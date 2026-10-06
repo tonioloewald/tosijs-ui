@@ -362,6 +362,42 @@ export const liveExampleStyleSpec = {
     display: 'none',
   },
 
+  /*
+  What a run logged, in place of a preview that rendered nothing (component.ts, refreshOutput).
+  Same line classes as the Console tab, so a warning looks like a warning in both places. The
+  empty preview stops reserving space but stays in the document: example code still owns it.
+  */
+  ':host [part="output"]': {
+    boxSizing: 'border-box',
+    padding: vars.spacing,
+    maxHeight: '20em',
+    overflow: 'auto',
+    fontFamily: 'var(--mono-font, monospace)',
+    fontSize: '13px',
+    lineHeight: '1.4',
+  },
+  ':host [part="output"] .console-line': {
+    whiteSpace: 'pre-wrap',
+    overflowWrap: 'anywhere',
+    padding: '1px 0',
+  },
+  ':host [part="output"] .console-warn': {
+    color: '#8a5a00',
+    background: '#fff8e1',
+  },
+  ':host [part="output"] .console-error': {
+    color: '#b00020',
+    background: '#fdecea',
+  },
+  ':host [part="output"] .console-debug, :host [part="output"] .console-dropped':
+    {
+      opacity: '0.6',
+    },
+  ':host(.-output-only) .preview': {
+    height: 'auto',
+    padding: '0',
+  },
+
   ':host .test-pass': {
     color: '#0a0',
   },

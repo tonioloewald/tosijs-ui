@@ -411,6 +411,14 @@ let fromTsOnce;
  * costs a few ms, and the working set is "the examples on this page".
  */
 const RESULT_CACHE_MAX = 256;
+/**
+ * Keep tjs-lang's `testRunner` beside the code when it returns one (#210 item 1). It is one
+ * property read on a transpile that already happened, and it is the only runner built from
+ * the test bodies as tjs-lang REWROTE them; `extractTests` builds its own from raw text.
+ */
+const withTestRunner = (out) => typeof out.testRunner === 'string'
+    ? { code: out.code, testRunner: out.testRunner }
+    : { code: out.code };
 const resultCache = new Map();
 const cacheResult = (key, result) => {
     if (resultCache.size >= RESULT_CACHE_MAX) {
@@ -502,14 +510,19 @@ export async function loadTransform(dialect = 'js') {
                         typescriptUrl: TYPESCRIPT_URL,
                     })).code
                     : code;
-                const result = {
-                    code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code,
-                };
+                /*
+                NO `dialect` here (#210 item 2). `fromTS` emits TJS carrying a `tjs <- …` annotation
+                that gives converted TypeScript JavaScript's semantics, and an explicit `dialect` is
+                authoritative: passing `'tjs'` overrode the annotation, so a TS example's
+                `new Calculator(…)` was refused as native TJS. tjs-lang's own playground and tests
+                call it this way.
+                */
+                const result = withTestRunner(tjs(tjsSource, { runTests: false }));
                 cacheResult(cacheKey, result);
                 return result;
             })();
         }
-        const result = { code: tjs(code, { dialect, runTests: false }).code };
+        const result = withTestRunner(tjs(code, { dialect, runTests: false }));
         cacheResult(cacheKey, result);
         return result;
     };

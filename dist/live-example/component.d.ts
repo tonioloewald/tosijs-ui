@@ -299,6 +299,35 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         ':host(.-test-only) .preview': {
             display: string;
         };
+        ':host [part="output"]': {
+            boxSizing: string;
+            padding: string;
+            maxHeight: string;
+            overflow: string;
+            fontFamily: string;
+            fontSize: string;
+            lineHeight: string;
+        };
+        ':host [part="output"] .console-line': {
+            whiteSpace: string;
+            overflowWrap: string;
+            padding: string;
+        };
+        ':host [part="output"] .console-warn': {
+            color: string;
+            background: string;
+        };
+        ':host [part="output"] .console-error': {
+            color: string;
+            background: string;
+        };
+        ':host [part="output"] .console-debug, :host [part="output"] .console-dropped': {
+            opacity: string;
+        };
+        ':host(.-output-only) .preview': {
+            height: string;
+            padding: string;
+        };
         ':host .test-pass': {
             color: string;
         };
@@ -390,6 +419,13 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private get consoleEnabled();
     private consoleForRun;
     private clearConsole;
+    private runSettled;
+    private outputQueued;
+    private outputWatch?;
+    private static readonly OUTPUT_LINES;
+    private previewIsEmpty;
+    private queueOutputRefresh;
+    private refreshOutput;
     private addConsoleLine;
     private consoleLineElement;
     private consoleDroppedEl?;
@@ -449,6 +485,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private inlineTjsTestCount;
     private lastTjsTests?;
     private runInlineTjsTests;
+    private inlineTjsTestBody;
     private renderTjsTests;
     private computeGeneratedJs;
     private ensureProductTabs;

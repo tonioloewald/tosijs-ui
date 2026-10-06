@@ -1,4 +1,9 @@
-import { Dialect, ExampleContext, TransformFn } from './types.js'
+import {
+  Dialect,
+  ExampleContext,
+  TransformFn,
+  TransformResult,
+} from './types.js'
 
 export const AsyncFunction = (async () => {
   /* placeholder */
@@ -314,7 +319,7 @@ export async function executeCode(
 type TjsFn = (
   source: string,
   options?: { dialect?: 'js' | 'tjs'; runTests?: boolean | 'only' | 'report' }
-) => { code: string }
+) => { code: string; testRunner?: unknown }
 
 /**
  * The fromTS() entry from tjs-lang/browser/from-ts — lowers TypeScript to tjs.
@@ -545,8 +550,21 @@ let fromTsOnce: Promise<FromTsFn | null> | undefined
  * costs a few ms, and the working set is "the examples on this page".
  */
 const RESULT_CACHE_MAX = 256
-const resultCache = new Map<string, { code: string }>()
-const cacheResult = (key: string, result: { code: string }) => {
+/**
+ * Keep tjs-lang's `testRunner` beside the code when it returns one (#210 item 1). It is one
+ * property read on a transpile that already happened, and it is the only runner built from
+ * the test bodies as tjs-lang REWROTE them; `extractTests` builds its own from raw text.
+ */
+const withTestRunner = (out: {
+  code: string
+  testRunner?: unknown
+}): TransformResult =>
+  typeof out.testRunner === 'string'
+    ? { code: out.code, testRunner: out.testRunner }
+    : { code: out.code }
+
+const resultCache = new Map<string, TransformResult>()
+const cacheResult = (key: string, result: TransformResult) => {
   if (resultCache.size >= RESULT_CACHE_MAX) {
     // Map preserves insertion order, so the first key is the oldest.
     const oldest = resultCache.keys().next().value
@@ -640,14 +658,19 @@ export async function loadTransform(
               })
             ).code
           : code
-        const result = {
-          code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code,
-        }
+        /*
+        NO `dialect` here (#210 item 2). `fromTS` emits TJS carrying a `tjs <- …` annotation
+        that gives converted TypeScript JavaScript's semantics, and an explicit `dialect` is
+        authoritative: passing `'tjs'` overrode the annotation, so a TS example's
+        `new Calculator(…)` was refused as native TJS. tjs-lang's own playground and tests
+        call it this way.
+        */
+        const result = withTestRunner(tjs(tjsSource, { runTests: false }))
         cacheResult(cacheKey, result)
         return result
       })()
     }
-    const result = { code: tjs(code, { dialect, runTests: false }).code }
+    const result = withTestRunner(tjs(code, { dialect, runTests: false }))
     cacheResult(cacheKey, result)
     return result
   }

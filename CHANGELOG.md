@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### Three more from tjs-lang's sweep of its own site (#210)
+
+- **Inline tjs tests ran with plain-JavaScript semantics**, so passing tests were shown
+  failing: `"hello world".capitalize is not a function` for a local `extend`, `Expected false
+  but got true` for a boxed boolean. An example's inline tests now use the runner `tjs()`
+  itself returns, which is built from the test bodies after tjs-lang rewrote them. This takes
+  effect with the tjs-lang release after 0.14.0-rc.2; on older versions behaviour is unchanged.
+- **The `ts` dialect overrode converted TypeScript's semantics.** It passed `dialect: 'tjs'`
+  to `tjs()`, which outranks the annotation `fromTS` writes, so a TS example's
+  `new Calculator(…)` was refused as native TJS. It now passes no dialect.
+- **An example whose output is only `console.log` was an empty box.** When a run finishes with
+  nothing rendered into its preview, the lines it logged (and its inline-test summary, when
+  one was run) are shown where the preview would be. It steps aside when the example renders
+  anything, never writes into `preview`, and follows the existing console switches.
+
+Not in this release: examples written as modules (`export const x = …`) still fail. Stripping
+`export` safely needs a JavaScript parser, which tosijs-ui does not ship; tjs-lang already
+bundles one, so the ask is with them to export their stripper.
+
 ### The doc-test lane can no longer pass over pages that reported nothing (#2874)
 
 The background test runner counted a page as tested when it finished or timed out, whether or

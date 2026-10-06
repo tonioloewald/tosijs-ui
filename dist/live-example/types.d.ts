@@ -18,6 +18,7 @@ export interface ExampleParts extends PartsMap {
     example: HTMLElement;
     testResults: HTMLElement;
     running: HTMLElement;
+    output: HTMLElement;
     js: CodeEditor;
     html: CodeEditor;
     css: CodeEditor;
@@ -40,8 +41,14 @@ export interface RemotePayload {
 }
 export type TransformFn = (code: string, options?: {
     transforms: ('jsx' | 'typescript' | 'flow' | 'imports')[];
-}) => {
+}) => TransformResult | Promise<TransformResult>;
+export interface TransformResult {
     code: string;
-} | Promise<{
-    code: string;
-}>;
+    /**
+     * tjs-lang's runner for the source's inline tests, built from the test bodies AFTER they
+     * were given the module's semantics (TJS `==`, boxed-primitive truthiness, local `extend`
+     * calls). Present for `tjs`/`ts` sources that have inline tests, on a tjs-lang new enough
+     * to return it. Run as `code + testUtils + 'return ' + testRunner`.
+     */
+    testRunner?: string;
+}

@@ -140,6 +140,19 @@ test('and evaluates in its scope', async () => {
 })
 ```
 
+An example that only logs still shows something. When a run finishes with nothing rendered
+into its `preview`, the lines it logged appear where the preview would be:
+
+```js
+const total = [1, 2, 3].reduce((sum, n) => sum + n, 0)
+console.log('1 + 2 + 3 =', total)
+```
+
+That is the same output as the Console tab, placed where a reader will see it without
+opening the code panel. It steps aside as soon as the example renders anything, and it is
+drawn in an element of its own, so `preview` stays empty for your code and tests. Turning the
+console off (below) turns this off too.
+
 - It shows `log`, `info`, `warn`, `error`, `debug`, `dir` and `table`, plus the error that
   stopped the example, if one did. Strings print as written, data as JSON, errors as
   `Name: message`.
@@ -1010,6 +1023,82 @@ export class LiveExample extends withAttributes({
         this.consoleDroppedCount = 0;
         this.consoleLinesEl?.replaceChildren();
     }
+    /*
+    An example whose whole output is `console.log` or inline tests used to be an empty box.
+  
+    The Console tab holds the lines, but a reader does not open a code panel to find out whether
+    an example did anything — tjs-lang's first example, hello-tjs, read as broken on its own site
+    (#210 item 3). So when a run has SETTLED with nothing rendered into its preview, the lines it
+    logged (and its inline-test summary, when there is one) are shown where the preview would
+    be. An example that does render is untouched, and so is the Console tab.
+  
+    The lines go in an element of their own, never into `preview`: example code and `test`
+    blocks own that element, and several assert on what is in it.
+    */
+    runSettled = false;
+    outputQueued = false;
+    outputWatch;
+    static OUTPUT_LINES = 50;
+    previewIsEmpty() {
+        const preview = this.parts.example.querySelector(':scope > .preview');
+        // Inline previews only: an iframe's emptiness is its own document's business.
+        return (!!preview &&
+            preview.childElementCount === 0 &&
+            (preview.textContent ?? '').trim() === '');
+    }
+    queueOutputRefresh() {
+        if (!this.runSettled || this.outputQueued)
+            return;
+        this.outputQueued = true;
+        queueMicrotask(() => {
+            this.outputQueued = false;
+            this.refreshOutput();
+        });
+    }
+    refreshOutput() {
+        if (!this.hydrated)
+            return;
+        const out = this.parts.output;
+        // What a reader would see printed: not what was typed into the REPL, nor its echoes.
+        const lines = this.consoleEnabled
+            ? this.consoleBuffer.filter((line) => line.level !== 'input' && line.level !== 'result')
+            : [];
+        const tests = this.lastTjsTests?.results ?? [];
+        const show = this.runSettled &&
+            !this.isTestOnly &&
+            (lines.length > 0 || tests.length > 0) &&
+            this.previewIsEmpty();
+        this.classList.toggle('-output-only', show);
+        out.hidden = !show;
+        this.outputWatch?.disconnect();
+        this.outputWatch = undefined;
+        if (!show) {
+            out.replaceChildren();
+            return;
+        }
+        const shown = lines.slice(-LiveExample.OUTPUT_LINES);
+        const failed = tests.filter((t) => !t.passed);
+        out.replaceChildren(...(lines.length > shown.length
+            ? [
+                div({ class: 'console-line console-dropped' }, `… ${lines.length - shown.length} earlier lines in the Console tab`),
+            ]
+            : []), ...shown.map((line) => this.consoleLineElement(line)), ...(tests.length
+            ? [
+                div({ class: failed.length ? 'test-fail' : 'test-pass' }, `${tests.length - failed.length}/${tests.length} inline tests passed`),
+                ...failed.map((t) => div({ class: 'test-fail' }, `✗ ${t.description}${t.error ? ` — ${t.error}` : ''}`)),
+            ]
+            : []));
+        // The moment the example renders something after all (a fetch resolved), step aside.
+        const preview = this.parts.example.querySelector(':scope > .preview');
+        if (preview) {
+            this.outputWatch = new MutationObserver(() => this.refreshOutput());
+            this.outputWatch.observe(preview, {
+                childList: true,
+                characterData: true,
+                subtree: true,
+            });
+        }
+    }
     addConsoleLine(level, text) {
         if (this.consoleBuffer.length >= LiveExample.CONSOLE_LINES) {
             this.consoleDroppedCount += 1;
@@ -1018,6 +1107,7 @@ export class LiveExample extends withAttributes({
         }
         const line = { level, text: typeof text === 'function' ? text() : text };
         this.consoleBuffer.push(line);
+        this.queueOutputRefresh();
         if (this.consoleLinesEl) {
             this.consoleLinesEl.append(this.consoleLineElement(line));
             this.scrollConsole();
@@ -1482,8 +1572,7 @@ export class LiveExample extends withAttributes({
             return;
         }
         try {
-            const execJs = (await transform(rewriteContextImports(extracted.code, this.context))).code;
-            const body = `${execJs}\n${api.testUtils}\nreturn ${extracted.testRunner}`;
+            const body = await this.inlineTjsTestBody(transform, api, extracted);
             // The test-stripped source still runs its top-level statements (to define
             // the functions under test), which may touch `preview` — give them a
             // throwaway one, mirroring execution's `{ preview, ...context }` scope.
@@ -1512,7 +1601,26 @@ export class LiveExample extends withAttributes({
         }
         this.renderTjsTests();
     }
+    /*
+    The function body that runs an example's inline tjs tests.
+  
+    Prefer the runner `tjs()` itself returns for the WHOLE source. That one is built from the
+    test bodies after tjs-lang gave them the module's semantics, and it finds the runtime it
+    needs in the module code it runs beside. The runner `extractTests` builds is from the RAW
+    bodies: run that and a passing test is shown FAILING — `"hello world".capitalize is not a
+    function` for a local `extend`, `Expected false but got true` for a boxed boolean (#210
+    item 1). An older tjs-lang returns no runner from `tjs()`, and then the old path stands.
+    */
+    async inlineTjsTestBody(transform, api, extracted) {
+        const whole = await transform(rewriteContextImports(this.js, this.context));
+        if (typeof whole.testRunner === 'string') {
+            return `${whole.code}\n${api.testUtils}\nreturn ${whole.testRunner}`;
+        }
+        const execJs = (await transform(rewriteContextImports(extracted.code, this.context))).code;
+        return `${execJs}\n${api.testUtils}\nreturn ${extracted.testRunner}`;
+    }
     renderTjsTests() {
+        this.queueOutputRefresh();
         const view = this.tjsTestsView;
         if (!view)
             return;
@@ -1891,7 +1999,9 @@ export class LiveExample extends withAttributes({
             role: 'status',
             ariaLabel: 'Running',
             hidden: true,
-        })),
+        }), 
+        // What the run logged, shown in place of a preview that rendered nothing (refreshOutput).
+        div({ part: 'output', role: 'log', hidden: true })),
         // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
         // who never opens a panel never constructs a <tosi-code> (and never pulls the
         // CodeMirror chunk). See ensureEditors().
@@ -2407,6 +2517,8 @@ export class LiveExample extends withAttributes({
         const runAbort = (this.runAbort = new AbortController());
         if (this.hydrated)
             this.parts.running.hidden = true;
+        this.runSettled = false;
+        this.refreshOutput();
         this.clearConsole();
         const exampleConsole = this.consoleForRun();
         // The bake was made at build time by the PINNED transpiler, so it is only valid for a
@@ -2542,6 +2654,11 @@ export class LiveExample extends withAttributes({
                 if (this.runAbort === runAbort)
                     running.hidden = true;
             }
+        }
+        // The run has settled: if it rendered nothing, show what it logged (refreshOutput).
+        if (this.runAbort === runAbort) {
+            this.runSettled = true;
+            this.refreshOutput();
         }
         if (this.persistToDom) {
             this.updateSources();
