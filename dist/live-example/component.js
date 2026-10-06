@@ -1177,7 +1177,9 @@ export class LiveExample extends withAttributes({
             scope.set('console', replConsole);
         for (const [key, value] of Object.entries(this.capturedScope ?? {}))
             scope.set(key, value);
-        const code = rewriteContextImports(source, this.context);
+        // Plain `rewriteImports`, not the checking one: a REPL line is not a module, and an
+        // error thrown here would land outside the `try` that prints errors to the console.
+        const code = rewriteImports(source, Object.keys(this.context));
         const names = [...scope.keys()];
         let fn;
         try {
@@ -1382,7 +1384,9 @@ export class LiveExample extends withAttributes({
         this.consoleInputEl?.removeAttribute('aria-activedescendant');
     }
     async evalInExample(evaluate, source) {
-        const code = rewriteContextImports(source, this.context);
+        // Plain `rewriteImports`, not the checking one: a REPL line is not a module, and an
+        // error thrown here would land outside the `try` that prints errors to the console.
+        const code = rewriteImports(source, Object.keys(this.context));
         /*
         `$` and `$$`, as in a browser console, unless something named `$` is already in scope (the
         example's own, or a page's jQuery): then that wins. They query THIS example's preview: in

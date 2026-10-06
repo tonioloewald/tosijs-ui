@@ -11,15 +11,12 @@ export declare function misconfigured(strict: boolean | undefined, message: stri
 /**
  * The languages of the corpus's LIVE fences, under the site's example policy.
  *
- * Goes through `parseFenceInfo` and `isLiveFence` rather than a rule of its own: a second
- * copy of that rule is exactly what disagreed when `:static` shipped (see example-policy.ts),
- * and a third — a four-language regex in the bundle guard — is what the 1.16.7 review caught
- * deciding a `strict` build. Every build-side "does this corpus have live examples?" asks here.
- *
- * Fences are tracked the way CommonMark closes them, because the renderer does: a block opened
- * with N backticks (or tildes) closes only on a bare line of at least N of the same character.
- * Anything less would read a fence SHOWN inside a longer block as a fence of its own, or miss
- * the `~~~` and four-backtick blocks that render as live examples all the same.
+ * Code blocks come from marked (`collectCodeTokens`), the parser the pages are rendered with,
+ * and liveness from `isLiveFence`, THE predicate. Neither is re-derived here: a second copy of
+ * the liveness rule is what disagreed when `:static` shipped, a regex of its own in the bundle
+ * guard is what the 1.16.7 review caught deciding a `strict` build, and the line scanner that
+ * first replaced it missed CRLF files and blockquoted fences. Every build-side "does this
+ * corpus have live examples?" asks here.
  */
 export declare function liveFenceLanguages(docs: Array<{
     text?: string;

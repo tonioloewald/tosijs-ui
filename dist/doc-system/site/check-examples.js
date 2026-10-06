@@ -21,9 +21,9 @@ executed, so they're skipped.
 
 Build-time only (bun). Never import from browser code.
 */
-import { marked } from 'marked';
+import { collectCodeTokens } from './code-fences.js';
 import { rewriteImports, AsyncFunction, loadTransform, transformAvailable, UnsupportedImportError, } from '../../live-example/code-transform.js';
-import { isLiveFence, parseFenceInfo, } from '../example-policy.js';
+import { isLiveFence } from '../example-policy.js';
 // The default live-example context (matches the IIFE globals the pages provide).
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
 // own keys; these are the tosijs-ui defaults.
@@ -54,36 +54,6 @@ const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'test']);
 // scope is the difference between "once" and "once per rebuild". Lazily created, so a
 // corpus with no `ts` examples never makes one at all.
 let tsTranspiler;
-/*
-Fence info is parsed by `parseFenceInfo`, the one copy of that grammar. This file had its own
-`dialectOf`/`modeOf` pair; once fences could carry JSON options (#184) `modeOf` would have read
-`{"debug":true}` as the mode `true`.
-*/
-function collectCodeTokens(text) {
-    const out = [];
-    const walk = (tokens) => {
-        for (const t of tokens) {
-            /*
-            Keep the MODE. `dialectOf` reduced `js:static` to `js`, so the checker could not tell a
-            block that will never run from one that will — and hard-failed a build over the syntax
-            of illustrative code, advising the author to retag it as `typescript`, which is exactly
-            the mislabelling this release exists to abolish (review major M2).
-            */
-            if (t.type === 'code')
-                out.push({
-                    lang: parseFenceInfo(t.lang ?? '').lang,
-                    text: t.text,
-                    mode: parseFenceInfo(t.lang ?? '').mode,
-                });
-            if (Array.isArray(t.tokens))
-                walk(t.tokens);
-            if (Array.isArray(t.items))
-                walk(t.items); // list items
-        }
-    };
-    walk(marked.lexer(text));
-    return out;
-}
 /**
  * Transpile-check every executable block in the corpus. Returns the problems and
  * the `tjs` bakes (which it computes anyway while checking — no double transpile).

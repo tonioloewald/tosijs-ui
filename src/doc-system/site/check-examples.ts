@@ -22,7 +22,7 @@ executed, so they're skipped.
 Build-time only (bun). Never import from browser code.
 */
 
-import { marked } from 'marked'
+import { collectCodeTokens } from './code-fences.js'
 import {
   rewriteImports,
   AsyncFunction,
@@ -31,11 +31,7 @@ import {
   UnsupportedImportError,
 } from '../../live-example/code-transform.js'
 import type { Doc } from './docs.js'
-import {
-  isLiveFence,
-  parseFenceInfo,
-  type ExamplePolicy,
-} from '../example-policy.js'
+import { isLiveFence, type ExamplePolicy } from '../example-policy.js'
 import type { ExampleBakes } from '../render.js'
 
 declare const Bun: {
@@ -83,37 +79,6 @@ export interface ExampleProblem {
   lang: string
   error: string
   snippet: string
-}
-
-/*
-Fence info is parsed by `parseFenceInfo`, the one copy of that grammar. This file had its own
-`dialectOf`/`modeOf` pair; once fences could carry JSON options (#184) `modeOf` would have read
-`{"debug":true}` as the mode `true`.
-*/
-function collectCodeTokens(
-  text: string
-): Array<{ lang: string; text: string; mode?: string }> {
-  const out: Array<{ lang: string; text: string; mode?: string }> = []
-  const walk = (tokens: any[]): void => {
-    for (const t of tokens) {
-      /*
-      Keep the MODE. `dialectOf` reduced `js:static` to `js`, so the checker could not tell a
-      block that will never run from one that will — and hard-failed a build over the syntax
-      of illustrative code, advising the author to retag it as `typescript`, which is exactly
-      the mislabelling this release exists to abolish (review major M2).
-      */
-      if (t.type === 'code')
-        out.push({
-          lang: parseFenceInfo(t.lang ?? '').lang,
-          text: t.text,
-          mode: parseFenceInfo(t.lang ?? '').mode,
-        })
-      if (Array.isArray(t.tokens)) walk(t.tokens)
-      if (Array.isArray(t.items)) walk(t.items) // list items
-    }
-  }
-  walk(marked.lexer(text))
-  return out
 }
 
 export interface ExampleCheck {

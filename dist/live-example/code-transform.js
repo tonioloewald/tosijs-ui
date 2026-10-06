@@ -170,9 +170,10 @@ export function assertContextProvided(code, context) {
 }
 /**
  * `rewriteImports` for code that is about to RUN against a context: checks first that every
- * module it imports was actually supplied (`assertContextProvided`). Every execution path goes
- * through this — the example, its tests, the REPL, inline tjs tests — so a missing module is
- * the same sentence wherever it is met.
+ * module it imports was actually supplied (`assertContextProvided`). Tests, inline tjs tests
+ * and `executeCode` go through this. The example itself pairs the two calls by hand in
+ * execution.ts, because a pre-compiled example skips the rewrite but still needs the check.
+ * The REPL deliberately uses plain `rewriteImports`: a REPL line is not a module.
  */
 export function rewriteContextImports(code, context) {
     assertContextProvided(code, context);

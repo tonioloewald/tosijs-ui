@@ -42,7 +42,7 @@ without being told.
   from the doc system's own copy. `tosijs-ui` still has to be supplied by the entry (importing
   it here would put every component in every doc site's bundle), and an example that imports
   it without one now fails with a message naming the module and the two lines that fix it,
-  whether it is met in the example, its tests or the Console tab's REPL. The cost of the
+  whether it is met in the example or its tests. The cost of the
   `tosijs` fallback is 0.3 kB gzip on this site's own bundle.
 
 ### `strict: true` makes the build fail on what it otherwise warns about

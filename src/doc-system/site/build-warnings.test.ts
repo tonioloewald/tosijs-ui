@@ -84,3 +84,29 @@ test('a block closes only on a bare fence of its own character', () => {
   const text = '```md:static\n~~~\n```\n\n~~~js\nlive\n~~~\n'
   expect([...liveFenceLanguages(doc(text))]).toEqual(['js'])
 })
+
+// The re-review's finding: the line scanner that first replaced the regex found NOTHING in a
+// CRLF file, and disagreed with the renderer about blockquotes, indentation and HTML blocks.
+test('REGRESSION: a CRLF corpus has the same live fences as an LF one', () => {
+  const lf = '# x\n\n```js\nconst a = 1\n```\n'
+  expect([...liveFenceLanguages(doc(lf.replace(/\n/g, '\r\n')))]).toEqual([
+    'js',
+  ])
+})
+
+test('agrees with the renderer: blockquoted fences count; indented and commented ones do not', () => {
+  expect([...liveFenceLanguages(doc('> ```js\n> quoted()\n> ```\n'))]).toEqual([
+    'js',
+  ])
+  // Four spaces of indent is an indented code block containing backticks, not a fence.
+  expect(
+    liveFenceLanguages(doc('para\n\n    ```js\n    x\n    ```\n')).size
+  ).toBe(0)
+  expect(liveFenceLanguages(doc('<!--\n```js\nx\n```\n-->\n')).size).toBe(0)
+})
+
+test('a fence in a list item counts', () => {
+  expect([
+    ...liveFenceLanguages(doc('- item\n\n  ```ts\n  x\n  ```\n')),
+  ]).toEqual(['ts'])
+})
