@@ -61,6 +61,21 @@ the site's `liveExamples` policy. The build's warning used a narrower pattern of
 counted a bare `js` fence on an opt-in site, and missed `js:iframe`, `html`, `css`, `~~~`
 fences and registered dialects. `llms.txt`'s note about live examples follows the same rule.
 
+### Found by the pre-tag review, fixed before release
+
+None of these ever shipped; they are listed so the notes account for every fix in the release.
+
+- `liveFenceLanguages` found no fences in a CRLF corpus and disagreed with the renderer on
+  blockquoted, indented and commented-out fences, because it scanned lines. It now reads
+  marked's tokens through `collectCodeTokens`, shared with check-examples.
+- The missing-module error covered the example only; tests and inline tjs tests still got the
+  destructuring error. They now go through `rewriteContextImports`, and the check matches a
+  real import statement, not a commented-out one.
+- The Console REPL keeps plain `rewriteImports`: the checking variant threw outside the `try`
+  that prints REPL errors, so a line importing an unsupplied module printed nothing.
+- A failed copy of the tjs-lang bundles shared a `catch` with resolution and would have been
+  reported as "could not be resolved"; only resolution is caught now.
+
 ### `<meta charset>` is back in the first 1024 bytes of every page
 
 Two explanatory HTML comments at the top of each generated page's `<head>` had pushed the
