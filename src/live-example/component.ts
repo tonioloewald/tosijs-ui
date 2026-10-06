@@ -667,6 +667,7 @@ import {
   loadTransform,
   loadTjsTestApi,
   rewriteImports,
+  rewriteContextImports,
   contextVarName,
   contextParamNames,
   AsyncFunction,
@@ -1298,7 +1299,7 @@ export class LiveExample extends withAttributes({
     if (replConsole) scope.set('console', replConsole)
     for (const [key, value] of Object.entries(this.capturedScope ?? {}))
       scope.set(key, value)
-    const code = rewriteImports(source, Object.keys(this.context))
+    const code = rewriteContextImports(source, this.context)
     const names = [...scope.keys()]
     let fn: (...args: unknown[]) => Promise<unknown>
     try {
@@ -1530,7 +1531,7 @@ export class LiveExample extends withAttributes({
     evaluate: ReplEvaluate,
     source: string
   ): Promise<unknown> {
-    const code = rewriteImports(source, Object.keys(this.context))
+    const code = rewriteContextImports(source, this.context)
     /*
     `$` and `$$`, as in a browser console, unless something named `$` is already in scope (the
     example's own, or a page's jQuery): then that wins. They query THIS example's preview: in
@@ -1634,9 +1635,7 @@ export class LiveExample extends withAttributes({
     }
     try {
       const execJs = (
-        await transform(
-          rewriteImports(extracted.code, Object.keys(this.context))
-        )
+        await transform(rewriteContextImports(extracted.code, this.context))
       ).code
       const body = `${execJs}\n${api.testUtils}\nreturn ${extracted.testRunner}`
       // The test-stripped source still runs its top-level statements (to define

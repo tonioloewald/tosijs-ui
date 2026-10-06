@@ -21,6 +21,17 @@ import {
   registerLiveLanguage,
 } from '../example-policy.js'
 import * as path from 'path'
+
+/**
+ * Declared dialects are live fences at build time too (#2463). Idempotent, so every place
+ * that asks "is this fence live?" calls it first rather than depending on build order: the
+ * misconfiguration checks run long before the page generator, which used to be the only caller.
+ */
+function registerSiteDialects(config: { dialects?: readonly string[] }): void {
+  for (const name of normalizeDialectNames(config.dialects)) {
+    if (!BUILT_IN_DIALECTS.has(name)) registerLiveLanguage(name)
+  }
+}
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
@@ -1336,9 +1347,13 @@ export async function buildSite(
           let docsHaveExamples = false
           try {
             const corpus = JSON.parse(await Bun.file(DOCS_JSON).text())
-            docsHaveExamples = (corpus as Array<{ text?: string }>).some((d) =>
-              /^[ \t]*```(js|ts|tjs|test)[ \t]*$/m.test(d.text ?? '')
-            )
+            // THE shared rule, under the site's own policy — not a regex of this block's own.
+            // That is what this was until the 1.16.7 review: it called a bare `js` fence live
+            // on an opt-in site and missed `js:iframe`, `html` and `css` everywhere, which
+            // stopped being cosmetic the moment `strict` made it decide a build.
+            registerSiteDialects(config)
+            docsHaveExamples =
+              liveFenceLanguages(corpus, config.liveExamples).size > 0
           } catch {
             // corpus unreadable — the doc-system warning below still stands on its own
           }
@@ -1425,6 +1440,7 @@ export async function buildSite(
               projectLinks: config.projectLinks,
               haltijaDev: config.haltijaDev,
               markdownPages: config.markdownPages,
+              liveExamples: config.liveExamples,
             },
             corpus
           )
@@ -1441,12 +1457,22 @@ export async function buildSite(
       // tells the loader to prefer them (it falls back to the CDN chain if absent).
       // Optional: skipped if tjs-lang isn't installed.
       let tjsHead = ''
+      // Only RESOLUTION is allowed to fail quietly here. A copy that fails is a broken build
+      // and throws; it used to share this `catch`, and would have been reported as "could not
+      // be resolved … install tjs-lang".
+      let tjsBundles: { browser: string; fromTs: string } | null = null
       try {
-        const browser = Bun.resolveSync('tjs-lang/browser', PROJECT_ROOT)
-        const fromTs = Bun.resolveSync('tjs-lang/browser/from-ts', PROJECT_ROOT)
+        tjsBundles = {
+          browser: Bun.resolveSync('tjs-lang/browser', PROJECT_ROOT),
+          fromTs: Bun.resolveSync('tjs-lang/browser/from-ts', PROJECT_ROOT),
+        }
+      } catch {
+        // tjs-lang absent, or present without its browser bundles — reported below
+      }
+      if (tjsBundles) {
         await $`mkdir -p ${PUBLIC}/tjs`.text()
-        await $`cp ${browser} ${PUBLIC}/tjs/tjs-browser.js`.text()
-        await $`cp ${fromTs} ${PUBLIC}/tjs/tjs-browser-from-ts.js`.text()
+        await $`cp ${tjsBundles.browser} ${PUBLIC}/tjs/tjs-browser.js`.text()
+        await $`cp ${tjsBundles.fromTs} ${PUBLIC}/tjs/tjs-browser-from-ts.js`.text()
         const bp = config.basePath
         const base =
           !bp || bp === '/' ? '/tjs/' : bp.replace(/\/$/, '') + '/tjs/'
@@ -1454,7 +1480,7 @@ export async function buildSite(
           base
         )}</script>`
         console.log(`tjs-lang bundles served same-origin at ${base}`)
-      } catch {
+      } else {
         /*
         The copy was skipped, and that used to be the end of it (#210 item 6).
 
@@ -1467,6 +1493,7 @@ export async function buildSite(
         let needed: string[] = []
         try {
           const corpus = JSON.parse(await Bun.file(DOCS_JSON).text())
+          registerSiteDialects(config)
           const live = liveFenceLanguages(corpus, config.liveExamples)
           needed = ['tjs', 'ts'].filter((lang) => live.has(lang))
         } catch {
@@ -1706,9 +1733,7 @@ export async function buildSite(
       const docs = JSON.parse(docsJsonText)
       // Declared dialects are live fences at build time too, so the static highlighter
       // leaves their source alone (#2463). Idempotent: a watch rebuild re-adds the same names.
-      for (const name of normalizeDialectNames(config.dialects)) {
-        if (!BUILT_IN_DIALECTS.has(name)) registerLiveLanguage(name)
-      }
+      registerSiteDialects(config)
       const pageCount = await generateSite({
         liveExamples: config.liveExamples,
         docs,

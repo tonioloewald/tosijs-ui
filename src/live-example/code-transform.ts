@@ -186,7 +186,13 @@ export function assertContextProvided(
   for (const [moduleName, value] of Object.entries(context)) {
     if (value != null) continue
     const m = moduleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    if (!new RegExp(`\\bfrom\\s*['"]${m}['"]`).test(code)) continue
+    // A real import STATEMENT: `import` opening a statement, then `from 'mod'` before any
+    // quote or semicolon. A commented-out import, or the words inside a string, are not one —
+    // and an example carrying either ran fine before this check existed, so it must still.
+    const statement = new RegExp(
+      `(?:^|[;\\n])[ \\t]*import\\b[^;'"]*?\\bfrom\\s*['"]${m}['"]`
+    )
+    if (!statement.test(code)) continue
     throw new Error(
       `This example imports from '${moduleName}', but this site's bundle does not ` +
         `provide '${moduleName}' to examples. A custom bundleEntry replaces the bundle ` +
@@ -195,6 +201,20 @@ export function assertContextProvided(
         `\`globalThis.xinjsui = tosijsUi\` (or set <tosi-doc-system>'s \`context\`).`
     )
   }
+}
+
+/**
+ * `rewriteImports` for code that is about to RUN against a context: checks first that every
+ * module it imports was actually supplied (`assertContextProvided`). Every execution path goes
+ * through this — the example, its tests, the REPL, inline tjs tests — so a missing module is
+ * the same sentence wherever it is met.
+ */
+export function rewriteContextImports(
+  code: string,
+  context: Record<string, unknown>
+): string {
+  assertContextProvided(code, context)
+  return rewriteImports(code, Object.keys(context))
 }
 
 export function rewriteImports(
@@ -274,7 +294,7 @@ export async function executeCode(
   context: ExampleContext,
   transform: TransformFn
 ): Promise<void> {
-  const rewrittenCode = rewriteImports(code, Object.keys(context))
+  const rewrittenCode = rewriteContextImports(code, context)
   const transformedCode = (
     await transform(rewrittenCode, {
       transforms: ['typescript'],

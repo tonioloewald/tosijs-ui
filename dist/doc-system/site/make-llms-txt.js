@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { buildSlugMap, pathForSlug, withBase } from '../routing.js';
+import { liveFenceLanguages } from './build-warnings.js';
 const SRC = 'src';
 const DIST = 'dist';
 function extractTitle(text) {
@@ -113,8 +114,9 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
         : entriesFromSrcScan();
     // Only orient agents about the live-example execution model when the corpus
     // actually has live examples (a book / pure-docs site has none).
-    const exampleFence = /```(js|tjs|ts|html|css)\b/;
-    const hasLiveExamples = !!corpus && corpus.some((d) => exampleFence.test(d.text ?? ''));
+    // THE shared rule (build-warnings.ts), under the site's policy — this was a regex of its
+    // own, which told an opt-in prose site about live examples it does not have.
+    const hasLiveExamples = !!corpus && liveFenceLanguages(corpus, meta.liveExamples).size > 0;
     const liveExampleNote = hasLiveExamples
         ? [
             'Live examples run inline on the shared page by default (not sandboxed):',
@@ -145,8 +147,9 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
     // Only for a corpus-driven index: the legacy scan links to dist/ files, not pages.
     const markdownNote = corpus && meta.markdownPages !== false
         ? [
-            'Every page below is also available as plain markdown: append `index.md` to its',
-            'URL (for example `/carousel/index.md`). Prefer that if you only need the text.',
+            'Pages below are also available as plain markdown: append `index.md` to the URL',
+            '(for example `/carousel/index.md`). Prefer that if you only need the text. A page',
+            'marked noindex has no markdown copy.',
             '',
         ]
         : [];

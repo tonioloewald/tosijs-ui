@@ -639,7 +639,7 @@ import { prefersReducedMotion } from '../reduced-motion.js';
 import { popFloat } from '../pop-float.js';
 import { createExampleConsole, exampleConsoleEnabled, formatConsoleArgs, formatConsoleValue, } from './example-console.js';
 import { dialectDocs, dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
-import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
+import { loadTransform, loadTjsTestApi, rewriteImports, rewriteContextImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
 import { executeInline, executeInIframe } from './execution.js';
 import { insertExamples, examplePolicy } from './insert-examples.js';
@@ -1177,7 +1177,7 @@ export class LiveExample extends withAttributes({
             scope.set('console', replConsole);
         for (const [key, value] of Object.entries(this.capturedScope ?? {}))
             scope.set(key, value);
-        const code = rewriteImports(source, Object.keys(this.context));
+        const code = rewriteContextImports(source, this.context);
         const names = [...scope.keys()];
         let fn;
         try {
@@ -1382,7 +1382,7 @@ export class LiveExample extends withAttributes({
         this.consoleInputEl?.removeAttribute('aria-activedescendant');
     }
     async evalInExample(evaluate, source) {
-        const code = rewriteImports(source, Object.keys(this.context));
+        const code = rewriteContextImports(source, this.context);
         /*
         `$` and `$$`, as in a browser console, unless something named `$` is already in scope (the
         example's own, or a page's jQuery): then that wins. They query THIS example's preview: in
@@ -1478,7 +1478,7 @@ export class LiveExample extends withAttributes({
             return;
         }
         try {
-            const execJs = (await transform(rewriteImports(extracted.code, Object.keys(this.context)))).code;
+            const execJs = (await transform(rewriteContextImports(extracted.code, this.context))).code;
             const body = `${execJs}\n${api.testUtils}\nreturn ${extracted.testRunner}`;
             // The test-stripped source still runs its top-level statements (to define
             // the functions under test), which may touch `preview` — give them a

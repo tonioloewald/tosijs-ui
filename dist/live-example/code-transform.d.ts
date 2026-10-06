@@ -57,6 +57,13 @@ export declare function contextParamNames(keys: string[]): string[];
  * about a line they did not write.
  */
 export declare function assertContextProvided(code: string, context: Record<string, unknown>): void;
+/**
+ * `rewriteImports` for code that is about to RUN against a context: checks first that every
+ * module it imports was actually supplied (`assertContextProvided`). Every execution path goes
+ * through this — the example, its tests, the REPL, inline tjs tests — so a missing module is
+ * the same sentence wherever it is met.
+ */
+export declare function rewriteContextImports(code: string, context: Record<string, unknown>): string;
 export declare function rewriteImports(code: string, contextKeys: string[], importPrefix?: string | undefined): string;
 /**
  * Execute code as an async function with injected context

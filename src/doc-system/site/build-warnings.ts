@@ -37,8 +37,15 @@ export function misconfigured(
 /**
  * The languages of the corpus's LIVE fences, under the site's example policy.
  *
- * Goes through `parseFenceInfo` and `isLiveFence` rather than a regex of its own: a second
- * copy of that rule is exactly what disagreed when `:static` shipped (see example-policy.ts).
+ * Goes through `parseFenceInfo` and `isLiveFence` rather than a rule of its own: a second
+ * copy of that rule is exactly what disagreed when `:static` shipped (see example-policy.ts),
+ * and a third — a four-language regex in the bundle guard — is what the 1.16.7 review caught
+ * deciding a `strict` build. Every build-side "does this corpus have live examples?" asks here.
+ *
+ * Fences are tracked the way CommonMark closes them, because the renderer does: a block opened
+ * with N backticks (or tildes) closes only on a bare line of at least N of the same character.
+ * Anything less would read a fence SHOWN inside a longer block as a fence of its own, or miss
+ * the `~~~` and four-backtick blocks that render as live examples all the same.
  */
 export function liveFenceLanguages(
   docs: Array<{ text?: string }>,
@@ -46,17 +53,23 @@ export function liveFenceLanguages(
 ): Set<string> {
   const langs = new Set<string>()
   for (const doc of docs) {
-    let open = false
+    let open: { char: string; length: number } | null = null
     for (const line of (doc.text ?? '').split('\n')) {
-      const fence = line.match(/^[ \t]*```(.*)$/)
+      const fence = line.match(/^[ \t]*(`{3,}|~{3,})(.*)$/)
       if (!fence) continue
-      // A closing fence is bare; anything after an opening one is its info string.
+      const [, marker, rest] = fence
+      const info = rest.trim()
       if (open) {
-        open = false
+        // Only a bare run of the SAME character, at least as long, closes the block.
+        if (marker[0] === open.char && marker.length >= open.length && !info) {
+          open = null
+        }
         continue
       }
-      open = true
-      const { lang, mode } = parseFenceInfo(fence[1].trim())
+      // An info string on a backtick fence cannot itself contain a backtick (CommonMark).
+      if (marker[0] === '`' && info.includes('`')) continue
+      open = { char: marker[0], length: marker.length }
+      const { lang, mode } = parseFenceInfo(info)
       if (lang && isLiveFence(lang, mode, policy)) langs.add(lang)
     }
   }

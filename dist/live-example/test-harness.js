@@ -1,4 +1,4 @@
-import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
+import { rewriteContextImports, AsyncFunction, contextParamNames, } from './code-transform.js';
 import { firstUserStackFrame, authorLine, sourceLineAt, describeError, diagnoseConstruction, TEST_SOURCE_URL, } from './error-location.js';
 class AssertionError extends Error {
     constructor(message) {
@@ -253,7 +253,7 @@ export async function runTests(testCode, preview, context, transform) {
         waitFor: (selector, timeout) => waitFor(preview, selector, timeout),
     };
     try {
-        const code = rewriteImports(testCode, Object.keys(context));
+        const code = rewriteContextImports(testCode, context);
         const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
         /*
         THE SHARED sanitiser. This used to be `key.replace(/-/g, '')` — its own copy of the rule,

@@ -10,8 +10,9 @@ Simple, robust web-components for use with tosijs or anything else.
 
 Full documentation, with live code examples, is at the links below.
 
-Every page below is also available as plain markdown: append `index.md` to its
-URL (for example `/carousel/index.md`). Prefer that if you only need the text.
+Pages below are also available as plain markdown: append `index.md` to the URL
+(for example `/carousel/index.md`). Prefer that if you only need the text. A page
+marked noindex has no markdown copy.
 
 Live examples run inline on the shared page by default (not sandboxed):
 each has its own `preview` element, but they share one tosijs module, so

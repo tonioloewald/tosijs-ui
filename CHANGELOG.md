@@ -6,7 +6,7 @@ A patch for readers that are not browsers, and for builds that were too polite. 
 now also ships as markdown, for LLM fetchers that fail on ordinary HTML. Two misconfigurations
 tjs-lang found the hard way now say so, and `strict: true` turns the build's warnings into
 failures. Nothing to change on upgrade: `markdownPages` is on by default and adds files only;
-`strict` is off by default.
+`strict` is off by default. `dist/iife.js` grows by 0.3 kB gzip (483.7 → 484.0 kB).
 
 ### Every doc page also ships as markdown
 
@@ -17,7 +17,11 @@ It is for readers that want the text and not the page: an LLM's URL fetcher, a s
 Prompted by one such fetcher reporting "no `<body>`" for a page whose whole article was in the
 static HTML.
 
-- On by default; `markdownPages: false` in the site config ships HTML only.
+- On by default; `markdownPages: false` in the site config ships HTML only. It adds one file
+  per page: on this repo's site, 70 files and 0.5 MB, about 3% of the output.
+- The file is the page's source as written, so HTML comments and metadata blocks in a doc
+  are served as text. If a page's source holds something its rendered page does not show,
+  mark it `noindex` or turn this off.
 - A `noindex` page gets neither the file nor the link.
 - The build now writes `.nojekyll` whenever markdown pages are on, not only under
   `host: 'github-pages'`. Without it, GitHub Pages' Jekyll would render `index.md` over the
@@ -37,7 +41,9 @@ without being told.
   failed with "Cannot destructure property 'elements' of 'tosijs'". Examples now get `tosijs`
   from the doc system's own copy. `tosijs-ui` still has to be supplied by the entry (importing
   it here would put every component in every doc site's bundle), and an example that imports
-  it without one now fails with a message naming the module and the two lines that fix it.
+  it without one now fails with a message naming the module and the two lines that fix it,
+  whether it is met in the example, its tests or the Console tab's REPL. The cost of the
+  `tosijs` fallback is 0.3 kB gzip on this site's own bundle.
 
 ### `strict: true` makes the build fail on what it otherwise warns about
 
@@ -47,7 +53,13 @@ corpus has executable fences and `bundleEntry` does not register `<tosi-example>
 the tjs-lang copy above is skipped on a corpus that needs it. Warning stays the default
 because each is a legitimate thing to do on purpose; this is for a project that never does.
 Asked for by tosijs-product, whose inert-bundle blocker reached a release candidate under a
-green build.
+green build. `SiteMisconfiguredError` is exported from `tosijs-ui/site`, so a caller can tell a
+refused misconfiguration from a crash.
+
+Whether a corpus "has executable fences" is now decided by the same rule the page uses, under
+the site's `liveExamples` policy. The build's warning used a narrower pattern of its own: it
+counted a bare `js` fence on an opt-in site, and missed `js:iframe`, `html`, `css`, `~~~`
+fences and registered dialects. `llms.txt`'s note about live examples follows the same rule.
 
 ### `<meta charset>` is back in the first 1024 bytes of every page
 

@@ -11,6 +11,9 @@ export type {
   LibraryBuildContext,
 } from './site-config.js'
 export { buildSite } from './orchestrator.js'
+// Thrown by `buildSite` under `strict: true` — exported so a caller can tell a refused
+// misconfiguration from a crash (`catch (e) { if (e instanceof SiteMisconfiguredError) … }`).
+export { SiteMisconfiguredError } from './build-warnings.js'
 export { devServer } from './dev-server.js'
 export {
   auditDependencies,

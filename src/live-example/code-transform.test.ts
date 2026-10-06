@@ -2,6 +2,7 @@ import { test, expect, describe } from 'bun:test'
 import {
   rewriteImports,
   assertContextProvided,
+  rewriteContextImports,
   AsyncFunction,
   loadTransform,
   TJS_VERSION,
@@ -320,6 +321,44 @@ describe('assertContextProvided', () => {
         'tosijs-ui': undefined,
       })
     ).not.toThrow()
+  })
+
+  test('a commented-out or quoted import is not an import (1.16.7 review)', () => {
+    // An example carrying either ran fine before this check existed, so it must still.
+    const context = { 'tosijs-ui': undefined }
+    for (const code of [
+      `// import { tosiTabs } from 'tosijs-ui'\nconsole.log(1)`,
+      `const s = "see: import x from 'tosijs-ui'"`,
+      `/*\n * import { a } from 'tosijs-ui'\n */`,
+    ]) {
+      expect(() => assertContextProvided(code, context)).not.toThrow()
+    }
+  })
+
+  test('a multi-line import and one after a semicolon both count', () => {
+    const context = { 'tosijs-ui': undefined }
+    expect(() =>
+      assertContextProvided(`import {\n  a,\n  b,\n} from 'tosijs-ui'`, context)
+    ).toThrow(/tosijs-ui/)
+    expect(() =>
+      assertContextProvided(
+        `const x = 1; import { a } from 'tosijs-ui'`,
+        context
+      )
+    ).toThrow(/tosijs-ui/)
+  })
+
+  test('rewriteContextImports checks, then rewrites', () => {
+    expect(() =>
+      rewriteContextImports(`import { a } from 'tosijs-ui'`, {
+        'tosijs-ui': undefined,
+      })
+    ).toThrow(/tosijs-ui/)
+    expect(
+      rewriteContextImports(`import { a } from 'tosijs-ui'`, {
+        'tosijs-ui': { a: 1 },
+      })
+    ).toBe('const { a } = tosijsui')
   })
 
   test("'tosijs' missing does not blame an import from 'tosijs-ui'", () => {

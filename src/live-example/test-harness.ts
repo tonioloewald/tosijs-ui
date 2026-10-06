@@ -1,6 +1,6 @@
 import { ExampleContext, TransformFn } from './types.js'
 import {
-  rewriteImports,
+  rewriteContextImports,
   AsyncFunction,
   contextParamNames,
 } from './code-transform.js'
@@ -371,7 +371,7 @@ export async function runTests(
   }
 
   try {
-    const code = rewriteImports(testCode, Object.keys(context))
+    const code = rewriteContextImports(testCode, context)
     const transformedCode = (
       await transform(code, { transforms: ['typescript'] })
     ).code

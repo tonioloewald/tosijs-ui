@@ -5,6 +5,9 @@ browser code. See ./README is at ../doc-site-system.md and the repo docs.
 */
 export { defineSiteConfig } from './site-config.js';
 export { buildSite } from './orchestrator.js';
+// Thrown by `buildSite` under `strict: true` — exported so a caller can tell a refused
+// misconfiguration from a crash (`catch (e) { if (e instanceof SiteMisconfiguredError) … }`).
+export { SiteMisconfiguredError } from './build-warnings.js';
 export { devServer } from './dev-server.js';
 export { auditDependencies, reportAudit, resolveAuditMode, } from './audit-guard.js';
 export { openDevBrowser, buildOpenPlan } from './open-browser.js';

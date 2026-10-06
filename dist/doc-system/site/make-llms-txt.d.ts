@@ -1,3 +1,4 @@
+import type { ExamplePolicy } from '../example-policy.js';
 /** A doc as it appears in the extracted corpus (docs.json). */
 interface CorpusDoc {
     title?: string;
@@ -45,6 +46,8 @@ export interface LlmsTxtMeta {
      * reader at a file that is not there costs more than not mentioning it.
      */
     markdownPages?: boolean;
+    /** Mirrors `SiteConfig.liveExamples`: which fences are live decides the examples note. */
+    liveExamples?: ExamplePolicy;
 }
 /**
  * Build entries from the extracted corpus — every doc that was actually

@@ -1287,8 +1287,8 @@ can say so:
 defineSiteConfig({ strict: true /* … */ })
 ```
 
-With `strict: true` each of these fails `buildSite` (it throws `SiteMisconfiguredError`, and
-the previous build output is restored):
+With `strict: true` each of these fails `buildSite` (it throws `SiteMisconfiguredError`,
+exported from `tosijs-ui/site`, and the previous build output is restored):
 
 - **`bundleEntry` does not register `<tosi-doc-system>`.** Every page would stay as inert
   pre-rendered markup. Deliberate only for a headless embedding.
