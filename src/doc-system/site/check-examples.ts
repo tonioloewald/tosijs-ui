@@ -22,7 +22,7 @@ executed, so they're skipped.
 Build-time only (bun). Never import from browser code.
 */
 
-import { collectCodeTokens } from './code-fences.js'
+import { collectCodeTokens } from '../code-fences.js'
 import {
   rewriteImports,
   AsyncFunction,

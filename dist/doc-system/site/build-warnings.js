@@ -8,7 +8,7 @@ each of these is a legitimate thing to do on purpose. `strict: true` in the site
 project that never does them on purpose says so, and then the build fails.
 */
 import { isLiveFence } from '../example-policy.js';
-import { collectCodeTokens } from './code-fences.js';
+import { collectCodeTokens } from '../code-fences.js';
 /** Thrown by `misconfigured` under `strict`, so a caller can tell it from a crash. */
 export class SiteMisconfiguredError extends Error {
     name = 'SiteMisconfiguredError';

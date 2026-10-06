@@ -183,6 +183,8 @@ import {
 import { TestResults } from './live-example/test-harness.js'
 import { highlightBlocks } from './doc-system/highlight.js'
 import { examplePolicy } from './live-example/insert-examples.js'
+import { collectCodeTokens } from './doc-system/code-fences.js'
+import { isLiveFence, type ExamplePolicy } from './doc-system/example-policy.js'
 import { tosiSidenav, TosiSidenav } from './side-nav.js'
 import { icons } from './icons.js'
 import { tosiLocalized } from './localize.js'
@@ -207,9 +209,45 @@ standalone run reporting "62 passed" against a build the full suite failed on.
 A fence is only a fence at the start of a line, which is the rule the doc extractor already
 applies to `/*#`. `[ \t]*` allows the indented fences that appear inside list items.
 */
-const TEST_FENCE = /^[ \t]*```test[ \t]*$/m
-export const hasTestBlock = (text: string | undefined): boolean =>
-  typeof text === 'string' && TEST_FENCE.test(text)
+/*
+…and a line-anchored regex was not the rule either (#2874). A ` ```test ` line SHOWN inside a
+longer or `:static` block matched it, so a page that documents the test tier was counted as a
+page with tests, ran in a background iframe, reported nothing, and was counted as tested. The
+lane said "19 of 19 pages" over results for 18. Code blocks now come from marked, the parser
+the page is rendered with, and liveness from `isLiveFence`, under the site's policy.
+*/
+export const hasTestBlock = (
+  text: string | undefined,
+  policy: ExamplePolicy = 'auto'
+): boolean =>
+  typeof text === 'string' &&
+  // Cheap reject first: lexing every doc in a large corpus is not free.
+  text.includes('test') &&
+  collectCodeTokens(text).some(
+    (t) => t.lang === 'test' && isLiveFence('test', t.mode, policy)
+  )
+
+/**
+ * The failure recorded for a page the runner counted but got NO results from.
+ *
+ * "We didn't look" and "we looked and it's fine" must not produce the same output. A page
+ * with test blocks that finishes, or times out, without reporting a single test is a page
+ * whose tests did not run — under load this was most of the corpus once (7 of 19 pages
+ * recorded, lane green). It is now a failure with a name, so the count of results always
+ * equals the count of pages and the lane cannot pass over a gap.
+ */
+export const noResultsFailure = (reason: string): PageTestResults => ({
+  passed: false,
+  tests: [
+    {
+      name: 'page reported test results',
+      passed: false,
+      error: reason,
+    },
+  ],
+  totalPassed: 0,
+  totalFailed: 1,
+})
 
 // Types for global test results
 export interface PageTestResults {
@@ -700,6 +738,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   let backgroundTestsStarted = false
   let pagesWithTests = 0
   let pagesTested = 0
+  // Per-page budget for the background runner; see the wait loop for why it exceeds 30s.
+  const PAGE_DEADLINE_MS = 45_000
 
   // Set up global promise for scriptable browser integration. A memory-routed
   // (embedded) browser must not clobber the host page's global.
@@ -2248,7 +2288,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     exits 0. So a runtime error in an example on a page with no ` ```test ` block is caught by
     nothing. Tracked as its own issue rather than papered over by making this predicate loose.
     */
-    const docsWithTests = docs.filter((doc) => hasTestBlock(doc.text))
+    const docsWithTests = docs.filter((doc) =>
+      hasTestBlock(doc.text, examplePolicy())
+    )
     pagesWithTests = docsWithTests.length
 
     if (pagesWithTests > 0) {
@@ -2335,9 +2377,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           ? `${window.location.origin}${hrefFor(doc.filename)}?_testMode=1`
           : `${window.location.origin}${window.location.pathname}?${doc.filename}&_testMode=1`
 
-      // Wait for the iframe to signal it's done (max 30s per page)
+      // Wait for the iframe to signal it's done. LONGER than the frame's own 30s stall
+      // timeout, so a frame that gives up on a hung example gets to say so: at the same 30s
+      // the two raced, and the parent could move on a moment before the stall report landed.
+      let timedOut = false
       await new Promise<void>((resolve) => {
-        const deadline = Date.now() + 30_000
+        const deadline = Date.now() + PAGE_DEADLINE_MS
         const onDone = (event: MessageEvent) => {
           if (
             event.data?.type === 'tosi-tests-done' &&
@@ -2350,10 +2395,21 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         window.addEventListener('message', onDone)
         setTimeout(() => {
           window.removeEventListener('message', onDone)
+          timedOut = true
           resolve()
         }, deadline - Date.now())
       })
 
+      if (!pageTestResults[doc.filename]) {
+        pageTestResults[doc.filename] = noResultsFailure(
+          timedOut
+            ? `The page did not finish within ${
+                PAGE_DEADLINE_MS / 1000
+              }s and reported no tests, so its test blocks did not run.`
+            : 'The page finished but reported no tests, though it has test blocks.'
+        )
+        updateDocTestStatus(doc.filename)
+      }
       markPageTested(doc.filename)
     }
 
@@ -2361,9 +2417,31 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     window.removeEventListener('message', messageHandler)
     testFrame.remove()
 
-    // Mark current page as tested if it has tests
+    /*
+    The current page runs its tests in place, with no "done" signal of its own. It used to be
+    marked tested after a flat second, whether or not anything had been reported — so the page
+    you were on could be the one missing from the results. Wait for its results instead, and
+    if none ever arrive, say so.
+    */
     if (docsWithTests.some((d) => d.filename === currentFilename)) {
-      setTimeout(() => markPageTested(currentFilename), 1000)
+      const deadline = Date.now() + PAGE_DEADLINE_MS
+      const settle = () => {
+        if (!pageTestResults[currentFilename]) {
+          if (Date.now() < deadline) {
+            setTimeout(settle, 250)
+            return
+          }
+          pageTestResults[currentFilename] = noResultsFailure(
+            `The page reported no tests within ${
+              PAGE_DEADLINE_MS / 1000
+            }s, though it has test blocks.`
+          )
+          updateDocTestStatus(currentFilename)
+        }
+        markPageTested(currentFilename)
+      }
+      // A beat for the last example on the page to report after the first has.
+      setTimeout(settle, 1000)
     }
   }
 
@@ -2373,7 +2451,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (isLocalhost) {
       setTimeout(runBackgroundTests, 1000)
     } else {
-      const currentHasTests = currentDoc.text.includes('```test')
+      const currentHasTests = hasTestBlock(currentDoc.text, examplePolicy())
       if (currentHasTests) {
         pagesWithTests = 1
         setTestWidgetRunning()

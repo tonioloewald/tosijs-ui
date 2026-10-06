@@ -8,6 +8,7 @@ headless browser through the inline doc tests and exits with their pass/fail.
 Build-time only (Bun APIs). Never import this from browser code.
 */
 
+import { testReportVerdict } from './test-report.js'
 import * as path from 'path'
 import { editableSourcePaths, mayEditSource } from './editable-sources.js'
 import { statSync, existsSync, readFileSync } from 'fs'
@@ -1319,8 +1320,12 @@ export async function devServer(
           }
         }
         console.error('')
-      } else if (results.passed > 0) {
-        console.log(`\n✅ Browser tests: ${results.passed} passed\n`)
+      } else if (results.passed > 0 && testReportVerdict(results).ok) {
+        console.log(
+          `\n✅ Browser tests: ${results.passed} passed across ${
+            Object.keys(results.pages ?? {}).length
+          } pages\n`
+        )
       }
 
       if (testReportResolve && (results.passed > 0 || results.failed > 0)) {
@@ -2807,7 +2812,12 @@ export async function devServer(
 
     try {
       const results = await testResults
-      const exitCode = results.failed > 0 ? 1 : 0
+      // The verdict covers the pages that did NOT report, not just the tests that did (#2874).
+      const verdict = testReportVerdict(results)
+      if (!verdict.ok && !(results.failed > 0)) {
+        console.error(`\n❌ Browser tests: ${verdict.reasons.join('; ')}\n`)
+      }
+      const exitCode = verdict.ok ? 0 : 1
       await stopHaltija()
       shutdown(exitCode)
     } catch (e: any) {

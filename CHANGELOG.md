@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+### The doc-test lane can no longer pass over pages that reported nothing (#2874)
+
+The background test runner counted a page as tested when it finished or timed out, whether or
+not any results arrived, and the lane passed on "0 failed". A run once passed with results for
+7 of 19 pages.
+
+- A page with test blocks that reports no tests, or does not finish within 45 seconds, is now
+  recorded as a failed test naming the page and the reason.
+- Which pages have tests is decided by parsing the markdown the way the page is rendered. A
+  ` ```test ` line shown inside a longer or `:static` block no longer makes a page count as
+  one with tests.
+- `bun run test-browser` now exits non-zero unless every page with tests has recorded results,
+  and prints how many pages its count covers.
+- The page you are on waits for its own results. It used to be marked tested after one second.
+
 ## 1.16.7
 
 A patch for readers that are not browsers, and for builds that were too polite. Every doc page

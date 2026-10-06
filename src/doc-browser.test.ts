@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'bun:test'
-import { hasTestBlock } from './doc-browser.js'
+import { hasTestBlock, noResultsFailure } from './doc-browser.js'
 
 /*
 The background runner decides which pages to load and EXECUTE from this predicate.
@@ -48,7 +48,41 @@ describe('hasTestBlock', () => {
     expect(hasTestBlock('```ts\nconst x = 1\n```\n')).toBe(false)
   })
 
+  test('REGRESSION #2874: a test fence SHOWN inside a longer block is not a test', () => {
+    // How a page documents the tier: a four-backtick block containing a three-backtick one.
+    // The line-anchored regex matched the inner line, the page was counted, reported
+    // nothing, and the lane said "19 of 19" over results for 18.
+    expect(
+      hasTestBlock('````md\n' + FENCE + "\ntest('x', () => {})\n```\n````\n")
+    ).toBe(false)
+  })
+
+  test('a :static test fence is displayed, never run', () => {
+    expect(hasTestBlock(FENCE + ":static\ntest('x', () => {})\n```\n")).toBe(
+      false
+    )
+  })
+
+  test('the site policy applies: opt-in needs the fence to ask', () => {
+    const bare = FENCE + "\ntest('x', () => {})\n```\n"
+    expect(hasTestBlock(bare, 'opt-in')).toBe(false)
+    expect(hasTestBlock(bare, 'none')).toBe(false)
+    expect(
+      hasTestBlock(FENCE + ":inline\ntest('x', () => {})\n```\n", 'opt-in')
+    ).toBe(true)
+  })
+
   test('undefined text is not a page with tests', () => {
     expect(hasTestBlock(undefined)).toBe(false)
+  })
+})
+
+describe('noResultsFailure', () => {
+  test('a page with no results is one failed test, carrying the reason', () => {
+    const r = noResultsFailure('did not finish')
+    expect(r.passed).toBe(false)
+    expect(r.totalFailed).toBe(1)
+    expect(r.totalPassed).toBe(0)
+    expect(r.tests[0].error).toBe('did not finish')
   })
 })

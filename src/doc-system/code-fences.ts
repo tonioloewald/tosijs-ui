@@ -1,13 +1,14 @@
 /*
-The build's ONE way to enumerate the code blocks in a doc: marked's own lexer.
+THE way to enumerate the code blocks in a doc, build and client alike: marked's own lexer.
 
 `check-examples` had this function; `build-warnings` then grew a hand-written line scanner for
 the same job, and the 1.16.7 re-review found the scanner disagreeing with marked on CRLF files,
 blockquoted fences and fences inside HTML blocks. A scanner can only ever approximate the
-parser the pages are rendered with, so nothing here scans: both callers ask marked.
+parser the pages are rendered with, so nothing here scans: every caller asks marked. The
+doc-browser's test runner asks here too (`hasTestBlock`), for the same reason.
 */
 import { marked } from 'marked'
-import { parseFenceInfo } from '../example-policy.js'
+import { parseFenceInfo } from './example-policy.js'
 
 /*
 Fence info is parsed by `parseFenceInfo`, the one copy of that grammar. This file had its own

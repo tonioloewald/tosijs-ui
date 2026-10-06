@@ -98,6 +98,14 @@ async function runTierAt(
     `only ${results.pagesTested} of ${results.pagesWithTests} pages with tests reported — ` +
       `the runner dropped pages rather than failing them`
   ).toBe(results.pagesWithTests)
+  // …and reported RESULTS, not merely "done" (#2874): `pagesTested` counted a page that timed
+  // out or reported nothing, so 19 "tested" once sat over results for 7.
+  expect(
+    Object.keys(results.pages).length,
+    `results were recorded for ${Object.keys(results.pages).length} of ${
+      results.pagesWithTests
+    } pages with tests`
+  ).toBe(results.pagesWithTests)
   const ran = results.passed + results.failed
   expect(
     ran,

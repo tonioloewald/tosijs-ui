@@ -21,7 +21,7 @@ executed, so they're skipped.
 
 Build-time only (bun). Never import from browser code.
 */
-import { collectCodeTokens } from './code-fences.js';
+import { collectCodeTokens } from '../code-fences.js';
 import { rewriteImports, AsyncFunction, loadTransform, transformAvailable, UnsupportedImportError, } from '../../live-example/code-transform.js';
 import { isLiveFence } from '../example-policy.js';
 // The default live-example context (matches the IIFE globals the pages provide).
