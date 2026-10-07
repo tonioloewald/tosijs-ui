@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 1.16.8
+
+A patch for honest results. The doc-test lane can no longer pass over pages that never
+reported, three more of tjs-lang's findings are fixed, and an example that only logs now
+shows what it logged. Nothing to change on upgrade. One thing may newly go red: a doc-test
+run that was silently losing pages will now fail and name them. `dist/iife.js` grows by
+1.0 kB gzip (484.0 → 485.0 kB).
 
 ### Three more from tjs-lang's sweep of its own site (#210)
 
