@@ -367,3 +367,23 @@ gap, recorded rather than hidden.
   under full load, 12/12 in isolation); consumer 54 checks; test-browser 76 over 18 of 19
   pages, the fail-open lane fixed straight after as #2874.
 - **Approval lapsed the 60-minute wait a third time;** `verify_only=true` green.
+
+## 1.16.8 (2026-10-07) — a doc-test lane that cannot pass on missing results; the fix was itself BLOCKed
+
+- **Scope:** #2874 (a page that reports nothing, or times out, is a recorded failure;
+  `testReportVerdict` is the one pass/fail rule) and #210 items 1 to 3 (tjs inline tests run,
+  `ts` examples transpile without a dialect, logged output shows when the preview is empty).
+  Item 5 waits on tjs-lang exporting `stripExports` (board #3109).
+- **The pre-tag review BLOCKed the fail-open fix for failing open two more ways:** a page that
+  timed out after partial results still passed, and the page a run starts on kept only its last
+  example's results. Three code paths added up a page three ways; fixed as a class with one
+  tally and one way to close a page.
+- **The scoped re-review found a regression in the remediation** (the off-localhost test toggle
+  read a stale current page). Fixed; that path is covered by no lane and still wants a check
+  over the tunnel.
+- **A new test raced hydration** (`__docTestResults` read before it existed); fixed with a wait
+  rather than a retry.
+- **Lanes:** unit 1718 tests 12.0s; Playwright 419 in 2.9m; consumer 54 checks; test-browser 76
+  over 18 of 18 pages, the first run where the page count is asserted rather than printed.
+- **Approval lapsed the 60-minute wait a fourth time;** `verify_only=true` green. Four in a row
+  says the wait is the wrong length for how approval actually happens.
