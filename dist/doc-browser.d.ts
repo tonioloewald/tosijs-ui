@@ -1,16 +1,6 @@
 import { TestResults } from './live-example/test-harness.js';
 import { type ExamplePolicy } from './doc-system/example-policy.js';
 export declare const hasTestBlock: (text: string | undefined, policy?: ExamplePolicy) => boolean;
-/**
- * The failure recorded for a page the runner counted but got NO results from.
- *
- * "We didn't look" and "we looked and it's fine" must not produce the same output. A page
- * with test blocks that finishes, or times out, without reporting a single test is a page
- * whose tests did not run — under load this was most of the corpus once (7 of 19 pages
- * recorded, lane green). It is now a failure with a name, so the count of results always
- * equals the count of pages and the lane cannot pass over a gap.
- */
-export declare const noResultsFailure: (reason: string) => PageTestResults;
 export interface PageTestResults {
     passed: boolean;
     tests: TestResults['tests'];

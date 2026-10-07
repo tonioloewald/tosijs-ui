@@ -30,10 +30,17 @@ export function testReportVerdict(report: TestReportLike): TestReportVerdict {
 
   if (failed > 0) reasons.push(`${failed} test(s) failed`)
   if (passed + failed === 0) reasons.push('no tests ran')
-  if (tested !== expected) {
+  // A report that ran tests but cannot say over how many pages is not evidence of coverage.
+  // (Missing fields read as 0, so without this `{ passed: 5 }` alone would be a pass.)
+  if (passed + failed > 0 && expected === 0) {
+    reasons.push('the report does not say how many pages have tests')
+  }
+  if (tested < expected) {
     reasons.push(`only ${tested} of ${expected} pages with tests were run`)
   }
-  if (recorded !== expected) {
+  // FEWER, not "different": a page with no test blocks whose example threw also records an
+  // entry (that failure is counted above), and must not read as "20 of 19".
+  if (recorded < expected) {
     reasons.push(
       `results were recorded for ${recorded} of ${expected} pages with tests`
     )

@@ -4,7 +4,8 @@
 
 A patch for honest results. The doc-test lane can no longer pass over pages that never
 reported, three more of tjs-lang's findings are fixed, and an example that only logs now
-shows what it logged. Nothing to change on upgrade. One thing may newly go red: a doc-test
+shows what it logged. Two things to know on upgrade: `ts` examples lose tjs's runtime
+parameter guards (below), and one thing may newly go red: a doc-test
 run that was silently losing pages will now fail and name them. `dist/iife.js` grows by
 1.0 kB gzip (484.0 → 485.0 kB).
 
@@ -12,16 +13,22 @@ run that was silently losing pages will now fail and name them. `dist/iife.js` g
 
 - **Inline tjs tests ran with plain-JavaScript semantics**, so passing tests were shown
   failing: `"hello world".capitalize is not a function` for a local `extend`, `Expected false
-  but got true` for a boxed boolean. An example's inline tests now use the runner `tjs()`
-  itself returns, which is built from the test bodies after tjs-lang rewrote them. This takes
-  effect with the tjs-lang release after 0.14.0-rc.2; on older versions behaviour is unchanged.
+  but got true` for a boxed boolean. This release prepares the fix and tjs-lang delivers it:
+  an example's inline tests now use the runner `tjs()` itself returns, and from the tjs-lang
+  release after 0.14.0-rc.2 that runner is built from the rewritten test bodies. On 0.13.13,
+  which this release still pins, nothing changes.
 - **The `ts` dialect overrode converted TypeScript's semantics.** It passed `dialect: 'tjs'`
   to `tjs()`, which outranks the annotation `fromTS` writes, so a TS example's
-  `new Calculator(…)` was refused as native TJS. It now passes no dialect.
+  `new Calculator(…)` was refused as native TJS. It now passes no dialect. **This changes
+  what every `ts` example does at run time:** converted TypeScript now has JavaScript's
+  semantics, so the runtime parameter guards are gone too. `add('a', 2)` with
+  `(a: number, b: number)` returned a type error before and returns `'a2'` now, as it would
+  in TypeScript. `tjs` examples are unaffected.
 - **An example whose output is only `console.log` was an empty box.** When a run finishes with
   nothing rendered into its preview, the lines it logged (and its inline-test summary, when
   one was run) are shown where the preview would be. It steps aside when the example renders
-  anything, never writes into `preview`, and follows the existing console switches.
+  anything, never writes into `preview`, and follows the existing console switches. Inline
+  examples only: an `:iframe` example's output stays in its Console tab.
 
 Not in this release: examples written as modules (`export const x = …`) still fail. Stripping
 `export` safely needs a JavaScript parser, which tosijs-ui does not ship; tjs-lang already
@@ -34,13 +41,22 @@ not any results arrived, and the lane passed on "0 failed". A run once passed wi
 7 of 19 pages.
 
 - A page with test blocks that reports no tests, or does not finish within 45 seconds, is now
-  recorded as a failed test naming the page and the reason.
+  recorded as a failed test naming the page and the reason. A page that times out fails even
+  if some of its examples had already reported.
+- The parent waited 30 seconds per page, the same as the frame's own stall timeout, so a
+  stall report could arrive just after the parent moved on. The page budget is now 45s.
 - Which pages have tests is decided by parsing the markdown the way the page is rendered. A
   ` ```test ` line shown inside a longer or `:static` block no longer makes a page count as
   one with tests.
 - `bun run test-browser` now exits non-zero unless every page with tests has recorded results,
   and prints how many pages its count covers.
-- The page you are on waits for its own results. It used to be marked tested after one second.
+- The page a run starts on is tested in place, by its own code path. That path replaced the
+  page's results each time one example finished, so the last example was the whole page and
+  a failing earlier one could vanish; and it marked the page tested on a timer. It now adds
+  its examples up and waits for all of them, by the same rule the iframes use. A deployed
+  (non-localhost) page with tests enabled follows the same rule.
+- `testReportVerdict` is exported from `tosijs-ui/site` for adopters' own gates. A gate that
+  checks only `failed === 0` should also require results for every page with tests.
 
 ## 1.16.7
 

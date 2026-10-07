@@ -151,7 +151,8 @@ console.log('1 + 2 + 3 =', total)
 That is the same output as the Console tab, placed where a reader will see it without
 opening the code panel. It steps aside as soon as the example renders anything, and it is
 drawn in an element of its own, so `preview` stays empty for your code and tests. Turning the
-console off (below) turns this off too.
+console off (below) turns this off too. It applies to inline examples; an `:iframe`
+example's output stays in its Console tab.
 
 - It shows `log`, `info`, `warn`, `error`, `debug`, `dir` and `table`, plus the error that
   stopped the example, if one did. Strings print as written, data as JSON, errors as
@@ -1794,7 +1795,12 @@ export class LiveExample extends withAttributes({
   needs in the module code it runs beside. The runner `extractTests` builds is from the RAW
   bodies: run that and a passing test is shown FAILING — `"hello world".capitalize is not a
   function` for a local `extend`, `Expected false but got true` for a boxed boolean (#210
-  item 1). An older tjs-lang returns no runner from `tjs()`, and then the old path stands.
+  item 1).
+
+  This PREPARES for the fix; tjs-lang delivers it. Through 0.13.13 `tjs()` already returns a
+  runner, but one identical to `extractTests`'s, so nothing changes there. From the release
+  after 0.14.0-rc.2 it is the rewritten one (measured on rc.3: 2/2 where the old path gave
+  0/2). The `extractTests` path remains for a tjs-lang that returns no runner at all.
   */
   private async inlineTjsTestBody(
     transform: TransformFn,

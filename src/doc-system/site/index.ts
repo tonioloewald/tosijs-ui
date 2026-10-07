@@ -14,6 +14,10 @@ export { buildSite } from './orchestrator.js'
 // Thrown by `buildSite` under `strict: true` — exported so a caller can tell a refused
 // misconfiguration from a crash (`catch (e) { if (e instanceof SiteMisconfiguredError) … }`).
 export { SiteMisconfiguredError } from './build-warnings.js'
+// THE pass/fail rule for a browser-test report (`window.__docTestResults`), for adopters'
+// own gates: it fails on pages that never reported, not only on failed tests.
+export { testReportVerdict } from './test-report.js'
+export type { TestReportLike, TestReportVerdict } from './test-report.js'
 export { devServer } from './dev-server.js'
 export {
   auditDependencies,

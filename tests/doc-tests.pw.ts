@@ -46,8 +46,9 @@ while the media queries told the truth. Touch belongs to a Playwright context (`
 */
 async function runTierAt(
   page: any,
-  viewport: { width: number; height: number } | null
-) {
+  viewport: { width: number; height: number } | null,
+  start = '/'
+): Promise<DocTestResults> {
   if (viewport) {
     // Read by the doc-browser before it creates the test iframe. Must be set before load.
     await page.addInitScript((vp: unknown) => {
@@ -55,17 +56,19 @@ async function runTierAt(
     }, viewport)
   }
   // Chromium + Firefox only. On WebKit the runner's per-page iframes never post their
-  // `tosi-tests-done` signal, so every page-with-tests waits out the runner's 30s
-  // per-page timeout — the corpus still finishes, but at ~30s × pages it blows past any
+  // `tosi-tests-done` signal, so every page-with-tests waits out the runner's 45s
+  // per-page timeout — and each such page is now a recorded failure — so at ~45s × pages it blows past any
   // sane CI budget. This is a pre-existing WebKit-specific issue in the iframe runner
   // (the old haltija lane only ever drove one Chromium-based engine, so WebKit doc-tests
   // never ran at all); it does NOT indicate a broken example — chromium+firefox run all
   // of them green. Tracked in TODO.md. Two engines, including the inline-WASM guard, is
   // a real gate; letting WebKit's runner quirk block it would be the tail wagging the dog.
-  await page.goto('/')
+  await page.goto(start)
   // The runner is localhost-gated and starts ~1s after load; `__docTestResults` is a
   // Promise that resolves once pagesTested >= pagesWithTests. Playwright awaits the
   // returned promise, so this blocks until the whole corpus has run (or the timeout).
+  // The promise is created when the doc browser hydrates, which can be after `load`.
+  await page.waitForFunction(() => !!window.__docTestResults)
   const results = (await page.evaluate(
     () => window.__docTestResults as unknown as Promise<DocTestResults>
   )) as DocTestResults
@@ -131,6 +134,7 @@ async function runTierAt(
   }
 
   expect(results.failed).toBe(0)
+  return results
 }
 
 test('every inline doc test passes (the whole ```test tier)', async ({
@@ -160,4 +164,32 @@ test('the whole tier passes at phone width too', async ({
   )
   test.setTimeout(180_000)
   await runTierAt(page, { width: 390, height: 844 })
+})
+
+/*
+The page the run STARTS on is tested in place, not in an iframe, by a different code path.
+
+That path replaced the page's results on every example's `testcomplete`, so the last example to
+finish was the whole page, and it was marked done on a timer. Nothing here could see it: every
+run starts at `/`, whose page has no tests. So start on a page with several test examples and
+require the same tests it reports when run in an iframe (1.16.8 review, M2).
+*/
+test('the page a run starts on reports ALL of its examples, as it does in an iframe', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit: iframe test-runner does not signal per-page completion — see TODO.md'
+  )
+  test.setTimeout(240_000)
+  const PAGE = 'data-table.ts'
+  const viaIframe = await runTierAt(page, null)
+  const inPlace = await runTierAt(await context.newPage(), null, '/data-table/')
+  const names = (r: DocTestResults) =>
+    r.pages[PAGE].tests.map((t) => t.name).sort()
+  // More than one example's worth, or this proves nothing.
+  expect(names(viaIframe).length).toBeGreaterThan(3)
+  expect(names(inPlace)).toEqual(names(viaIframe))
 })

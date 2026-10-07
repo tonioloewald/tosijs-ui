@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'bun:test'
-import { hasTestBlock, noResultsFailure } from './doc-browser.js'
+import { hasTestBlock } from './doc-browser.js'
 
 /*
 The background runner decides which pages to load and EXECUTE from this predicate.
@@ -74,15 +74,5 @@ describe('hasTestBlock', () => {
 
   test('undefined text is not a page with tests', () => {
     expect(hasTestBlock(undefined)).toBe(false)
-  })
-})
-
-describe('noResultsFailure', () => {
-  test('a page with no results is one failed test, carrying the reason', () => {
-    const r = noResultsFailure('did not finish')
-    expect(r.passed).toBe(false)
-    expect(r.totalFailed).toBe(1)
-    expect(r.totalPassed).toBe(0)
-    expect(r.tests[0].error).toBe('did not finish')
   })
 })

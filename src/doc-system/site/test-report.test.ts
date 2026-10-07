@@ -49,3 +49,21 @@ test('a failed test, an unrun page and an empty run each fail, with their own re
   ).toBe(false)
   expect(testReportVerdict({}).reasons).toContain('no tests ran')
 })
+
+test('a report that ran tests but names no page count is not a pass', () => {
+  expect(testReportVerdict({ passed: 5 }).ok).toBe(false)
+})
+
+test('an extra recorded page is not itself a failure', () => {
+  // A page without test blocks whose example threw records an entry too; its failure is
+  // what fails the run, not the count.
+  expect(
+    testReportVerdict({
+      passed: 5,
+      failed: 0,
+      pages: pages(4),
+      pagesWithTests: 3,
+      pagesTested: 3,
+    }).ok
+  ).toBe(true)
+})

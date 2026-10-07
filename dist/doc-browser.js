@@ -156,7 +156,7 @@ import { buildSlugMap, pathForSlug, filenameForPath, } from './doc-system/routin
 import { buildNavTree } from './doc-system/nav-tree.js';
 import { renderDocMarkdown } from './doc-system/render.js';
 import { pageTitle } from './doc-system/doc-title.js';
-import { unsettledExamples } from './doc-system/test-completion.js';
+import { unsettledExamples, tallyExamples, closePage, } from './doc-system/test-completion.js';
 import { LiveExample, testManager, pageTestCount, enableTests, disableTests, } from './live-example.js';
 import { highlightBlocks } from './doc-system/highlight.js';
 import { examplePolicy } from './live-example/insert-examples.js';
@@ -196,27 +196,6 @@ export const hasTestBlock = (text, policy = 'auto') => typeof text === 'string' 
     // Cheap reject first: lexing every doc in a large corpus is not free.
     text.includes('test') &&
     collectCodeTokens(text).some((t) => t.lang === 'test' && isLiveFence('test', t.mode, policy));
-/**
- * The failure recorded for a page the runner counted but got NO results from.
- *
- * "We didn't look" and "we looked and it's fine" must not produce the same output. A page
- * with test blocks that finishes, or times out, without reporting a single test is a page
- * whose tests did not run — under load this was most of the corpus once (7 of 19 pages
- * recorded, lane green). It is now a failure with a name, so the count of results always
- * equals the count of pages and the lane cannot pass over a gap.
- */
-export const noResultsFailure = (reason) => ({
-    passed: false,
-    tests: [
-        {
-            name: 'page reported test results',
-            passed: false,
-            error: reason,
-        },
-    ],
-    totalPassed: 0,
-    totalFailed: 1,
-});
 const { div, span, a, header, button, template, input, h2, img, details, summary, ul, li, } = elements;
 /*
 Test colors, and the text color that goes ON each — because contrast is a PAIR.
@@ -530,6 +509,9 @@ export function createDocBrowser(options) {
     let refreshNav = () => { };
     // Test result tracking
     const pageTestResults = {};
+    // The per-example results behind the entry for the page the reader is on.
+    let liveResults = new Map();
+    let liveResultsFile = '';
     let testResultsResolve;
     let backgroundTestsStarted = false;
     let pagesWithTests = 0;
@@ -588,14 +570,80 @@ export function createDocBrowser(options) {
     const handleTestComplete = (event) => {
         const { results } = event.detail;
         const filename = String(app.currentDoc.filename);
-        // Reset page results each time (don't accumulate across reloads)
-        pageTestResults[filename] = {
-            passed: results.failed === 0,
-            tests: [...results.tests],
-            totalPassed: results.passed,
-            totalFailed: results.failed,
-        };
+        /*
+        One entry per EXAMPLE, added up — `testcomplete` fires once for each. This used to
+        replace the page's entry on every event, so the last example to finish was the whole
+        page: a failing first example followed by a passing second one reported green.
+    
+        Keyed by element, so an example that re-runs (an edit, a refresh) replaces its own
+        result and nothing else's. A different page starts a fresh tally: the elements of the
+        page before are gone, and their results with them.
+        */
+        if (liveResultsFile !== filename) {
+            liveResultsFile = filename;
+            liveResults = new Map();
+        }
+        liveResults.set(event.detail.element, results);
+        pageTestResults[filename] = tallyExamples(liveResults.values());
         updateDocTestStatus(filename);
+    };
+    /*
+    When has the page now rendered in THIS document finished its tests? Resolves with the
+    examples that never settled (empty when all did).
+  
+    One definition, used by a test iframe to signal its parent, by the page the reader is on,
+    and by a deployed page — the latter two used to be a flat timer, which marked a page tested
+    whether or not anything had reported.
+  
+    The census is only as good as the DOM it reads. Examples are inserted into the page as it
+    renders, so a census taken while insertion is still in progress sees FEWER examples than the
+    page has — and an example that appears afterwards was never waited on, never reported, and
+    never missed. So the count must be observed to STOP GROWING before "done" means anything:
+    two consecutive equal censuses, and a third example arriving later restarts the requirement.
+    */
+    const whenPageSettled = (deadlineMs) => new Promise((resolve) => {
+        const startedAt = Date.now();
+        let previousCount = -1;
+        let stableCensuses = 0;
+        const census = () => {
+            const examples = [...container.querySelectorAll('tosi-example')];
+            if (examples.length === previousCount)
+                stableCensuses++;
+            else
+                stableCensuses = 0;
+            previousCount = examples.length;
+            const stalled = unsettledExamples(examples.map((ex) => ({
+                element: ex,
+                test: ex.test,
+                hasTests: ex.classList.contains('-has-tests'),
+                testRunning: ex.classList.contains('-test-running'),
+            })));
+            const settling = stalled.length > 0 || stableCensuses < 2;
+            if (settling && Date.now() - startedAt < deadlineMs) {
+                setTimeout(census, 100);
+                return;
+            }
+            resolve(stalled.map(({ element }) => element));
+        };
+        // Give the page a moment to insert its examples before the first census.
+        setTimeout(census, 500);
+    });
+    /*
+    The page the reader is on runs its tests in place. Wait for them the way a test iframe is
+    waited for, then close the entry by the same rule (`closePage`): examples that never
+    settled, or no results at all, are failures with a name.
+    */
+    const settleCurrentPage = async (filename) => {
+        const stalled = await whenPageSettled(PAGE_DEADLINE_MS);
+        // If the reader has navigated away, the census was of another page: judge by results only.
+        const stillHere = String(app.currentDoc.filename) === filename;
+        pageTestResults[filename] = closePage(pageTestResults[filename], {
+            timedOut: false,
+            deadlineMs: PAGE_DEADLINE_MS,
+            stalled: stillHere ? stalled.length : 0,
+        });
+        updateDocTestStatus(filename);
+        markPageTested(filename);
     };
     // Track when a page finishes loading all its tests
     const markPageTested = (_filename) => {
@@ -1803,36 +1851,7 @@ export function createDocBrowser(options) {
     if (isTestFrame && testFrameFilename) {
         // Generous: this bounds a hung example, it does not pace a slow one.
         const STALL_TIMEOUT_MS = 30000;
-        const startedAt = Date.now();
-        /*
-        The census is only as good as the DOM it reads. Examples are inserted into the page as
-        it renders, so a census taken while insertion is still in progress sees FEWER examples
-        than the page has — and an example that appears afterwards was never waited on, never
-        reported, and never missed. That is the same silent-loss failure as the bug above, one
-        step earlier, so the count must be observed to STOP GROWING before "done" means
-        anything. Two consecutive equal censuses is enough; a third example arriving later
-        restarts the requirement.
-        */
-        let previousCount = -1;
-        let stableCensuses = 0;
-        const signalDone = () => {
-            const examples = [...container.querySelectorAll('tosi-example')];
-            if (examples.length === previousCount)
-                stableCensuses++;
-            else
-                stableCensuses = 0;
-            previousCount = examples.length;
-            const stalled = unsettledExamples(examples.map((ex) => ({
-                element: ex,
-                test: ex.test,
-                hasTests: ex.classList.contains('-has-tests'),
-                testRunning: ex.classList.contains('-test-running'),
-            })));
-            const settling = stalled.length > 0 || stableCensuses < 2;
-            if (settling && Date.now() - startedAt < STALL_TIMEOUT_MS) {
-                setTimeout(signalDone, 100);
-                return;
-            }
+        void whenPageSettled(STALL_TIMEOUT_MS).then((stalled) => {
             /*
             Past the deadline with examples still unsettled: report them as failures rather than
             signalling a done that omits them. An example that never finishes is a real defect —
@@ -1846,7 +1865,7 @@ export function createDocBrowser(options) {
                     results: {
                         passed: 0,
                         failed: stalled.length,
-                        tests: stalled.map(({ element }) => ({
+                        tests: stalled.map((element) => ({
                             name: `example never finished running (${STALL_TIMEOUT_MS}ms)`,
                             passed: false,
                             error: `The example's code did not complete, so its test block never ran. Its source begins: ${String(element.js ?? '').slice(0, 120)}`,
@@ -1855,9 +1874,7 @@ export function createDocBrowser(options) {
                 }, '*');
             }
             window.parent.postMessage({ type: 'tosi-tests-done', filename: testFrameFilename }, '*');
-        };
-        // Give the page a moment to insert its examples before taking the census.
-        setTimeout(signalDone, 500);
+        });
     }
     // Background test runner for all doc pages
     const runBackgroundTests = async () => {
@@ -1929,6 +1946,9 @@ export function createDocBrowser(options) {
         const messageHandler = (event) => {
             if (event.data?.type !== 'tosi-test-results')
                 return;
+            // Only from OUR test frame: any other window on the page could otherwise post results.
+            if (event.source !== testFrame.contentWindow)
+                return;
             const { filename, results } = event.data;
             if (!pageTestResults[filename]) {
                 pageTestResults[filename] = {
@@ -1963,7 +1983,8 @@ export function createDocBrowser(options) {
             await new Promise((resolve) => {
                 const deadline = Date.now() + PAGE_DEADLINE_MS;
                 const onDone = (event) => {
-                    if (event.data?.type === 'tosi-tests-done' &&
+                    if (event.source === testFrame.contentWindow &&
+                        event.data?.type === 'tosi-tests-done' &&
                         event.data.filename === doc.filename) {
                         window.removeEventListener('message', onDone);
                         resolve();
@@ -1976,38 +1997,20 @@ export function createDocBrowser(options) {
                     resolve();
                 }, deadline - Date.now());
             });
-            if (!pageTestResults[doc.filename]) {
-                pageTestResults[doc.filename] = noResultsFailure(timedOut
-                    ? `The page did not finish within ${PAGE_DEADLINE_MS / 1000}s and reported no tests, so its test blocks did not run.`
-                    : 'The page finished but reported no tests, though it has test blocks.');
-                updateDocTestStatus(doc.filename);
-            }
+            // A page that timed out fails even if some of its examples had reported (closePage).
+            pageTestResults[doc.filename] = closePage(pageTestResults[doc.filename], {
+                timedOut,
+                deadlineMs: PAGE_DEADLINE_MS,
+            });
+            updateDocTestStatus(doc.filename);
             markPageTested(doc.filename);
         }
         // Clean up
         window.removeEventListener('message', messageHandler);
         testFrame.remove();
-        /*
-        The current page runs its tests in place, with no "done" signal of its own. It used to be
-        marked tested after a flat second, whether or not anything had been reported — so the page
-        you were on could be the one missing from the results. Wait for its results instead, and
-        if none ever arrive, say so.
-        */
+        // The page the reader is on ran its tests in place; wait for them and close its entry.
         if (docsWithTests.some((d) => d.filename === currentFilename)) {
-            const deadline = Date.now() + PAGE_DEADLINE_MS;
-            const settle = () => {
-                if (!pageTestResults[currentFilename]) {
-                    if (Date.now() < deadline) {
-                        setTimeout(settle, 250);
-                        return;
-                    }
-                    pageTestResults[currentFilename] = noResultsFailure(`The page reported no tests within ${PAGE_DEADLINE_MS / 1000}s, though it has test blocks.`);
-                    updateDocTestStatus(currentFilename);
-                }
-                markPageTested(currentFilename);
-            };
-            // A beat for the last example on the page to report after the first has.
-            setTimeout(settle, 1000);
+            void settleCurrentPage(currentFilename);
         }
     };
     // Run background tests when enabled (initially or when toggled on)
@@ -2022,7 +2025,8 @@ export function createDocBrowser(options) {
             if (currentHasTests) {
                 pagesWithTests = 1;
                 setTestWidgetRunning();
-                setTimeout(() => markPageTested(currentDoc.filename), 2000);
+                // Not a flat timer: the same settle-and-close rule as on localhost.
+                void settleCurrentPage(String(currentDoc.filename));
             }
             else if (testResultsResolve) {
                 testResultsResolve({

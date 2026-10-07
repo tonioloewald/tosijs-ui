@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=13c39f342002" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=30422fddebe5" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b33dc6a82534" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=f2a6f5c5fd2c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -159,7 +159,8 @@ console.log(&#39;1 + 2 + 3 =&#39;, total)
 <p>That is the same output as the Console tab, placed where a reader will see it without
 opening the code panel. It steps aside as soon as the example renders anything, and it is
 drawn in an element of its own, so <code>preview</code> stays empty for your code and tests. Turning the
-console off (below) turns this off too.</p>
+console off (below) turns this off too. It applies to inline examples; an <code>:iframe</code>
+example&#39;s output stays in its Console tab.</p>
 <ul>
 <li>It shows <code>log</code>, <code>info</code>, <code>warn</code>, <code>error</code>, <code>debug</code>, <code>dir</code> and <code>table</code>, plus the error that
 stopped the example, if one did. Strings print as written, data as JSON, errors as
@@ -696,6 +697,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-w5nxnc6g.js"></script>
+  <script type="module" src="../hydrate-mn5m301m.js"></script>
 </body>
 </html>

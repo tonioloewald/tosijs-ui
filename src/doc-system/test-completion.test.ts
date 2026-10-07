@@ -1,5 +1,10 @@
 import { test, expect } from 'bun:test'
-import { isSettled, unsettledExamples } from './test-completion'
+import {
+  isSettled,
+  unsettledExamples,
+  tallyExamples,
+  closePage,
+} from './test-completion'
 
 const example = (over = {}) => ({
   test: 'test("x", () => {})',
@@ -60,4 +65,57 @@ test('the unsettled examples are returned, so a stall can name them', () => {
   const slow = example({ test: 'test("slow", () => {})' })
   const [stalled] = unsettledExamples([done(), slow])
   expect(stalled).toBe(slow)
+})
+
+// ── adding a page up, and closing it (the 1.16.8 review's two majors) ────────────────────
+
+const failing = {
+  passed: 0,
+  failed: 1,
+  tests: [{ name: 'a', passed: false, error: 'boom' }],
+}
+const passing = { passed: 2, failed: 0, tests: [{ name: 'b', passed: true }] }
+
+test('REGRESSION: a page is the SUM of its examples, not the last one to finish', () => {
+  // Replacing the entry per `testcomplete` let a passing second example erase a failing first.
+  const page = tallyExamples([failing, passing])
+  expect(page.passed).toBe(false)
+  expect(page.totalFailed).toBe(1)
+  expect(page.totalPassed).toBe(2)
+  expect(page.tests.map((t) => t.name)).toEqual(['a', 'b'])
+})
+
+test('REGRESSION: a page that timed out after SOME results still fails', () => {
+  // `timedOut` used to matter only when nothing had reported; "0 failed so far" was a pass.
+  const closed = closePage(tallyExamples([passing]), {
+    timedOut: true,
+    deadlineMs: 45_000,
+  })
+  expect(closed.passed).toBe(false)
+  expect(closed.totalFailed).toBe(1)
+  expect(closed.totalPassed).toBe(2) // what did report is kept
+  expect(closed.tests.at(-1)?.error).toContain('45s')
+})
+
+test('a page with no results fails, timed out or not, and says which', () => {
+  const silent = closePage(undefined, { timedOut: false, deadlineMs: 45_000 })
+  expect(silent.passed).toBe(false)
+  expect(silent.tests[0].error).toContain('reported no tests')
+  const late = closePage(undefined, { timedOut: true, deadlineMs: 45_000 })
+  expect(late.tests[0].error).toContain('did not finish within 45s')
+})
+
+test('examples that never settled fail the page even when others passed', () => {
+  const closed = closePage(tallyExamples([passing]), {
+    timedOut: false,
+    deadlineMs: 45_000,
+    stalled: 2,
+  })
+  expect(closed.passed).toBe(false)
+  expect(closed.tests.at(-1)?.error).toContain('2 example(s)')
+})
+
+test('a page that finished with results is left exactly as it is', () => {
+  const page = tallyExamples([passing])
+  expect(closePage(page, { timedOut: false, deadlineMs: 45_000 })).toBe(page)
 })

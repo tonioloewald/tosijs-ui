@@ -150,7 +150,8 @@ console.log('1 + 2 + 3 =', total)
 That is the same output as the Console tab, placed where a reader will see it without
 opening the code panel. It steps aside as soon as the example renders anything, and it is
 drawn in an element of its own, so `preview` stays empty for your code and tests. Turning the
-console off (below) turns this off too.
+console off (below) turns this off too. It applies to inline examples; an `:iframe`
+example's output stays in its Console tab.
 
 - It shows `log`, `info`, `warn`, `error`, `debug`, `dir` and `table`, plus the error that
   stopped the example, if one did. Strings print as written, data as JSON, errors as

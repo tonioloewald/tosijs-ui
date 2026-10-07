@@ -2,6 +2,8 @@ export { defineSiteConfig } from './site-config.js';
 export type { SiteConfig, SiteHost, LibraryBuildContext, } from './site-config.js';
 export { buildSite } from './orchestrator.js';
 export { SiteMisconfiguredError } from './build-warnings.js';
+export { testReportVerdict } from './test-report.js';
+export type { TestReportLike, TestReportVerdict } from './test-report.js';
 export { devServer } from './dev-server.js';
 export { auditDependencies, reportAudit, resolveAuditMode, } from './audit-guard.js';
 export type { AuditConfig, AuditGate, AuditResult, AuditSeverity, AuditMode, AuditAdvisory, } from './audit-guard.js';

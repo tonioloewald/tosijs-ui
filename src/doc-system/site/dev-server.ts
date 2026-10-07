@@ -1320,7 +1320,14 @@ export async function devServer(
           }
         }
         console.error('')
-      } else if (results.passed > 0 && testReportVerdict(results).ok) {
+      } else if (results.passed > 0 && !testReportVerdict(results).ok) {
+        // Also during a plain `bun start`: an incomplete run must not be silent (#2874).
+        console.error(
+          `\n❌ Browser tests: ${testReportVerdict(results).reasons.join(
+            '; '
+          )}\n`
+        )
+      } else if (results.passed > 0) {
         console.log(
           `\n✅ Browser tests: ${results.passed} passed across ${
             Object.keys(results.pages ?? {}).length
@@ -2814,7 +2821,7 @@ export async function devServer(
       const results = await testResults
       // The verdict covers the pages that did NOT report, not just the tests that did (#2874).
       const verdict = testReportVerdict(results)
-      if (!verdict.ok && !(results.failed > 0)) {
+      if (!verdict.ok) {
         console.error(`\n❌ Browser tests: ${verdict.reasons.join('; ')}\n`)
       }
       const exitCode = verdict.ok ? 0 : 1

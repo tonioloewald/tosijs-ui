@@ -583,8 +583,10 @@ let warnedNoFromTs = false
  *           untouched (no footgun rewriting) — behavior-neutral for plain JS.
  * - `tjs` → `tjs(code, { dialect: 'tjs' })`, the full tjs lowering (structural
  *           `==`, type guards, runtime instrumentation).
- * - `ts`  → `fromTS(code)` → tjs source → `tjs(…, { dialect: 'tjs' })`. The
- *           TypeScript compiler is loaded lazily, only here.
+ * - `ts`  → `fromTS(code)` → tjs source → `tjs(…)` with NO dialect, so the annotation
+ *           `fromTS` writes decides: converted TypeScript keeps JavaScript's semantics
+ *           (no runtime parameter guards, `new` allowed). The TypeScript compiler is
+ *           loaded lazily, only here.
  *
  * The dialect is baked into the returned closure, so callers just pass code.
  *
