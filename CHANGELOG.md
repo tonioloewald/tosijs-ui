@@ -41,8 +41,9 @@ not any results arrived, and the lane passed on "0 failed". A run once passed wi
 7 of 19 pages.
 
 - A page with test blocks that reports no tests, or does not finish within 45 seconds, is now
-  recorded as a failed test naming the page and the reason. A page that times out fails even
-  if some of its examples had already reported.
+  recorded as a failed test naming the page and the reason. A page that timed out after some
+  of its examples had reported was still recorded as a pass in the first cut of this fix; a
+  timeout now fails the page whatever had reported.
 - The parent waited 30 seconds per page, the same as the frame's own stall timeout, so a
   stall report could arrive just after the parent moved on. The page budget is now 45s.
 - Which pages have tests is decided by parsing the markdown the way the page is rendered. A
@@ -55,6 +56,8 @@ not any results arrived, and the lane passed on "0 failed". A run once passed wi
   a failing earlier one could vanish; and it marked the page tested on a timer. It now adds
   its examples up and waits for all of them, by the same rule the iframes use. A deployed
   (non-localhost) page with tests enabled follows the same rule.
+- The runner accepted `tosi-test-results` messages from any window on the page; it now
+  requires its own test frame as the source.
 - `testReportVerdict` is exported from `tosijs-ui/site` for adopters' own gates. A gate that
   checks only `failed === 0` should also require results for every page with tests.
 
