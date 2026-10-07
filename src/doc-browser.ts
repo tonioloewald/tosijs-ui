@@ -798,12 +798,17 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     page: a failing first example followed by a passing second one reported green.
 
     Keyed by element, so an example that re-runs (an edit, a refresh) replaces its own
-    result and nothing else's. A different page starts a fresh tally: the elements of the
-    page before are gone, and their results with them.
+    result and nothing else's. A different page starts a fresh tally, and elements no longer
+    in the document are dropped first.
     */
     if (liveResultsFile !== filename) {
       liveResultsFile = filename
       liveResults = new Map()
+    }
+    // Navigating away and back re-creates the page's examples; the old elements are gone
+    // from the document and their results must go with them, or the page counts double.
+    for (const element of liveResults.keys()) {
+      if (!element.isConnected) liveResults.delete(element)
     }
     liveResults.set(event.detail.element as Element, results)
     pageTestResults[filename] = tallyExamples(liveResults.values())
@@ -862,14 +867,20 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   */
   const settleCurrentPage = async (filename: string): Promise<void> => {
     const stalled = await whenPageSettled(PAGE_DEADLINE_MS)
-    // If the reader has navigated away, the census was of another page: judge by results only.
-    const stillHere = String(app.currentDoc.filename) === filename
-    pageTestResults[filename] = closePage(pageTestResults[filename], {
-      timedOut: false,
-      deadlineMs: PAGE_DEADLINE_MS,
-      stalled: stillHere ? stalled.length : 0,
-    })
-    updateDocTestStatus(filename)
+    /*
+    If the reader navigated away, the census was of ANOTHER page and says nothing about this
+    one. Whatever this page had reported stands, and if it reported nothing no failure is
+    invented for it: the report then has one page fewer than it should, which is the honest
+    statement ("we did not look") and is what `testReportVerdict` fails on.
+    */
+    if (String(app.currentDoc.filename) === filename) {
+      pageTestResults[filename] = closePage(pageTestResults[filename], {
+        timedOut: false,
+        deadlineMs: PAGE_DEADLINE_MS,
+        stalled: stalled.length,
+      })
+      updateDocTestStatus(filename)
+    }
     markPageTested(filename)
   }
 
@@ -2449,12 +2460,20 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (isLocalhost) {
       setTimeout(runBackgroundTests, 1000)
     } else {
-      const currentHasTests = hasTestBlock(currentDoc.text, examplePolicy())
+      /*
+      The page showing NOW, not the one this browser was constructed on. Tests are toggled
+      from the menu, often after navigating, and the construction-time doc then named a page
+      that is no longer on screen: it was judged by a census of some other page and recorded
+      as "reported no tests" without ever having run (1.16.8 re-review, F1).
+      */
+      const showing = String(app.currentDoc.filename)
+      const showingDoc = docs.find((d) => d.filename === showing)
+      const currentHasTests = hasTestBlock(showingDoc?.text, examplePolicy())
       if (currentHasTests) {
         pagesWithTests = 1
         setTestWidgetRunning()
         // Not a flat timer: the same settle-and-close rule as on localhost.
-        void settleCurrentPage(String(currentDoc.filename))
+        void settleCurrentPage(showing)
       } else if (testResultsResolve) {
         testResultsResolve({
           passed: 0,

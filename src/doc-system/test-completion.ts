@@ -41,10 +41,15 @@ export function unsettledExamples<T extends ExampleTestState>(
 }
 
 /*
-ONE way to add up a page's results and ONE way to close it — shared by every path that
-collects them: the background iframes, the page the reader is on, and a deployed (non-
-localhost) page. They used to be three pieces of code with three rules, and the 1.16.8 review
-found the two that had not been fixed each still able to pass over a failure.
+ONE way to CLOSE a page's entry (`closePage`), shared by every path that collects results:
+the background iframes, the page the reader is on, and a deployed (non-localhost) page. They
+used to be three pieces of code with three rules, and the 1.16.8 review found the two that had
+not been fixed each still able to pass over a failure.
+
+Adding up is shared less than that, and the difference is deliberate: the page the reader is
+on adds its examples with `tallyExamples`, keyed by element because examples there re-run;
+an iframe's parent appends each message as it arrives, because a frame loads once and every
+example in it reports once.
 */
 
 interface ExampleResults {

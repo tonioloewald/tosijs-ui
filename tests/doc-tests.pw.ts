@@ -101,6 +101,9 @@ async function runTierAt(
     `only ${results.pagesTested} of ${results.pagesWithTests} pages with tests reported — ` +
       `the runner dropped pages rather than failing them`
   ).toBe(results.pagesWithTests)
+  // Asserted here by hand rather than through `testReportVerdict`, on purpose: this gate is
+  // STRICTER than the shipped rule (exactly as many pages as have tests, where the rule allows
+  // an extra entry from a page whose example threw), and each condition gets its own message.
   // …and reported RESULTS, not merely "done" (#2874): `pagesTested` counted a page that timed
   // out or reported nothing, so 19 "tested" once sat over results for 7.
   expect(
