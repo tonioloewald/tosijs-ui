@@ -347,3 +347,23 @@ gap, recorded rather than hidden.
   read the count, not just the tick.
 - **Approval landed after the 60-minute wait again:** `verify` skipped; `verify_only=true`
   ran green.
+
+## 1.16.7 (2026-10-06) — markdown copies of pages, `strict` builds; a BLOCK on the feature's own gate
+
+- **Trigger was an LLM, not a person:** Gemini's fetcher reported "no `<body>`" for a page whose
+  whole article is static HTML (verified raw, hydrated, and through Readability and Jina). Not
+  reproducible or fixable from here, so the answer was to hand such readers markdown:
+  `/slug/index.md` beside every page. Found on the way: `<meta charset>` at byte ~1550.
+- **The pre-tag review BLOCKed on the release's own new gate.** `strict` decided "has live
+  examples" with a four-language regex I had seen and left, so it could pass with inert
+  examples or fail a prose site. Fixed as a class (one helper for every build-side asker).
+- **The fix for the blocker introduced two regressions**, caught by the scoped re-review: a
+  hand-written fence scanner that found nothing in CRLF files, and a REPL path that threw
+  where nothing printed it. Second fix used marked's own lexer instead of a better scanner.
+  No third review: Tier 0 plus the full lanes.
+- **`release-check` did its job at the last step:** four `[fix]` bullets from the remediation
+  commits were not in the CHANGELOG. Fixes to never-shipped code should be `[note]`.
+- **Lanes:** unit 1701 tests 12.4s; build 3.4s; Playwright 405 in 1.8m (one WebKit title flake
+  under full load, 12/12 in isolation); consumer 54 checks; test-browser 76 over 18 of 19
+  pages, the fail-open lane fixed straight after as #2874.
+- **Approval lapsed the 60-minute wait a third time;** `verify_only=true` green.
