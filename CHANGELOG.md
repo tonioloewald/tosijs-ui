@@ -9,6 +9,12 @@ console that speaks the example's language (#216). Additive, with one behaviour 
 know about: in a `tjs` or `ts` example, or one in a registered dialect, a line typed at the
 console is now evaluated in that language and not as JavaScript.
 
+### The book opens on the project, not on "Adopting the doc system"
+
+Both pages are pinned to the top, and the adopting page had an `order` where the README had
+none, so it sorted first: the ePub's opening chapter, and the first entry in the site nav, was
+a page about adopting the doc system. The README now leads both.
+
 ### One source, several outputs (#217)
 
 - **Per-volume placement.** A page can sit in a different place in each book:
