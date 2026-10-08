@@ -387,3 +387,28 @@ gap, recorded rather than hidden.
   over 18 of 18 pages, the first run where the page count is asserted rather than printed.
 - **Approval lapsed the 60-minute wait a fourth time;** `verify_only=true` green. Four in a row
   says the wait is the wrong length for how approval actually happens.
+
+## 1.16.9 (2026-10-08) — one source, several outputs; an inset that could read `.env`
+
+- **Scope:** two asks from tjs-lang for its book. GitHub #217: per-volume `placement`, text
+  insets, conditional text (`only`: `site` or `book`). GitHub #216: an example that opens with
+  its code or console showing inline, and a console that evaluates in the example's dialect.
+  Also the README now leads the nav and the ePub (the maintainer found "Adopting the doc
+  system" on the ePub's first page).
+- **The pre-tag review BLOCKed on the inset's file form:** it read any file in the project
+  (`.env` included) and published hidden and draft docs. Fixed by making a file inset a
+  fragment only (`_name.md`, in a directory doc extraction walked).
+- **The scoped re-review found the fix still too loose,** because the gate kept a second copy
+  of the ignore rule: a file doc path made the project a root, a path-form ignore was not
+  honoured, and a symlink was judged by the link's name. Second fix asks extraction which
+  directories it walked and checks the real path. No third review: Tier 0 plus the full lanes.
+- **CI failed once on lint** in a new test file. `bun format` had been run with its output
+  discarded, which hid the ESLint errors; `bun run format-check` and its exit code are the gate.
+- **`release-check` caught a `[fix]` bullet on a markdown-only commit;** retagged `[note]`.
+- **Lanes:** unit 1759 tests; Playwright 428 passed and one WebKit failure (a sub-pixel
+  rounding in a new test, fixed, 9/9 in the three browsers); consumer 54 checks; test-browser
+  77 over 18 pages.
+- **Not shipped, by design:** the generated JS per console line (#216 item 3), an ePub
+  rendering of the inline views, per-volume `only` targets. Review follow-ups are board #3133;
+  tjs-lang #3134 asks for a separable runtime prelude so a console line keeps tjs values.
+- **Approval lapsed the 60-minute wait a fifth time;** `verify_only=true` green.
