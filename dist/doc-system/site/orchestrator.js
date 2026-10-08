@@ -644,8 +644,13 @@ export async function buildSite(config, opts = {}) {
                         touched++;
                     }
                     // The book's variant is a second copy of the text (conditional text, #217).
-                    if (typeof doc.bookText === 'string')
-                        doc.bookText = renderEpubDownloads(doc.bookText, volumes);
+                    if (typeof doc.bookText === 'string') {
+                        const book = renderEpubDownloads(doc.bookText, volumes);
+                        if (book !== doc.bookText) {
+                            doc.bookText = book;
+                            touched++;
+                        }
+                    }
                 }
                 if (touched)
                     await Bun.write(DOCS_JSON, JSON.stringify(corpus, null, 2));

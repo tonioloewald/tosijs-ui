@@ -96,7 +96,7 @@ describe('insets', () => {
       }),
     ]
     const options = {
-      roots: ['/proj/docs'],
+      fragmentDirs: new Set(['/proj/docs']),
       realPath: (p: string) => p,
       readFile: () => undefined,
     }
@@ -120,7 +120,7 @@ describe('insets', () => {
       }),
     ]
     resolveInsets(docs, {
-      roots: ['/proj/docs'],
+      fragmentDirs: new Set(['/proj/docs']),
       realPath: (p) => p,
       readFile: (p) => {
         seen.push(p)
@@ -137,9 +137,13 @@ describe('insets', () => {
       '- item\n  <!--{ "inset": "nowhere.md" }-->\n',
       '> <!--{ "only": "book" }-->\n',
       'Some text <!--{ "inset": "x.md" }--> more text.\n',
+      // shapes the first version of this guard walked past (re-review F4)
+      '| a |\n| - |\n| <!--{ "inset": "x.md" }--> |\n',
+      '<div>\n<!--{ "inset": "x.md" }-->\n</div>\n',
+      '<!--{ "only": "book" }--> <!--{ "end": "only" }-->\n',
     ]) {
       expect(() => assembleCorpus([doc('a.md', text)] as any)).toThrow(
-        /own line at the top level/
+        /on its own line at the top level/
       )
     }
   })
@@ -171,8 +175,12 @@ describe('a file inset reads fragments and nothing else', () => {
     }
     return root
   }
+  // The ignore list a site build passes: its own, plus the default `reviews` exclusion.
   const build = (root: string) =>
-    extractDocs({ paths: [path.join(root, 'docs')] }) as any[]
+    extractDocs({
+      paths: [path.join(root, 'docs')],
+      ignore: ['node_modules', 'dist', 'build', 'reviews'],
+    }) as any[]
   const host = (ref: string) => `# Host\n\n<!--{ "inset": "${ref}" }-->\n`
 
   test('not a secrets file beside the docs', () => {
@@ -210,34 +218,76 @@ describe('a file inset reads fragments and nothing else', () => {
     }
   })
 
-  test('not a fragment outside the doc paths, or under an ignored or dot directory', () => {
-    for (const [file, ref, message] of [
-      ['notes/_x.md', '../notes/_x.md', /outside the doc paths/],
-      ['docs/reviews/_x.md', 'reviews/_x.md', /inside "reviews"/],
-      [
-        'docs/node_modules/_x.md',
-        'node_modules/_x.md',
-        /inside "node_modules"/,
-      ],
-      ['docs/.private/_x.md', '.private/_x.md', /inside "\.private"/],
+  test('not a fragment outside the doc paths, or under an ignored directory', () => {
+    for (const [file, ref] of [
+      ['notes/_x.md', '../notes/_x.md'],
+      ['docs/reviews/_x.md', 'reviews/_x.md'],
+      ['docs/node_modules/_x.md', 'node_modules/_x.md'],
     ] as const) {
       const root = site({ [file]: 'withheld', 'docs/page.md': host(ref) })
-      expect(() => build(root)).toThrow(message)
+      try {
+        expect(() => build(root)).toThrow(
+          /not in a directory the docs are extracted from/
+        )
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true })
+      }
+    }
+  })
+
+  // Re-review F1: `README.md` as a doc path made the whole project a place to read from.
+  test('a FILE in the doc paths does not open its directory', () => {
+    const root = site({
+      'README.md': '# Readme\n',
+      'notes/_x.md': 'withheld',
+      'docs/page.md': host('../notes/_x.md'),
+    })
+    try {
+      expect(() =>
+        extractDocs({
+          paths: [path.join(root, 'docs'), path.join(root, 'README.md')],
+        })
+      ).toThrow(/not in a directory the docs are extracted from/)
+    } finally {
       fs.rmSync(root, { recursive: true, force: true })
     }
   })
 
-  test('not through a symlink that leaves the doc paths', () => {
+  // Re-review F2: an ignore written as a path was honoured by extraction and not here.
+  test('an ignore written as a path withholds fragments as it withholds pages', () => {
     const root = site({
-      'outside/_x.md': 'withheld',
-      'docs/page.md': host('_link.md'),
+      'docs/private/_x.md': 'withheld',
+      'docs/private/p.md': '# P\n',
+      'docs/page.md': host('private/_x.md'),
     })
-    fs.symlinkSync(
-      path.join(root, 'outside/_x.md'),
-      path.join(root, 'docs/_link.md')
-    )
-    expect(() => build(root)).toThrow(/outside the doc paths/)
-    fs.rmSync(root, { recursive: true, force: true })
+    try {
+      expect(() =>
+        extractDocs({
+          paths: [path.join(root, 'docs')],
+          ignore: [path.join(root, 'docs/private')],
+        })
+      ).toThrow(/not in a directory the docs are extracted from/)
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test("not through a symlink: the name and the place that count are the target's", () => {
+    for (const [target, text] of [
+      ['outside/_x.md', 'withheld'], // a fragment, in the wrong place
+      ['docs/secret.md', '---\ndraft: true\n---\n# S\n\nwithheld\n'], // a draft page
+      ['docs/.env', 'API_KEY=abc'],
+    ] as const) {
+      const root = site({ [target]: text, 'docs/page.md': host('_link.md') })
+      fs.symlinkSync(path.join(root, target), path.join(root, 'docs/_link.md'))
+      try {
+        expect(() => build(root)).toThrow(
+          /must name a fragment|not in a directory the docs are extracted from/
+        )
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true })
+      }
+    }
   })
 
   test('a real fragment in a subdirectory of the docs is read', () => {

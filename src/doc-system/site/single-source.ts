@@ -80,22 +80,35 @@ was accepted, both on a green build, while the docs promised that a mistake fail
 directive found anywhere but the top level is itself the error.
 */
 function refuseNested(tokens: any[], where: string): void {
-  const walk = (inner: any[]): void => {
-    for (const t of inner) {
-      const d = directiveOf(t)
-      if (d) {
-        throw new SingleSourceError(
-          `${where}: ${t.raw.trim()} is inside a list, a quote or a paragraph. ` +
-            `A directive must be on its own line at the top level of the document.`
-        )
-      }
-      if (Array.isArray(t.tokens)) walk(t.tokens)
-      if (Array.isArray(t.items)) walk(t.items)
+  const refuse = (raw: string): never => {
+    throw new SingleSourceError(
+      `${where}: ${raw.trim()} is not a directive on its own line at the top level of ` +
+        `the document (it is inside a list, quote, table or paragraph, or shares its line).`
+    )
+  }
+  // Every nested token, wherever marked keeps it: `tokens`, list `items`, table cells.
+  const walk = (node: any): void => {
+    if (Array.isArray(node)) return node.forEach(walk)
+    if (!node || typeof node !== 'object') return
+    if (typeof node.type === 'string' && typeof node.raw === 'string') {
+      if (
+        directiveOf(node) ||
+        (node.type === 'html' && mayHaveSingleSourceDirective(node.raw))
+      )
+        refuse(node.raw)
     }
+    for (const key of ['tokens', 'items', 'header', 'rows']) walk(node[key])
   }
   for (const t of tokens) {
-    if (Array.isArray(t.tokens)) walk(t.tokens)
-    if (Array.isArray(t.items)) walk(t.items)
+    // Top level: a clean directive is fine; a comment that looks like one but does not
+    // parse as one (two on a line, text after it, bad JSON) would otherwise ship as a comment.
+    if (
+      t.type === 'html' &&
+      !directiveOf(t) &&
+      mayHaveSingleSourceDirective(t.raw)
+    )
+      refuse(t.raw)
+    for (const key of ['tokens', 'items', 'header', 'rows']) walk(t[key])
   }
 }
 
@@ -184,12 +197,10 @@ function bodyOf(text: string, anchor: string | undefined, ref: string): string {
 
 export interface ResolveInsetsOptions {
   /**
-   * Directories a fragment file may live under: the doc paths the corpus was extracted
-   * from. Default `[process.cwd()]`.
+   * Real paths of the directories a fragment file may be read from: the ones extraction
+   * walked. `extractDocs` supplies this. Without it no file inset is read at all.
    */
-  roots?: string[]
-  /** directory names that are never read, as extraction's `ignore` */
-  ignore?: string[]
+  fragmentDirs?: ReadonlySet<string>
   /** read a fragment file; injectable so the rule is testable without a filesystem */
   readFile?: (absolutePath: string) => string | undefined
   /** resolve symlinks; injectable for the same reason */
@@ -199,8 +210,8 @@ export interface ResolveInsetsOptions {
 /*
 Which files a FILE inset may read: fragments, and nothing else.
 
-A fragment is a markdown file whose name starts with `_`, under one of the doc paths, with
-no ignored or dot-prefixed directory on the way to it.
+A fragment is a markdown file whose name starts with `_`, in a directory doc extraction
+walked. That is: a file extraction saw and skipped for its underscore.
 
 The first cut read any file under the project root, and the pre-tag review found two things
 wrong with that, both in this one branch:
@@ -216,43 +227,40 @@ Requiring the `_` prefix closes both by construction instead of by a list of exc
 `_` file is skipped by extraction, so it is never a page and cannot be a hidden one; and the
 name is the author's own statement that the file exists to be included.
 
-The cost, stated: someone who can edit a page can read the `_`-prefixed markdown under the doc
-paths by insetting it. That is what a fragment is for.
+Both tests are made on the REAL path. A symlink named `_x.md` is whatever it points at, so
+the name that counts is the target's, and the directory that counts is the target's.
+
+The cost, stated: someone who can edit a page can read the `_`-prefixed markdown in the
+published directories by insetting it. That is what a fragment is for.
 */
+const isFragmentName = (file: string): boolean =>
+  file.startsWith('_') && /\.(md|markdown)$/i.test(file)
+
 function fragmentPath(
   abs: string,
-  roots: string[],
-  ignore: Set<string>,
+  fragmentDirs: ReadonlySet<string> | undefined,
   realPath: (p: string) => string
 ): string | { refused: string } {
-  const base = path.basename(abs)
-  if (!base.startsWith('_') || !/\.(md|markdown)$/i.test(base)) {
-    return {
-      refused:
-        'a file inset must name a fragment: a markdown file whose name starts with "_". ' +
-        'A document is inset by its filename, slug or title, and a hidden one cannot be.',
-    }
+  const notFragment = {
+    refused:
+      'a file inset must name a fragment: a markdown file whose name starts with "_". ' +
+      'A document is inset by its filename, slug or title, and a hidden one cannot be.',
   }
+  if (!isFragmentName(path.basename(abs))) return notFragment
   let real: string
   try {
     real = realPath(abs)
   } catch {
     return abs // does not exist: reported by the caller as "no such file"
   }
-  const root = roots.find(
-    (r) =>
-      real === r || real.startsWith(r.endsWith(path.sep) ? r : r + path.sep)
-  )
-  if (!root) {
+  if (!isFragmentName(path.basename(real))) return notFragment
+  if (!fragmentDirs?.has(path.dirname(real))) {
     return {
-      refused: `it is outside the doc paths (${roots
-        .map((r) => path.relative(process.cwd(), r) || '.')
-        .join(', ')}).`,
+      refused:
+        'it is not in a directory the docs are extracted from (a directory under ' +
+        'docPaths that is not ignored).',
     }
   }
-  const segments = path.relative(root, path.dirname(real)).split(path.sep)
-  const bad = segments.find((seg) => seg.startsWith('.') || ignore.has(seg))
-  if (bad) return { refused: `it is inside "${bad}", which is not published.` }
   return real
 }
 
@@ -272,17 +280,6 @@ export function resolveInsets(
 ): number {
   if (!docs.some((d) => mayHaveDirective(d.text))) return 0
   const realPath = options.realPath ?? ((p: string) => fs.realpathSync(p))
-  const safeReal = (p: string): string => {
-    try {
-      return realPath(p)
-    } catch {
-      return p
-    }
-  }
-  const roots = (options.roots ?? [process.cwd()]).map((r) =>
-    safeReal(path.resolve(r))
-  )
-  const ignore = new Set(options.ignore ?? [])
   const readFile =
     options.readFile ??
     ((p: string) => {
@@ -336,8 +333,7 @@ export function resolveInsets(
         } else if (target && dir !== undefined) {
           const found = fragmentPath(
             path.resolve(dir, target),
-            roots,
-            ignore,
+            options.fragmentDirs,
             realPath
           )
           if (typeof found !== 'string') {

@@ -24,7 +24,7 @@ a page about adopting the doc system. The README now leads both.
   page into it. The site nav is unaffected.
 - **Text insets.** `<!--{ "inset": "install.md#with-bun" }-->` includes another document, or
   one heading's section of it, in the page. A fragment (a markdown file whose name starts
-  with `_`, under your doc paths) can be inset without being a page, and is the only kind of
+  with `_`, in a directory the docs are extracted from) can be inset without being a page, and is the only kind of
   file an inset reads. Resolved at extraction, so the site, the ePubs, `llms.txt` and the markdown copies
   all get the assembled text, and an inset passage's live examples and tests run where it is
   inset.
@@ -42,7 +42,8 @@ a page about adopting the doc system. The README now leads both.
   `bookTextOf`, and the `BookPlacement` type.
 - Saving an edited live example back to source is refused on a page whose source uses an
   inset or conditional text, where the example's position on the page no longer identifies a
-  block in that file.
+  block in that file. No existing page is affected: it applies only to a page that uses one
+  of the new directives.
 
 ### Examples that open with their code showing, and a console in their language (#216)
 

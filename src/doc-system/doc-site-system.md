@@ -1232,11 +1232,13 @@ fragment is how a passage exists without being a page of its own: a markdown fil
 starts with `_` is skipped by extraction and can still be inset.
 
 A fragment is the only kind of file an inset reads. It must be markdown, its name must start
-with `_`, and it must sit under one of your `docPaths`, outside any ignored or dot-prefixed
-directory, with symlinks resolved first. So an inset cannot reach a `.env`, a source file, or
-a page you hid: a hidden or draft document is not in the corpus to be found by name, and it
-is not a fragment to be found by path. Anyone who can edit a page can read your `_` fragments
-by insetting them, which is what they are for.
+with `_`, and it must be in a directory the docs are extracted from: a directory under
+`docPaths` that is not ignored. A single file listed in `docPaths`, such as `README.md`, does
+not make its folder one. A symlink is judged by what it points at, name and place both. So an
+inset cannot reach a `.env`, a source file, or a page you hid: a hidden or draft document is
+not in the corpus to be found by name, and it is not a fragment to be found by path. Anyone
+who can edit a page can read the `_` fragments in those directories by insetting them, which
+is what they are for.
 
 What arrives is the passage without its place in the other page's outline: a whole document
 loses its title heading and metadata block, and a section loses its own heading and runs to

@@ -305,7 +305,9 @@ function hasDocBlock(filePath) {
         return false; // unreadable is not our business here
     }
 }
-function findMarkdownFiles(paths, ignore, defaultIgnores = new Set()) {
+function findMarkdownFiles(paths, ignore, defaultIgnores = new Set(), 
+/** filled with the real path of every directory actually walked (see `assembleCorpus`) */
+walked) {
     const markdownFiles = [];
     const truncationFound = [];
     const withheld = [];
@@ -373,6 +375,12 @@ function findMarkdownFiles(paths, ignore, defaultIgnores = new Set()) {
                     withheld.push({ dir, count: n });
             }
             return;
+        }
+        try {
+            walked?.add(fs.realpathSync(dir));
+        }
+        catch {
+            // unreadable: nothing in it is scraped, so nothing in it is a fragment either
         }
         files.forEach((file) => {
             // Skip scaffolding / working files (Jekyll-style `_`-prefix): a
@@ -506,7 +514,8 @@ function findMarkdownFiles(paths, ignore, defaultIgnores = new Set()) {
 }
 export function extractDocs(options) {
     const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options;
-    const found = findMarkdownFiles(paths, ignore, new Set(DEFAULT_DOC_IGNORES));
+    const walked = new Set();
+    const found = findMarkdownFiles(paths, ignore, new Set(DEFAULT_DOC_IGNORES), walked);
     /*
     Drop hidden docs HERE, before anything else sees them.
   
@@ -528,18 +537,14 @@ export function extractDocs(options) {
     insetting it; a fragment that should not be a page is a `_`-prefixed file instead, and that
     is the only kind of file an inset will read (see `fragmentPath`).
     */
-    assembleCorpus(docs, {
-        // A fragment file must live where docs live: under a doc path, outside what is ignored.
-        roots: paths.map((p) => {
-            try {
-                return fs.statSync(p).isDirectory() ? p : path.dirname(p);
-            }
-            catch {
-                return p;
-            }
-        }),
-        ignore: [...ignore, ...DEFAULT_DOC_IGNORES],
-    });
+    /*
+    A fragment may be read from a directory this extraction WALKED, and nowhere else. Not a
+    list of roots with the ignore rule applied again: the re-review found that second copy
+    disagreeing with the first within the hour (a file doc path such as `README.md` made the
+    whole project a root, and a path-form ignore was not honoured). The walk already decided
+    which directories are published, so ask it.
+    */
+    assembleCorpus(docs, { fragmentDirs: walked });
     if (output) {
         saveDocsJSON(docs, output);
     }

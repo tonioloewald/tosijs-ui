@@ -192,4 +192,4 @@ Its two callers want exactly that bias. The build uses it to skip docs that cert
 none before asking the parser, and the example editor uses it to refuse a save, where a
 false positive costs a refusal and a false negative writes an edit into the wrong block.
 */
-export const mayHaveSingleSourceDirective = (text) => /<!--\s*\{[^\n]*"(inset|only|end)"/.test(text);
+export const mayHaveSingleSourceDirective = (text) => /<!--\s*\{[^\n]*"(inset|only|end)"\s*:/.test(text);

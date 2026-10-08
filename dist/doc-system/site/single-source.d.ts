@@ -13,12 +13,10 @@ interface SourceDoc {
 export declare function isSingleSourceDirective(json: string): boolean;
 export interface ResolveInsetsOptions {
     /**
-     * Directories a fragment file may live under: the doc paths the corpus was extracted
-     * from. Default `[process.cwd()]`.
+     * Real paths of the directories a fragment file may be read from: the ones extraction
+     * walked. `extractDocs` supplies this. Without it no file inset is read at all.
      */
-    roots?: string[];
-    /** directory names that are never read, as extraction's `ignore` */
-    ignore?: string[];
+    fragmentDirs?: ReadonlySet<string>;
     /** read a fragment file; injectable so the rule is testable without a filesystem */
     readFile?: (absolutePath: string) => string | undefined;
     /** resolve symlinks; injectable for the same reason */

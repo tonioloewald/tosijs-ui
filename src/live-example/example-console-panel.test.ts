@@ -522,6 +522,30 @@ describe("the REPL evaluates in the example's dialect", () => {
     })
   })
 
+  test('the transform is told which calls are console lines', async () => {
+    await quietly(async () => {
+      const seen: unknown[] = []
+      registerDialect('tellme', {
+        transform: (source, options) => {
+          seen.push(options.repl)
+          return { code: source }
+        },
+      })
+      const example: any = liveExample()
+      document.body.append(example)
+      await example.whenHydrated
+      example.dialect = 'tellme'
+      example.js = `preview.textContent = 'x'`
+      await example.refresh()
+      expect(seen.length).toBeGreaterThan(0)
+      expect(seen.every((flag) => flag === undefined)).toBe(true) // the example's own run
+      seen.length = 0
+      await example.consoleEval('1 + 1')
+      expect(seen).toContain(true)
+      example.remove()
+    })
+  })
+
   test('a line the dialect rejects is reported, not retried as JavaScript', async () => {
     await quietly(async () => {
       registerDialect('strictlang', {
