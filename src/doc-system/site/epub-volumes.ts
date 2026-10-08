@@ -37,10 +37,43 @@ export interface EpubVolume {
   filename: string
   /** served URL, honouring basePath */
   url: string
-  /** the cover image the build writes beside the ePub, e.g. `my-project-cover.png` */
-  coverFilename: string
+  /**
+   * The cover image the build wrote beside the ePub, e.g. `my-project-cover.png`. Present
+   * only in the manifest, and only when that file exists: it is read back from the output
+   * dir after the ePubs are built (`attachCovers`), never predicted.
+   */
+  coverFilename?: string
   /** served URL of that cover, honouring basePath — Print uses it as its first page */
-  coverUrl: string
+  coverUrl?: string
+}
+
+/** The name `buildEpub` gives a cover written beside `<stem>.epub`, minus its extension. */
+export const coverStem = (epubFilename: string): string =>
+  `${epubFilename.replace(/\.epub$/, '')}-cover`
+
+/**
+ * Add `coverFilename`/`coverUrl` to each volume whose cover is among `files` (a listing of
+ * the output dir, taken AFTER the ePubs were built).
+ *
+ * Read back and not derived, because only the ePub build knows what it wrote: an explicit
+ * cover keeps its own type, a missing one falls back to a generated PNG, and a build without
+ * `@resvg/resvg-js` writes none. A predicted name was wrong in each of those cases.
+ */
+export function attachCovers(
+  volumes: EpubVolume[],
+  files: string[],
+  basePath = '/'
+): EpubVolume[] {
+  const base = basePath.replace(/\/+$/, '')
+  return volumes.map((volume) => {
+    const stem = coverStem(volume.filename)
+    const coverFilename = files.find(
+      (f) => f.startsWith(`${stem}.`) && !f.slice(stem.length + 1).includes('.')
+    )
+    return coverFilename
+      ? { ...volume, coverFilename, coverUrl: `${base}/${coverFilename}` }
+      : volume
+  })
 }
 
 export interface VolumeNamingConfig {
@@ -51,8 +84,7 @@ export interface VolumeNamingConfig {
     | {
         title?: string
         volumeTitles?: Record<string, string>
-        /** an explicit cover image; only its extension matters here */
-        cover?: string
+        printCover?: boolean
       }
 }
 
@@ -75,19 +107,11 @@ export function epubVolumeIdentity(
     ? `${slugify(baseTitle)}-${slugify(bookTarget)}.epub`
     : `${slugify(baseTitle)}.epub`
   const base = (config.basePath ?? '/').replace(/\/+$/, '')
-  // A generated cover is always a PNG; an explicit one keeps its own type.
-  const coverExt = /\.(jpe?g|gif|png)$/i.exec(epub.cover ?? '')?.[0] ?? '.png'
-  const coverFilename = `${filename.replace(
-    /\.epub$/,
-    ''
-  )}-cover${coverExt.toLowerCase()}`
   return {
     book: bookTarget ?? DEFAULT_BOOK,
     title,
     filename,
     url: `${base}/${filename}`,
-    coverFilename,
-    coverUrl: `${base}/${coverFilename}`,
   }
 }
 
@@ -147,4 +171,20 @@ export function renderEpubDownloads(
     .map((v) => `- [${v.title}](${v.url}) *(ePub)*`)
     .join('\n')
   return text.replace(EPUB_DOWNLOADS_MARKER, list)
+}
+
+/** Where the volume manifest is served. */
+export const VOLUME_MANIFEST = 'epub-volumes.json'
+
+/**
+ * The manifest URL a page should hand to Print so it can open with the cover, or
+ * `undefined` when it should not: no ePub is built, or `epub.printCover` is `false`.
+ */
+export function printCoverManifestUrl(
+  config: VolumeNamingConfig
+): string | undefined {
+  if (!config.epub) return undefined
+  if (typeof config.epub === 'object' && config.epub.printCover === false)
+    return undefined
+  return `${(config.basePath ?? '/').replace(/\/+$/, '')}/${VOLUME_MANIFEST}`
 }

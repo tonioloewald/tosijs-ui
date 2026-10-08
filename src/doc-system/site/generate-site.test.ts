@@ -109,11 +109,11 @@ describe('docs.json cache-busting', () => {
     return html
   }
 
-  test('the book cover URL reaches the page config, where Print reads it', async () => {
-    expect(await page({ bookCover: '/t-cover.png' })).toContain(
-      '&quot;bookCover&quot;:&quot;/t-cover.png&quot;'
+  test('the volume manifest URL reaches the page config, where Print reads it', async () => {
+    expect(await page({ bookVolumes: '/epub-volumes.json' })).toContain(
+      '&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;'
     )
-    expect(await page()).not.toContain('bookCover')
+    expect(await page()).not.toContain('bookVolumes')
   })
 
   test('docsStamp is applied to the corpus URL', async () => {

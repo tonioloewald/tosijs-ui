@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=ebaf5a077f1a" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=759957a69116" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=49a7c76efb91" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookCover&quot;:&quot;/tosijs-ui-cover.png&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=aa823638056c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -510,7 +510,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>epub</code></td>
 <td><code>false</code></td>
-<td>build + ship an ePub of the corpus every build — <code>true</code> or <code>{ author, title, css, cover, coverColor }</code> (see below)</td>
+<td>build + ship an ePub of the corpus every build — <code>true</code> or <code>{ author, title, css, cover, coverIcon, coverColor, printCover }</code> (see below)</td>
 </tr>
 <tr>
 <td><code>book</code></td>
@@ -1093,7 +1093,11 @@ HTML and the hydrated SPA show the same thing.</p>
 <span class="token punctuation">]</span>
 </code></pre>
 <p><code>coverUrl</code> is the volume&#39;s cover as a plain image, written beside the ePub (a PNG when
-generated; an explicit <code>cover</code> keeps its own type).</p>
+generated; an explicit <code>cover</code> keeps its own type). The two cover fields are present only
+when the build wrote that file: they are read back from the output dir after the ePubs are
+built, so a volume with no cover (no <code>@resvg/resvg-js</code> and no explicit <code>cover</code>, or a failed
+ePub build) simply lacks them. <code>epubVolumeIdentity</code> does not return them, and a build that
+sets <code>epub.output</code> writes the cover beside that file where the manifest does not look.</p>
 <p><strong>The helper</strong>, if you are generating links in your own code:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> listEpubVolumes<span class="token punctuation">,</span> epubVolumeIdentity <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
 </code></pre>
@@ -1567,15 +1571,18 @@ path of the real page.</li>
 <li><code>markdownPages: false</code> turns all of it off.</li>
 </ul>
 <h4>The book (ePub) &amp; the <code>book</code> manifest</h4>
-<p>Set <code>epub: true</code> (or <code>{ author, title, css, cover, coverColor }</code>) and every build
+<p>Set <code>epub: true</code> (or <code>{ author, title, css, cover, coverIcon, coverColor, printCover }</code>) and every build
 emits <code>{name}.epub</code> into the output dir, one chapter per doc in nav order, with a
 Contents page, EPUB3 nav + EPUB2 ncx, and a cover (an explicit <code>cover</code> image, or
-one generated from the title + your <code>favicon</code>; install <code>@resvg/resvg-js</code> to
+one generated from the title + <code>coverIcon</code>, an SVG, or failing that your <code>favicon</code>; install <code>@resvg/resvg-js</code> to
 render the generated one). The doc-browser&#39;s settings menu links to it as
 &quot;Download ePub&quot;. <code>bun bin/build-book.ts</code> builds it standalone. PDF is the
-in-browser <strong>Print</strong> button, not a batch job. Print opens with the same cover as the
-default volume, then the title page and contents; a site built without <code>epub</code>, or
-without a cover, prints from the title page as before.</p>
+in-browser <strong>Print</strong> button, not a batch job. Print opens with the default volume&#39;s
+cover, then the title page and contents. It reads the cover from <code>/epub-volumes.json</code>
+and checks the image loads first, so it prints from the title page as before when there
+is nothing to show: a site without <code>epub</code>, a build that wrote no cover, or a corpus
+where every doc names a volume (there is no default volume). Set
+<code>epub: { printCover: false }</code> to leave the cover out of Print and keep it in the ePub.</p>
 <p>By default <strong>the book is the whole visible corpus</strong> — zero config. To emit a
 <em>subset</em> in a <em>curated order</em> (a library that also ships a book, a novel with
 front/back matter) add a <code>book</code> manifest. It shapes only the book artifact; the
@@ -2045,6 +2052,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-ccmjj0gt.js"></script>
+  <script type="module" src="../hydrate-60vratc1.js"></script>
 </body>
 </html>

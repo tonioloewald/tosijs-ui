@@ -28,7 +28,7 @@ function registerSiteDialects(config) {
     }
 }
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
-import { epubVolumeIdentity, listEpubVolumes, renderEpubDownloads, } from './epub-volumes.js';
+import { attachCovers, listEpubVolumes, printCoverManifestUrl, renderEpubDownloads, } from './epub-volumes.js';
 import { buildSlugMap } from '../routing.js';
 import { computeAssetStamp, missingStampInputWarning } from './asset-stamp.js';
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, } from 'fs';
@@ -1479,9 +1479,7 @@ export async function buildSite(config, opts = {}) {
                 docs,
                 outputDir: PUBLIC,
                 projectName: config.name,
-                bookCover: config.epub
-                    ? epubVolumeIdentity(config).coverUrl
-                    : undefined,
+                bookVolumes: printCoverManifestUrl(config),
                 description: config.description,
                 baseUrl: config.baseUrl,
                 lang: config.lang,
@@ -1602,6 +1600,12 @@ export async function buildSite(config, opts = {}) {
                         ...epubOpts,
                         bookTarget,
                     });
+                }
+                // Now the covers exist (or do not), say so in the manifest: a `coverUrl` there
+                // names a file this build wrote. Print reads the default volume's from here.
+                const manifest = `${PUBLIC}/epub-volumes.json`;
+                if (existsSync(manifest)) {
+                    await Bun.write(manifest, JSON.stringify(attachCovers(JSON.parse(await Bun.file(manifest).text()), readdirSync(PUBLIC), config.basePath), null, 2));
                 }
             }
             console.timeEnd('build');

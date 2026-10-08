@@ -108,7 +108,7 @@ a.wikilink { text-decoration: none; border-bottom: 1px dotted currentColor; }
 // Print-only layout: page margins, a chapter per page, an avoid-break TOC.
 export const PRINT_CSS = `
 @page { margin: 18mm 16mm; }
-.book-cover { display: block; width: 100%; height: 100vh; object-fit: contain; page-break-after: always; }
+.book-cover { display: block; margin: 0 auto; max-width: 100%; max-height: 100vh; page-break-after: always; break-inside: avoid; }
 .book-title { text-align: center; margin: 30vh 0 1em; }
 .book-toc { page-break-after: always; }
 .book-toc h2 { page-break-before: avoid; }
@@ -163,7 +163,7 @@ export function buildBookHtml(docs, opts) {
 </head>
 <body>
 ${opts.cover
-        ? `<img class="book-cover" src="${escapeAttr(opts.cover)}" alt="${escapeAttr(opts.title)} cover" onerror="this.remove()"/>`
+        ? `<img class="book-cover" src="${escapeAttr(opts.cover)}" alt="${escapeAttr(opts.title)} cover"/>`
         : ''}
 <h1 class="book-title">${escapeHtml(opts.title)}</h1>
 <nav class="book-toc"><h2>Contents</h2><ol>${tocHtml(roots)}</ol></nav>

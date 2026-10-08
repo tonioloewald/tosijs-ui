@@ -1,5 +1,9 @@
 import { test, expect, describe } from 'bun:test'
-import { printWhenReady, PrintableWindow } from './print-window'
+import {
+  printWhenReady,
+  resolveBookCover,
+  PrintableWindow,
+} from './print-window'
 
 /*
 The Print path changed twice in one cycle and had no test at any tier (review F15).
@@ -113,5 +117,69 @@ describe('printWhenReady (F15)', () => {
     )
     await new Promise((r) => setTimeout(r, 0))
     expect(order).toEqual(['highlight', 'print'])
+  })
+})
+
+describe('resolveBookCover', () => {
+  const manifest = [
+    { book: 'two', coverUrl: '/b-two-cover.png' },
+    { book: '', coverUrl: '/b-cover.png' },
+  ]
+  const fetchOf =
+    (body: unknown, ok = true) =>
+    async () => ({
+      ok,
+      json: async () => body,
+    })
+  const loads = async () => undefined
+  const fails = async () => {
+    throw new Error('404')
+  }
+
+  test("answers with the DEFAULT volume's cover once it has loaded", async () => {
+    const asked: string[] = []
+    const cover = await resolveBookCover('/epub-volumes.json', {
+      fetchFn: fetchOf(manifest),
+      loadImage: async (url) => {
+        asked.push(url)
+      },
+    })
+    expect(cover).toBe('/b-cover.png')
+    expect(asked).toEqual(['/b-cover.png'])
+  })
+
+  test('no cover when the image does not load, so Print never opens on a broken image', async () => {
+    expect(
+      await resolveBookCover('/epub-volumes.json', {
+        fetchFn: fetchOf(manifest),
+        loadImage: fails,
+      })
+    ).toBeUndefined()
+  })
+
+  test('no cover without a manifest URL, a default volume, a listed cover, or a good response', async () => {
+    let fetched = 0
+    const counting = async () => {
+      fetched++
+      return { ok: true, json: async () => manifest }
+    }
+    // Opted out (or no ePub): the site bakes no URL, and nothing is fetched.
+    expect(
+      await resolveBookCover(undefined, { fetchFn: counting, loadImage: loads })
+    ).toBeUndefined()
+    expect(fetched).toBe(0)
+    for (const fetchFn of [
+      fetchOf([{ book: 'two', coverUrl: '/b-two-cover.png' }]),
+      fetchOf([{ book: '' }]),
+      fetchOf(manifest, false),
+      fetchOf('not a list'),
+      async () => {
+        throw new Error('offline')
+      },
+    ]) {
+      expect(
+        await resolveBookCover('/m.json', { fetchFn, loadImage: loads })
+      ).toBeUndefined()
+    }
   })
 })

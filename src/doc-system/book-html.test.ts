@@ -12,8 +12,9 @@ test('Print opens with the cover when the build made one', () => {
   expect(cover).toBeGreaterThan(-1)
   // First thing in the body, ahead of the title page and the contents.
   expect(cover).toBeLessThan(html.indexOf('class="book-title"'))
-  // A cover that fails to load must not leave a blank first page.
-  expect(html).toContain('onerror="this.remove()"')
+  // No inline handler: a Content-Security-Policy would block it in the popup. The caller
+  // checks the image loads (`resolveBookCover`).
+  expect(html).not.toContain('onerror')
   expect(html).toContain('alt="My &quot;Book&quot; cover"')
 })
 

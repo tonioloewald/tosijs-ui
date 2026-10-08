@@ -34,8 +34,9 @@ function registerSiteDialects(config: { dialects?: readonly string[] }): void {
 }
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import {
-  epubVolumeIdentity,
+  attachCovers,
   listEpubVolumes,
+  printCoverManifestUrl,
   renderEpubDownloads,
 } from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
@@ -1751,9 +1752,7 @@ export async function buildSite(
         docs,
         outputDir: PUBLIC,
         projectName: config.name,
-        bookCover: config.epub
-          ? epubVolumeIdentity(config).coverUrl
-          : undefined,
+        bookVolumes: printCoverManifestUrl(config),
         description: config.description,
         baseUrl: config.baseUrl,
         lang: config.lang,
@@ -1899,6 +1898,23 @@ export async function buildSite(
             ...epubOpts,
             bookTarget,
           })
+        }
+        // Now the covers exist (or do not), say so in the manifest: a `coverUrl` there
+        // names a file this build wrote. Print reads the default volume's from here.
+        const manifest = `${PUBLIC}/epub-volumes.json`
+        if (existsSync(manifest)) {
+          await Bun.write(
+            manifest,
+            JSON.stringify(
+              attachCovers(
+                JSON.parse(await Bun.file(manifest).text()),
+                readdirSync(PUBLIC),
+                config.basePath
+              ),
+              null,
+              2
+            )
+          )
         }
       }
 

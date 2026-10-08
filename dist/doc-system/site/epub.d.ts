@@ -54,6 +54,11 @@ export interface BuildEpubOptions {
     coverIcon?: string;
     /** background color for the generated cover, default '#1f2933' */
     coverColor?: string;
+    /**
+     * `false` keeps the cover out of Print as PDF, which otherwise opens with the default
+     * volume's cover. The ePub's own cover is unaffected.
+     */
+    printCover?: boolean;
 }
 export declare function escapeXml(s: string): string;
 /**

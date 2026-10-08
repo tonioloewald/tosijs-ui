@@ -48,8 +48,11 @@ export interface GenerateSiteConfig {
   /** directory to write pages into (the served web root, e.g. ./docs) */
   outputDir: string
   projectName?: string
-  /** URL of the book cover image, when the build makes one — Print's first page */
-  bookCover?: string
+  /**
+   * URL of the volume manifest (`/epub-volumes.json`). Print reads the default volume's
+   * cover from it; omitted when the site has no ePub or opted out with `printCover: false`.
+   */
+  bookVolumes?: string
   /** site-level description, used as a fallback when a doc has none */
   description?: string
   /** <html lang>, default 'en' */
@@ -504,7 +507,7 @@ export async function generateSite(
       projectName: config.projectName,
       projectLinks: config.projectLinks,
       logo: config.logo,
-      bookCover: config.bookCover,
+      bookVolumes: config.bookVolumes,
     })
   )
 

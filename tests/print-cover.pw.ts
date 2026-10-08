@@ -42,7 +42,13 @@ test('Print as PDF opens with the cover the build wrote', async ({
       src: new URL(img.src).pathname,
     }
   })
-  expect(cover.src).toMatch(/-cover\.png$/)
+  // The manifest lists the cover it names only because the build wrote that file.
+  const listed = await page.evaluate(async () =>
+    (
+      await (await fetch('/epub-volumes.json')).json()
+    ).find((v: { book: string }) => v.book === '')
+  )
+  expect(cover.src).toBe(listed.coverUrl)
   expect(cover.width, 'the cover image must load, not 404').toBeGreaterThan(0)
   expect(cover.first, 'the cover is the first page').toBe(true)
 })

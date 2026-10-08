@@ -72,3 +72,53 @@ export function printWhenReady(
     else win.addEventListener('load', go, { once: true })
   })
 }
+
+export interface ResolveBookCoverOptions {
+  /** Injected for tests. */
+  fetchFn?: (
+    url: string
+  ) => Promise<{ ok: boolean; json: () => Promise<unknown> }>
+  /** Resolves when the image at `url` loads, rejects when it does not. Injected for tests. */
+  loadImage?: (url: string) => Promise<unknown>
+}
+
+const loadImageInPage = (url: string): Promise<unknown> =>
+  new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = resolve
+    img.onerror = reject
+    img.src = url
+  })
+
+/**
+ * The cover Print should open with, or `undefined` for none.
+ *
+ * Reads the default volume's `coverUrl` from the volume manifest the site build wrote, then
+ * loads the image before answering. Both steps are checks on purpose: the manifest lists a
+ * cover only when the build wrote one, and loading it here means the printed book never
+ * starts with a broken image and a page break — without an inline `onerror`, which a
+ * Content-Security-Policy would block in the popup.
+ *
+ * Any failure means no cover. Print must still happen.
+ */
+export async function resolveBookCover(
+  manifestUrl: string | undefined,
+  opts: ResolveBookCoverOptions = {}
+): Promise<string | undefined> {
+  if (!manifestUrl) return undefined
+  const { fetchFn = fetch, loadImage = loadImageInPage } = opts
+  try {
+    const response = await fetchFn(manifestUrl)
+    if (!response.ok) return undefined
+    const volumes = (await response.json()) as Array<{
+      book?: string
+      coverUrl?: string
+    }>
+    const cover = volumes.find((v) => v.book === '')?.coverUrl
+    if (!cover) return undefined
+    await loadImage(cover)
+    return cover
+  } catch {
+    return undefined
+  }
+}

@@ -76,7 +76,7 @@ import {
 import { buildSlugMap, legacyQueryPath } from './routing.js'
 import { buildBookHtml, slugify } from './book-html.js'
 import { highlightBlocks } from './highlight.js'
-import { printWhenReady } from './print-window.js'
+import { printWhenReady, resolveBookCover } from './print-window.js'
 import type { PrintableWindow } from './print-window.js'
 import { docSystemStyleSpec } from './doc-system-styles.js'
 import { icons } from '../icons.js'
@@ -92,8 +92,8 @@ interface DocSystemConfig {
   projectName?: string
   projectLinks?: ProjectLinks
   logo?: string
-  /** URL of the book cover the site build wrote; Print opens with it */
-  bookCover?: string
+  /** URL of the site's `epub-volumes.json`; Print reads its cover from it */
+  bookVolumes?: string
 }
 
 const PREFS_KEY = 'tosi-doc-system-prefs'
@@ -349,11 +349,11 @@ export class TosiDocSystem extends withAttributes({
 
           // Print / ePub of the whole corpus, before a separator + the prefs.
           let projectName = ''
-          let bookCover: string | undefined
+          let bookVolumes: string | undefined
           try {
             const parsed = JSON.parse(this.config || '{}')
             projectName = parsed.projectName || ''
-            bookCover = parsed.bookCover || undefined
+            bookVolumes = parsed.bookVolumes || undefined
           } catch {
             // ignore — fall through to document.title
           }
@@ -361,7 +361,8 @@ export class TosiDocSystem extends withAttributes({
           menuItems.push({
             caption: 'Print as PDF',
             icon: 'printer',
-            action: () => {
+            action: async () => {
+              // Opened synchronously, inside the click, or a popup blocker refuses it.
               const win = window.open('', '_blank')
               if (!win) {
                 window.alert(
@@ -369,6 +370,9 @@ export class TosiDocSystem extends withAttributes({
                 )
                 return
               }
+              // Checked before the book is written: a cover only if the build wrote one
+              // and it loads. See `resolveBookCover`.
+              const bookCover = await resolveBookCover(bookVolumes)
               win.document.open()
               /*
               `autoPrint: false` — highlight BEFORE printing (review major M1).

@@ -1,7 +1,9 @@
 import { test, expect } from 'bun:test'
 import {
+  attachCovers,
   epubVolumeIdentity,
   listEpubVolumes,
+  printCoverManifestUrl,
   renderEpubDownloads,
 } from './epub-volumes'
 
@@ -148,19 +150,40 @@ test('substitution is stateless across repeated calls', () => {
   }
 })
 
-test('a volume names its cover beside the ePub, keeping an explicit cover type', () => {
-  // Print reads this URL; the ePub build writes the file. One derivation for both.
-  expect(epubVolumeIdentity(cfg)).toMatchObject({
-    coverFilename: 'foresight-rpg-cover.png',
-    coverUrl: '/foresight-rpg-cover.png',
+test('a cover is listed only when the build wrote it, under the name it was written', () => {
+  // The manifest's coverUrl is read back from the output dir. A predicted name was wrong
+  // for a webp cover, a missing cover file and a build with no rasterizer.
+  const volumes = [epubVolumeIdentity(cfg), epubVolumeIdentity(cfg, 'two')]
+  const withCovers = attachCovers(
+    volumes,
+    [
+      'foresight-rpg.epub',
+      'foresight-rpg-cover.webp',
+      'foresight-rpg-two.epub',
+      // not a cover of either volume: another stem, and a doubled extension
+      'foresight-rpg-three-cover.png',
+      'foresight-rpg-two-cover.png.bak',
+    ],
+    '/docs/'
+  )
+  expect(withCovers[0]).toMatchObject({
+    coverFilename: 'foresight-rpg-cover.webp',
+    coverUrl: '/docs/foresight-rpg-cover.webp',
   })
+  expect(withCovers[1]).toEqual(volumes[1])
+  expect('coverUrl' in epubVolumeIdentity(cfg)).toBe(false)
+})
+
+test('Print is handed the manifest only when there is an ePub and the cover is not opted out', () => {
+  expect(printCoverManifestUrl({ name: 'b' })).toBeUndefined()
+  expect(printCoverManifestUrl({ name: 'b', epub: false })).toBeUndefined()
+  expect(printCoverManifestUrl({ name: 'b', epub: true })).toBe(
+    '/epub-volumes.json'
+  )
   expect(
-    epubVolumeIdentity(
-      { name: 'b', basePath: '/docs/', epub: { cover: 'art/Front.JPG' } },
-      'two'
-    )
-  ).toMatchObject({
-    coverFilename: 'b-two-cover.jpg',
-    coverUrl: '/docs/b-two-cover.jpg',
-  })
+    printCoverManifestUrl({ name: 'b', basePath: '/docs/', epub: {} })
+  ).toBe('/docs/epub-volumes.json')
+  expect(
+    printCoverManifestUrl({ name: 'b', epub: { printCover: false } })
+  ).toBeUndefined()
 })

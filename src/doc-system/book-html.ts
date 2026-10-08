@@ -121,7 +121,7 @@ a.wikilink { text-decoration: none; border-bottom: 1px dotted currentColor; }
 // Print-only layout: page margins, a chapter per page, an avoid-break TOC.
 export const PRINT_CSS = `
 @page { margin: 18mm 16mm; }
-.book-cover { display: block; width: 100%; height: 100vh; object-fit: contain; page-break-after: always; }
+.book-cover { display: block; margin: 0 auto; max-width: 100%; max-height: 100vh; page-break-after: always; break-inside: avoid; }
 .book-title { text-align: center; margin: 30vh 0 1em; }
 .book-toc { page-break-after: always; }
 .book-toc h2 { page-break-before: avoid; }
@@ -175,8 +175,9 @@ function tocHtml(nodes: NavNode<BookDoc>[]): string {
 export interface BookHtmlOptions {
   title: string
   /**
-   * URL of a cover image, printed as the first page. If it fails to load (a build
-   * without a cover) the image removes itself, so no blank page is printed.
+   * URL of a cover image, printed as the first page. The caller is responsible for it
+   * loading (`resolveBookCover` checks before passing it): a broken image here is a blank
+   * first page.
    */
   cover?: string
   /** full stylesheet (defaults to DEFAULT_BOOK_CSS + PRINT_CSS) */
@@ -216,7 +217,7 @@ ${
   opts.cover
     ? `<img class="book-cover" src="${escapeAttr(
         opts.cover
-      )}" alt="${escapeAttr(opts.title)} cover" onerror="this.remove()"/>`
+      )}" alt="${escapeAttr(opts.title)} cover"/>`
     : ''
 }
 <h1 class="book-title">${escapeHtml(opts.title)}</h1>

@@ -10,7 +10,7 @@ import {
   buildEpub,
   rewriteInBookLinks,
 } from './epub.js'
-import { epubVolumeIdentity } from './epub-volumes.js'
+import { attachCovers, epubVolumeIdentity } from './epub-volumes.js'
 
 // ── #15: in-book cross-links (/slug/ and ?filename → <slug>.xhtml) ────────────
 
@@ -497,7 +497,7 @@ test('a placement parent that is not in the volume fails the build', async () =>
   }
 }, 60000)
 
-test('the cover is also written beside the ePub, at the name the volume helper gives', async () => {
+test('the cover is written beside the ePub under its real type, where attachCovers finds it', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-cover-'))
   try {
     const corpus = path.join(dir, 'docs.json')
@@ -512,16 +512,33 @@ test('the cover is also written beside the ePub, at the name the volume helper g
         },
       ])
     )
-    const art = path.join(dir, 'art.png')
-    const bytes = Buffer.from('not really a png, but ours')
+    const art = path.join(dir, 'art.webp')
+    const bytes = Buffer.from('not really an image, but ours')
     fs.writeFileSync(art, bytes)
     const config = { name: 'Cover Book', outputDir: dir, docsJson: corpus }
-    const out = await buildEpub(config as any, { cover: art })
-    const beside = path.join(
-      path.dirname(out),
-      epubVolumeIdentity({ ...config, epub: { cover: art } }).coverFilename
+
+    // Default name, a type the old prediction got wrong.
+    await buildEpub(config as any, { cover: art })
+    const [volume] = attachCovers(
+      [epubVolumeIdentity(config)],
+      fs.readdirSync(dir)
     )
-    expect(fs.readFileSync(beside).equals(bytes)).toBe(true)
+    expect(volume.coverFilename).toBe('cover-book-cover.webp')
+    expect(
+      fs.readFileSync(path.join(dir, volume.coverFilename!)).equals(bytes)
+    ).toBe(true)
+
+    // An explicit output keeps its own stem, so the default volume lists no cover.
+    fs.rmSync(path.join(dir, 'cover-book-cover.webp'))
+    await buildEpub(config as any, {
+      cover: art,
+      output: path.join(dir, 'custom.epub'),
+    })
+    expect(fs.existsSync(path.join(dir, 'custom-cover.webp'))).toBe(true)
+    expect(
+      attachCovers([epubVolumeIdentity(config)], fs.readdirSync(dir))[0]
+        .coverUrl
+    ).toBeUndefined()
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }

@@ -21,7 +21,7 @@ import { highlightHtml } from '../highlight.js';
 import { buildSlugMap, pathForSlug, resolveParent, slugForPath, withBase, } from '../routing.js';
 import { buildNavTree } from '../nav-tree.js';
 import { partitionByBook, placeInBook, bookTextOf, DEFAULT_BOOK, } from '../book-target.js';
-import { epubVolumeIdentity } from './epub-volumes.js';
+import { coverStem, epubVolumeIdentity } from './epub-volumes.js';
 import { isLiveFence, languageOfClass } from '../example-policy.js';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify, } from '../book-html.js';
 import { selectBookDocs } from '../book-manifest.js';
@@ -513,6 +513,9 @@ function loadSvgGlyph(absPath) {
  * if neither is available.
  */
 async function makeCover(config, opts, meta) {
+    if (opts.cover && !fs.existsSync(opts.cover)) {
+        console.warn(`epub: cover "${opts.cover}" not found — generating one from the title instead.`);
+    }
     if (opts.cover && fs.existsSync(opts.cover)) {
         const ext = path.extname(opts.cover).toLowerCase();
         const mediaType = ext === '.jpg' || ext === '.jpeg'
@@ -786,12 +789,13 @@ export async function buildEpub(config, opts = {}) {
         // on disk all derive from one function. A link cannot point at a name nothing wrote.
         path.join(outDir, epubVolumeIdentity({ name: baseTitle, epub: { title: baseTitle } }, opts.bookTarget).filename));
     await zipEpub(buildDir, output);
-    // The same cover, as a plain file beside the ePub, so Print can open with it. Named by
-    // the shared helper (`coverFilename`) for the default name; an explicit `output` keeps
-    // its own stem.
-    if (cover) {
-        fs.writeFileSync(output.replace(/\.epub$/, '') + `-cover${path.extname(cover.file)}`, cover.data);
-    }
+    // The same cover, as a plain file beside the ePub, so Print can open with it. The site
+    // build reads the name back from the output dir (`attachCovers`); nothing predicts it.
+    const coverPath = cover
+        ? path.join(path.dirname(output), coverStem(path.basename(output)) + path.extname(cover.file))
+        : null;
+    if (cover && coverPath)
+        fs.writeFileSync(coverPath, cover.data);
     fs.rmSync(buildDir, { recursive: true, force: true });
     // Release the parser window: an unclosed happy-dom Window holds its whole
     // document (every chapter parsed) plus its timers. Hygiene, not a proven win —
@@ -799,6 +803,7 @@ export async function buildEpub(config, opts = {}) {
     // is still retained. buildEpub now runs in a child process (see orchestrator),
     // which is what actually bounds it.
     win?.close?.();
-    console.log(`epub: ${output} (${chapters.length} chapters)`);
+    console.log(`epub: ${output} (${chapters.length} chapters)` +
+        (coverPath ? `, cover ${path.basename(coverPath)}` : ''));
     return output;
 }

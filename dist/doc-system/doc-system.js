@@ -62,7 +62,7 @@ import { createDocBrowser, } from '../doc-browser.js';
 import { buildSlugMap, legacyQueryPath } from './routing.js';
 import { buildBookHtml, slugify } from './book-html.js';
 import { highlightBlocks } from './highlight.js';
-import { printWhenReady } from './print-window.js';
+import { printWhenReady, resolveBookCover } from './print-window.js';
 import { docSystemStyleSpec } from './doc-system-styles.js';
 import { icons } from '../icons.js';
 import { popMenu } from '../menu.js';
@@ -288,11 +288,11 @@ export class TosiDocSystem extends withAttributes({
                 const menuItems = [];
                 // Print / ePub of the whole corpus, before a separator + the prefs.
                 let projectName = '';
-                let bookCover;
+                let bookVolumes;
                 try {
                     const parsed = JSON.parse(this.config || '{}');
                     projectName = parsed.projectName || '';
-                    bookCover = parsed.bookCover || undefined;
+                    bookVolumes = parsed.bookVolumes || undefined;
                 }
                 catch {
                     // ignore — fall through to document.title
@@ -301,12 +301,16 @@ export class TosiDocSystem extends withAttributes({
                 menuItems.push({
                     caption: 'Print as PDF',
                     icon: 'printer',
-                    action: () => {
+                    action: async () => {
+                        // Opened synchronously, inside the click, or a popup blocker refuses it.
                         const win = window.open('', '_blank');
                         if (!win) {
                             window.alert('Allow pop-ups to print the documentation as a book.');
                             return;
                         }
+                        // Checked before the book is written: a cover only if the build wrote one
+                        // and it loads. See `resolveBookCover`.
+                        const bookCover = await resolveBookCover(bookVolumes);
                         win.document.open();
                         /*
                         `autoPrint: false` — highlight BEFORE printing (review major M1).

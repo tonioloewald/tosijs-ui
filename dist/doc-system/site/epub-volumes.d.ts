@@ -7,19 +7,33 @@ export interface EpubVolume {
     filename: string;
     /** served URL, honouring basePath */
     url: string;
-    /** the cover image the build writes beside the ePub, e.g. `my-project-cover.png` */
-    coverFilename: string;
+    /**
+     * The cover image the build wrote beside the ePub, e.g. `my-project-cover.png`. Present
+     * only in the manifest, and only when that file exists: it is read back from the output
+     * dir after the ePubs are built (`attachCovers`), never predicted.
+     */
+    coverFilename?: string;
     /** served URL of that cover, honouring basePath — Print uses it as its first page */
-    coverUrl: string;
+    coverUrl?: string;
 }
+/** The name `buildEpub` gives a cover written beside `<stem>.epub`, minus its extension. */
+export declare const coverStem: (epubFilename: string) => string;
+/**
+ * Add `coverFilename`/`coverUrl` to each volume whose cover is among `files` (a listing of
+ * the output dir, taken AFTER the ePubs were built).
+ *
+ * Read back and not derived, because only the ePub build knows what it wrote: an explicit
+ * cover keeps its own type, a missing one falls back to a generated PNG, and a build without
+ * `@resvg/resvg-js` writes none. A predicted name was wrong in each of those cases.
+ */
+export declare function attachCovers(volumes: EpubVolume[], files: string[], basePath?: string): EpubVolume[];
 export interface VolumeNamingConfig {
     name?: string;
     basePath?: string;
     epub?: boolean | {
         title?: string;
         volumeTitles?: Record<string, string>;
-        /** an explicit cover image; only its extension matters here */
-        cover?: string;
+        printCover?: boolean;
     };
 }
 /**
@@ -53,3 +67,10 @@ export declare const EPUB_DOWNLOADS_MARKER: RegExp;
  * comment.
  */
 export declare function renderEpubDownloads(text: string, volumes: EpubVolume[]): string;
+/** Where the volume manifest is served. */
+export declare const VOLUME_MANIFEST = "epub-volumes.json";
+/**
+ * The manifest URL a page should hand to Print so it can open with the cover, or
+ * `undefined` when it should not: no ePub is built, or `epub.printCover` is `false`.
+ */
+export declare function printCoverManifestUrl(config: VolumeNamingConfig): string | undefined;
