@@ -1,4 +1,8 @@
 import { test, expect, describe } from 'bun:test'
+import * as fs from 'fs'
+import * as os from 'os'
+import * as path from 'path'
+import { extractDocs } from './docs'
 import {
   resolveInsets,
   splitConditions,
@@ -160,11 +164,6 @@ What a file inset may read, against a REAL directory: the first cut read anythin
 project root, and published it (1.16.9 review, B1 and B2). Every case here built green then.
 */
 describe('a file inset reads fragments and nothing else', () => {
-  const fs = require('fs') as typeof import('fs')
-  const os = require('os') as typeof import('os')
-  const path = require('path') as typeof import('path')
-  const { extractDocs } = require('./docs') as typeof import('./docs')
-
   const site = (files: Record<string, string>) => {
     const root = fs.realpathSync(
       fs.mkdtempSync(path.join(os.tmpdir(), 'inset-guard-'))
@@ -451,10 +450,6 @@ describe('per-volume placement', () => {
 })
 
 test('extraction assembles the corpus: fragment file, section inset, condition, metadata', async () => {
-  const fs = await import('fs')
-  const os = await import('os')
-  const path = await import('path')
-  const { extractDocs } = await import('./docs')
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'single-source-'))
   try {
     // Opens with an inset and has no metadata of its own.
