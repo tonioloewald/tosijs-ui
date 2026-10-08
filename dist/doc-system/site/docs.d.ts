@@ -1,3 +1,4 @@
+import { type BookPlacement } from '../book-target.js';
 export interface Doc {
     text: string;
     title: string;
@@ -32,6 +33,18 @@ export interface Doc {
      * individual chapter can still divert, join several volumes, or opt out.
      */
     book?: string | string[];
+    /**
+     * Where this doc sits in a particular volume, when that differs from the site:
+     * `{ "language": { "parent": "for-programmers", "order": 20 } }`. Keyed by `book` name
+     * (`"default"` for the main volume); each entry may set `parent`, `order`, `pin` and
+     * `title`. Naming a volume here also binds the doc into it. The site nav is unaffected.
+     */
+    placement?: Record<string, BookPlacement>;
+    /**
+     * The text a book binds, set by the build only where `{"only": …}` conditional text made
+     * it differ from `text` (which is always what the site shows). Never author this.
+     */
+    bookText?: string;
     /**
      * Opt this page out of the reading column.
      *
@@ -78,6 +91,8 @@ export interface ExtractDocsOptions {
     paths: string[];
     ignore?: string[];
     output?: string;
+    /** project root a file inset must stay inside; default `process.cwd()` */
+    root?: string;
 }
 /**
  * The title a markdown file implies, when nothing declares one.

@@ -43,6 +43,16 @@ export { buildEpub, DEFAULT_BOOK_CSS } from './epub.js'
 export type { BuildEpubOptions, BookMeta } from './epub.js'
 export { selectBookDocs } from '../book-manifest.js'
 export type { BookManifest } from '../book-manifest.js'
+export { placeInBook, bookTextOf } from '../book-target.js'
+export type { BookPlacement } from '../book-target.js'
+// Insets and conditional text (#217): `extractDocs` applies these; exported for a consumer
+// that builds its corpus some other way.
+export {
+  assembleCorpus,
+  resolveInsets,
+  splitConditions,
+  SingleSourceError,
+} from './single-source.js'
 
 export {
   listEpubVolumes,

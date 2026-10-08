@@ -19,10 +19,21 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { renderDocMarkdown } from '../render.js'
 import { highlightHtml } from '../highlight.js'
-import { buildSlugMap, pathForSlug, slugForPath, withBase } from '../routing.js'
+import {
+  buildSlugMap,
+  pathForSlug,
+  resolveParent,
+  slugForPath,
+  withBase,
+} from '../routing.js'
 import { buildNavTree, NavNode } from '../nav-tree.js'
 import type { Doc } from './docs.js'
-import { partitionByBook, DEFAULT_BOOK } from '../book-target.js'
+import {
+  partitionByBook,
+  placeInBook,
+  bookTextOf,
+  DEFAULT_BOOK,
+} from '../book-target.js'
 import { epubVolumeIdentity } from './epub-volumes.js'
 import type { SiteConfig } from './site-config.js'
 import { isLiveFence, languageOfClass } from '../example-policy.js'
@@ -837,8 +848,32 @@ export async function buildEpub(
         `   If this is a typo, note that book names are case- and space-sensitive.`
     )
   }
+  /*
+  Arrange for THIS volume before curating: a doc's `placement` for this book replaces its
+  site parent and order (#217), and the manifest then orders what results.
+
+  A placement parent that is not in the volume is an error. The nav tree would otherwise
+  quietly promote the chapter to the top level, which is a book with the wrong outline and a
+  green build.
+  */
+  const book = opts.bookTarget ?? DEFAULT_BOOK
+  const placed = placeInBook(visible, book)
+  const placedSlugs = buildSlugMap(placed)
+  for (const [i, doc] of placed.entries()) {
+    if (doc === visible[i] || !doc.parent) continue
+    if (doc.parent === visible[i].parent) continue
+    if (!resolveParent(doc.parent, placed, placedSlugs)) {
+      throw new Error(
+        `ePub volume ${JSON.stringify(book || '(default)')}: ${
+          doc.filename
+        } is placed under "${
+          doc.parent
+        }", which is not a document in that volume.`
+      )
+    }
+  }
   // Curate/reorder for the book (a no-op when config.book is absent).
-  const docs = selectBookDocs(visible, config.book)
+  const docs = selectBookDocs(placed, config.book)
   const slugMap = buildSlugMap(docs)
   const roots = buildNavTree(docs, slugMap)
 
@@ -941,7 +976,10 @@ export async function buildEpub(
       `injectExampleLinks` matches on the `language-*` class, never on the code text, so
       highlighting cannot break the "Run this example live" links.
       */
-      await highlightHtml(renderDocMarkdown(stripDocMeta(doc.text)), 'none'),
+      await highlightHtml(
+        renderDocMarkdown(stripDocMeta(bookTextOf(doc))),
+        'none'
+      ),
       bookFiles,
       slugMap,
       config.basePath

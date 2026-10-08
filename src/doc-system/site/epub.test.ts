@@ -406,3 +406,92 @@ test('the ePub child counts declared dialects as examples, so live links match t
   expect(chapter).toContain('href="https://example.test/a/#example-2"')
   fs.rmSync(dir, { recursive: true, force: true })
 })
+
+// ── #217: one corpus, arranged and worded per volume ─────────────────────────
+
+test('a volume binds its own arrangement and its own text; the default keeps the site one', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-placement-'))
+  const corpus = path.join(dir, 'docs.json')
+  fs.writeFileSync(
+    corpus,
+    JSON.stringify([
+      {
+        filename: 'part-two.md',
+        title: 'Part Two',
+        text: '# Part Two',
+        path: 'part-two.md',
+        book: 'language',
+      },
+      {
+        filename: 'for-ts.md',
+        title: 'For TS',
+        text: '# For TS\n\nNext page.',
+        bookText: '# For TS\n\nNext chapter.',
+        path: 'for-ts.md',
+        placement: {
+          language: { parent: 'part-two', title: 'Coming from TS' },
+        },
+      },
+    ])
+  )
+  const build = async (bookTarget?: string) => {
+    // A named volume names its own file; `output` is the default volume's.
+    const out = await buildEpub(
+      { name: 'B', outputDir: dir, docsJson: corpus } as any,
+      {
+        output: path.join(dir, 'default.epub'),
+        author: 'T',
+        ...(bookTarget ? { bookTarget } : {}),
+      }
+    )
+    return {
+      nav: await Bun.$`unzip -p ${out} OEBPS/nav.xhtml`.quiet().text(),
+      chapter: await Bun.$`unzip -p ${out} OEBPS/for-ts.xhtml`.quiet().text(),
+    }
+  }
+  try {
+    const language = await build('language')
+    // Nested under Part Two, under its volume title.
+    expect(language.nav).toMatch(
+      /Part Two<\/a>\s*<ol>[\s\S]*Coming from TS[\s\S]*<\/ol>/
+    )
+    // A book reads the book variant.
+    expect(language.chapter).toContain('Next chapter.')
+    expect(language.chapter).not.toContain('Next page.')
+
+    const main = await build()
+    expect(main.nav).toContain('For TS')
+    expect(main.nav).not.toContain('Coming from TS')
+    expect(main.nav).not.toContain('Part Two')
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+}, 60000)
+
+test('a placement parent that is not in the volume fails the build', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-placement-bad-'))
+  const corpus = path.join(dir, 'docs.json')
+  fs.writeFileSync(
+    corpus,
+    JSON.stringify([
+      {
+        filename: 'a.md',
+        title: 'A',
+        text: '# A',
+        path: 'a.md',
+        placement: { language: { parent: 'no-such-part' } },
+      },
+    ])
+  )
+  try {
+    await expect(
+      buildEpub({ name: 'B', outputDir: dir, docsJson: corpus } as any, {
+        output: path.join(dir, 'x.epub'),
+        author: 'T',
+        bookTarget: 'language',
+      })
+    ).rejects.toThrow(/placed under "no-such-part"/)
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+}, 60000)

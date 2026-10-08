@@ -29,6 +29,11 @@ export const NO_BOOK = 'none';
  * `book: ["default", "field-guide"]` binds the doc into both.
  */
 export const DEFAULT_BOOK_NAME = 'default';
+const placementKey = (book) => book === DEFAULT_BOOK ? DEFAULT_BOOK_NAME : book;
+/** Volumes a doc's `placement` names, as book keys. */
+function placedBooks(doc) {
+    return Object.keys(doc.placement ?? {}).map((k) => k.trim().toLowerCase() === DEFAULT_BOOK_NAME ? DEFAULT_BOOK : k.trim());
+}
 /**
  * The doc itself, then each ancestor nearest-first. Stops at an unresolvable parent and
  * at a cycle, so a self-parented doc yields just itself rather than hanging.
@@ -86,14 +91,48 @@ function normalizeDeclaration(value) {
  * another, or bind into several (`["default", "appendices"]`).
  */
 export function resolveBooks(doc, docs, slugMap = {}) {
+    const placed = placedBooks(doc);
+    const withPlaced = (books) => [
+        ...books,
+        ...placed.filter((b) => !books.includes(b)),
+    ];
     for (const d of chain(doc, docs, slugMap)) {
         if (d.book === undefined)
             continue;
         const declared = normalizeDeclaration(d.book);
-        if (declared !== null)
-            return declared;
+        /*
+        An explicit `none` on the doc ITSELF still wins over its own placement: withholding is
+        the conservative reading of a contradiction, as it is for `["default", "none"]`. An
+        inherited `none` does not, or a chapter could never be placed into a book from a section
+        that is otherwise site-only.
+        */
+        if (declared !== null) {
+            if (!declared.length && d === doc)
+                return [];
+            return withPlaced(declared);
+        }
     }
-    return [DEFAULT_BOOK];
+    return withPlaced([DEFAULT_BOOK]);
+}
+/**
+ * The docs of one volume, arranged for it: each doc's `placement` for this book overlaid on
+ * its site `parent` / `order` / `pin` / `title`. Returns shallow copies; the site's
+ * arrangement is untouched.
+ */
+export function placeInBook(docs, book) {
+    const key = placementKey(book);
+    return docs.map((doc) => {
+        const entry = Object.entries(doc.placement ?? {}).find(([k]) => k.trim() === key ||
+            (book === DEFAULT_BOOK && k.trim().toLowerCase() === DEFAULT_BOOK_NAME));
+        if (!entry)
+            return doc;
+        const out = { ...doc };
+        for (const [field, value] of Object.entries(entry[1])) {
+            if (value !== undefined)
+                out[field] = value;
+        }
+        return out;
+    });
 }
 /**
  * Hidden here or anywhere above.
@@ -134,3 +173,20 @@ export function namedBooks(docs, slugMap = {}) {
         .filter((k) => k !== DEFAULT_BOOK)
         .sort();
 }
+/*
+The text a book binds for this doc.
+
+`bookText` exists only where conditional text made the book differ from the site
+(`site/single-source.ts`). Every book output asks here, so there are exactly two readers to
+get right (the ePub and print) and every other consumer keeps reading `text`.
+*/
+export const bookTextOf = (doc) => doc.bookText ?? doc.text;
+/*
+Might this source use an inset or conditional text?
+
+Deliberately loose: it also matches a directive that is only being SHOWN in a code fence.
+Its two callers want exactly that bias. The build uses it to skip docs that certainly have
+none before asking the parser, and the example editor uses it to refuse a save, where a
+false positive costs a refusal and a false negative writes an edit into the wrong block.
+*/
+export const mayHaveSingleSourceDirective = (text) => /<!--\s*\{[^\n]*"(inset|only|end)"/.test(text);

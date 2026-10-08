@@ -10,11 +10,14 @@ force-wrapped code listings, not executed.
 import { renderDocMarkdown } from './render.js'
 import { buildSlugMap } from './routing.js'
 import { buildNavTree, NavNode, NavDoc } from './nav-tree.js'
+import { bookTextOf } from './book-target.js'
 
 export interface BookDoc {
   filename: string
   title: string
   text: string
+  /** the book's variant, where conditional text made it differ from the site's */
+  bookText?: string
   parent?: string
   hidden?: boolean
 }
@@ -187,7 +190,9 @@ export function buildBookHtml(docs: BookDoc[], opts: BookHtmlOptions): string {
       (node) =>
         `<section class="chapter" id="${slugify(
           node.doc.filename
-        )}">\n${renderDocMarkdown(stripDocMeta(node.doc.text))}\n</section>`
+        )}">\n${renderDocMarkdown(
+          stripDocMeta(bookTextOf(node.doc))
+        )}\n</section>`
     )
     .join('\n')
 

@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.16.9
+
+Single-sourcing for books, asked for by tjs-lang for *The TJS Programming Language* (#217):
+one corpus, several outputs, nothing kept in sync by hand. All additive; a corpus that uses
+none of it is assembled exactly as before.
+
+### One source, several outputs (#217)
+
+- **Per-volume placement.** A page can sit in a different place in each book:
+  `{"placement": {"language": {"parent": "for-programmers", "order": 20}}}` in its metadata.
+  Each entry may set `parent`, `order`, `pin` and `title`, and naming a volume also binds the
+  page into it. The site nav is unaffected.
+- **Text insets.** `<!--{ "inset": "install.md#with-bun" }-->` includes another document, or
+  one heading's section of it, in the page. A `_`-prefixed file can be inset without being a
+  page. Resolved at extraction, so the site, the ePubs, `llms.txt` and the markdown copies
+  all get the assembled text, and an inset passage's live examples and tests run where it is
+  inset.
+- **Conditional text.** `<!--{ "only": "book" }--> … <!--{ "end": "only" }-->` (or `"site"`)
+  for wording that belongs to one output, such as "next chapter" against "next page".
+- **Each is guarded.** An inset that resolves nowhere, an include cycle, a missing heading, an
+  unbalanced `only`, and a placement under a parent that is not in the volume all fail the
+  build.
+- Saving an edited live example back to source is refused on a page whose source uses an
+  inset or conditional text, where the example's position on the page no longer identifies a
+  block in that file.
+
 ## 1.16.8
 
 A patch for honest results. The doc-test lane can no longer pass over pages that never

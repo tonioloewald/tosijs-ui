@@ -14,6 +14,16 @@ export interface BookTargetDoc {
     /** one book, several books, or `'none'` */
     book?: string | string[];
     hidden?: boolean;
+    /** where this doc sits in a particular volume, keyed by `book` name */
+    placement?: Record<string, BookPlacement>;
+}
+export interface BookPlacement {
+    /** parent within this volume; `''` puts the doc at the top level */
+    parent?: string;
+    order?: number;
+    pin?: 'top' | 'bottom';
+    /** chapter title in this volume */
+    title?: string;
 }
 type SlugMap = Record<string, string>;
 /**
@@ -29,6 +39,15 @@ export declare function chain<T extends BookTargetDoc>(doc: T, docs: T[], slugMa
  * another, or bind into several (`["default", "appendices"]`).
  */
 export declare function resolveBooks<T extends BookTargetDoc>(doc: T, docs: T[], slugMap?: SlugMap): string[];
+/**
+ * The docs of one volume, arranged for it: each doc's `placement` for this book overlaid on
+ * its site `parent` / `order` / `pin` / `title`. Returns shallow copies; the site's
+ * arrangement is untouched.
+ */
+export declare function placeInBook<T extends BookTargetDoc & {
+    order?: number;
+    pin?: 'top' | 'bottom';
+}>(docs: T[], book: string): T[];
 /**
  * Hidden here or anywhere above.
  *
@@ -48,4 +67,9 @@ export declare function withoutHidden<T extends BookTargetDoc>(docs: T[], slugMa
 export declare function partitionByBook<T extends BookTargetDoc>(docs: T[], slugMap?: SlugMap): Map<string, T[]>;
 /** Named books only, in stable order — the extra volumes beside the default one. */
 export declare function namedBooks<T extends BookTargetDoc>(docs: T[], slugMap?: SlugMap): string[];
+export declare const bookTextOf: (doc: {
+    text: string;
+    bookText?: string;
+}) => string;
+export declare const mayHaveSingleSourceDirective: (text: string) => boolean;
 export {};

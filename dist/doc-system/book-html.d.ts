@@ -3,6 +3,8 @@ export interface BookDoc {
     filename: string;
     title: string;
     text: string;
+    /** the book's variant, where conditional text made it differ from the site's */
+    bookText?: string;
     parent?: string;
     hidden?: boolean;
 }

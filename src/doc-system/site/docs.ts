@@ -104,7 +104,8 @@ import {
 } from './truncated-doc.js'
 import { pinnedSort } from '../nav-tree.js'
 import { buildSlugMap } from '../routing.js'
-import { withoutHidden } from '../book-target.js'
+import { withoutHidden, type BookPlacement } from '../book-target.js'
+import { assembleCorpus, isSingleSourceDirective } from './single-source.js'
 
 export interface Doc {
   text: string
@@ -140,6 +141,18 @@ export interface Doc {
    * individual chapter can still divert, join several volumes, or opt out.
    */
   book?: string | string[]
+  /**
+   * Where this doc sits in a particular volume, when that differs from the site:
+   * `{ "language": { "parent": "for-programmers", "order": 20 } }`. Keyed by `book` name
+   * (`"default"` for the main volume); each entry may set `parent`, `order`, `pin` and
+   * `title`. Naming a volume here also binds the doc into it. The site nav is unaffected.
+   */
+  placement?: Record<string, BookPlacement>
+  /**
+   * The text a book binds, set by the build only where `{"only": …}` conditional text made
+   * it differ from `text` (which is always what the site shows). Never author this.
+   */
+  bookText?: string
   // Opt-in SEO / agent metadata, provided in the doc's JSON block alongside `pin`:
   //   <!--{ "headTitle": "...", "description": "...", "keywords": "a, b", "image": "/og/x.webp" }-->
   // `title` (if provided) also renames the nav item + heading; `headTitle` sets only
@@ -195,6 +208,8 @@ export interface ExtractDocsOptions {
   paths: string[]
   ignore?: string[]
   output?: string
+  /** project root a file inset must stay inside; default `process.cwd()` */
+  root?: string
 }
 
 const TRIM_REGEX = /^#+ |`/g
@@ -315,9 +330,14 @@ function metadata(content: string, filePath: string): Partial<Doc> {
   And it must START A LINE. A metadata block is a standalone directive, so an inline mention
   in a sentence is prose — exactly the rule `/*#` doc blocks already follow.
   */
-  const source = scannable.match(
-    /^[ \t]*<!--(\{.*\})-->|^[ \t]*\/\*(\{.*\})\*\//m
-  )
+  /*
+  The first such block that is not a single-sourcing directive. An inset or an `only` is
+  spelled the same way, and a doc that opens with one and has no metadata of its own was
+  otherwise published carrying `inset` as a metadata field.
+  */
+  const source = [
+    ...scannable.matchAll(/^[ \t]*<!--(\{.*\})-->|^[ \t]*\/\*(\{.*\})\*\//gm),
+  ].find((m) => !isSingleSourceDirective(m[1] || m[2]))
   let data: Partial<Doc> = {}
   if (source) {
     try {
@@ -601,7 +621,12 @@ function findMarkdownFiles(
 }
 
 export function extractDocs(options: ExtractDocsOptions): Doc[] {
-  const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options
+  const {
+    paths,
+    ignore = ['node_modules', 'dist', 'build'],
+    output,
+    root,
+  } = options
   const found = findMarkdownFiles(paths, ignore, new Set(DEFAULT_DOC_IGNORES))
   /*
   Drop hidden docs HERE, before anything else sees them.
@@ -617,6 +642,13 @@ export function extractDocs(options: ExtractDocsOptions): Doc[] {
   rest of the pipeline is concerned. Descendants of a hidden doc go with it.
   */
   const docs = withoutHidden(found, buildSlugMap(found))
+  /*
+  Insets and conditional text are resolved HERE, for the same reason hidden docs are dropped
+  here: the corpus is the thing that ships, so anything assembled later is assembled by each
+  consumer separately. After the hidden filter, so a withheld doc cannot be published by
+  insetting it; a fragment that should not be a page is a `_`-prefixed file instead.
+  */
+  assembleCorpus(docs, { root })
   if (output) {
     saveDocsJSON(docs, output)
   }

@@ -658,6 +658,7 @@ import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } fr
 import { executeInline, executeInIframe } from './execution.js';
 import { insertExamples, examplePolicy } from './insert-examples.js';
 import { rewriteExampleBlocks, groupExamples, findFencedBlocks, } from './save-to-source.js';
+import { mayHaveSingleSourceDirective } from '../doc-system/book-target.js';
 import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, hasExampleEdit, } from './example-store.js';
 import { liveExampleStyleSpec } from './styles.js';
 import { runTests } from './test-harness.js';
@@ -1856,6 +1857,18 @@ export class LiveExample extends withAttributes({
         }
         catch {
             window.alert('Source endpoint unavailable — saving to source works in dev only.');
+            return;
+        }
+        /*
+        A page assembled from insets or conditional text does not have the source's examples in
+        the source's order: an inset brings another file's examples with it, and an `only` block
+        removes some. The ordinal would index a different block here than it did on the page, so
+        refuse rather than write the edit somewhere it was not made.
+        */
+        if (mayHaveSingleSourceDirective(content)) {
+            window.alert(`${sourceFile} uses insets or conditional text, so an example on this page ` +
+                `cannot be matched to a block in that file.\n\n` +
+                `Edit the source instead: an inset example lives in the file it is inset from.`);
             return;
         }
         /*

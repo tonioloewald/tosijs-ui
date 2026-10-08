@@ -1195,6 +1195,72 @@ child process, and `epub` settings (title, author, css, the `book` manifest) app
 of them. Note the two senses of the word: `config.book` is the **manifest** that curates
 and orders docs _within_ a volume; a doc's `book` metadata selects **which** volume.
 
+
+#### One source, several outputs: placement, insets and conditional text
+
+A site and each of its books are different arrangements of the same sources. Three pieces of
+markup keep them from becoming copies that drift apart. All three are resolved by the build,
+so the pages, the ePubs, `llms.txt` and the markdown copies of pages all receive finished
+text, and a mistake in any of them **fails the build** instead of leaving a page quietly
+short.
+
+**Placement: a page sits somewhere different in each volume.** A doc has one `parent` and one
+`order`, and a book inherits them. `placement` overrides them per volume, keyed by `book` name
+(`"default"` for the main volume):
+
+```text
+<!--{ "placement": { "language": { "parent": "for-programmers", "order": 20 } } }-->
+```
+
+Each entry may set `parent`, `order`, `pin` and `title`; `"parent": ""` puts the page at the
+top level of that volume. Naming a volume here also binds the page into it, in addition to
+whatever `book` says, so the name is written once. A page's own `"book": "none"` still
+withholds it. The site nav is unaffected. A placement `parent` that is not a document in that
+volume is a build error.
+
+**Insets: write a passage once, show it in several pages.**
+
+```text
+<!--{ "inset": "install.md" }-->            → the whole document
+<!--{ "inset": "install.md#with-bun" }-->   → one heading's section of it
+<!--{ "inset": "_how-examples-work.md" }--> → a fragment file that is not a page
+```
+
+The reference is tried as a document first (filename, slug or title, the same matching
+`parent` uses) and then as a file relative to the page that includes it. The second form is
+how a passage exists without being a page of its own: a file whose name starts with `_` is
+skipped by extraction and can still be inset.
+
+What arrives is the passage without its place in the other page's outline: a whole document
+loses its title heading and metadata block, and a section loses its own heading and runs to
+the next heading of the same or a higher level. Write the heading you want in the page that
+includes it. Live examples and inline tests in the passage run in every page they are inset
+into. Insets nest; a cycle, a document or file that does not exist, a heading that does not
+exist, and a file outside the project are all build errors. A hidden document cannot be
+inset, so insetting never publishes something that was withheld.
+
+**Conditional text: wording for the site or for books only.**
+
+```text
+<!--{ "only": "book" }-->
+
+The examples in this chapter run in the online edition.
+
+<!--{ "end": "only" }-->
+```
+
+`"only"` takes `"site"` or `"book"`. The site, `llms.txt` and the markdown copies get the
+site wording; every ePub and the Print output get the book wording. Blocks do not nest, and
+an unclosed or unmatched block is a build error.
+
+All three directives go on their own line, like the metadata block they are spelled after.
+One shown inside a code fence is an illustration and is left alone.
+
+**What does not work on an assembled page.** Saving an edited live example back to its source
+is refused on a page whose source uses an inset or conditional text, because the examples on
+the page are no longer the examples in that file, in that order. Edit the source file; an
+inset example lives in the file it is inset from.
+
 #### `/version.json` — what am I looking at?
 
 Every build writes a small build-identity file to the web root:

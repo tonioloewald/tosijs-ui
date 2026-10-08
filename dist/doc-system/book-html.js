@@ -9,6 +9,7 @@ force-wrapped code listings, not executed.
 import { renderDocMarkdown } from './render.js';
 import { buildSlugMap } from './routing.js';
 import { buildNavTree } from './nav-tree.js';
+import { bookTextOf } from './book-target.js';
 // Clean book typography; force-wraps code so listings never overflow a page.
 export const DEFAULT_BOOK_CSS = `/* doc-system book stylesheet */
 html { font-size: 100%; }
@@ -149,7 +150,7 @@ export function buildBookHtml(docs, opts) {
     const roots = buildNavTree(visible, slugMap);
     const css = opts.css ?? `${DEFAULT_BOOK_CSS}\n${PRINT_CSS}`;
     const chapters = flatten(roots)
-        .map((node) => `<section class="chapter" id="${slugify(node.doc.filename)}">\n${renderDocMarkdown(stripDocMeta(node.doc.text))}\n</section>`)
+        .map((node) => `<section class="chapter" id="${slugify(node.doc.filename)}">\n${renderDocMarkdown(stripDocMeta(bookTextOf(node.doc)))}\n</section>`)
         .join('\n');
     return `<!DOCTYPE html>
 <html lang="${opts.lang ?? 'en'}">

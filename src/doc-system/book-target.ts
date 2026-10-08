@@ -41,6 +41,39 @@ export interface BookTargetDoc {
   /** one book, several books, or `'none'` */
   book?: string | string[]
   hidden?: boolean
+  /** where this doc sits in a particular volume, keyed by `book` name */
+  placement?: Record<string, BookPlacement>
+}
+
+/*
+A doc's place in ONE volume, where that differs from its place on the site (#217).
+
+The site nav has one `parent` and one `order` per doc, and a book used to inherit both. But a
+page that is a top-level section of the site can be a chapter inside Part II of a book, and a
+second book can put it somewhere else again. So the overrides are keyed by volume, and the
+site's own placement is the default for any volume that says nothing.
+
+Naming a volume here also binds the doc into it. Saying where a chapter goes in a book it is
+not in would be a contradiction, and requiring the name twice (`book` and `placement`) is how
+the two would come to disagree.
+*/
+export interface BookPlacement {
+  /** parent within this volume; `''` puts the doc at the top level */
+  parent?: string
+  order?: number
+  pin?: 'top' | 'bottom'
+  /** chapter title in this volume */
+  title?: string
+}
+
+const placementKey = (book: string): string =>
+  book === DEFAULT_BOOK ? DEFAULT_BOOK_NAME : book
+
+/** Volumes a doc's `placement` names, as book keys. */
+function placedBooks(doc: BookTargetDoc): string[] {
+  return Object.keys(doc.placement ?? {}).map((k) =>
+    k.trim().toLowerCase() === DEFAULT_BOOK_NAME ? DEFAULT_BOOK : k.trim()
+  )
 }
 
 type SlugMap = Record<string, string>
@@ -108,12 +141,50 @@ export function resolveBooks<T extends BookTargetDoc>(
   docs: T[],
   slugMap: SlugMap = {}
 ): string[] {
+  const placed = placedBooks(doc)
+  const withPlaced = (books: string[]): string[] => [
+    ...books,
+    ...placed.filter((b) => !books.includes(b)),
+  ]
   for (const d of chain(doc, docs, slugMap)) {
     if (d.book === undefined) continue
     const declared = normalizeDeclaration(d.book)
-    if (declared !== null) return declared
+    /*
+    An explicit `none` on the doc ITSELF still wins over its own placement: withholding is
+    the conservative reading of a contradiction, as it is for `["default", "none"]`. An
+    inherited `none` does not, or a chapter could never be placed into a book from a section
+    that is otherwise site-only.
+    */
+    if (declared !== null) {
+      if (!declared.length && d === doc) return []
+      return withPlaced(declared)
+    }
   }
-  return [DEFAULT_BOOK]
+  return withPlaced([DEFAULT_BOOK])
+}
+
+/**
+ * The docs of one volume, arranged for it: each doc's `placement` for this book overlaid on
+ * its site `parent` / `order` / `pin` / `title`. Returns shallow copies; the site's
+ * arrangement is untouched.
+ */
+export function placeInBook<
+  T extends BookTargetDoc & { order?: number; pin?: 'top' | 'bottom' }
+>(docs: T[], book: string): T[] {
+  const key = placementKey(book)
+  return docs.map((doc) => {
+    const entry = Object.entries(doc.placement ?? {}).find(
+      ([k]) =>
+        k.trim() === key ||
+        (book === DEFAULT_BOOK && k.trim().toLowerCase() === DEFAULT_BOOK_NAME)
+    )
+    if (!entry) return doc
+    const out = { ...doc }
+    for (const [field, value] of Object.entries(entry[1])) {
+      if (value !== undefined) (out as any)[field] = value
+    }
+    return out
+  })
 }
 
 /**
@@ -169,3 +240,24 @@ export function namedBooks<T extends BookTargetDoc>(
     .filter((k) => k !== DEFAULT_BOOK)
     .sort()
 }
+
+/*
+The text a book binds for this doc.
+
+`bookText` exists only where conditional text made the book differ from the site
+(`site/single-source.ts`). Every book output asks here, so there are exactly two readers to
+get right (the ePub and print) and every other consumer keeps reading `text`.
+*/
+export const bookTextOf = (doc: { text: string; bookText?: string }): string =>
+  doc.bookText ?? doc.text
+
+/*
+Might this source use an inset or conditional text?
+
+Deliberately loose: it also matches a directive that is only being SHOWN in a code fence.
+Its two callers want exactly that bias. The build uses it to skip docs that certainly have
+none before asking the parser, and the example editor uses it to refuse a save, where a
+false positive costs a refusal and a false negative writes an edit into the wrong block.
+*/
+export const mayHaveSingleSourceDirective = (text: string): boolean =>
+  /<!--\s*\{[^\n]*"(inset|only|end)"/.test(text)
