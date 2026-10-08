@@ -182,4 +182,20 @@ describe('resolveBookCover', () => {
       ).toBeUndefined()
     }
   })
+
+  test('a lookup that never settles gives up, so the popup is not left blank', async () => {
+    const never = () => new Promise<never>(() => {})
+    const started = performance.now()
+    expect(
+      await resolveBookCover('/m.json', { fetchFn: never, timeoutMs: 20 })
+    ).toBeUndefined()
+    expect(
+      await resolveBookCover('/m.json', {
+        fetchFn: fetchOf(manifest),
+        loadImage: never,
+        timeoutMs: 20,
+      })
+    ).toBeUndefined()
+    expect(performance.now() - started).toBeLessThan(1000)
+  })
 })

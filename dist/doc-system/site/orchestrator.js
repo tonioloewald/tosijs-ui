@@ -28,7 +28,7 @@ function registerSiteDialects(config) {
     }
 }
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
-import { attachCovers, listEpubVolumes, printCoverManifestUrl, renderEpubDownloads, } from './epub-volumes.js';
+import { attachCovers, listEpubVolumes, printCoverManifestUrl, VOLUME_MANIFEST, renderEpubDownloads, } from './epub-volumes.js';
 import { buildSlugMap } from '../routing.js';
 import { computeAssetStamp, missingStampInputWarning } from './asset-stamp.js';
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, } from 'fs';
@@ -656,7 +656,7 @@ export async function buildSite(config, opts = {}) {
                     await Bun.write(DOCS_JSON, JSON.stringify(corpus, null, 2));
                 // A stable, machine-readable list so a consumer can link the books without
                 // re-deriving the filename — the "documented helper" half of #46.
-                await Bun.write(`${PUBLIC}/epub-volumes.json`, JSON.stringify(volumes, null, 2));
+                await Bun.write(`${PUBLIC}/${VOLUME_MANIFEST}`, JSON.stringify(volumes, null, 2));
             };
             // Auto-create missing section docs + regenerate their TOC blocks, then
             // re-extract so the corpus reflects the on-disk changes.
@@ -1603,7 +1603,7 @@ export async function buildSite(config, opts = {}) {
                 }
                 // Now the covers exist (or do not), say so in the manifest: a `coverUrl` there
                 // names a file this build wrote. Print reads the default volume's from here.
-                const manifest = `${PUBLIC}/epub-volumes.json`;
+                const manifest = `${PUBLIC}/${VOLUME_MANIFEST}`;
                 if (existsSync(manifest)) {
                     await Bun.write(manifest, JSON.stringify(attachCovers(JSON.parse(await Bun.file(manifest).text()), readdirSync(PUBLIC), config.basePath), null, 2));
                 }

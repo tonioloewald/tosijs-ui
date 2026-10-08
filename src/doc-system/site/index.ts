@@ -58,6 +58,9 @@ export {
   listEpubVolumes,
   epubVolumeIdentity,
   renderEpubDownloads,
+  attachCovers,
+  printCoverManifestUrl,
+  VOLUME_MANIFEST,
   type EpubVolume,
 } from './epub-volumes.js'
 

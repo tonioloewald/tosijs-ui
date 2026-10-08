@@ -21,7 +21,7 @@ import { highlightHtml } from '../highlight.js';
 import { buildSlugMap, pathForSlug, resolveParent, slugForPath, withBase, } from '../routing.js';
 import { buildNavTree } from '../nav-tree.js';
 import { partitionByBook, placeInBook, bookTextOf, DEFAULT_BOOK, } from '../book-target.js';
-import { coverStem, epubVolumeIdentity } from './epub-volumes.js';
+import { COVER_MEDIA_TYPES, coverStem, epubVolumeIdentity, } from './epub-volumes.js';
 import { isLiveFence, languageOfClass } from '../example-policy.js';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify, } from '../book-html.js';
 import { selectBookDocs } from '../book-manifest.js';
@@ -518,11 +518,7 @@ async function makeCover(config, opts, meta) {
     }
     if (opts.cover && fs.existsSync(opts.cover)) {
         const ext = path.extname(opts.cover).toLowerCase();
-        const mediaType = ext === '.jpg' || ext === '.jpeg'
-            ? 'image/jpeg'
-            : ext === '.gif'
-                ? 'image/gif'
-                : 'image/png';
+        const mediaType = COVER_MEDIA_TYPES[ext] ?? 'image/png';
         return {
             file: `cover${ext || '.png'}`,
             mediaType,

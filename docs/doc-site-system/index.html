@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=759957a69116" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=aa823638056c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1101,6 +1101,9 @@ sets <code>epub.output</code> writes the cover beside that file where the manife
 <p><strong>The helper</strong>, if you are generating links in your own code:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> listEpubVolumes<span class="token punctuation">,</span> epubVolumeIdentity <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
 </code></pre>
+<p>If you run your own build in place of <code>buildSite</code>, <code>attachCovers(volumes, filesInOutputDir, basePath)</code> adds the cover fields for the covers <code>buildEpub</code> wrote, and
+<code>printCoverManifestUrl(config)</code> is the value to pass <code>generateSite</code> as <code>bookVolumes</code> so Print
+can find them (the manifest is <code>VOLUME_MANIFEST</code>, <code>epub-volumes.json</code>).</p>
 <blockquote>
 <p><strong>Do not hard-code the filename.</strong> It is <em>derived</em> — <code>&lt;project&gt;-&lt;volume&gt;.epub</code> — so a
 hand-written link rots the moment a volume is renamed, and rots silently, since nothing
@@ -2052,6 +2055,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-60vratc1.js"></script>
+  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
 </body>
 </html>

@@ -36,6 +36,11 @@ export interface ResolveBookCoverOptions {
     }>;
     /** Resolves when the image at `url` loads, rejects when it does not. Injected for tests. */
     loadImage?: (url: string) => Promise<unknown>;
+    /**
+     * How long the whole lookup may take before Print goes ahead without a cover. The files
+     * are small and same-origin, so this only bites on a stalled connection.
+     */
+    timeoutMs?: number;
 }
 /**
  * The cover Print should open with, or `undefined` for none.
@@ -46,6 +51,8 @@ export interface ResolveBookCoverOptions {
  * starts with a broken image and a page break — without an inline `onerror`, which a
  * Content-Security-Policy would block in the popup.
  *
- * Any failure means no cover. Print must still happen.
+ * Any failure means no cover, and so does taking too long: the popup is already open and
+ * blank while this runs, and a request that never settles must not leave it that way. Print
+ * must still happen.
  */
 export declare function resolveBookCover(manifestUrl: string | undefined, opts?: ResolveBookCoverOptions): Promise<string | undefined>;

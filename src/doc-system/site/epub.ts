@@ -34,7 +34,11 @@ import {
   bookTextOf,
   DEFAULT_BOOK,
 } from '../book-target.js'
-import { coverStem, epubVolumeIdentity } from './epub-volumes.js'
+import {
+  COVER_MEDIA_TYPES,
+  coverStem,
+  epubVolumeIdentity,
+} from './epub-volumes.js'
 import type { SiteConfig } from './site-config.js'
 import { isLiveFence, languageOfClass } from '../example-policy.js'
 import type { ExamplePolicy } from '../example-policy.js'
@@ -713,12 +717,7 @@ async function makeCover(
   }
   if (opts.cover && fs.existsSync(opts.cover)) {
     const ext = path.extname(opts.cover).toLowerCase()
-    const mediaType =
-      ext === '.jpg' || ext === '.jpeg'
-        ? 'image/jpeg'
-        : ext === '.gif'
-        ? 'image/gif'
-        : 'image/png'
+    const mediaType = COVER_MEDIA_TYPES[ext] ?? 'image/png'
     return {
       file: `cover${ext || '.png'}`,
       mediaType,

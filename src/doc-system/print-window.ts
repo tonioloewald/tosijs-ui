@@ -15,6 +15,8 @@ Both failure modes are silent in the worst way: a print dialog that opens over a
 page, or one that never opens at all. Neither throws, and you only find out by printing.
 */
 
+import { DEFAULT_BOOK } from './book-target.js'
+
 /** The minimum `window` surface this needs — so a test can supply a fake. */
 export interface PrintableWindow {
   document: { readyState: string }
@@ -80,6 +82,11 @@ export interface ResolveBookCoverOptions {
   ) => Promise<{ ok: boolean; json: () => Promise<unknown> }>
   /** Resolves when the image at `url` loads, rejects when it does not. Injected for tests. */
   loadImage?: (url: string) => Promise<unknown>
+  /**
+   * How long the whole lookup may take before Print goes ahead without a cover. The files
+   * are small and same-origin, so this only bites on a stalled connection.
+   */
+  timeoutMs?: number
 }
 
 const loadImageInPage = (url: string): Promise<unknown> =>
@@ -99,26 +106,40 @@ const loadImageInPage = (url: string): Promise<unknown> =>
  * starts with a broken image and a page break — without an inline `onerror`, which a
  * Content-Security-Policy would block in the popup.
  *
- * Any failure means no cover. Print must still happen.
+ * Any failure means no cover, and so does taking too long: the popup is already open and
+ * blank while this runs, and a request that never settles must not leave it that way. Print
+ * must still happen.
  */
-export async function resolveBookCover(
+export function resolveBookCover(
   manifestUrl: string | undefined,
   opts: ResolveBookCoverOptions = {}
 ): Promise<string | undefined> {
-  if (!manifestUrl) return undefined
-  const { fetchFn = fetch, loadImage = loadImageInPage } = opts
-  try {
-    const response = await fetchFn(manifestUrl)
-    if (!response.ok) return undefined
-    const volumes = (await response.json()) as Array<{
-      book?: string
-      coverUrl?: string
-    }>
-    const cover = volumes.find((v) => v.book === '')?.coverUrl
-    if (!cover) return undefined
-    await loadImage(cover)
-    return cover
-  } catch {
-    return undefined
+  if (!manifestUrl) return Promise.resolve(undefined)
+  const {
+    fetchFn = fetch,
+    loadImage = loadImageInPage,
+    timeoutMs = 3000,
+  } = opts
+  const lookup = async (): Promise<string | undefined> => {
+    try {
+      const response = await fetchFn(manifestUrl)
+      if (!response.ok) return undefined
+      const volumes = (await response.json()) as Array<{
+        book?: string
+        coverUrl?: string
+      }>
+      const cover = volumes.find((v) => v.book === DEFAULT_BOOK)?.coverUrl
+      if (!cover) return undefined
+      await loadImage(cover)
+      return cover
+    } catch {
+      return undefined
+    }
   }
+  return Promise.race([
+    lookup(),
+    new Promise<undefined>((resolve) =>
+      setTimeout(() => resolve(undefined), timeoutMs)
+    ),
+  ])
 }

@@ -1,3 +1,5 @@
+/** Where the volume manifest is served. */
+export declare const VOLUME_MANIFEST = "epub-volumes.json";
 export interface EpubVolume {
     /** the `book` value, or '' for the default volume */
     book: string;
@@ -16,6 +18,11 @@ export interface EpubVolume {
     /** served URL of that cover, honouring basePath — Print uses it as its first page */
     coverUrl?: string;
 }
+/**
+ * The image types a cover may be, by extension. One table: the ePub build labels its cover
+ * from it and `attachCovers` recognises a cover file by it.
+ */
+export declare const COVER_MEDIA_TYPES: Record<string, string>;
 /** The name `buildEpub` gives a cover written beside `<stem>.epub`, minus its extension. */
 export declare const coverStem: (epubFilename: string) => string;
 /**
@@ -67,8 +74,6 @@ export declare const EPUB_DOWNLOADS_MARKER: RegExp;
  * comment.
  */
 export declare function renderEpubDownloads(text: string, volumes: EpubVolume[]): string;
-/** Where the volume manifest is served. */
-export declare const VOLUME_MANIFEST = "epub-volumes.json";
 /**
  * The manifest URL a page should hand to Print so it can open with the cover, or
  * `undefined` when it should not: no ePub is built, or `epub.printCover` is `false`.

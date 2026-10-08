@@ -37,6 +37,7 @@ import {
   attachCovers,
   listEpubVolumes,
   printCoverManifestUrl,
+  VOLUME_MANIFEST,
   renderEpubDownloads,
 } from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
@@ -810,7 +811,7 @@ export async function buildSite(
         // A stable, machine-readable list so a consumer can link the books without
         // re-deriving the filename — the "documented helper" half of #46.
         await Bun.write(
-          `${PUBLIC}/epub-volumes.json`,
+          `${PUBLIC}/${VOLUME_MANIFEST}`,
           JSON.stringify(volumes, null, 2)
         )
       }
@@ -1901,7 +1902,7 @@ export async function buildSite(
         }
         // Now the covers exist (or do not), say so in the manifest: a `coverUrl` there
         // names a file this build wrote. Print reads the default volume's from here.
-        const manifest = `${PUBLIC}/epub-volumes.json`
+        const manifest = `${PUBLIC}/${VOLUME_MANIFEST}`
         if (existsSync(manifest)) {
           await Bun.write(
             manifest,

@@ -28,6 +28,9 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, '')
 }
 
+/** Where the volume manifest is served. */
+export const VOLUME_MANIFEST = 'epub-volumes.json'
+
 export interface EpubVolume {
   /** the `book` value, or '' for the default volume */
   book: string
@@ -45,6 +48,19 @@ export interface EpubVolume {
   coverFilename?: string
   /** served URL of that cover, honouring basePath — Print uses it as its first page */
   coverUrl?: string
+}
+
+/**
+ * The image types a cover may be, by extension. One table: the ePub build labels its cover
+ * from it and `attachCovers` recognises a cover file by it.
+ */
+export const COVER_MEDIA_TYPES: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
 }
 
 /** The name `buildEpub` gives a cover written beside `<stem>.epub`, minus its extension. */
@@ -67,8 +83,12 @@ export function attachCovers(
   const base = basePath.replace(/\/+$/, '')
   return volumes.map((volume) => {
     const stem = coverStem(volume.filename)
+    // An image, by extension: a volume named "cover" writes `<stem>-cover.epub`, which is
+    // another volume's book and not this one's cover.
     const coverFilename = files.find(
-      (f) => f.startsWith(`${stem}.`) && !f.slice(stem.length + 1).includes('.')
+      (f) =>
+        f.startsWith(`${stem}.`) &&
+        f.slice(stem.length).toLowerCase() in COVER_MEDIA_TYPES
     )
     return coverFilename
       ? { ...volume, coverFilename, coverUrl: `${base}/${coverFilename}` }
@@ -172,9 +192,6 @@ export function renderEpubDownloads(
     .join('\n')
   return text.replace(EPUB_DOWNLOADS_MARKER, list)
 }
-
-/** Where the volume manifest is served. */
-export const VOLUME_MANIFEST = 'epub-volumes.json'
 
 /**
  * The manifest URL a page should hand to Print so it can open with the cover, or

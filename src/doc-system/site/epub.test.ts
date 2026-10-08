@@ -528,8 +528,33 @@ test('the cover is written beside the ePub under its real type, where attachCove
       fs.readFileSync(path.join(dir, volume.coverFilename!)).equals(bytes)
     ).toBe(true)
 
-    // An explicit output keeps its own stem, so the default volume lists no cover.
+    // The ePub labels the cover with its real type, from the same table.
+    const opf = (
+      await Bun.$`unzip -p ${path.join(
+        dir,
+        'cover-book.epub'
+      )} OEBPS/package.opf`.text()
+    ).toString()
+    expect(opf).toContain('href="cover.webp" media-type="image/webp"')
+
+    // A configured cover that is not there warns, and a generated one stands in.
     fs.rmSync(path.join(dir, 'cover-book-cover.webp'))
+    const warned: string[] = []
+    const warn = console.warn
+    console.warn = (...args: unknown[]) => void warned.push(args.join(' '))
+    try {
+      await buildEpub(config as any, { cover: path.join(dir, 'gone.jpg') })
+    } finally {
+      console.warn = warn
+    }
+    expect(warned.join('\n')).toContain('gone.jpg" not found')
+    expect(
+      attachCovers([epubVolumeIdentity(config)], fs.readdirSync(dir))[0]
+        .coverFilename
+    ).toBe('cover-book-cover.png')
+    fs.rmSync(path.join(dir, 'cover-book-cover.png'))
+
+    // An explicit output keeps its own stem, so the default volume lists no cover.
     await buildEpub(config as any, {
       cover: art,
       output: path.join(dir, 'custom.epub'),

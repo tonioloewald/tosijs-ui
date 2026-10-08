@@ -14,6 +14,7 @@ The two changes, so the shape is not rediscovered:
 Both failure modes are silent in the worst way: a print dialog that opens over a half-rendered
 page, or one that never opens at all. Neither throws, and you only find out by printing.
 */
+import { DEFAULT_BOOK } from './book-target.js';
 /**
  * Highlight, then print — after the window has actually loaded.
  *
@@ -63,24 +64,32 @@ const loadImageInPage = (url) => new Promise((resolve, reject) => {
  * starts with a broken image and a page break — without an inline `onerror`, which a
  * Content-Security-Policy would block in the popup.
  *
- * Any failure means no cover. Print must still happen.
+ * Any failure means no cover, and so does taking too long: the popup is already open and
+ * blank while this runs, and a request that never settles must not leave it that way. Print
+ * must still happen.
  */
-export async function resolveBookCover(manifestUrl, opts = {}) {
+export function resolveBookCover(manifestUrl, opts = {}) {
     if (!manifestUrl)
-        return undefined;
-    const { fetchFn = fetch, loadImage = loadImageInPage } = opts;
-    try {
-        const response = await fetchFn(manifestUrl);
-        if (!response.ok)
+        return Promise.resolve(undefined);
+    const { fetchFn = fetch, loadImage = loadImageInPage, timeoutMs = 3000, } = opts;
+    const lookup = async () => {
+        try {
+            const response = await fetchFn(manifestUrl);
+            if (!response.ok)
+                return undefined;
+            const volumes = (await response.json());
+            const cover = volumes.find((v) => v.book === DEFAULT_BOOK)?.coverUrl;
+            if (!cover)
+                return undefined;
+            await loadImage(cover);
+            return cover;
+        }
+        catch {
             return undefined;
-        const volumes = (await response.json());
-        const cover = volumes.find((v) => v.book === '')?.coverUrl;
-        if (!cover)
-            return undefined;
-        await loadImage(cover);
-        return cover;
-    }
-    catch {
-        return undefined;
-    }
+        }
+    };
+    return Promise.race([
+        lookup(),
+        new Promise((resolve) => setTimeout(() => resolve(undefined), timeoutMs)),
+    ]);
 }

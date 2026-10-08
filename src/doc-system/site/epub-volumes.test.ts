@@ -171,6 +171,13 @@ test('a cover is listed only when the build wrote it, under the name it was writ
     coverUrl: '/docs/foresight-rpg-cover.webp',
   })
   expect(withCovers[1]).toEqual(volumes[1])
+  // A volume named "cover" writes `<stem>-cover.epub`: a book, not the default's cover.
+  expect(
+    attachCovers(
+      [epubVolumeIdentity(cfg)],
+      ['foresight-rpg-cover.epub', 'foresight-rpg.epub']
+    )[0].coverUrl
+  ).toBeUndefined()
   expect('coverUrl' in epubVolumeIdentity(cfg)).toBe(false)
 })
 

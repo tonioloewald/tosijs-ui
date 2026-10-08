@@ -936,6 +936,11 @@ sets `epub.output` writes the cover beside that file where the manifest does not
 import { listEpubVolumes, epubVolumeIdentity } from 'tosijs-ui/site'
 ```
 
+If you run your own build in place of `buildSite`, `attachCovers(volumes, filesInOutputDir,
+basePath)` adds the cover fields for the covers `buildEpub` wrote, and
+`printCoverManifestUrl(config)` is the value to pass `generateSite` as `bookVolumes` so Print
+can find them (the manifest is `VOLUME_MANIFEST`, `epub-volumes.json`).
+
 > **Do not hard-code the filename.** It is _derived_ — `<project>-<volume>.epub` — so a
 > hand-written link rots the moment a volume is renamed, and rots silently, since nothing
 > checks that a link points at a file the build made. That is exactly how a project ships a

@@ -13,6 +13,10 @@ Print now opens with the book cover.
   (`my-project-cover.png`; an explicit cover keeps its own type), and `/epub-volumes.json`
   gains `coverFilename` and `coverUrl` for every volume whose cover the build wrote. A volume
   without a cover has neither field.
+- A WebP or SVG `epub.cover` is now declared with its own media type in the ePub; it was
+  labelled `image/png`.
+- `attachCovers`, `printCoverManifestUrl` and `VOLUME_MANIFEST` are exported from
+  `tosijs-ui/site` for a build that does not go through `buildSite`.
 - A configured `epub.cover` that does not exist now prints a warning; the build still
   generates a cover in its place, as before.
 

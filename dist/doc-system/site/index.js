@@ -22,7 +22,7 @@ export { placeInBook, bookTextOf } from '../book-target.js';
 // Insets and conditional text (#217): `extractDocs` applies these; exported for a consumer
 // that builds its corpus some other way.
 export { assembleCorpus, resolveInsets, splitConditions, SingleSourceError, } from './single-source.js';
-export { listEpubVolumes, epubVolumeIdentity, renderEpubDownloads, } from './epub-volumes.js';
+export { listEpubVolumes, epubVolumeIdentity, renderEpubDownloads, attachCovers, printCoverManifestUrl, VOLUME_MANIFEST, } from './epub-volumes.js';
 /*
 Reading the build lock is part of the PUBLIC surface, not an internal detail (#117).
 
