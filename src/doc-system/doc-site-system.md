@@ -1227,17 +1227,23 @@ volume is a build error.
 ```
 
 The reference is tried as a document first (filename, slug or title, the same matching
-`parent` uses) and then as a file relative to the page that includes it. The second form is
-how a passage exists without being a page of its own: a file whose name starts with `_` is
-skipped by extraction and can still be inset.
+`parent` uses) and then as a **fragment file**, relative to the page that includes it. A
+fragment is how a passage exists without being a page of its own: a markdown file whose name
+starts with `_` is skipped by extraction and can still be inset.
+
+A fragment is the only kind of file an inset reads. It must be markdown, its name must start
+with `_`, and it must sit under one of your `docPaths`, outside any ignored or dot-prefixed
+directory, with symlinks resolved first. So an inset cannot reach a `.env`, a source file, or
+a page you hid: a hidden or draft document is not in the corpus to be found by name, and it
+is not a fragment to be found by path. Anyone who can edit a page can read your `_` fragments
+by insetting them, which is what they are for.
 
 What arrives is the passage without its place in the other page's outline: a whole document
 loses its title heading and metadata block, and a section loses its own heading and runs to
 the next heading of the same or a higher level. Write the heading you want in the page that
 includes it. Live examples and inline tests in the passage run in every page they are inset
 into. Insets nest; a cycle, a document or file that does not exist, a heading that does not
-exist, and a file outside the project are all build errors. A hidden document cannot be
-inset, so insetting never publishes something that was withheld.
+exist, and a file that is not a fragment are all build errors.
 
 **Conditional text: wording for the site or for books only.**
 
@@ -1253,8 +1259,17 @@ The examples in this chapter run in the online edition.
 site wording; every ePub and the Print output get the book wording. Blocks do not nest, and
 an unclosed or unmatched block is a build error.
 
-All three directives go on their own line, like the metadata block they are spelled after.
-One shown inside a code fence is an illustration and is left alone.
+`only` chooses wording, not access. Both wordings are in the published `docs.json`
+(`bookText` beside `text`), so do not put anything in a book-only block that a site visitor
+must not be able to find.
+
+The inset and `only` directives go on their own line at the top level of the document, like
+the metadata block they are spelled after. One inside a list item, a blockquote or the middle
+of a paragraph is a build error. One shown inside a code fence is an illustration and is left
+alone.
+
+**Print is not a volume.** The in-app Print output is the whole visible site in site order,
+with the book wording. `placement` and `book` arrange ePub volumes only.
 
 **What does not work on an assembled page.** Saving an edited live example back to its source
 is refused on a page whose source uses an inset or conditional text, because the examples on

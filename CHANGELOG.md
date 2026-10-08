@@ -7,7 +7,8 @@ programming in the page. Single-sourcing for books (#217): one corpus, several o
 nothing kept in sync by hand. And live examples that open with their code showing and a
 console that speaks the example's language (#216). Additive, with one behaviour change to
 know about: in a `tjs` or `ts` example, or one in a registered dialect, a line typed at the
-console is now evaluated in that language and not as JavaScript.
+console is now evaluated in that language and not as JavaScript. `dist/iife.js` grows by
+0.7 kB gzip.
 
 ### The book opens on the project, not on "Adopting the doc system"
 
@@ -22,15 +23,23 @@ a page about adopting the doc system. The README now leads both.
   Each entry may set `parent`, `order`, `pin` and `title`, and naming a volume also binds the
   page into it. The site nav is unaffected.
 - **Text insets.** `<!--{ "inset": "install.md#with-bun" }-->` includes another document, or
-  one heading's section of it, in the page. A `_`-prefixed file can be inset without being a
-  page. Resolved at extraction, so the site, the ePubs, `llms.txt` and the markdown copies
+  one heading's section of it, in the page. A fragment (a markdown file whose name starts
+  with `_`, under your doc paths) can be inset without being a page, and is the only kind of
+  file an inset reads. Resolved at extraction, so the site, the ePubs, `llms.txt` and the markdown copies
   all get the assembled text, and an inset passage's live examples and tests run where it is
   inset.
-- **Conditional text.** `<!--{ "only": "book" }--> … <!--{ "end": "only" }-->` (or `"site"`)
-  for wording that belongs to one output, such as "next chapter" against "next page".
-- **Each is guarded.** An inset that resolves nowhere, an include cycle, a missing heading, an
-  unbalanced `only`, and a placement under a parent that is not in the volume all fail the
-  build.
+- **Conditional text.** `<!--{ "only": "book" | "site" }--> … <!--{ "end": "only" }-->`
+  conditional text, for wording that belongs to one output, such as "next chapter" against
+  "next page". Books read `bookText`, everything else reads `text`; both are in the published
+  `docs.json`, so this chooses wording and does not hide anything.
+- **Each is guarded.** An inset that resolves nowhere, an include cycle, a missing heading, a
+  file that is not a fragment, an unbalanced `only`, a directive inside a list, quote or
+  paragraph, and a placement under a parent that is not in the volume all fail the build.
+- **Print is not a volume.** The in-app Print output takes the book wording but stays the
+  whole site in site order; `placement` arranges ePub volumes.
+- New from `tosijs-ui/site`, for a consumer that builds its corpus some other way:
+  `assembleCorpus`, `resolveInsets`, `splitConditions`, `SingleSourceError`, `placeInBook`,
+  `bookTextOf`, and the `BookPlacement` type.
 - Saving an edited live example back to source is refused on a page whose source uses an
   inset or conditional text, where the example's position on the page no longer identifies a
   block in that file.
@@ -46,7 +55,13 @@ a page about adopting the doc system. The README now leads both.
 - **The console evaluates in the example's dialect.** A line goes through the same transform
   as the example's code, with the same fence options, so `x == '5'` in a `tjs` example is
   TJS's `==`. A line the dialect rejects shows the dialect's error and is not retried as
-  JavaScript. Plain `js` examples and `run` dialects are unchanged.
+  JavaScript. Plain `js` examples and `run` dialects are unchanged. A registered dialect's
+  `transform` now also receives console lines, marked with `options.repl === true`.
+- **Known limit of the above with tjs.** tjs puts setup statements in front of the line it
+  translates, so an expression shows its value, but a line that is only a declaration shows a
+  leftover value where a browser console shows `undefined`, and a line needing both that
+  setup and `await` shows `undefined`. Fixing it needs the setup to be separable, which is
+  asked of tjs-lang.
 - The generated JavaScript tjs-lang asked to see already exists as the read-only **JS** tab of
   a `tjs` or `ts` example, and the inline views make it reachable in the page. Showing the
   JavaScript for a single console line is not in this release: a transform's output for one

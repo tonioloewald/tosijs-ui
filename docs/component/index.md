@@ -187,6 +187,11 @@ example's output stays in its Console tab.
   transform as the example's code, with the same fence options, so in a `tjs` example `==`
   is TJS's `==`. A line the dialect rejects shows the dialect's error; it is not retried as
   JavaScript. A `run` dialect has no transform, so its lines are JavaScript.
+  A transform may put setup statements in front of your line (tjs does), and then two things
+  show the wrong value: a line that is only a declaration (`const z = x == 5`) shows a value
+  left over from that setup where a browser console shows `undefined`, and a line that needs
+  both the setup and `await` shows `undefined`. An expression, which is what a console is
+  mostly for, shows its value.
 
 ## Opening with the code showing
 

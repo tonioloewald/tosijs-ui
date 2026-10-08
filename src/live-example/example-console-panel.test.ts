@@ -546,6 +546,27 @@ describe("the REPL evaluates in the example's dialect", () => {
     })
   })
 
+  /*
+  Against the REAL tjs transform, because the stand-ins above emit one expression and tjs
+  does not: it puts a runtime prelude of several statements in front of the user's line, and
+  the review found the evaluators handling that correctly on one path only.
+  */
+  test('a real tjs example: == is TJS equality at the console', async () => {
+    await quietly(async () => {
+      const example: any = liveExample()
+      document.body.append(example)
+      await example.whenHydrated
+      example.dialect = 'tjs'
+      example.js = `const x = 5\npreview.textContent = 'x'`
+      await example.refresh()
+      // JavaScript's == says true; TJS's does not coerce.
+      expect(await example.consoleEval("x == '5'")).toBe(false)
+      expect(await example.consoleEval('x == 5')).toBe(true)
+      expect(await example.consoleEval('x + 1')).toBe(6)
+      example.remove()
+    })
+  })
+
   test('a plain js example is evaluated exactly as before', async () => {
     await quietly(async () => {
       const example = await mount(`const n = 2`)

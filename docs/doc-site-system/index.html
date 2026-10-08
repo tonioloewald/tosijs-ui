@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=c39d41ee8961" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=eefa859a10a5" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=bd89a5a68fff" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=6ff246a6236c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1406,16 +1406,21 @@ volume is a build error.</p>
 &lt;!--{ "inset": "_how-examples-work.md" }--> → a fragment file that is not a page
 </code></pre>
 <p>The reference is tried as a document first (filename, slug or title, the same matching
-<code>parent</code> uses) and then as a file relative to the page that includes it. The second form is
-how a passage exists without being a page of its own: a file whose name starts with <code>_</code> is
-skipped by extraction and can still be inset.</p>
+<code>parent</code> uses) and then as a <strong>fragment file</strong>, relative to the page that includes it. A
+fragment is how a passage exists without being a page of its own: a markdown file whose name
+starts with <code>_</code> is skipped by extraction and can still be inset.</p>
+<p>A fragment is the only kind of file an inset reads. It must be markdown, its name must start
+with <code>_</code>, and it must sit under one of your <code>docPaths</code>, outside any ignored or dot-prefixed
+directory, with symlinks resolved first. So an inset cannot reach a <code>.env</code>, a source file, or
+a page you hid: a hidden or draft document is not in the corpus to be found by name, and it
+is not a fragment to be found by path. Anyone who can edit a page can read your <code>_</code> fragments
+by insetting them, which is what they are for.</p>
 <p>What arrives is the passage without its place in the other page&#39;s outline: a whole document
 loses its title heading and metadata block, and a section loses its own heading and runs to
 the next heading of the same or a higher level. Write the heading you want in the page that
 includes it. Live examples and inline tests in the passage run in every page they are inset
 into. Insets nest; a cycle, a document or file that does not exist, a heading that does not
-exist, and a file outside the project are all build errors. A hidden document cannot be
-inset, so insetting never publishes something that was withheld.</p>
+exist, and a file that is not a fragment are all build errors.</p>
 <p><strong>Conditional text: wording for the site or for books only.</strong></p>
 <pre><code class="language-text" data-highlighted>&lt;!--{ "only": "book" }-->
 
@@ -1426,8 +1431,15 @@ The examples in this chapter run in the online edition.
 <p><code>&quot;only&quot;</code> takes <code>&quot;site&quot;</code> or <code>&quot;book&quot;</code>. The site, <code>llms.txt</code> and the markdown copies get the
 site wording; every ePub and the Print output get the book wording. Blocks do not nest, and
 an unclosed or unmatched block is a build error.</p>
-<p>All three directives go on their own line, like the metadata block they are spelled after.
-One shown inside a code fence is an illustration and is left alone.</p>
+<p><code>only</code> chooses wording, not access. Both wordings are in the published <code>docs.json</code>
+(<code>bookText</code> beside <code>text</code>), so do not put anything in a book-only block that a site visitor
+must not be able to find.</p>
+<p>The inset and <code>only</code> directives go on their own line at the top level of the document, like
+the metadata block they are spelled after. One inside a list item, a blockquote or the middle
+of a paragraph is a build error. One shown inside a code fence is an illustration and is left
+alone.</p>
+<p><strong>Print is not a volume.</strong> The in-app Print output is the whole visible site in site order,
+with the book wording. <code>placement</code> and <code>book</code> arrange ePub volumes only.</p>
 <p><strong>What does not work on an assembled page.</strong> Saving an edited live example back to its source
 is refused on a page whose source uses an inset or conditional text, because the examples on
 the page are no longer the examples in that file, in that order. Edit the source file; an
@@ -2024,6 +2036,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-bec2p42m.js"></script>
+  <script type="module" src="../hydrate-nq40eepk.js"></script>
 </body>
 </html>

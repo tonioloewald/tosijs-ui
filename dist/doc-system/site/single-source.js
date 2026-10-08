@@ -57,6 +57,35 @@ function directiveOf(token) {
         return { kind: 'end' };
     return null;
 }
+/*
+A directive only works at the top level of a document, on a line of its own.
+
+Inside a list item, a blockquote or the middle of a paragraph it is a different kind of token,
+which nothing here visits: an inset there was shipped as a raw comment and an unclosed `only`
+was accepted, both on a green build, while the docs promised that a mistake fails. So a
+directive found anywhere but the top level is itself the error.
+*/
+function refuseNested(tokens, where) {
+    const walk = (inner) => {
+        for (const t of inner) {
+            const d = directiveOf(t);
+            if (d) {
+                throw new SingleSourceError(`${where}: ${t.raw.trim()} is inside a list, a quote or a paragraph. ` +
+                    `A directive must be on its own line at the top level of the document.`);
+            }
+            if (Array.isArray(t.tokens))
+                walk(t.tokens);
+            if (Array.isArray(t.items))
+                walk(t.items);
+        }
+    };
+    for (const t of tokens) {
+        if (Array.isArray(t.tokens))
+            walk(t.tokens);
+        if (Array.isArray(t.items))
+            walk(t.items);
+    }
+}
 /** Is this JSON directive single-sourcing rather than doc metadata? */
 export function isSingleSourceDirective(json) {
     try {
@@ -129,6 +158,58 @@ function bodyOf(text, anchor, ref) {
         .trim();
 }
 /*
+Which files a FILE inset may read: fragments, and nothing else.
+
+A fragment is a markdown file whose name starts with `_`, under one of the doc paths, with
+no ignored or dot-prefixed directory on the way to it.
+
+The first cut read any file under the project root, and the pre-tag review found two things
+wrong with that, both in this one branch:
+
+  - It published withheld text. A hidden or draft doc is dropped from the corpus, so a
+    reference to it missed the doc lookup and fell through to reading the same file from
+    disk, with the `draft: true` that withheld it stripped off as frontmatter.
+  - It read anything: `{"inset": "../.env"}` built green with the secrets in the page. The
+    source editor is confined to doc sources (#128) precisely so that someone invited to edit
+    a page cannot read the files beside it, and a directive in that page went around it.
+
+Requiring the `_` prefix closes both by construction instead of by a list of exclusions. A
+`_` file is skipped by extraction, so it is never a page and cannot be a hidden one; and the
+name is the author's own statement that the file exists to be included.
+
+The cost, stated: someone who can edit a page can read the `_`-prefixed markdown under the doc
+paths by insetting it. That is what a fragment is for.
+*/
+function fragmentPath(abs, roots, ignore, realPath) {
+    const base = path.basename(abs);
+    if (!base.startsWith('_') || !/\.(md|markdown)$/i.test(base)) {
+        return {
+            refused: 'a file inset must name a fragment: a markdown file whose name starts with "_". ' +
+                'A document is inset by its filename, slug or title, and a hidden one cannot be.',
+        };
+    }
+    let real;
+    try {
+        real = realPath(abs);
+    }
+    catch {
+        return abs; // does not exist: reported by the caller as "no such file"
+    }
+    const root = roots.find((r) => real === r || real.startsWith(r.endsWith(path.sep) ? r : r + path.sep));
+    if (!root) {
+        return {
+            refused: `it is outside the doc paths (${roots
+                .map((r) => path.relative(process.cwd(), r) || '.')
+                .join(', ')}).`,
+        };
+    }
+    const segments = path.relative(root, path.dirname(real)).split(path.sep);
+    const bad = segments.find((seg) => seg.startsWith('.') || ignore.has(seg));
+    if (bad)
+        return { refused: `it is inside "${bad}", which is not published.` };
+    return real;
+}
+/*
 Replace every inset directive in the corpus with the text it names.
 
 A reference is tried as a DOC first (filename, slug or title, the same matcher `parent` uses)
@@ -141,9 +222,26 @@ Mutates `docs` in place and returns how many insets were resolved.
 export function resolveInsets(docs, options = {}) {
     if (!docs.some((d) => mayHaveDirective(d.text)))
         return 0;
-    const root = path.resolve(options.root ?? process.cwd());
+    const realPath = options.realPath ?? ((p) => fs.realpathSync(p));
+    const safeReal = (p) => {
+        try {
+            return realPath(p);
+        }
+        catch {
+            return p;
+        }
+    };
+    const roots = (options.roots ?? [process.cwd()]).map((r) => safeReal(path.resolve(r)));
+    const ignore = new Set(options.ignore ?? []);
     const readFile = options.readFile ??
-        ((p) => (fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : undefined));
+        ((p) => {
+            try {
+                return fs.statSync(p).isFile() ? fs.readFileSync(p, 'utf8') : undefined;
+            }
+            catch {
+                return undefined;
+            }
+        });
     const slugMap = buildSlugMap(docs);
     const raw = new Map(docs.map((d) => [d.filename, d.text]));
     const byFilename = new Map(docs.map((d) => [d.filename, d]));
@@ -157,6 +255,7 @@ export function resolveInsets(docs, options = {}) {
             throw new SingleSourceError(`inset cycle: ${[...stack, id].join(' → ')}`);
         }
         const tokens = marked.lexer(text);
+        refuseNested(tokens, id);
         if (!tokens.some((t) => directiveOf(t)?.kind === 'inset'))
             return text;
         return tokens
@@ -166,6 +265,9 @@ export function resolveInsets(docs, options = {}) {
                 return t.raw;
             count++;
             const [target, anchor] = d.ref.split('#');
+            if (!target.trim()) {
+                throw new SingleSourceError(`inset "${d.ref}" in ${id}: names no document. Write "doc.md#heading".`);
+            }
             const next = [...stack, id];
             let source;
             let sourceId = '';
@@ -177,21 +279,21 @@ export function resolveInsets(docs, options = {}) {
                 sourceDir = doc.path ? path.dirname(doc.path) : undefined;
                 source = raw.get(docFile);
             }
-            else if (dir !== undefined) {
-                const abs = path.resolve(root, dir, target);
-                if (abs !== root && !abs.startsWith(root + path.sep)) {
-                    throw new SingleSourceError(`inset "${d.ref}" in ${id}: resolves outside the project.`);
+            else if (target && dir !== undefined) {
+                const found = fragmentPath(path.resolve(dir, target), roots, ignore, realPath);
+                if (typeof found !== 'string') {
+                    throw new SingleSourceError(`inset "${d.ref}" in ${id}: no document has that name, and ${found.refused}`);
                 }
-                sourceId = path.relative(root, abs);
-                sourceDir = path.dirname(sourceId);
+                sourceId = path.relative(process.cwd(), found);
+                sourceDir = path.dirname(found);
                 // A fragment is not extracted, so its frontmatter was never stripped for it.
-                source = readFile(abs)?.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+                source = readFile(found)?.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
             }
             if (source === undefined) {
                 throw new SingleSourceError(`inset "${d.ref}" in ${id}: no such document or file.\n` +
                     `   Tried a doc named "${target}" (filename, slug or title)` +
-                    (dir !== undefined
-                        ? `, then the file ${path.join(dir, target)}.`
+                    (target && dir !== undefined
+                        ? `, then the fragment file ${path.join(dir, target)}.`
                         : '.'));
             }
             const expanded = expand(source, sourceId, sourceDir, next);
@@ -222,6 +324,7 @@ export function splitConditions(text, where = 'document') {
     if (!mayHaveDirective(text))
         return { site: text, book: text };
     const tokens = marked.lexer(text);
+    refuseNested(tokens, where);
     if (!tokens.some((t) => directiveOf(t) && directiveOf(t).kind !== 'inset'))
         return { site: text, book: text };
     let site = '';

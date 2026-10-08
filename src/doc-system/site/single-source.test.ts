@@ -90,13 +90,18 @@ describe('insets', () => {
   })
 
   test('an inset that resolves nowhere fails, saying what was tried', () => {
-    const docs = [doc('a.md', '<!--{ "inset": "missing.md" }-->\n')]
-    expect(() => resolveInsets(docs, { readFile: () => undefined })).toThrow(
-      SingleSourceError
-    )
-    expect(() => resolveInsets(docs, { readFile: () => undefined })).toThrow(
-      /docs\/missing\.md/
-    )
+    const docs = [
+      doc('a.md', '<!--{ "inset": "_missing.md" }-->\n', {
+        path: '/proj/docs/a.md',
+      }),
+    ]
+    const options = {
+      roots: ['/proj/docs'],
+      realPath: (p: string) => p,
+      readFile: () => undefined,
+    }
+    expect(() => resolveInsets(docs, options)).toThrow(SingleSourceError)
+    expect(() => resolveInsets(docs, options)).toThrow(/docs\/_missing\.md/)
   })
 
   test('a missing heading fails and lists the headings that exist', () => {
@@ -109,9 +114,14 @@ describe('insets', () => {
 
   test('a fragment file that is not a page resolves relative to the including doc', () => {
     const seen: string[] = []
-    const docs = [doc('a.md', '# A\n\n<!--{ "inset": "_steps.md" }-->\n')]
+    const docs = [
+      doc('a.md', '# A\n\n<!--{ "inset": "_steps.md" }-->\n', {
+        path: '/proj/docs/a.md',
+      }),
+    ]
     resolveInsets(docs, {
-      root: '/proj',
+      roots: ['/proj/docs'],
+      realPath: (p) => p,
       readFile: (p) => {
         seen.push(p)
         return '---\ntitle: x\n---\n# Steps\n\nstep one\n'
@@ -122,11 +132,122 @@ describe('insets', () => {
     expect(docs[0].text).not.toContain('title: x')
   })
 
-  test('a file inset cannot leave the project', () => {
-    const docs = [doc('a.md', '<!--{ "inset": "../../etc/passwd" }-->\n')]
+  test('a directive inside a list, a quote or a paragraph is an error, not a comment', () => {
+    for (const text of [
+      '- item\n  <!--{ "inset": "nowhere.md" }-->\n',
+      '> <!--{ "only": "book" }-->\n',
+      'Some text <!--{ "inset": "x.md" }--> more text.\n',
+    ]) {
+      expect(() => assembleCorpus([doc('a.md', text)] as any)).toThrow(
+        /own line at the top level/
+      )
+    }
+  })
+
+  test('an inset that names no document is an error', () => {
     expect(() =>
-      resolveInsets(docs, { root: '/proj', readFile: () => 'secret' })
-    ).toThrow(/outside the project/)
+      resolveInsets([doc('a.md', '<!--{ "inset": "#with-bun" }-->\n')])
+    ).toThrow(/names no document/)
+  })
+})
+
+/*
+What a file inset may read, against a REAL directory: the first cut read anything under the
+project root, and published it (1.16.9 review, B1 and B2). Every case here built green then.
+*/
+describe('a file inset reads fragments and nothing else', () => {
+  const fs = require('fs') as typeof import('fs')
+  const os = require('os') as typeof import('os')
+  const path = require('path') as typeof import('path')
+  const { extractDocs } = require('./docs') as typeof import('./docs')
+
+  const site = (files: Record<string, string>) => {
+    const root = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'inset-guard-'))
+    )
+    for (const [name, text] of Object.entries(files)) {
+      fs.mkdirSync(path.dirname(path.join(root, name)), { recursive: true })
+      fs.writeFileSync(path.join(root, name), text)
+    }
+    return root
+  }
+  const build = (root: string) =>
+    extractDocs({ paths: [path.join(root, 'docs')] }) as any[]
+  const host = (ref: string) => `# Host\n\n<!--{ "inset": "${ref}" }-->\n`
+
+  test('not a secrets file beside the docs', () => {
+    const root = site({
+      '.env': 'API_KEY=abc',
+      'docs/page.md': host('../.env'),
+    })
+    expect(() => build(root)).toThrow(/must name a fragment/)
+    fs.rmSync(root, { recursive: true, force: true })
+  })
+
+  test('not a file that is not markdown, even with the prefix', () => {
+    const root = site({
+      'docs/_key.pem': 'PRIVATE',
+      'docs/page.md': host('_key.pem'),
+    })
+    expect(() => build(root)).toThrow(/must name a fragment/)
+    fs.rmSync(root, { recursive: true, force: true })
+  })
+
+  test('not a draft, a hidden doc, or a child of a hidden section', () => {
+    const cases: Record<string, string>[] = [
+      { 'docs/secret.md': '---\ndraft: true\n---\n# Secret\n\nwithheld\n' },
+      { 'docs/secret.md': '<!--{ "hidden": true }-->\n# Secret\n\nwithheld\n' },
+      {
+        'docs/section.md': '<!--{ "hidden": true }-->\n# Section\n',
+        'docs/secret.md':
+          '<!--{ "parent": "section" }-->\n# Secret\n\nwithheld\n',
+      },
+    ]
+    for (const files of cases) {
+      const root = site({ ...files, 'docs/page.md': host('secret.md') })
+      expect(() => build(root)).toThrow(/a hidden one cannot be/)
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test('not a fragment outside the doc paths, or under an ignored or dot directory', () => {
+    for (const [file, ref, message] of [
+      ['notes/_x.md', '../notes/_x.md', /outside the doc paths/],
+      ['docs/reviews/_x.md', 'reviews/_x.md', /inside "reviews"/],
+      [
+        'docs/node_modules/_x.md',
+        'node_modules/_x.md',
+        /inside "node_modules"/,
+      ],
+      ['docs/.private/_x.md', '.private/_x.md', /inside "\.private"/],
+    ] as const) {
+      const root = site({ [file]: 'withheld', 'docs/page.md': host(ref) })
+      expect(() => build(root)).toThrow(message)
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  test('not through a symlink that leaves the doc paths', () => {
+    const root = site({
+      'outside/_x.md': 'withheld',
+      'docs/page.md': host('_link.md'),
+    })
+    fs.symlinkSync(
+      path.join(root, 'outside/_x.md'),
+      path.join(root, 'docs/_link.md')
+    )
+    expect(() => build(root)).toThrow(/outside the doc paths/)
+    fs.rmSync(root, { recursive: true, force: true })
+  })
+
+  test('a real fragment in a subdirectory of the docs is read', () => {
+    const root = site({
+      'docs/parts/_x.md': '# X\n\nshared words\n',
+      'docs/page.md': host('parts/_x.md'),
+    })
+    const page = build(root).find((d) => d.filename === 'page.md')
+    expect(page.text).toContain('shared words')
+    fs.rmSync(root, { recursive: true, force: true })
   })
 })
 
@@ -242,6 +363,23 @@ describe('per-volume placement', () => {
     expect(corpus[1].order).toBe(5)
   })
 
+  test('a placement sets its four fields and nothing else', () => {
+    const docs: any[] = [
+      {
+        filename: 'a.md',
+        title: 'A',
+        text: 'real',
+        placement: {
+          language: { title: 'B', text: 'smuggled', hidden: false },
+        },
+      },
+    ]
+    const placed: any = placeInBook(docs, 'language')[0]
+    expect(placed.title).toBe('B')
+    expect(placed.text).toBe('real')
+    expect(placed.hidden).toBeUndefined()
+  })
+
   test('"default" places a doc in the main volume', () => {
     const docs: any[] = [
       { filename: 'a.md', title: 'A', placement: { default: { order: 9 } } },
@@ -284,7 +422,7 @@ test('extraction assembles the corpus: fragment file, section inset, condition, 
       path.join(dir, '_how.md'),
       '# How\n\nExamples run in the page.\n'
     )
-    const docs = extractDocs({ paths: [dir], root: dir }) as any[]
+    const docs = extractDocs({ paths: [dir] }) as any[]
     expect(docs.map((d) => d.filename).sort()).toEqual([
       'install.md',
       'intro.md',

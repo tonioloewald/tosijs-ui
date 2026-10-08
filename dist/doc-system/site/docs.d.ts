@@ -91,8 +91,6 @@ export interface ExtractDocsOptions {
     paths: string[];
     ignore?: string[];
     output?: string;
-    /** project root a file inset must stay inside; default `process.cwd()` */
-    root?: string;
 }
 /**
  * The title a markdown file implies, when nothing declares one.

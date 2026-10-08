@@ -12,10 +12,17 @@ interface SourceDoc {
 /** Is this JSON directive single-sourcing rather than doc metadata? */
 export declare function isSingleSourceDirective(json: string): boolean;
 export interface ResolveInsetsOptions {
-    /** project root: a file inset must resolve inside it. Default `process.cwd()`. */
-    root?: string;
+    /**
+     * Directories a fragment file may live under: the doc paths the corpus was extracted
+     * from. Default `[process.cwd()]`.
+     */
+    roots?: string[];
+    /** directory names that are never read, as extraction's `ignore` */
+    ignore?: string[];
     /** read a fragment file; injectable so the rule is testable without a filesystem */
     readFile?: (absolutePath: string) => string | undefined;
+    /** resolve symlinks; injectable for the same reason */
+    realPath?: (absolutePath: string) => string;
 }
 export declare function resolveInsets(docs: SourceDoc[], options?: ResolveInsetsOptions): number;
 export declare function splitConditions(text: string, where?: string): {

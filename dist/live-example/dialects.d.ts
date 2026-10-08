@@ -28,6 +28,10 @@ export interface DialectSpec {
     /**
      * Source → JavaScript. The example runs the result the way it runs a `js` block, with
      * imports from the page's context modules already rewritten.
+     *
+     * Also called with a single line typed at the example's console, so the REPL speaks the
+     * example's language (#216). Those calls carry `options.repl === true`, and the result is
+     * evaluated for the value of its last expression statement.
      */
     transform?: (source: string, options: DialectOptions) => {
         code: string;

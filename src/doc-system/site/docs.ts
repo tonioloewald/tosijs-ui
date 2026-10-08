@@ -208,8 +208,6 @@ export interface ExtractDocsOptions {
   paths: string[]
   ignore?: string[]
   output?: string
-  /** project root a file inset must stay inside; default `process.cwd()` */
-  root?: string
 }
 
 const TRIM_REGEX = /^#+ |`/g
@@ -621,12 +619,7 @@ function findMarkdownFiles(
 }
 
 export function extractDocs(options: ExtractDocsOptions): Doc[] {
-  const {
-    paths,
-    ignore = ['node_modules', 'dist', 'build'],
-    output,
-    root,
-  } = options
+  const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options
   const found = findMarkdownFiles(paths, ignore, new Set(DEFAULT_DOC_IGNORES))
   /*
   Drop hidden docs HERE, before anything else sees them.
@@ -646,9 +639,20 @@ export function extractDocs(options: ExtractDocsOptions): Doc[] {
   Insets and conditional text are resolved HERE, for the same reason hidden docs are dropped
   here: the corpus is the thing that ships, so anything assembled later is assembled by each
   consumer separately. After the hidden filter, so a withheld doc cannot be published by
-  insetting it; a fragment that should not be a page is a `_`-prefixed file instead.
+  insetting it; a fragment that should not be a page is a `_`-prefixed file instead, and that
+  is the only kind of file an inset will read (see `fragmentPath`).
   */
-  assembleCorpus(docs, { root })
+  assembleCorpus(docs, {
+    // A fragment file must live where docs live: under a doc path, outside what is ignored.
+    roots: paths.map((p) => {
+      try {
+        return fs.statSync(p).isDirectory() ? p : path.dirname(p)
+      } catch {
+        return p
+      }
+    }),
+    ignore: [...ignore, ...DEFAULT_DOC_IGNORES],
+  })
   if (output) {
     saveDocsJSON(docs, output)
   }

@@ -179,8 +179,11 @@ export function placeInBook<
         (book === DEFAULT_BOOK && k.trim().toLowerCase() === DEFAULT_BOOK_NAME)
     )
     if (!entry) return doc
+    // Only what a placement is documented to set: an entry is author-written JSON, and
+    // copying whatever it holds would let `"hidden": false` or `"text"` through.
     const out = { ...doc }
-    for (const [field, value] of Object.entries(entry[1])) {
+    for (const field of ['parent', 'order', 'pin', 'title'] as const) {
+      const value = entry[1][field]
       if (value !== undefined) (out as any)[field] = value
     }
     return out
