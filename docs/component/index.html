@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=183f78e4d786" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=c39d41ee8961" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=2267091fdf96" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=36971d507f47" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -192,6 +192,55 @@ left behind) is not shown.</li>
 <code>tosijs-ui/live-example</code>.</li>
 <li>A <code>run</code> dialect gets the same console as <code>context.console</code>, so a VM can forward its output
 to it.</li>
+<li><strong>The REPL speaks the example&#39;s language.</strong> A line you type goes through the same dialect
+transform as the example&#39;s code, with the same fence options, so in a <code>tjs</code> example <code>==</code>
+is TJS&#39;s <code>==</code>. A line the dialect rejects shows the dialect&#39;s error; it is not retried as
+JavaScript. A <code>run</code> dialect has no transform, so its lines are JavaScript.</li>
+</ul>
+<h2>Opening with the code showing</h2>
+<p>An example normally opens as its preview, and the <code>&lt;&gt;</code> button opens the code full-screen.
+A page that is teaching wants the code and its effect in view together, in the page. Ask for
+that with a fence option on the example&#39;s source block, written after the language:
+<code>{&quot;view&quot;: &quot;code&quot;}</code> puts the preview beside the code, and <code>{&quot;view&quot;: &quot;console&quot;}</code> puts the
+console beside the code, where the preview would be.</p>
+<p><code>&quot;code&quot;</code> is for &quot;edit this and watch it change&quot;:</p>
+<pre data-example-options="{&quot;view&quot;:&quot;code&quot;}"><code class="language-js">import { elements } from &#39;tosijs&#39;
+
+const { button } = elements
+let clicks = 0
+preview.append(
+  button(&#39;clicked 0 times&#39;, {
+    onClick(event) {
+      event.target.textContent = `clicked ${++clicks} times`
+    },
+  })
+)
+</code></pre>
+<pre><code class="language-test">test(&#39;view: code opens the editor in the page, not full-screen&#39;, async () =&gt; {
+  const example = preview.closest(&#39;tosi-example&#39;)
+  // the editor is built when the example nears the viewport
+  example.showInline(&#39;code&#39;)
+  expect(example.classList.contains(&#39;-maximize&#39;)).toBe(false)
+  expect(example.parts.codeEditors.hidden).toBe(false)
+  example.closeCode()
+})
+</code></pre>
+<p><code>&quot;console&quot;</code> is for &quot;type a line, see the answer&quot;, where the point is a value and not a
+rendering. Try <code>total * 2</code> at the prompt:</p>
+<pre data-example-options="{&quot;view&quot;:&quot;console&quot;}"><code class="language-js">const total = [1, 2, 3].reduce((sum, n) =&gt; sum + n, 0)
+console.log(&#39;total is&#39;, total)
+</code></pre>
+<ul>
+<li>The editor is built when the example nears the viewport, so a long chapter of these costs
+what the reader scrolls past, not twenty editors at load.</li>
+<li>In a narrow column the two panes stack, and the example is twice its usual height.</li>
+<li>Closing the code (the <code>×</code> in the tab bar) returns the example to its preview, and puts the
+console back among the tabs.</li>
+<li>From code, <code>example.showInline(&#39;code&#39; | &#39;console&#39;)</code> does the same thing.</li>
+<li>The generated JavaScript of a <code>tjs</code> or <code>ts</code> example is the read-only <strong>JS</strong> tab beside its
+source, in every view.</li>
+<li>In an ePub or in print an example is its code listing; the view option changes nothing
+there.</li>
 </ul>
 <h2>Adding a dialect</h2>
 <p><code>js</code>, <code>tjs</code> and <code>ts</code> are the built-in entries of a <strong>dialect registry</strong>, and a site can add
@@ -697,6 +746,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-zf3851nk.js"></script>
+  <script type="module" src="../hydrate-bec2p42m.js"></script>
 </body>
 </html>

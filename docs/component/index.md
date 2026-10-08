@@ -183,6 +183,63 @@ example's output stays in its Console tab.
   `tosijs-ui/live-example`.
 - A `run` dialect gets the same console as `context.console`, so a VM can forward its output
   to it.
+- **The REPL speaks the example's language.** A line you type goes through the same dialect
+  transform as the example's code, with the same fence options, so in a `tjs` example `==`
+  is TJS's `==`. A line the dialect rejects shows the dialect's error; it is not retried as
+  JavaScript. A `run` dialect has no transform, so its lines are JavaScript.
+
+## Opening with the code showing
+
+An example normally opens as its preview, and the `<>` button opens the code full-screen.
+A page that is teaching wants the code and its effect in view together, in the page. Ask for
+that with a fence option on the example's source block, written after the language:
+`{"view": "code"}` puts the preview beside the code, and `{"view": "console"}` puts the
+console beside the code, where the preview would be.
+
+`"code"` is for "edit this and watch it change":
+
+```js {"view": "code"}
+import { elements } from 'tosijs'
+
+const { button } = elements
+let clicks = 0
+preview.append(
+  button('clicked 0 times', {
+    onClick(event) {
+      event.target.textContent = `clicked ${++clicks} times`
+    },
+  })
+)
+```
+```test
+test('view: code opens the editor in the page, not full-screen', async () => {
+  const example = preview.closest('tosi-example')
+  // the editor is built when the example nears the viewport
+  example.showInline('code')
+  expect(example.classList.contains('-maximize')).toBe(false)
+  expect(example.parts.codeEditors.hidden).toBe(false)
+  example.closeCode()
+})
+```
+
+`"console"` is for "type a line, see the answer", where the point is a value and not a
+rendering. Try `total * 2` at the prompt:
+
+```js {"view": "console"}
+const total = [1, 2, 3].reduce((sum, n) => sum + n, 0)
+console.log('total is', total)
+```
+
+- The editor is built when the example nears the viewport, so a long chapter of these costs
+  what the reader scrolls past, not twenty editors at load.
+- In a narrow column the two panes stack, and the example is twice its usual height.
+- Closing the code (the `×` in the tab bar) returns the example to its preview, and puts the
+  console back among the tabs.
+- From code, `example.showInline('code' | 'console')` does the same thing.
+- The generated JavaScript of a `tjs` or `ts` example is the read-only **JS** tab beside its
+  source, in every view.
+- In an ePub or in print an example is its code listing; the view option changes nothing
+  there.
 
 ## Adding a dialect
 

@@ -66,6 +66,23 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         ':host.-vertical': {
             flexDirection: string;
         };
+        ':host.-inline-code.-vertical:not(.-maximize)': {
+            height: string;
+        };
+        ':host.-inline-code:not(.-maximize):not(.-vertical) > .code-editors': {
+            flex: string;
+        };
+        ':host.-inline-code:not(.-maximize):not(.-vertical) > [part="example"]': {
+            flex: string;
+        };
+        ':host.-inline-code:not(.-maximize) [part="undo"], :host.-inline-code:not(.-maximize) [part="redo"]': {
+            display: string;
+        };
+        ':host.-console-docked > [part="example"] > .example-console': {
+            position: string;
+            inset: string;
+            zIndex: string;
+        };
         ':host .layout-indicator': {
             transition: string;
             transform: string;
@@ -474,6 +491,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private setActiveCompletion;
     private applyCompletion;
     private closeCompletions;
+    private replCode;
     private evalInExample;
     private currentPreview;
     compiledJs?: string;
@@ -545,6 +563,14 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     collapseWidgetsAfterAction: (event: Event) => void;
     toggleMaximize: () => void;
     showCode: () => void;
+    showInline: (view?: "code" | "console") => void;
+    private static readonly INLINE_STACK_WIDTH;
+    private consoleDocked;
+    private dockConsole;
+    private undockConsole;
+    private initialViewApplied;
+    private initialViewWatch?;
+    private applyInitialView;
     closeCode: () => void;
     openEditorWindow: () => void;
     refreshRemote: () => void;

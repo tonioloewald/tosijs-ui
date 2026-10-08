@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, spyOn, test } from 'bun:test'
 import { liveExample, testManager } from './component.js'
 import { setExampleConsole } from './example-console.js'
+import { registerDialect } from './dialects.js'
 
 afterEach(() => setExampleConsole(true))
 
@@ -478,6 +479,183 @@ describe('REPL autocomplete (Tab)', () => {
       field.dispatchEvent(event)
       expect(event.defaultPrevented).toBe(false)
       example.remove()
+    })
+  })
+})
+
+/*
+#216: the REPL speaks the example's language.
+
+A stand-in dialect whose one difference from JavaScript is observable in a single line:
+`a is b` means strict equality, and is a syntax error as JavaScript.
+*/
+describe("the REPL evaluates in the example's dialect", () => {
+  const dialectMount = async (js: string) => {
+    registerDialect('islang', {
+      transform: (source, options) => ({
+        code:
+          `/* ${options.tag ?? 'none'} */ ` + source.replace(/ is /g, ' === '),
+      }),
+    })
+    const example: any = liveExample()
+    document.body.append(example)
+    await example.whenHydrated
+    example.dialect = 'islang'
+    example.options = { tag: 'from-fence' }
+    example.js = js
+    await example.refresh()
+    return example
+  }
+
+  test("a line goes through the example's transform, with the example's scope and options", async () => {
+    await quietly(async () => {
+      const example = await dialectMount(
+        `const five = 5\npreview.textContent = 'x'`
+      )
+      // Not JavaScript: this only evaluates if the line was transformed.
+      expect(await example.consoleEval('five is 5')).toBe(true)
+      expect(await example.consoleEval("five is '5'")).toBe(false)
+      expect(
+        lines(example).filter(([level]: string[]) => level === 'error')
+      ).toEqual([])
+      example.remove()
+    })
+  })
+
+  test('a line the dialect rejects is reported, not retried as JavaScript', async () => {
+    await quietly(async () => {
+      registerDialect('strictlang', {
+        transform: (source) => {
+          if (source.includes('==')) throw new Error('strictlang has no ==')
+          return { code: source }
+        },
+      })
+      const example: any = liveExample()
+      document.body.append(example)
+      await example.whenHydrated
+      example.dialect = 'strictlang'
+      example.js = `preview.textContent = 'x'`
+      await example.refresh()
+      // Valid JavaScript, so a fallback would have answered `true`.
+      expect(await example.consoleEval('1 == 1')).toBeUndefined()
+      expect(lines(example).at(-1)).toEqual([
+        'error',
+        'Error: strictlang has no ==',
+      ])
+      example.remove()
+    })
+  })
+
+  test('a plain js example is evaluated exactly as before', async () => {
+    await quietly(async () => {
+      const example = await mount(`const n = 2`)
+      await example.refresh()
+      expect(await example.consoleEval('n * 21')).toBe(42)
+      example.remove()
+    })
+  })
+})
+
+/*
+#216: a fence picks the view an example opens in, in the page.
+*/
+describe('the inline views', () => {
+  const opened = async (options: Record<string, unknown>) => {
+    const example = await mount(`console.log('hi')`, options)
+    await example.refresh()
+    return example
+  }
+  // happy-dom's IntersectionObserver never reports; stand in for "scrolled into view".
+  const withoutObserver = async <T>(fn: () => Promise<T>): Promise<T> => {
+    const real = (globalThis as any).IntersectionObserver
+    ;(globalThis as any).IntersectionObserver = undefined
+    try {
+      return await fn()
+    } finally {
+      ;(globalThis as any).IntersectionObserver = real
+    }
+  }
+
+  test('view: code opens the editor beside the preview, not maximized', async () => {
+    await quietly(() =>
+      withoutObserver(async () => {
+        const example = await opened({ view: 'code' })
+        expect(example.parts.codeEditors.hidden).toBe(false)
+        expect(example.classList.contains('-maximize')).toBe(false)
+        expect(example.classList.contains('-inline-code')).toBe(true)
+        // the console is still a tab, not docked
+        expect(example.classList.contains('-console-docked')).toBe(false)
+        expect(
+          example.parts.editors.querySelector('.example-console')
+        ).not.toBe(null)
+        example.remove()
+      })
+    )
+  })
+
+  test('view: console puts the console where the preview is, and closing puts it back', async () => {
+    await quietly(() =>
+      withoutObserver(async () => {
+        const example = await opened({ view: 'console' })
+        const dock = () =>
+          example.parts.example.querySelector(':scope > .example-console')
+        expect(example.classList.contains('-maximize')).toBe(false)
+        expect(example.parts.codeEditors.hidden).toBe(false)
+        expect(dock()).not.toBe(null)
+        expect(example.parts.editors.querySelector('.example-console')).toBe(
+          null
+        )
+        // and it is the working console: the run's log is in it, and it evaluates
+        expect(dock().textContent).toContain('hi')
+        expect(await example.consoleEval('1 + 1')).toBe(2)
+
+        example.closeCode()
+        expect(example.parts.codeEditors.hidden).toBe(true)
+        expect(dock()).toBe(null)
+        expect(
+          example.parts.editors.querySelector('.example-console')
+        ).not.toBe(null)
+        expect(example.classList.contains('-inline-code')).toBe(false)
+        example.remove()
+      })
+    )
+  })
+
+  test('no view option, or an unknown one, leaves the example as it was', async () => {
+    await quietly(() =>
+      withoutObserver(async () => {
+        for (const options of [{}, { view: 'sideways' }]) {
+          const example = await opened(options)
+          expect(example.parts.codeEditors.hidden).toBe(true)
+          expect(example.classList.contains('-inline-code')).toBe(false)
+          example.remove()
+        }
+      })
+    )
+  })
+
+  test('the editor is not built until the example nears the viewport', async () => {
+    await quietly(async () => {
+      let report: ((entries: any[]) => void) | undefined
+      const real = (globalThis as any).IntersectionObserver
+      ;(globalThis as any).IntersectionObserver = class {
+        constructor(callback: (entries: any[]) => void) {
+          report = callback
+        }
+        observe() {}
+        disconnect() {}
+      }
+      try {
+        const example = await opened({ view: 'code' })
+        expect(example.parts.codeEditors.hidden).toBe(true)
+        expect(example.parts.codeEditors.childElementCount).toBe(0)
+        report!([{ isIntersecting: true }])
+        expect(example.parts.codeEditors.hidden).toBe(false)
+        expect(example.parts.codeEditors.childElementCount).toBe(1)
+        example.remove()
+      } finally {
+        ;(globalThis as any).IntersectionObserver = real
+      }
     })
   })
 })

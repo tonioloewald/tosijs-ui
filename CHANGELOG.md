@@ -2,9 +2,12 @@
 
 ## 1.16.9
 
-Single-sourcing for books, asked for by tjs-lang for *The TJS Programming Language* (#217):
-one corpus, several outputs, nothing kept in sync by hand. All additive; a corpus that uses
-none of it is assembled exactly as before.
+Two sets of asks from tjs-lang for *The TJS Programming Language*, a book that teaches
+programming in the page. Single-sourcing for books (#217): one corpus, several outputs,
+nothing kept in sync by hand. And live examples that open with their code showing and a
+console that speaks the example's language (#216). Additive, with one behaviour change to
+know about: in a `tjs` or `ts` example, or one in a registered dialect, a line typed at the
+console is now evaluated in that language and not as JavaScript.
 
 ### One source, several outputs (#217)
 
@@ -25,6 +28,23 @@ none of it is assembled exactly as before.
 - Saving an edited live example back to source is refused on a page whose source uses an
   inset or conditional text, where the example's position on the page no longer identifies a
   block in that file.
+
+### Examples that open with their code showing, and a console in their language (#216)
+
+- **A fence picks the view an example opens in.** `{"view": "code"}` in the source block's
+  fence options opens the editor beside the preview, in the page and not full-screen;
+  `{"view": "console"}` puts the console where the preview would be, beside the code, for
+  examples whose point is a value. The editor is built as the example nears the viewport. In
+  a narrow column the panes stack. `example.showInline('code' | 'console')` does the same
+  from code.
+- **The console evaluates in the example's dialect.** A line goes through the same transform
+  as the example's code, with the same fence options, so `x == '5'` in a `tjs` example is
+  TJS's `==`. A line the dialect rejects shows the dialect's error and is not retried as
+  JavaScript. Plain `js` examples and `run` dialects are unchanged.
+- The generated JavaScript tjs-lang asked to see already exists as the read-only **JS** tab of
+  a `tjs` or `ts` example, and the inline views make it reachable in the page. Showing the
+  JavaScript for a single console line is not in this release: a transform's output for one
+  line is mostly its runtime prelude, and there is no general way to separate the two.
 
 ## 1.16.8
 

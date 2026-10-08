@@ -33,6 +33,23 @@ export declare const liveExampleStyleSpec: {
     ':host.-vertical': {
         flexDirection: string;
     };
+    ':host.-inline-code.-vertical:not(.-maximize)': {
+        height: string;
+    };
+    ':host.-inline-code:not(.-maximize):not(.-vertical) > .code-editors': {
+        flex: string;
+    };
+    ':host.-inline-code:not(.-maximize):not(.-vertical) > [part="example"]': {
+        flex: string;
+    };
+    ':host.-inline-code:not(.-maximize) [part="undo"], :host.-inline-code:not(.-maximize) [part="redo"]': {
+        display: string;
+    };
+    ':host.-console-docked > [part="example"] > .example-console': {
+        position: string;
+        inset: string;
+        zIndex: string;
+    };
     ':host .layout-indicator': {
         transition: string;
         transform: string;

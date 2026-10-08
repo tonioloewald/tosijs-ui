@@ -57,6 +57,38 @@ export const liveExampleStyleSpec = {
     flexDirection: 'column',
   },
 
+  /*
+  Code open in the page (`showInline`), stacked because the column is narrow: two panes need
+  twice the height one did, or each gets half an example's worth and neither is usable.
+  */
+  ':host.-inline-code.-vertical:not(.-maximize)': {
+    height: 'calc(var(--tosi-example-height) * 2)',
+  },
+
+  /*
+  In the page the code pane is a few hundred pixels wide, and its tab bar has to hold the
+  tabs AND the way out. So the code gets the larger share, and undo/redo (which are also in
+  the example menu, and on the keyboard) give up their place to the menu and the close button.
+  */
+  ':host.-inline-code:not(.-maximize):not(.-vertical) > .code-editors': {
+    flex: '1 1 60%',
+  },
+  ':host.-inline-code:not(.-maximize):not(.-vertical) > [part="example"]': {
+    flex: '1 1 40%',
+  },
+  ':host.-inline-code:not(.-maximize) [part="undo"], :host.-inline-code:not(.-maximize) [part="redo"]':
+    {
+      display: 'none',
+    },
+
+  // `view: console`: the console sits where the preview would be, beside the code. Under the
+  // toolbar (z-index 100), over the preview, which is still there for the code to write to.
+  ':host.-console-docked > [part="example"] > .example-console': {
+    position: 'absolute',
+    inset: '0',
+    zIndex: '5',
+  },
+
   ':host .layout-indicator': {
     transition: '0.5s ease-out',
     transform: 'rotateZ(270deg)',

@@ -184,6 +184,63 @@ example's output stays in its Console tab.
   `tosijs-ui/live-example`.
 - A `run` dialect gets the same console as `context.console`, so a VM can forward its output
   to it.
+- **The REPL speaks the example's language.** A line you type goes through the same dialect
+  transform as the example's code, with the same fence options, so in a `tjs` example `==`
+  is TJS's `==`. A line the dialect rejects shows the dialect's error; it is not retried as
+  JavaScript. A `run` dialect has no transform, so its lines are JavaScript.
+
+## Opening with the code showing
+
+An example normally opens as its preview, and the `<>` button opens the code full-screen.
+A page that is teaching wants the code and its effect in view together, in the page. Ask for
+that with a fence option on the example's source block, written after the language:
+`{"view": "code"}` puts the preview beside the code, and `{"view": "console"}` puts the
+console beside the code, where the preview would be.
+
+`"code"` is for "edit this and watch it change":
+
+```js {"view": "code"}
+import { elements } from 'tosijs'
+
+const { button } = elements
+let clicks = 0
+preview.append(
+  button('clicked 0 times', {
+    onClick(event) {
+      event.target.textContent = `clicked ${++clicks} times`
+    },
+  })
+)
+```
+```test
+test('view: code opens the editor in the page, not full-screen', async () => {
+  const example = preview.closest('tosi-example')
+  // the editor is built when the example nears the viewport
+  example.showInline('code')
+  expect(example.classList.contains('-maximize')).toBe(false)
+  expect(example.parts.codeEditors.hidden).toBe(false)
+  example.closeCode()
+})
+```
+
+`"console"` is for "type a line, see the answer", where the point is a value and not a
+rendering. Try `total * 2` at the prompt:
+
+```js {"view": "console"}
+const total = [1, 2, 3].reduce((sum, n) => sum + n, 0)
+console.log('total is', total)
+```
+
+- The editor is built when the example nears the viewport, so a long chapter of these costs
+  what the reader scrolls past, not twenty editors at load.
+- In a narrow column the two panes stack, and the example is twice its usual height.
+- Closing the code (the `×` in the tab bar) returns the example to its preview, and puts the
+  console back among the tabs.
+- From code, `example.showInline('code' | 'console')` does the same thing.
+- The generated JavaScript of a `tjs` or `ts` example is the read-only **JS** tab beside its
+  source, in every view.
+- In an ePub or in print an example is its code listing; the view option changes nothing
+  there.
 
 ## Adding a dialect
 
@@ -1269,9 +1326,9 @@ export class LiveExample extends withAttributes({
             scope.set('console', replConsole);
         for (const [key, value] of Object.entries(this.capturedScope ?? {}))
             scope.set(key, value);
-        // Plain `rewriteImports`, not the checking one: a REPL line is not a module, and an
-        // error thrown here would land outside the `try` that prints errors to the console.
-        const code = rewriteImports(source, Object.keys(this.context));
+        const code = await this.replCode(source);
+        if (code === undefined)
+            return undefined;
         const names = [...scope.keys()];
         let fn;
         try {
@@ -1475,10 +1532,41 @@ export class LiveExample extends withAttributes({
         this.consoleInputEl?.setAttribute('aria-expanded', 'false');
         this.consoleInputEl?.removeAttribute('aria-activedescendant');
     }
+    /*
+    The JavaScript a REPL line evaluates as: the line through the example's own dialect, the
+    same transform its code went through (#216).
+  
+    It was evaluated as plain JavaScript whatever the example was written in, so in a `tjs`
+    example `x == '5'` meant JavaScript's `==`, the opposite of what the code above the prompt
+    had just taught, and syntax the dialect adds did not parse at all. A `run` dialect has no
+    transform (it executes its source itself), so its lines stay JavaScript.
+  
+    A line the dialect rejects is reported in the console and NOT retried as JavaScript:
+    falling back would answer with the other language's semantics and say nothing.
+  
+    Returns `undefined` after printing the error. Then plain `rewriteImports`, not the checking
+    one: a REPL line is not a module, and an error thrown there would land outside the `try`
+    that prints errors to the console.
+    */
+    async replCode(source) {
+        let code = source;
+        if (!(this.dialect === 'js' && isBuiltInDialect('js'))) {
+            try {
+                const transform = await dialectTransform(this.dialect, this.options);
+                if (transform)
+                    code = (await transform(source)).code;
+            }
+            catch (error) {
+                this.addConsoleLine('error', formatConsoleValue(error));
+                return undefined;
+            }
+        }
+        return rewriteImports(code, Object.keys(this.context));
+    }
     async evalInExample(evaluate, source) {
-        // Plain `rewriteImports`, not the checking one: a REPL line is not a module, and an
-        // error thrown here would land outside the `try` that prints errors to the console.
-        const code = rewriteImports(source, Object.keys(this.context));
+        const code = await this.replCode(source);
+        if (code === undefined)
+            return undefined;
         /*
         `$` and `$$`, as in a browser console, unless something named `$` is already in scope (the
         example's own, or a page's jQuery): then that wins. They query THIS example's preview: in
@@ -2136,6 +2224,8 @@ export class LiveExample extends withAttributes({
         this.runAbort?.abort();
         this.remoteSync?.sendClose();
         this.remoteSync?.stopListening();
+        this.initialViewWatch?.disconnect();
+        this.initialViewWatch = undefined;
         if (this.undoInterval) {
             clearInterval(this.undoInterval);
             this.undoInterval = undefined;
@@ -2468,7 +2558,83 @@ export class LiveExample extends withAttributes({
         this.parts.codeEditors.hidden = false;
         this.ensureProductTabs();
     };
+    /*
+    Open the code beside the example, in the page, without going full-screen (#216).
+  
+    `showCode()` maximizes, which is right for someone who decided to work on an example and
+    wrong for a page that is teaching: a tutorial wants the code and its effect in view together
+    as you scroll past. Two arrangements:
+  
+      'code'     the preview beside the code: edit this, watch it change
+      'console'  the console beside the code, where the preview would be: type a line, see
+                 the answer. For examples whose point is a value, not a rendering.
+  
+    A fence asks for one with `{"view": "code"}` or `{"view": "console"}` in its options. The
+    editor is then built when the example nears the viewport, not at load: a chapter can hold
+    twenty of these, and each one constructs a CodeMirror.
+    */
+    showInline = (view = 'code') => {
+        if (!this.hydrated || this.remoteId !== '')
+            return;
+        this.ensureEditors();
+        this.classList.remove('-maximize');
+        this.classList.add('-inline-code');
+        // Side by side needs room for two columns; below that, stack them.
+        this.classList.toggle('-vertical', this.offsetWidth > 0 && this.offsetWidth < LiveExample.INLINE_STACK_WIDTH);
+        this.parts.codeEditors.hidden = false;
+        this.ensureProductTabs();
+        if (view === 'console')
+            this.dockConsole();
+    };
+    static INLINE_STACK_WIDTH = 560;
+    // The console view lives in the tab strip, or docked over the preview (`view: console`).
+    consoleDocked = false;
+    dockConsole() {
+        if (this.consoleDocked || !this.consoleView)
+            return;
+        this.parts.example.append(this.consoleView);
+        this.consoleDocked = true;
+        this.classList.add('-console-docked');
+        this.parts.editors.setupTabs();
+        this.showDefaultTab();
+    }
+    undockConsole() {
+        if (!this.consoleDocked || !this.consoleView)
+            return;
+        // back where buildEditorPanel() put it: after the four source editors
+        this.parts.test.after(this.consoleView);
+        this.consoleDocked = false;
+        this.classList.remove('-console-docked');
+        this.parts.editors.setupTabs();
+    }
+    initialViewApplied = false;
+    initialViewWatch;
+    // Called from refresh(), so it sees options whether they were set before or after mount.
+    applyInitialView() {
+        if (this.initialViewApplied || !this.hydrated || this.remoteId !== '')
+            return;
+        const view = this.options.view;
+        if (view !== 'code' && view !== 'console')
+            return;
+        this.initialViewApplied = true;
+        if (typeof IntersectionObserver === 'undefined') {
+            this.showInline(view);
+            return;
+        }
+        this.initialViewWatch = new IntersectionObserver((entries) => {
+            if (!entries.some((entry) => entry.isIntersecting))
+                return;
+            this.initialViewWatch?.disconnect();
+            this.initialViewWatch = undefined;
+            this.showInline(view);
+        }, 
+        // a screen ahead, so the editor is there by the time the reader is
+        { rootMargin: '100% 0px' });
+        this.initialViewWatch.observe(this);
+    }
     closeCode = () => {
+        this.classList.remove('-inline-code');
+        this.undockConsole();
         if (this.remoteId !== '') {
             // Remote editor window — send close signal to original, then close popup
             this.remoteSync?.sendClose();
@@ -2521,6 +2687,7 @@ export class LiveExample extends withAttributes({
     refresh = async () => {
         if (this.remoteId !== '')
             return;
+        this.applyInitialView();
         // Reader fast path: with the build-time bake AND tests off (the deployed
         // reader — tests default off outside localhost), run the example WITHOUT
         // loading the tjs transpiler. When tests are on (localhost / the doc-test
