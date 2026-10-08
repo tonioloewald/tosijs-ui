@@ -37,7 +37,10 @@ test('view: code shows the preview beside the editor, in the page', async ({
   expect(whole!.height).toBeLessThan(500)
   // The way out is on screen: at the reading column's width the tab bar used to push it off.
   const close = await host.locator('button[title="close code"]').boundingBox()
-  expect(close!.x + close!.width).toBeLessThanOrEqual(whole!.x + whole!.width)
+  // +1: WebKit reports the flush-right button a 64th of a pixel past the box.
+  expect(close!.x + close!.width).toBeLessThanOrEqual(
+    whole!.x + whole!.width + 1
+  )
   // The example still works with the code open.
   await button.click()
   await expect(button).toHaveText('clicked 1 times')
