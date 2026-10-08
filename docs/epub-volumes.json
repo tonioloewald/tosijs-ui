@@ -3,6 +3,8 @@
     "book": "",
     "title": "tosijs-ui",
     "filename": "tosijs-ui.epub",
-    "url": "/tosijs-ui.epub"
+    "url": "/tosijs-ui.epub",
+    "coverFilename": "tosijs-ui-cover.png",
+    "coverUrl": "/tosijs-ui-cover.png"
   }
 ]

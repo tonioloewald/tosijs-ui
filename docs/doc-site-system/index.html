@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=79e6cad369d8" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=ebaf5a077f1a" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=81bc4ec16c1d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=49a7c76efb91" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookCover&quot;:&quot;/tosijs-ui-cover.png&quot;}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1084,11 +1084,16 @@ and its real output URL. Substituted into the corpus before pages render, so the
 HTML and the hydrated SPA show the same thing.</p>
 <p><strong>A manifest.</strong> Every build writes <code>/epub-volumes.json</code> to the output dir:</p>
 <pre><code class="language-json" data-highlighted><span class="token punctuation">[</span>
-  <span class="token punctuation">{</span> <span class="token property">"book"</span><span class="token operator">:</span> <span class="token string">""</span><span class="token punctuation">,</span> <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"my-project"</span><span class="token punctuation">,</span> <span class="token property">"filename"</span><span class="token operator">:</span> <span class="token string">"my-project.epub"</span><span class="token punctuation">,</span> <span class="token property">"url"</span><span class="token operator">:</span> <span class="token string">"/my-project.epub"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span> <span class="token property">"book"</span><span class="token operator">:</span> <span class="token string">""</span><span class="token punctuation">,</span> <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"my-project"</span><span class="token punctuation">,</span> <span class="token property">"filename"</span><span class="token operator">:</span> <span class="token string">"my-project.epub"</span><span class="token punctuation">,</span> <span class="token property">"url"</span><span class="token operator">:</span> <span class="token string">"/my-project.epub"</span><span class="token punctuation">,</span>
+    <span class="token property">"coverFilename"</span><span class="token operator">:</span> <span class="token string">"my-project-cover.png"</span><span class="token punctuation">,</span> <span class="token property">"coverUrl"</span><span class="token operator">:</span> <span class="token string">"/my-project-cover.png"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token punctuation">{</span> <span class="token property">"book"</span><span class="token operator">:</span> <span class="token string">"field-guide"</span><span class="token punctuation">,</span> <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"my-project — field-guide"</span><span class="token punctuation">,</span>
-    <span class="token property">"filename"</span><span class="token operator">:</span> <span class="token string">"my-project-field-guide.epub"</span><span class="token punctuation">,</span> <span class="token property">"url"</span><span class="token operator">:</span> <span class="token string">"/my-project-field-guide.epub"</span> <span class="token punctuation">}</span>
+    <span class="token property">"filename"</span><span class="token operator">:</span> <span class="token string">"my-project-field-guide.epub"</span><span class="token punctuation">,</span> <span class="token property">"url"</span><span class="token operator">:</span> <span class="token string">"/my-project-field-guide.epub"</span><span class="token punctuation">,</span>
+    <span class="token property">"coverFilename"</span><span class="token operator">:</span> <span class="token string">"my-project-field-guide-cover.png"</span><span class="token punctuation">,</span>
+    <span class="token property">"coverUrl"</span><span class="token operator">:</span> <span class="token string">"/my-project-field-guide-cover.png"</span> <span class="token punctuation">}</span>
 <span class="token punctuation">]</span>
 </code></pre>
+<p><code>coverUrl</code> is the volume&#39;s cover as a plain image, written beside the ePub (a PNG when
+generated; an explicit <code>cover</code> keeps its own type).</p>
 <p><strong>The helper</strong>, if you are generating links in your own code:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> listEpubVolumes<span class="token punctuation">,</span> epubVolumeIdentity <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
 </code></pre>
@@ -1568,7 +1573,9 @@ Contents page, EPUB3 nav + EPUB2 ncx, and a cover (an explicit <code>cover</code
 one generated from the title + your <code>favicon</code>; install <code>@resvg/resvg-js</code> to
 render the generated one). The doc-browser&#39;s settings menu links to it as
 &quot;Download ePub&quot;. <code>bun bin/build-book.ts</code> builds it standalone. PDF is the
-in-browser <strong>Print</strong> button, not a batch job.</p>
+in-browser <strong>Print</strong> button, not a batch job. Print opens with the same cover as the
+default volume, then the title page and contents; a site built without <code>epub</code>, or
+without a cover, prints from the title page as before.</p>
 <p>By default <strong>the book is the whole visible corpus</strong> — zero config. To emit a
 <em>subset</em> in a <em>curated order</em> (a library that also ships a book, a novel with
 front/back matter) add a <code>book</code> manifest. It shapes only the book artifact; the
@@ -2038,6 +2045,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-1m0des59.js"></script>
+  <script type="module" src="../hydrate-ccmjj0gt.js"></script>
 </body>
 </html>

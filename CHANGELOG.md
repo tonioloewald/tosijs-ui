@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.16.10
+
+Print now opens with the book cover.
+
+- **Print as PDF has a cover.** The first page is the same cover the ePub carries: your
+  `epub.cover` image, or the one generated from the title and `coverIcon`. The title page and
+  contents follow it. A site built without `epub`, or where no cover could be generated,
+  prints as it did before.
+- **The cover is a file you can link.** Each ePub build writes its cover beside the book
+  (`my-project-cover.png`), and `/epub-volumes.json` and `epubVolumeIdentity` gain
+  `coverFilename` and `coverUrl` for it.
+
 ## 1.16.9
 
 Two sets of asks from tjs-lang for *The TJS Programming Language*, a book that teaches

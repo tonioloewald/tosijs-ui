@@ -48,6 +48,8 @@ export interface GenerateSiteConfig {
   /** directory to write pages into (the served web root, e.g. ./docs) */
   outputDir: string
   projectName?: string
+  /** URL of the book cover image, when the build makes one — Print's first page */
+  bookCover?: string
   /** site-level description, used as a fallback when a doc has none */
   description?: string
   /** <html lang>, default 'en' */
@@ -502,6 +504,7 @@ export async function generateSite(
       projectName: config.projectName,
       projectLinks: config.projectLinks,
       logo: config.logo,
+      bookCover: config.bookCover,
     })
   )
 

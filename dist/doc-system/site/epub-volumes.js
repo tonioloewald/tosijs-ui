@@ -41,11 +41,16 @@ export function epubVolumeIdentity(config, bookTarget) {
         ? `${slugify(baseTitle)}-${slugify(bookTarget)}.epub`
         : `${slugify(baseTitle)}.epub`;
     const base = (config.basePath ?? '/').replace(/\/+$/, '');
+    // A generated cover is always a PNG; an explicit one keeps its own type.
+    const coverExt = /\.(jpe?g|gif|png)$/i.exec(epub.cover ?? '')?.[0] ?? '.png';
+    const coverFilename = `${filename.replace(/\.epub$/, '')}-cover${coverExt.toLowerCase()}`;
     return {
         book: bookTarget ?? DEFAULT_BOOK,
         title,
         filename,
         url: `${base}/${filename}`,
+        coverFilename,
+        coverUrl: `${base}/${coverFilename}`,
     };
 }
 /**

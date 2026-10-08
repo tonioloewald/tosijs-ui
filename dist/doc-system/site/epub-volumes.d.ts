@@ -7,6 +7,10 @@ export interface EpubVolume {
     filename: string;
     /** served URL, honouring basePath */
     url: string;
+    /** the cover image the build writes beside the ePub, e.g. `my-project-cover.png` */
+    coverFilename: string;
+    /** served URL of that cover, honouring basePath — Print uses it as its first page */
+    coverUrl: string;
 }
 export interface VolumeNamingConfig {
     name?: string;
@@ -14,6 +18,8 @@ export interface VolumeNamingConfig {
     epub?: boolean | {
         title?: string;
         volumeTitles?: Record<string, string>;
+        /** an explicit cover image; only its extension matters here */
+        cover?: string;
     };
 }
 /**

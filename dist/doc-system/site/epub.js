@@ -786,6 +786,12 @@ export async function buildEpub(config, opts = {}) {
         // on disk all derive from one function. A link cannot point at a name nothing wrote.
         path.join(outDir, epubVolumeIdentity({ name: baseTitle, epub: { title: baseTitle } }, opts.bookTarget).filename));
     await zipEpub(buildDir, output);
+    // The same cover, as a plain file beside the ePub, so Print can open with it. Named by
+    // the shared helper (`coverFilename`) for the default name; an explicit `output` keeps
+    // its own stem.
+    if (cover) {
+        fs.writeFileSync(output.replace(/\.epub$/, '') + `-cover${path.extname(cover.file)}`, cover.data);
+    }
     fs.rmSync(buildDir, { recursive: true, force: true });
     // Release the parser window: an unclosed happy-dom Window holds its whole
     // document (every chapter parsed) plus its timers. Hygiene, not a proven win —

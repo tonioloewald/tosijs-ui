@@ -288,8 +288,11 @@ export class TosiDocSystem extends withAttributes({
                 const menuItems = [];
                 // Print / ePub of the whole corpus, before a separator + the prefs.
                 let projectName = '';
+                let bookCover;
                 try {
-                    projectName = JSON.parse(this.config || '{}').projectName || '';
+                    const parsed = JSON.parse(this.config || '{}');
+                    projectName = parsed.projectName || '';
+                    bookCover = parsed.bookCover || undefined;
                 }
                 catch {
                     // ignore — fall through to document.title
@@ -319,6 +322,7 @@ export class TosiDocSystem extends withAttributes({
                         */
                         win.document.write(buildBookHtml(this.corpus, {
                             title: bookTitle,
+                            cover: bookCover,
                             autoPrint: false,
                         }));
                         win.document.close();

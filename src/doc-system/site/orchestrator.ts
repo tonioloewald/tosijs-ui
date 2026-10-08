@@ -33,7 +33,11 @@ function registerSiteDialects(config: { dialects?: readonly string[] }): void {
   }
 }
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
-import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js'
+import {
+  epubVolumeIdentity,
+  listEpubVolumes,
+  renderEpubDownloads,
+} from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
 import { computeAssetStamp, missingStampInputWarning } from './asset-stamp.js'
 import {
@@ -1747,6 +1751,9 @@ export async function buildSite(
         docs,
         outputDir: PUBLIC,
         projectName: config.name,
+        bookCover: config.epub
+          ? epubVolumeIdentity(config).coverUrl
+          : undefined,
         description: config.description,
         baseUrl: config.baseUrl,
         lang: config.lang,

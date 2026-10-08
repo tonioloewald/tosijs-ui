@@ -92,6 +92,8 @@ interface DocSystemConfig {
   projectName?: string
   projectLinks?: ProjectLinks
   logo?: string
+  /** URL of the book cover the site build wrote; Print opens with it */
+  bookCover?: string
 }
 
 const PREFS_KEY = 'tosi-doc-system-prefs'
@@ -347,8 +349,11 @@ export class TosiDocSystem extends withAttributes({
 
           // Print / ePub of the whole corpus, before a separator + the prefs.
           let projectName = ''
+          let bookCover: string | undefined
           try {
-            projectName = JSON.parse(this.config || '{}').projectName || ''
+            const parsed = JSON.parse(this.config || '{}')
+            projectName = parsed.projectName || ''
+            bookCover = parsed.bookCover || undefined
           } catch {
             // ignore — fall through to document.title
           }
@@ -380,6 +385,7 @@ export class TosiDocSystem extends withAttributes({
               win.document.write(
                 buildBookHtml(this.corpus as any, {
                   title: bookTitle,
+                  cover: bookCover,
                   autoPrint: false,
                 })
               )

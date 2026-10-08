@@ -303,6 +303,7 @@ export async function generateSite(config) {
         projectName: config.projectName,
         projectLinks: config.projectLinks,
         logo: config.logo,
+        bookCover: config.bookCover,
     }));
     // The theme stylesheet (config.stylesUrl) is written separately by
     // ./generate-css.ts; pages here just <link> to it.

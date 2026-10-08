@@ -10,6 +10,7 @@ import {
   buildEpub,
   rewriteInBookLinks,
 } from './epub.js'
+import { epubVolumeIdentity } from './epub-volumes.js'
 
 // ── #15: in-book cross-links (/slug/ and ?filename → <slug>.xhtml) ────────────
 
@@ -495,3 +496,33 @@ test('a placement parent that is not in the volume fails the build', async () =>
     fs.rmSync(dir, { recursive: true, force: true })
   }
 }, 60000)
+
+test('the cover is also written beside the ePub, at the name the volume helper gives', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-cover-'))
+  try {
+    const corpus = path.join(dir, 'docs.json')
+    fs.writeFileSync(
+      corpus,
+      JSON.stringify([
+        {
+          filename: 'README.md',
+          title: 'Home',
+          text: '# Home',
+          path: 'README.md',
+        },
+      ])
+    )
+    const art = path.join(dir, 'art.png')
+    const bytes = Buffer.from('not really a png, but ours')
+    fs.writeFileSync(art, bytes)
+    const config = { name: 'Cover Book', outputDir: dir, docsJson: corpus }
+    const out = await buildEpub(config as any, { cover: art })
+    const beside = path.join(
+      path.dirname(out),
+      epubVolumeIdentity({ ...config, epub: { cover: art } }).coverFilename
+    )
+    expect(fs.readFileSync(beside).equals(bytes)).toBe(true)
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})

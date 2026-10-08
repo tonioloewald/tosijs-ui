@@ -914,11 +914,17 @@ HTML and the hydrated SPA show the same thing.
 
 ```json
 [
-  { "book": "", "title": "my-project", "filename": "my-project.epub", "url": "/my-project.epub" },
+  { "book": "", "title": "my-project", "filename": "my-project.epub", "url": "/my-project.epub",
+    "coverFilename": "my-project-cover.png", "coverUrl": "/my-project-cover.png" },
   { "book": "field-guide", "title": "my-project — field-guide",
-    "filename": "my-project-field-guide.epub", "url": "/my-project-field-guide.epub" }
+    "filename": "my-project-field-guide.epub", "url": "/my-project-field-guide.epub",
+    "coverFilename": "my-project-field-guide-cover.png",
+    "coverUrl": "/my-project-field-guide-cover.png" }
 ]
 ```
+
+`coverUrl` is the volume's cover as a plain image, written beside the ePub (a PNG when
+generated; an explicit `cover` keeps its own type).
 
 **The helper**, if you are generating links in your own code:
 
@@ -1424,7 +1430,9 @@ Contents page, EPUB3 nav + EPUB2 ncx, and a cover (an explicit `cover` image, or
 one generated from the title + your `favicon`; install `@resvg/resvg-js` to
 render the generated one). The doc-browser's settings menu links to it as
 "Download ePub". `bun bin/build-book.ts` builds it standalone. PDF is the
-in-browser **Print** button, not a batch job.
+in-browser **Print** button, not a batch job. Print opens with the same cover as the
+default volume, then the title page and contents; a site built without `epub`, or
+without a cover, prints from the title page as before.
 
 By default **the book is the whole visible corpus** — zero config. To emit a
 _subset_ in a _curated order_ (a library that also ships a book, a novel with

@@ -147,3 +147,20 @@ test('substitution is stateless across repeated calls', () => {
     ).toHaveLength(2)
   }
 })
+
+test('a volume names its cover beside the ePub, keeping an explicit cover type', () => {
+  // Print reads this URL; the ePub build writes the file. One derivation for both.
+  expect(epubVolumeIdentity(cfg)).toMatchObject({
+    coverFilename: 'foresight-rpg-cover.png',
+    coverUrl: '/foresight-rpg-cover.png',
+  })
+  expect(
+    epubVolumeIdentity(
+      { name: 'b', basePath: '/docs/', epub: { cover: 'art/Front.JPG' } },
+      'two'
+    )
+  ).toMatchObject({
+    coverFilename: 'b-two-cover.jpg',
+    coverUrl: '/docs/b-two-cover.jpg',
+  })
+})

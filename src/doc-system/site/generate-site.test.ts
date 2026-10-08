@@ -109,6 +109,13 @@ describe('docs.json cache-busting', () => {
     return html
   }
 
+  test('the book cover URL reaches the page config, where Print reads it', async () => {
+    expect(await page({ bookCover: '/t-cover.png' })).toContain(
+      '&quot;bookCover&quot;:&quot;/t-cover.png&quot;'
+    )
+    expect(await page()).not.toContain('bookCover')
+  })
+
   test('docsStamp is applied to the corpus URL', async () => {
     const html = await page({ docsStamp: 'deadbeef', assetStamp: '9.9.9' })
     expect(html).toContain('docs.json?v=deadbeef')

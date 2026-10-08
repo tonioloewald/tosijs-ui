@@ -37,12 +37,23 @@ export interface EpubVolume {
   filename: string
   /** served URL, honouring basePath */
   url: string
+  /** the cover image the build writes beside the ePub, e.g. `my-project-cover.png` */
+  coverFilename: string
+  /** served URL of that cover, honouring basePath — Print uses it as its first page */
+  coverUrl: string
 }
 
 export interface VolumeNamingConfig {
   name?: string
   basePath?: string
-  epub?: boolean | { title?: string; volumeTitles?: Record<string, string> }
+  epub?:
+    | boolean
+    | {
+        title?: string
+        volumeTitles?: Record<string, string>
+        /** an explicit cover image; only its extension matters here */
+        cover?: string
+      }
 }
 
 /**
@@ -64,11 +75,19 @@ export function epubVolumeIdentity(
     ? `${slugify(baseTitle)}-${slugify(bookTarget)}.epub`
     : `${slugify(baseTitle)}.epub`
   const base = (config.basePath ?? '/').replace(/\/+$/, '')
+  // A generated cover is always a PNG; an explicit one keeps its own type.
+  const coverExt = /\.(jpe?g|gif|png)$/i.exec(epub.cover ?? '')?.[0] ?? '.png'
+  const coverFilename = `${filename.replace(
+    /\.epub$/,
+    ''
+  )}-cover${coverExt.toLowerCase()}`
   return {
     book: bookTarget ?? DEFAULT_BOOK,
     title,
     filename,
     url: `${base}/${filename}`,
+    coverFilename,
+    coverUrl: `${base}/${coverFilename}`,
   }
 }
 
