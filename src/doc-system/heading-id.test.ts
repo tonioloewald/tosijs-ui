@@ -32,10 +32,26 @@ test('a repeated heading gets -1, -2, and a suffixed id never collides with a li
   ).toEqual(['usage', 'usage-1', 'usage-1-1', 'usage-2', ''])
 })
 
-test("`example-N` is a live example's id on the page; a heading never takes it", () => {
-  expect(new HeadingIds().next('example-2')).toBe('example-2-1')
-  expect(renderDocMarkdown('## Example 2')).toContain('id="example-2-1"')
-})
+test('repeats always get an id, whatever the slug: the suffix loop ends', () => {
+  // A reservation of `example-N` once made the second "Example" loop forever: every
+  // suffix of `example` is `example-N`. Nothing is reserved now; this pins that it ends.
+  for (const slug of ['example', 'usage', 'example-1', 'a-1-1']) {
+    const ids = new HeadingIds()
+    const out = Array.from({ length: 50 }, () => ids.next(slug))
+    expect(new Set(out).size).toBe(50)
+    expect(out[0]).toBe(slug)
+  }
+  const ids = new HeadingIds()
+  expect(
+    ['example', 'example-1', 'example', 'example'].map((s) => ids.next(s))
+  ).toEqual(['example', 'example-1', 'example-2', 'example-3'])
+  const html = renderDocMarkdown(
+    '## Example\n\na\n\n## Example\n\nb\n\n## Example 2\n'
+  )
+  expect(html).toContain('<h2 id="example">')
+  expect(html).toContain('<h2 id="example-1">')
+  expect(html).toContain('<h2 id="example-2">')
+}, 2000)
 
 test('rendered headings carry ids, fresh for every page', () => {
   const page = '# Title\n\n## Usage\n\n### Usage\n\n## ???\n'

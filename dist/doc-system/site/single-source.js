@@ -154,7 +154,10 @@ function bodyOf(text, anchor, ref) {
     // By the id the page gives it first (so `#usage-1` names the second "Usage"), then by slug.
     const ids = new HeadingIds();
     const pageIds = tokens.map((t) => t.type === 'heading' ? ids.next(headingSlug(t)) : '');
-    const byId = pageIds.indexOf(slugOfHeadingText(anchor));
+    // An anchor with nothing sluggable in it ("#???") names no heading; '' is also what every
+    // non-heading token has in `pageIds`, so it must not be looked up there.
+    const wanted = slugOfHeadingText(anchor);
+    const byId = wanted ? pageIds.indexOf(wanted) : -1;
     const start = byId > -1
         ? byId
         : tokens.findIndex((t) => t.type === 'heading' && headingMatches(t, anchor));

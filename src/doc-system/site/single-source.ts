@@ -181,7 +181,10 @@ function bodyOf(text: string, anchor: string | undefined, ref: string): string {
   const pageIds = tokens.map((t) =>
     t.type === 'heading' ? ids.next(headingSlug(t)) : ''
   )
-  const byId = pageIds.indexOf(slugOfHeadingText(anchor))
+  // An anchor with nothing sluggable in it ("#???") names no heading; '' is also what every
+  // non-heading token has in `pageIds`, so it must not be looked up there.
+  const wanted = slugOfHeadingText(anchor)
+  const byId = wanted ? pageIds.indexOf(wanted) : -1
   const start =
     byId > -1
       ? byId

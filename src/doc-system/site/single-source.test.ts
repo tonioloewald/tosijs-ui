@@ -69,6 +69,15 @@ describe('insets', () => {
     }
   })
 
+  test('an anchor with nothing in it to match names no heading', () => {
+    expect(() =>
+      resolveInsets([
+        doc('g.md', '# G\n\nintro\n\n## Usage\n\nbody\n'),
+        doc('a.md', '<!--{ "inset": "g.md#???" }-->\n'),
+      ])
+    ).toThrow(/no heading "#\?\?\?"/)
+  })
+
   test('a repeated heading is named by the id the page gives it', () => {
     const docs = [
       doc('g.md', '# G\n\n## Usage\n\nfirst\n\n## Usage\n\nsecond\n'),

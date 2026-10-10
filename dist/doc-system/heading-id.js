@@ -32,7 +32,15 @@ export function slugOfHeadingText(text) {
 }
 /** The slug of a marked heading token, before any `-1` de-duplication. */
 export const headingSlug = (token) => slugOfHeadingText(headingText(token));
-/** Hands out ids for one page, suffixing a repeat the way GitHub does. */
+/**
+ * Hands out ids for one page, suffixing a repeat the way GitHub does.
+ *
+ * It knows about headings and nothing else. In particular it does NOT keep headings out of
+ * `example-N`, the ids live examples get in the browser: a reservation here was tried for
+ * 1.16.11 and made `next('example')` loop forever on its second call, because every suffix
+ * of `example` is `example-N`. A heading "Example 2" is `example-2`, as on GitHub, and wins
+ * `#example-2` over the page's second live example because it comes first in the document.
+ */
 export class HeadingIds {
     seen = new Map();
     /** The id for the next heading with this slug, or '' when the slug is empty. */
@@ -40,11 +48,9 @@ export class HeadingIds {
         if (!slug)
             return '';
         let id = slug;
-        // `example-N` belongs to the page's live examples: a heading "Example 2" must not take
-        // the id a deep link to the second example resolves to.
-        const taken = (candidate) => this.seen.has(candidate) || /^example-\d+$/.test(candidate);
-        // A suffixed id can itself collide with a later literal heading ("Usage 1").
-        while (taken(id)) {
+        // A suffixed id can itself collide with an earlier literal heading ("Usage 1"). Each
+        // pass raises the counter, and `seen` is finite, so this ends.
+        while (this.seen.has(id)) {
             const n = (this.seen.get(slug) ?? 0) + 1;
             this.seen.set(slug, n);
             id = `${slug}-${n}`;

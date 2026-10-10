@@ -1747,10 +1747,16 @@ export class LiveExample extends withAttributes({
             this.inlineTjsTestCount > 0 &&
             this.productTabsReady &&
             this.jsOutEditor) {
+            // A new tab shifts the ones after it; keep the reader on the one they were reading.
+            const { editors } = this.parts;
+            const active = this.activeTab;
             this.tjsTestsView = div({ name: 'tjs tests', class: 'tjs-test-results' });
             this.jsOutEditor.after(this.tjsTestsView);
-            this.parts.editors.setupTabs();
-            this.parts.editors.queueRender();
+            editors.setupTabs();
+            const index = active ? editors.bodies.indexOf(active) : -1;
+            if (index > -1)
+                editors.value = index;
+            editors.queueRender();
         }
         const view = this.tjsTestsView;
         if (!view)

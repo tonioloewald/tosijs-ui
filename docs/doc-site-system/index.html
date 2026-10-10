@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=9c1da296a8f2" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=fffb52cc7012" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=209441ef38ed" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=8175e178c1cb" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1704,8 +1704,9 @@ the heading&#39;s text as GitHub slugs it: lowercased, everything that is not a 
 number, a space, <code>-</code> or <code>_</code> dropped, and each space turned into <code>-</code>. So &quot;What&#39;s new?&quot; is
 <code>whats-new</code> and &quot;Foo &amp; Bar&quot; is <code>foo--bar</code>. Letters of any script are kept. A heading
 repeated on one page gets <code>-1</code>, <code>-2</code>, and so on, in order. An entity such as <code>&amp;copy;</code> adds
-nothing to the id, and a heading that would be <code>example-2</code> gets <code>example-2-1</code>, since that id
-belongs to the page&#39;s second live example. The build warns about an
+nothing to the id. One overlap to know about: live examples are <code>example-1</code>, <code>example-2</code>, …
+in the browser, so on a page with both, a heading titled &quot;Example 2&quot; is what <code>#example-2</code>
+reaches. The build warns about an
 in-page link that matches no id on its page (it fails under <code>strict</code>).</li>
 </ul>
 <h3 id="which-fence-languages-execute">Which fence languages EXECUTE</h3>
@@ -2078,6 +2079,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-fz04wv2s.js"></script>
+  <script type="module" src="../hydrate-s7c5e74s.js"></script>
 </body>
 </html>

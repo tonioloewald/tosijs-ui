@@ -1538,8 +1538,9 @@ case is fully covered.
   number, a space, `-` or `_` dropped, and each space turned into `-`. So "What's new?" is
   `whats-new` and "Foo & Bar" is `foo--bar`. Letters of any script are kept. A heading
   repeated on one page gets `-1`, `-2`, and so on, in order. An entity such as `&copy;` adds
-  nothing to the id, and a heading that would be `example-2` gets `example-2-1`, since that id
-  belongs to the page's second live example. The build warns about an
+  nothing to the id. One overlap to know about: live examples are `example-1`, `example-2`, …
+  in the browser, so on a page with both, a heading titled "Example 2" is what `#example-2`
+  reaches. The build warns about an
   in-page link that matches no id on its page (it fails under `strict`).
 
 ### Which fence languages EXECUTE
