@@ -218,12 +218,8 @@ preview.append(
 )
 ```
 ```test
-test('the code is open in the page, not full-screen', async () => {
-  const example = preview.closest('tosi-example')
-  // the editor is built when the example nears the viewport
-  example.showInline('code')
-  expect(example.classList.contains('-maximize')).toBe(false)
-  expect(example.parts.codeEditors.hidden).toBe(false)
+test('the button starts at zero', () => {
+  expect(preview.querySelector('button').textContent).toBe('clicked 0 times')
 })
 ```
 
@@ -233,7 +229,7 @@ view the tests are part of the lesson, so:
 - **The result is on show.** One line under the preview (or the console) gives the count when
   everything passes and the first failure, in red, when something does not. It covers both the
   `test` block and a `tjs` example's inline tests, and clicking it opens the tab with the
-  detail. Change `'clicked 0 times'` in the test above to see it go red.
+  detail. Change the expected text in the **DOM tests** tab to see it go red.
 - **The tests always run**, on every site, whatever the page's tests switch says. Elsewhere
   that switch is off by default away from localhost; here the result is the reader's feedback.
   A `tjs` or `ts` example in an inline view therefore loads its transpiler when it runs, where

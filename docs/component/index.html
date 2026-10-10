@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=0aad99431b07" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="example">example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -221,12 +221,8 @@ preview.append(
   })
 )
 </code></pre>
-<pre><code class="language-test">test(&#39;the code is open in the page, not full-screen&#39;, async () =&gt; {
-  const example = preview.closest(&#39;tosi-example&#39;)
-  // the editor is built when the example nears the viewport
-  example.showInline(&#39;code&#39;)
-  expect(example.classList.contains(&#39;-maximize&#39;)).toBe(false)
-  expect(example.parts.codeEditors.hidden).toBe(false)
+<pre><code class="language-test">test(&#39;the button starts at zero&#39;, () =&gt; {
+  expect(preview.querySelector(&#39;button&#39;).textContent).toBe(&#39;clicked 0 times&#39;)
 })
 </code></pre>
 <p>That example has a <code>test</code> block, and its result is the line under the preview. In an inline
@@ -235,7 +231,7 @@ view the tests are part of the lesson, so:</p>
 <li><strong>The result is on show.</strong> One line under the preview (or the console) gives the count when
 everything passes and the first failure, in red, when something does not. It covers both the
 <code>test</code> block and a <code>tjs</code> example&#39;s inline tests, and clicking it opens the tab with the
-detail. Change <code>&#39;clicked 0 times&#39;</code> in the test above to see it go red.</li>
+detail. Change the expected text in the <strong>DOM tests</strong> tab to see it go red.</li>
 <li><strong>The tests always run</strong>, on every site, whatever the page&#39;s tests switch says. Elsewhere
 that switch is off by default away from localhost; here the result is the reader&#39;s feedback.
 A <code>tjs</code> or <code>ts</code> example in an inline view therefore loads its transpiler when it runs, where
