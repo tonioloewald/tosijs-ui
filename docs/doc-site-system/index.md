@@ -1539,8 +1539,10 @@ case is fully covered.
   `whats-new` and "Foo & Bar" is `foo--bar`. Letters of any script are kept. A heading
   repeated on one page gets `-1`, `-2`, and so on, in order. An entity such as `&copy;` adds
   nothing to the id. One overlap to know about: live examples are `example-1`, `example-2`, …
-  in the browser, so on a page with both, a heading titled "Example 2" is what `#example-2`
-  reaches. The build warns about an
+  in the browser. A heading titled "Example 2" (or a second heading titled "Example", which
+  is `example-1`) can therefore share an id with a live example on the same page, and a link
+  to it reaches whichever comes first. The build does not check for this; title such
+  headings differently if you link to them. The build warns about an
   in-page link that matches no id on its page (it fails under `strict`).
 
 ### Which fence languages EXECUTE

@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=8175e178c1cb" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=e8b17a4cbc38" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1705,8 +1705,10 @@ number, a space, <code>-</code> or <code>_</code> dropped, and each space turned
 <code>whats-new</code> and &quot;Foo &amp; Bar&quot; is <code>foo--bar</code>. Letters of any script are kept. A heading
 repeated on one page gets <code>-1</code>, <code>-2</code>, and so on, in order. An entity such as <code>&amp;copy;</code> adds
 nothing to the id. One overlap to know about: live examples are <code>example-1</code>, <code>example-2</code>, …
-in the browser, so on a page with both, a heading titled &quot;Example 2&quot; is what <code>#example-2</code>
-reaches. The build warns about an
+in the browser. A heading titled &quot;Example 2&quot; (or a second heading titled &quot;Example&quot;, which
+is <code>example-1</code>) can therefore share an id with a live example on the same page, and a link
+to it reaches whichever comes first. The build does not check for this; title such
+headings differently if you link to them. The build warns about an
 in-page link that matches no id on its page (it fails under <code>strict</code>).</li>
 </ul>
 <h3 id="which-fence-languages-execute">Which fence languages EXECUTE</h3>
