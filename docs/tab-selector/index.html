@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>tabs — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-tabs&gt; creates a tabpanel for its children, creating a tab for each based on its name attribute." />
   <link rel="canonical" href="https://ui.tosijs.net/tab-selector/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>tabs</h1>
+<h1 id="tabs">tabs</h1>
 <p><code>&lt;tosi-tabs&gt;</code> creates a <code>tabpanel</code> for its children, creating a <code>tab</code> for each based on its
 <code>name</code> attribute.</p>
 <pre><code class="language-js">[...preview.querySelectorAll(&#39;div[name]&#39;)].forEach(div =&gt; {
@@ -105,16 +105,16 @@ preview.querySelector(&#39;.add&#39;).addEventListener(&#39;click&#39;, () =&gt;
 <p>A <code>&lt;tosi-tabs&gt;</code> has <code>addTabBody(body: HTMLElement, select?: boolean)</code> and
 <code>removeTabBody(body: number | HTMLElement)</code> methods for updating its content.</p>
 <p>You can also just insert or remove tab bodies directly and call <code>setupTabs()</code>.</p>
-<h2>Closeable Tabs</h2>
+<h2 id="closeable-tabs">Closeable Tabs</h2>
 <p>Adding the <code>data-close</code> attribute to a tab will make it closeable.</p>
 <p>When a tab is closed, the <code>&lt;tosi-tabs&gt;</code> element&#39;s <code>handleCloseTab: (tabBody: Element) =&gt; boolean | undefined | void</code>
 will be called (the old <code>onCloseTab</code> name still works but is deprecated). If you set this and return <code>false</code>, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).</p>
-<h2>Custom Tab Content</h2>
+<h2 id="custom-tab-content">Custom Tab Content</h2>
 <p>You can specify the exact content of the tab for a given body by
 adding a <code>&lt;template role=&quot;tab&quot;&gt;</code> to that body. The contents of that
 template will be cloned into the tab.</p>
-<h2>Localized Support</h2>
+<h2 id="localized-support">Localized Support</h2>
 <pre><code class="language-html">&lt;tosi-tabs localized&gt;
   &lt;div name=&quot;localize&quot;&gt;&lt;h2&gt;localize!&lt;/h2&gt;&lt;/div&gt;
   &lt;div name=&quot;tabs&quot;&gt;&lt;h2&gt;tabs&lt;/h2&gt;&lt;/div&gt;
@@ -122,7 +122,7 @@ template will be cloned into the tab.</p>
 </code></pre>
 <p><code>&lt;tosi-tabs&gt;</code> supports the <code>localized</code> attribute. It will automatically localize
 tab names (but it won&#39;t override custom tab content, so localizing that is on you).</p>
-<h2>Tab Tooltips</h2>
+<h2 id="tab-tooltips">Tab Tooltips</h2>
 <p>Add <code>data-tooltip</code> to a tab body and it will be shown on its tab button
 (requires <code>initTooltips()</code>).</p>
 <pre><code class="language-js">import { initTooltips } from &#39;tosijs-ui&#39;
@@ -239,6 +239,6 @@ initTooltips()
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

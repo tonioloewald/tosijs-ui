@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>Adopting the doc system — tosijs-ui</title>
   <meta name="description" content="A first hour with tosijs-ui/site: the minimum that works, how to tell it is actually working, and the four things that fail silently while the site still serves 200s." />
   <link rel="canonical" href="https://ui.tosijs.net/adopting-the-doc-system/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>Adopting the doc system</h1>
+<h1 id="adopting-the-doc-system">Adopting the doc system</h1>
 <!--{ "pin": "top", "order": 20, "description": "A first hour with tosijs-ui/site: the minimum that works, how to tell it is actually working, and the four things that fail silently while the site still serves 200s." }-->
 
 <p>This is the page to read <strong>before</strong> your first build. <a href="/doc-site-system/">Doc-Site System</a> is
@@ -45,7 +45,7 @@ crash, not a 404 — pages return 200, your markup is in the HTML, your own elem
 and the page is inert. Every problem in the &quot;silent failures&quot; section below looks like that,
 so &quot;it built and it&#39;s serving&quot; is not evidence that it worked.</p>
 </blockquote>
-<h2>The minimum that works</h2>
+<h2 id="the-minimum-that-works">The minimum that works</h2>
 <p>Three files. This is complete — not a sketch.</p>
 <p><strong><code>site.config.ts</code></strong> at your repo root:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> defineSiteConfig <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
@@ -81,7 +81,7 @@ process<span class="token punctuation">.</span>argv<span class="token punctuatio
 a local TLS cert the first time — it will tell you to run <code>bunx tosijs-dev-certs</code>.</p>
 <p>Build-time peers, installed when the build says it needs them:
 <code>bun add -d happy-dom tjs-lang marked</code>.</p>
-<h2>How to tell it actually worked</h2>
+<h2 id="how-to-tell-it-actually-worked">How to tell it actually worked</h2>
 <p>Do this once on your first build. It takes a minute and it is the difference between finding a
 problem now and finding it after you have deployed.</p>
 <ol>
@@ -102,8 +102,8 @@ fail at build time to tell you this.</p>
 is only highlighted did not execute — check the fence language.</p>
 </li>
 </ol>
-<h2>The four things that fail silently</h2>
-<h3><code>bundleEntry</code> replaces, it does not extend</h3>
+<h2 id="the-four-things-that-fail-silently">The four things that fail silently</h2>
+<h3 id="bundleentry-replaces-it-does-not-extend"><code>bundleEntry</code> replaces, it does not extend</h3>
 <p>Setting <code>bundleEntry</code> means pages load <strong>your</strong> bundle <em>instead of</em> tosijs-ui&#39;s — which is
 where the doc system itself lives. Omit <code>import &#39;tosijs-ui/doc-browser&#39;</code> and every page renders
 its prerendered markup with no header, no nav, no menu and no live examples.</p>
@@ -119,7 +119,7 @@ deliberately excludes the doc-system cluster (<a href="https://github.com/toniol
 so the root import registers your buttons and leaves <code>&lt;tosi-doc-system&gt;</code> undefined. Write the
 subpaths.</p>
 </blockquote>
-<h3><code>baseUrl</code> is the origin. <code>basePath</code> is the mount path.</h3>
+<h3 id="baseurl-is-the-origin-basepath-is-the-mount-path"><code>baseUrl</code> is the origin. <code>basePath</code> is the mount path.</h3>
 <p>They are different fields and putting the path in both doubles it in every canonical URL,
 <code>og:url</code> and sitemap entry.</p>
 <table>
@@ -144,7 +144,7 @@ subpaths.</p>
 <p>Getting this wrong does not break the site — <code>basePath</code> affects <strong>metadata only</strong>, so nav and
 assets resolve relative and everything works. You find it by reading the emitted <code>&lt;head&gt;</code>, or
 from Search Console weeks later. The build now warns on the combination that is always wrong.</p>
-<h3>Six fence languages EXECUTE</h3>
+<h3 id="six-fence-languages-execute">Six fence languages EXECUTE</h3>
 <p><code>js</code>, <code>ts</code>, <code>tjs</code>, <code>html</code>, <code>css</code>, <code>test</code>. Everything else is display-only.</p>
 <p>The two that surprise people are <strong><code>html</code></strong> and <strong><code>css</code></strong>, because they do not look like code
 you are asking to be run:</p>
@@ -163,7 +163,7 @@ and ran — turning a one-line console check into a live example with an editor.
 looking at the built output, which is the habit worth forming.</p>
 <p>If you want CSS that is both real and scoped, write it against the theme variables
 (<code>--tosi-bg</code>, <code>--tosi-text</code>) and scope the selector to your example&#39;s own markup.</p>
-<h3>Adjacent fences are ONE example</h3>
+<h3 id="adjacent-fences-are-one-example">Adjacent fences are ONE example</h3>
 <p>Consecutive code blocks merge into a single <code>&lt;tosi-example&gt;</code> with tabs. <strong>Prose between them
 starts a new one.</strong></p>
 <p>So moving a <code>```test</code> block under its own heading silently detaches it from the demo it was
@@ -171,7 +171,7 @@ written against and gives it a second, empty editor. The tests still run; they j
 run against that example&#39;s DOM.</p>
 <p>One executable script block per example — <code>js</code>, <code>ts</code> and <code>tjs</code> are the same slot, so
 consecutive ones discard all but the last.</p>
-<h2>Writing the docs themselves</h2>
+<h2 id="writing-the-docs-themselves">Writing the docs themselves</h2>
 <ul>
 <li><strong><code>.md</code> files</strong> are included whole.</li>
 <li><strong><code>/*# … */</code> block comments</strong> in <code>.ts</code>/<code>.js</code>/<code>.css</code> are extracted as markdown. The first
@@ -180,7 +180,7 @@ heading becomes the page title. The block must start at the beginning of a line.
 <li>Nav placement comes from a metadata block: <code>&lt;!--{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 10 }--&gt;</code> in
 markdown, <code>/*{ … }*/</code> in code. <code>parent</code> puts a page in a section.</li>
 </ul>
-<h2>When you get stuck</h2>
+<h2 id="when-you-get-stuck">When you get stuck</h2>
 <p>The dev server holds the config it imported at <strong>startup</strong> — editing <code>site.config.ts</code> while it
 runs has no effect, and a rebuild will use the stale one while printing what looks like
 success. Restart it.</p>
@@ -283,6 +283,6 @@ success. Restart it.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

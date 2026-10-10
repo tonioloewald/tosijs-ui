@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,11 +30,11 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
-<h1><code>tosijs-ui/site</code> — static, pre-rendered, hydrating doc sites</h1>
+<h1 id="tosijs-uisite--static-pre-rendered-hydrating-doc-sites"><code>tosijs-ui/site</code> — static, pre-rendered, hydrating doc sites</h1>
 <p>A build system that turns a project&#39;s markdown (<code>.md</code> files + <code>/*#</code> block
 comments in source) into a <strong>fast, SEO/AI-friendly documentation site</strong> that
 works with no JavaScript and then upgrades itself into the interactive
@@ -46,7 +46,7 @@ Firebase Hosting, or any static host.</p>
 lives in <code>src/doc-system/</code> and is importable as <code>tosijs-ui/site</code>. See
 &quot;Where the code lives&quot; at the bottom.</p>
 </blockquote>
-<h2>What you get</h2>
+<h2 id="what-you-get">What you get</h2>
 <ul>
 <li><strong>One pre-rendered <code>/{slug}/index.html</code> per doc</strong> (README → site root) with
 real <code>&lt;head&gt;</code> metadata: <code>&lt;title&gt;</code>, description, canonical, Open Graph,
@@ -59,7 +59,7 @@ page into the live doc browser (search, live examples, locale switching).</li>
 <li><strong><code>sitemap.xml</code> + <code>robots.txt</code></strong> (when <code>baseUrl</code> is set), and host files
 (<code>.nojekyll</code>, <code>CNAME</code>, …) appropriate to the chosen host.</li>
 </ul>
-<h2>How it works (pipeline)</h2>
+<h2 id="how-it-works-pipeline">How it works (pipeline)</h2>
 <pre><code>extractDocs(docPaths)            →  docs.json   (markdown corpus)
 generateSite(config, docs)       →  /{slug}/index.html + docs.json + sitemap + robots
 generate-css(theme)              →  doc-system.css   (burned-in, no FOUC)
@@ -68,7 +68,7 @@ host preset                      →  .nojekyll / CNAME / firebase.json
 </code></pre>
 <p>Static and hydrated output share the same slug + markdown rendering
 (<code>src/doc-system/routing</code> + <code>render</code>) so the page never reflows on hydration.</p>
-<h2>Quick start (adopting in your project)</h2>
+<h2 id="quick-start-adopting-in-your-project">Quick start (adopting in your project)</h2>
 <blockquote>
 <p><strong>First time?</strong> Read <strong><a href="/adopting-the-doc-system/">Adopting the doc system</a></strong> first. This
 section is the configuration; that one is the narrow path plus the four things that fail
@@ -139,7 +139,7 @@ for <code>localhost</code>, <code>127.0.0.1</code>, <code>::1</code>, and your m
 your normal user (it prompts for sudo itself only to install its CA); re-run to
 add hostnames. Requires <code>mkcert</code> — the command prints install instructions if
 it&#39;s missing.</p>
-<h2>Bundles &amp; live examples (read this)</h2>
+<h2 id="bundles--live-examples-read-this">Bundles &amp; live examples (read this)</h2>
 <p>The static pages are inert HTML until a JS bundle loads and registers the
 custom elements (and powers live <code>js</code>/<code>test</code> examples). You pick one of two
 modes:</p>
@@ -199,7 +199,7 @@ bundle). Good for a pure docs site with no custom elements of its own.</p>
 (kept async) or an importmap — never a static top-level import.</li>
 </ul>
 <p>The build warns about both, but they fail at page-load, not build-time.</p>
-<h2>Custom icons</h2>
+<h2 id="custom-icons">Custom icons</h2>
 <p>The icon set is extensible at runtime: <code>defineIcons({ name: &#39;&lt;svg…&gt;&#39; })</code> adds new
 icons or <strong>overrides a default by reusing its name</strong>. Registered icons work with
 <code>icons.name()</code>, <code>&lt;tosi-icon icon=&quot;name&quot;&gt;</code>, and the composition language; an icon&#39;s
@@ -223,10 +223,10 @@ CLI (it scales/rounds coordinates and emits <code>export default { name: &#39;&l
 <span class="token function">defineIcons</span><span class="token punctuation">(</span>myIcons<span class="token punctuation">)</span>
 </code></pre>
 <p>(Each SVG file&#39;s <code>class</code> attribute — <code>filled</code> / <code>stroked</code> / <code>color</code> — is preserved.)</p>
-<h2>Configuration reference</h2>
+<h2 id="configuration-reference">Configuration reference</h2>
 <p>All fields are optional except <code>name</code>. See <code>src/doc-system/site/site-config.ts</code>
 for the authoritative typed definition.</p>
-<h3>Identity &amp; SEO</h3>
+<h3 id="identity--seo">Identity &amp; SEO</h3>
 <table>
 <thead>
 <tr>
@@ -271,7 +271,7 @@ for the authoritative typed definition.</p>
 <td>raw lines injected into every <code>&lt;head&gt;</code></td>
 </tr>
 </tbody></table>
-<h3>Branding &amp; chrome</h3>
+<h3 id="branding--chrome">Branding &amp; chrome</h3>
 <table>
 <thead>
 <tr>
@@ -315,7 +315,7 @@ The same <code>logo</code> is accepted by <code>createDocBrowser({ logo })</code
 (<code>.logo-mark</code>), so retune them with one CSS variable each rather than editing the
 build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-mark-gap</code> (default
 10px).</p>
-<h3>Doc sources</h3>
+<h3 id="doc-sources">Doc sources</h3>
 <table>
 <thead>
 <tr>
@@ -345,7 +345,7 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td>path of the intermediate doc corpus the build writes and re-reads; its directory is created automatically, so you don&#39;t need a <code>demo/</code> folder</td>
 </tr>
 </tbody></table>
-<h3>Bundle</h3>
+<h3 id="bundle">Bundle</h3>
 <table>
 <thead>
 <tr>
@@ -380,7 +380,7 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td>where the bundle is BUILT; set only when it is itself a published artifact</td>
 </tr>
 </tbody></table>
-<h3>Example checking</h3>
+<h3 id="example-checking">Example checking</h3>
 <table>
 <thead>
 <tr>
@@ -408,7 +408,7 @@ extend the context rather than turning the check off:</p>
 <p><code>checkExamples: false</code> disables it entirely. Worth knowing what that costs: with the guard
 off, one adopter published a page teaching its own core contract with a hard <code>SyntaxError</code> in
 the example, plus ten pages importing a symbol their barrel did not export.</p>
-<h3>Static assets</h3>
+<h3 id="static-assets">Static assets</h3>
 <table>
 <thead>
 <tr>
@@ -423,7 +423,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <td>dirs copied to the web root</td>
 </tr>
 </tbody></table>
-<h3>Hosting</h3>
+<h3 id="hosting">Hosting</h3>
 <table>
 <thead>
 <tr>
@@ -453,7 +453,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <td><code>{ host, path?, url?, tunnel? }</code> — deploy the built site, and optionally expose the live dev server; see <a href="#preview--deploy-the-built-site-to-a-host-you-control"><code>preview</code></a> and <a href="#previewtunnel--the-live-workspace"><code>preview.tunnel</code></a></td>
 </tr>
 </tbody></table>
-<h3>Build toggles &amp; dev server</h3>
+<h3 id="build-toggles--dev-server">Build toggles &amp; dev server</h3>
 <table>
 <thead>
 <tr>
@@ -568,7 +568,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <td>dependency-audit gate — <code>bun audit</code> on the initial build — synchronously in <code>buildSite</code> (ungated high+ advisories fail the build), and after the port is bound under <code>bun start</code> (reported, never blocking) (findings annotated with the nature of the risk). <code>true</code>/omitted = <code>{ mode: &#39;fail&#39;, level: &#39;high&#39; }</code>; <code>false</code>/<code>{ mode: &#39;off&#39; }</code> disables; also <code>TOSIJS_AUDIT=off|warn|fail</code>. Time-box exceptions via <code>{ allow: [{ advisory, reason, expires }] }</code> (see below)</td>
 </tr>
 </tbody></table>
-<h4>Dependency audit gate</h4>
+<h4 id="dependency-audit-gate">Dependency audit gate</h4>
 <p><code>bun audit</code> knows the registry advisory database; nothing in a normal build ever
 asks it, so a high-severity advisory in a transitive dep stays invisible until
 someone runs it by hand. The gate asks once, at the point a human is looking:</p>
@@ -720,7 +720,7 @@ build time; advisories published later against an unchanged lockfile are caught 
 GitHub Dependabot (alerts are automatic on public repos; add <code>.github/dependabot.yml</code>
 to also get fix PRs). The two are complementary: Dependabot <em>notifies</em>, the gate makes
 it <em>un-ignorable</em>.</p>
-<h4>Not taking the machine down with you</h4>
+<h4 id="not-taking-the-machine-down-with-you">Not taking the machine down with you</h4>
 <p>A dev server is a process that lives for <strong>days</strong>, rebuilding thousands of times.
 Three things follow from that, and the build system enforces all three — because a
 forgotten dev server is not inert, it is a days-old process <strong>still running the code
@@ -796,7 +796,7 @@ arbitrary consumer code</strong>, and anything it writes into a watched path loo
 the diagnosis — and stops.</p>
 </li>
 </ul>
-<h4>Nothing the dev server serves is cacheable</h4>
+<h4 id="nothing-the-dev-server-serves-is-cacheable">Nothing the dev server serves is cacheable</h4>
 <p>Every response carries <code>Cache-Control: no-store</code>. That is not paranoia — sending no
 <code>Cache-Control</code> is not neutral, because a browser is free to invent a freshness lifetime when
 you decline to state one, and Safari is the most willing to. The failure mode is a dev server
@@ -809,7 +809,7 @@ is a static site for a real host, and telling a CDN never to store it would be a
 dev server keeps executing the code it loaded at launch, so a change to the server itself
 needs a restart, not a reload.</p>
 </blockquote>
-<h4><code>debugSink</code> — telemetry back from a page that is not on this machine</h4>
+<h4 id="debugsink--telemetry-back-from-a-page-that-is-not-on-this-machine"><code>debugSink</code> — telemetry back from a page that is not on this machine</h4>
 <p><code>haltijaDev</code> is localhost-gated for good reason: an injected drive-my-browser channel reachable
 from the network is RCE-adjacent. But that leaves a page served to a headset or a phone with no
 way to say anything at all — and in a WebXR session there is no console and
@@ -831,7 +831,7 @@ endpoint on a LAN-reachable server should be a decision you made rather than one
 <p>Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413) and the file
 stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
 — otherwise <code>tail -f</code> would show a split event and the reader could not tell.</p>
-<h4><code>POST /__build</code> — let a build delegate to a running dev server</h4>
+<h4 id="post-__build--let-a-build-delegate-to-a-running-dev-server"><code>POST /__build</code> — let a build delegate to a running dev server</h4>
 <p><code>bun run build</code> used to refuse while a dev server held the build lock, and the workflow that
 produced was &quot;kill the server, build, forget to restart it&quot;. It now asks the server to build and
 reports what it says.</p>
@@ -846,7 +846,7 @@ refused, and a stale lock still names its holder.</p>
 <p><strong><code>devServer(config, { test: true })</code> now defaults to port 8798</strong> (Playwright&#39;s lane uses 8799),
 so a test run no longer reclaims 8787 by killing the dev server you are looking at. An explicit
 <code>PORT</code> or <code>config.port</code> still wins.</p>
-<h4><code>haltijaDev</code> — Claude eyes on your running dev page</h4>
+<h4 id="haltijadev--claude-eyes-on-your-running-dev-page"><code>haltijaDev</code> — Claude eyes on your running dev page</h4>
 <p>Set <code>haltijaDev: true</code> (or run with <code>HALTIJA_DEV=1</code>) and <code>bun start</code> gives a coding
 agent (Claude) eyes <strong>and hands</strong> on your actual running page via
 <a href="https://github.com/tonioloewald/haltija">haltija</a>: read the live DOM, click, type,
@@ -876,7 +876,7 @@ agent&#39;s context (add <code>--format webp --scale 0.5</code> for a compact ca
 <p>The channel tracks haltija&#39;s <strong><code>@beta</code></strong> dist-tag, where the in-browser WebRTC
 screen capture landed ahead of <code>latest</code>.</p>
 </blockquote>
-<h5><code>haltijaDev: &#39;tunnel&#39;</code> — drive a page that is NOT on this machine</h5>
+<h5 id="haltijadev-tunnel--drive-a-page-that-is-not-on-this-machine"><code>haltijaDev: &#39;tunnel&#39;</code> — drive a page that is NOT on this machine</h5>
 <p><code>true</code> is localhost-gated, and that gate is exactly what stops the feature working where
 it is worth the most: a <strong>VR headset</strong>, or a phone. Debugging in a headset is close to
 blind — no readable console, no devtools, no way to inspect the DOM without taking it off,
@@ -926,7 +926,7 @@ break the tunnel case itself).</p>
 genuinely usable in haltija 1.12.6 — before that the widget never sent the token, so requiring
 one broke every page-side feature, which is why older advice said to skip it. Do not read our
 404-on-unauthorized as covering the channel underneath; it covers the bridge, not the port.</p>
-<h4><code>layout</code> — let a page opt out of the reading column</h4>
+<h4 id="layout--let-a-page-opt-out-of-the-reading-column"><code>layout</code> — let a page opt out of the reading column</h4>
 <p>Prose wants a measure. 44em is roughly the line length people read comfortably, and it is the
 default for good reason. But a doc site is not only prose: a demo, a dashboard, a wide table or
 a canvas is <em>worse</em> squeezed into a column, and having to pick one habit for the whole site is
@@ -951,7 +951,7 @@ already shows the nav <em>or</em> the content and takes turns between them, whic
 full-screen page wants, so this reuses that behaviour rather than adding a second layout. Before
 hydration there is no sidenav yet — just static markup — so a stylesheet rule covers the first
 paint.</p>
-<h4><code>preview</code> — deploy the built site to a host you control</h4>
+<h4 id="preview--deploy-the-built-site-to-a-host-you-control"><code>preview</code> — deploy the built site to a host you control</h4>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>
 <pre><code class="language-typescript" data-highlighted>preview<span class="token operator">:</span> <span class="token punctuation">{</span>
@@ -1000,7 +1000,7 @@ and one shared secret is no stronger. Do not confuse this with exposing a <em>de
 — that has a write endpoint, and is gated by a per-session magic link; see
 <a href="#previewtunnel--the-live-workspace"><code>preview.tunnel</code></a> below.</p>
 </blockquote>
-<h4>Runtimes — what runs where</h4>
+<h4 id="runtimes--what-runs-where">Runtimes — what runs where</h4>
 <p>The doc-site system is a <strong>bun</strong> tool: it shells out (<code>Bun.$</code>), builds (<code>bun build</code>), and
 spawns child processes. <code>import { buildSite } from &#39;tosijs-ui/site&#39;</code> under plain Node
 fails with <code>Cannot find package &#39;bun&#39;</code>, which names a symptom rather than the cause — so
@@ -1030,7 +1030,7 @@ specifiers, which Node ESM requires and bundlers accept. Before that, <code>dist
 extensionless relative imports that only bun could resolve — so a Node consumer got
 <code>Cannot find module</code> on entry points that had nothing to do with bun. That was invisible
 here because every lane ran under bun; the consumer lane now imports through Node too.</p>
-<h4>Host bootstrap — do this once per box</h4>
+<h4 id="host-bootstrap--do-this-once-per-box">Host bootstrap — do this once per box</h4>
 <p>Both <code>tosijs-deploy</code> and <code>tosijs-tunnel</code> write a Caddy fragment ending in
 <code>import preview_site</code> / <code>import tunnel_site</code>. <strong>Those snippets have to exist first</strong>, or
 <code>caddy validate</code> fails on every deploy forever — and the failure is per-project, so
@@ -1073,7 +1073,7 @@ box serves anything else through Caddy, read that diff before <code>--go</code>.
 <p>Bring your own template with <code>--template=./path/to/Caddyfile</code>; the same guards apply.</p>
 <p>You also want a wildcard DNS record (<code>*.dev.example.com</code>) pointing at the box, so a new
 project needs no registrar visit, and sshd running <code>GatewayPorts no</code>.</p>
-<h4>Linking the books the build produces</h4>
+<h4 id="linking-the-books-the-build-produces">Linking the books the build produces</h4>
 <p>The build writes an ePub per volume — but a file nobody links to is a file nobody can
 download. Three ways to surface them, cheapest first.</p>
 <p><strong>A marker in any page.</strong> Drop this where you want the list:</p>
@@ -1113,7 +1113,7 @@ the name from the same function the ePub build uses, so they cannot disagree.</p
 </blockquote>
 <p>Note the title is for humans and the filename is an identifier: <code>epub.volumeTitles</code> renames
 the former without moving the latter, so published links survive a retitle.</p>
-<h4><code>preview.tunnel</code> — the live workspace</h4>
+<h4 id="previewtunnel--the-live-workspace"><code>preview.tunnel</code> — the live workspace</h4>
 <p>The static preview publishes a <em>snapshot</em>. <code>preview.tunnel</code> publishes the <strong>running dev
 server on your machine</strong>, at an authenticated public URL, so you can read and edit real
 source from a phone or a borrowed laptop. The box does no compute — it terminates TLS and
@@ -1208,7 +1208,7 @@ omits them.</p>
 <td>the loopback port the tunnel forwards to</td>
 </tr>
 </tbody></table>
-<h4>The token is eight letters, and you can type it</h4>
+<h4 id="the-token-is-eight-letters-and-you-can-type-it">The token is eight letters, and you can type it</h4>
 <p><code>--link</code> prints the URL <strong>and the code on its own line</strong>, because on the device this exists
 for you are not pasting anything — you are reading characters off one screen and entering
 them on another:</p>
@@ -1253,7 +1253,7 @@ from: the <strong>slot</strong> sets the guess rate, the queue depth only decide
 <p>The <strong>session</strong> token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;
 only the half a human has to transcribe got shorter.</p>
-<h4>Link security — pick your level</h4>
+<h4 id="link-security--pick-your-level">Link security — pick your level</h4>
 <p>A link is redeemable for <strong>5 minutes</strong>, as many times as you like, and hands over a session
 cookie. The cookie is the durable credential; the link only delivers it. For those five
 minutes the link is a bearer token — anyone who sees the URL can mint a session — which is a
@@ -1277,7 +1277,7 @@ window is short and configurable.</p>
 control (pasted into a shared channel, say), and shorten <code>linkTtlMinutes</code>. <strong>Ratchet down</strong>
 with a longer TTL for a link you want to keep working across a session. Widening reuse never
 widens lifetime: an expired link is refused under either policy.</p>
-<h4>Sending a link to a PERSON: <code>--link --share</code></h4>
+<h4 id="sending-a-link-to-a-person---link---share">Sending a link to a PERSON: <code>--link --share</code></h4>
 <p>Everything above is tuned for <strong>device</strong> handoff — you read a code off one screen and type it
 into the headset in your hands, seconds later, and you want to edit. <strong>Human</strong> handoff is a
 different shape and has its own flag:</p>
@@ -1337,7 +1337,7 @@ server may write to disk at all</em>; the session says <em>you may ask it to</em
 <p>The box should also run sshd with <code>GatewayPorts no</code>, so the forwarded port binds the
 box&#39;s loopback rather than the internet. That is defence in depth, not the wall — verify
 it yourself with <code>sshd -T | grep gatewayports</code>.</p>
-<h4><code>book</code> and <code>hidden</code> — multiple volumes from one corpus</h4>
+<h4 id="book-and-hidden--multiple-volumes-from-one-corpus"><code>book</code> and <code>hidden</code> — multiple volumes from one corpus</h4>
 <p>Two pieces of doc metadata decide <strong>which book a page binds into, and whether it is
 published at all</strong>. Both are inherited down the <code>parent</code> chain, so you mark a section
 rather than every leaf.</p>
@@ -1396,7 +1396,7 @@ any more.</p>
 child process, and <code>epub</code> settings (title, author, css, the <code>book</code> manifest) apply to all
 of them. Note the two senses of the word: <code>config.book</code> is the <strong>manifest</strong> that curates
 and orders docs <em>within</em> a volume; a doc&#39;s <code>book</code> metadata selects <strong>which</strong> volume.</p>
-<h4>One source, several outputs: placement, insets and conditional text</h4>
+<h4 id="one-source-several-outputs-placement-insets-and-conditional-text">One source, several outputs: placement, insets and conditional text</h4>
 <p>A site and each of its books are different arrangements of the same sources. Three pieces of
 markup keep them from becoming copies that drift apart. All three are resolved by the build,
 so the pages, the ePubs, <code>llms.txt</code> and the markdown copies of pages all receive finished
@@ -1417,6 +1417,7 @@ volume is a build error.</p>
 &lt;!--{ "inset": "install.md#with-bun" }-->   → one heading's section of it
 &lt;!--{ "inset": "_how-examples-work.md" }--> → a fragment file that is not a page
 </code></pre>
+<p>The part after <code>#</code> is the heading&#39;s id, the same one an in-page link uses (see &quot;Doc format&quot;).</p>
 <p>The reference is tried as a document first (filename, slug or title, the same matching
 <code>parent</code> uses) and then as a <strong>fragment file</strong>, relative to the page that includes it. A
 fragment is how a passage exists without being a page of its own: a markdown file whose name
@@ -1458,7 +1459,7 @@ with the book wording. <code>placement</code> and <code>book</code> arrange ePub
 is refused on a page whose source uses an inset or conditional text, because the examples on
 the page are no longer the examples in that file, in that order. Edit the source file; an
 inset example lives in the file it is inset from.</p>
-<h4><code>/version.json</code> — what am I looking at?</h4>
+<h4 id="versionjson--what-am-i-looking-at"><code>/version.json</code> — what am I looking at?</h4>
 <p>Every build writes a small build-identity file to the web root:</p>
 <pre><code class="language-json" data-highlighted><span class="token punctuation">{</span>
   <span class="token property">"generator"</span><span class="token operator">:</span> <span class="token string">"1.8.0"</span><span class="token punctuation">,</span>
@@ -1493,7 +1494,7 @@ at deploy time where a human can act on it — not baked into a committed file t
 then be permanently wrong.</p>
 <p>Git fields are <strong>omitted</strong> (never blank) when git isn&#39;t available — an adopter need not
 be in a repo, and a build must not fail for want of git metadata.</p>
-<h4><code>openBrowser</code> — one dev tab per project</h4>
+<h4 id="openbrowser--one-dev-tab-per-project"><code>openBrowser</code> — one dev tab per project</h4>
 <p>Set <code>openBrowser: true</code> and <code>bun start</code>, once the server is listening, opens the dev
 page in your browser — and on the <strong>next</strong> launch or restart it brings that <strong>same
 tab</strong> forward instead of stacking up a new one. This is create-react-app&#39;s &quot;open the
@@ -1518,7 +1519,7 @@ disables it for one run.</li>
 on <strong>watch rebuilds</strong> (it only fires at launch). Best-effort throughout — a failure
 degrades to a plain open or a no-op and never blocks or crashes the server.</li>
 </ul>
-<h4><code>llms.txt</code></h4>
+<h4 id="llmstxt"><code>llms.txt</code></h4>
 <p>The default index is built from your config — <code>name</code>, <code>description</code>, <code>baseUrl</code>
 (→ <code>Docs:</code> link), and <code>projectLinks.github</code>/<code>.npm</code> (→ <code>Source:</code>/<code>npm:</code> links;
 npm falls back to your package name) — plus one entry per documented <code>src/*.ts</code>
@@ -1526,7 +1527,7 @@ with a <code>dist/*.js</code> pointer. It&#39;s written <strong>both</strong> to
 ship it in your package&#39;s <code>files</code>) <strong>and</strong> to the served output dir, so
 <code>{baseUrl}/llms.txt</code> resolves for crawlers/agents. Set <code>llmsTxt: false</code> to skip,
 or pass a function <code>(docs) =&gt; string</code> to generate your own from the corpus.</p>
-<h4>Strict builds (<code>strict</code>)</h4>
+<h4 id="strict-builds-strict">Strict builds (<code>strict</code>)</h4>
 <p>Some things the build can see are wrong are also things a project might do on purpose, so
 by default it warns and carries on. A warning in scrollback under a green build is easy to
 miss — one such reached a release candidate — so a project that never does these on purpose
@@ -1536,14 +1537,23 @@ can say so:</p>
 <p>With <code>strict: true</code> each of these fails <code>buildSite</code> (it throws <code>SiteMisconfiguredError</code>,
 exported from <code>tosijs-ui/site</code>, and the previous build output is restored):</p>
 <ul>
-<li><strong><code>bundleEntry</code> does not register <code>&lt;tosi-doc-system&gt;</code>.</strong> Every page would stay as inert
-pre-rendered markup. Deliberate only for a headless embedding.</li>
-<li><strong>The corpus has executable fences but <code>bundleEntry</code> does not register <code>&lt;tosi-example&gt;</code>.</strong>
-The code blocks would render as plain text.</li>
-<li><strong>The corpus has live <code>tjs</code> / <code>ts</code> examples but <code>tjs-lang/browser</code> cannot be resolved.</strong>
+<li><p><strong><code>bundleEntry</code> does not register <code>&lt;tosi-doc-system&gt;</code>.</strong> Every page would stay as inert
+pre-rendered markup. Deliberate only for a headless embedding.</p>
+</li>
+<li><p><strong>The corpus has executable fences but <code>bundleEntry</code> does not register <code>&lt;tosi-example&gt;</code>.</strong>
+The code blocks would render as plain text.</p>
+</li>
+<li><p><strong>The corpus has live <code>tjs</code> / <code>ts</code> examples but <code>tjs-lang/browser</code> cannot be resolved.</strong>
 No same-origin copy is written to <code>/tjs/</code>, so those examples load tjs-lang from a CDN at
 the version tosijs-ui pins, not the one your project has installed. Without <code>strict</code> this
-now prints a warning; before 1.16.7 it was silent.</li>
+now prints a warning; before 1.16.7 it was silent.</p>
+</li>
+<li><p><strong>An in-page link points at nothing.</strong> <code>[text](#some-heading)</code> where the page has no such
+id is a link that looks live and does nothing. The warning names the page and the anchor.
+Not checked: <code>#/route</code> and <code>#!…</code> (hash routers), <code>#top</code>, and the ids live examples get in
+the browser (<code>#example-2</code>, or a fence&#39;s own <code>#id</code>). An id that only exists once a live
+example has rendered its HTML is reported, because the build cannot see it.</p>
+</li>
 </ul>
 <p>One related failure shows up in the browser, not the build. <code>bundleEntry</code> replaces the bundle
 that supplied <code>tosijs</code> and <code>tosijs-ui</code> to live examples. Examples still get <code>tosijs</code> (the doc
@@ -1553,7 +1563,7 @@ system hands them its own copy). They get <code>tosijs-ui</code> only if your en
 </code></pre>
 <p>An example that imports <code>tosijs-ui</code> on a site that has not done this fails with a message
 saying exactly that, and the doc-test lane reports it as a failed example.</p>
-<h4>Markdown copies of pages (<code>markdownPages</code>)</h4>
+<h4 id="markdown-copies-of-pages-markdownpages">Markdown copies of pages (<code>markdownPages</code>)</h4>
 <p>Every page is written twice: <code>/{slug}/index.html</code>, and its markdown source as
 <code>/{slug}/index.md</code> beside it. The HTML carries
 <code>&lt;link rel=&quot;alternate&quot; type=&quot;text/markdown&quot; href=&quot;index.md&quot;&gt;</code>, and <code>llms.txt</code> tells a
@@ -1573,13 +1583,14 @@ Pages otherwise runs Jekyll, which renders <code>guide/index.md</code> to <code>
 path of the real page.</li>
 <li><code>markdownPages: false</code> turns all of it off.</li>
 </ul>
-<h4>The book (ePub) &amp; the <code>book</code> manifest</h4>
+<h4 id="the-book-epub--the-book-manifest">The book (ePub) &amp; the <code>book</code> manifest</h4>
 <p>Set <code>epub: true</code> (or <code>{ author, title, css, cover, coverIcon, coverColor, printCover }</code>) and every build
 emits <code>{name}.epub</code> into the output dir, one chapter per doc in nav order, with a
 Contents page, EPUB3 nav + EPUB2 ncx, and a cover (an explicit <code>cover</code> image, or
 one generated from the title + <code>coverIcon</code>, an SVG, or failing that your <code>favicon</code>; install <code>@resvg/resvg-js</code> to
 render the generated one). The doc-browser&#39;s settings menu links to it as
-&quot;Download ePub&quot;. <code>bun bin/build-book.ts</code> builds it standalone. PDF is the
+&quot;Download ePub&quot;, at the URL the build wrote it to; a site with several volumes gets a
+submenu with one entry each, and a site that builds no ePub gets no entry. <code>bun bin/build-book.ts</code> builds it standalone. PDF is the
 in-browser <strong>Print</strong> button, not a batch job. Print opens with the default volume&#39;s
 cover, then the title page and contents. It reads the cover from <code>/epub-volumes.json</code>
 and checks the image loads first, so it prints from the title page as before when there
@@ -1607,7 +1618,7 @@ front-matter concept.</li>
 metadata; a per-doc <code>order</code> still wins.</li>
 <li>Identity (title / author / cover) comes from <code>epub</code>, not here.</li>
 </ul>
-<h2>Host presets &amp; custom domains</h2>
+<h2 id="host-presets--custom-domains">Host presets &amp; custom domains</h2>
 <table>
 <thead>
 <tr>
@@ -1652,7 +1663,7 @@ metadata; a per-doc <code>order</code> still wins.</li>
 explicitly to override (apex vs <code>www</code>, or a domain that differs from the
 canonical origin). A custom domain always serves from root, so it forces
 <code>basePath: &#39;/&#39;</code>.</p>
-<h3>Mount-agnostic builds (<code>basePath</code> only affects metadata)</h3>
+<h3 id="mount-agnostic-builds-basepath-only-affects-metadata">Mount-agnostic builds (<code>basePath</code> only affects metadata)</h3>
 <p>The build emits every <strong>functional</strong> URL — nav / content links, <code>scriptUrl</code>,
 <code>stylesUrl</code>, favicon, <code>docsUrl</code> — <strong>relative to each page</strong>, so a single build
 works at a <code>/repo</code> project page, a custom-domain root, or a moved mount with <strong>no
@@ -1671,7 +1682,7 @@ root mount, drifting under <code>/repo</code>) and the same-origin tjs-lang load
 likewise absolute, since they come from the renderer shared with the client. None
 of these affect first paint or the no-JS asset load — the custom-domain-cutover
 case is fully covered.</p>
-<h2>Doc format</h2>
+<h2 id="doc-format">Doc format</h2>
 <ul>
 <li><strong><code>.md</code> files</strong> are included whole.</li>
 <li><strong><code>/*#</code> … <code>*/</code> block comments</strong> in <code>.ts</code>/<code>.js</code>/<code>.css</code> are extracted as
@@ -1684,8 +1695,15 @@ the section <code>parent</code>, all in the same block.</li>
 title, then filename. Use <strong><code>order</code></strong> (a number, <strong>lower first</strong>; default 500)
 to rank items <em>within</em> the same <code>pin</code> — e.g. two <code>&quot;pin&quot;: &quot;top&quot;</code> docs with
 <code>&quot;order&quot;: 1</code> and <code>&quot;order&quot;: 2</code>. Siblings inside a section sort the same way.</li>
+<li><strong>Every heading has an <code>id</code></strong>, so <code>[see the errata](#the-1987-errata)</code> links to a
+heading on the same page and <code>/page/#the-1987-errata</code> links to it from anywhere. The id is
+the heading&#39;s text as GitHub slugs it: lowercased, everything that is not a letter, a
+number, a space, <code>-</code> or <code>_</code> dropped, and each space turned into <code>-</code>. So &quot;What&#39;s new?&quot; is
+<code>whats-new</code> and &quot;Foo &amp; Bar&quot; is <code>foo--bar</code>. Letters of any script are kept. A heading
+repeated on one page gets <code>-1</code>, <code>-2</code>, and so on, in order. The build warns about an
+in-page link that matches no id on its page (it fails under <code>strict</code>).</li>
 </ul>
-<h3>Which fence languages EXECUTE</h3>
+<h3 id="which-fence-languages-execute">Which fence languages EXECUTE</h3>
 <p><strong>Six languages run. Everything else is display-only.</strong> This catches people out because two
 of the six do not look like code you are asking to be <em>run</em> (#146):</p>
 <table>
@@ -1738,7 +1756,7 @@ own theme and is a white slab in dark mode.</li>
 typically unstyled, because the rules live in a component&#39;s shadow DOM and there is no
 component around it. It reads as a broken demo rather than an illustration.</li>
 </ul>
-<h4>Marking a fence display-only: <code>:static</code></h4>
+<h4 id="marking-a-fence-display-only-static">Marking a fence display-only: <code>:static</code></h4>
 <p>Add <code>:static</code> to the fence and it is highlighted, never run — <strong>whatever its language</strong>:</p>
 <pre><code>```html:static
 &lt;tosi-widget&gt;&lt;/tosi-widget&gt;
@@ -1753,7 +1771,7 @@ writing. tjs-lang made the argument that settled it (#155): a TJS colon example,
 document exists to correct. On the web that is cosmetic. In a printed book it is permanent.</p>
 <p>So tag the fence with its real language and add <code>:static</code>. The old alternatives still work and
 nothing has been removed; they are simply no longer the price of not running something.</p>
-<h4>Making display-only the DEFAULT: <code>liveExamples: &#39;opt-in&#39;</code></h4>
+<h4 id="making-display-only-the-default-liveexamples-opt-in">Making display-only the DEFAULT: <code>liveExamples: &#39;opt-in&#39;</code></h4>
 <p>For a corpus that is mostly illustration — a book, a prose site, an API reference — invert it:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineSiteConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
   liveExamples<span class="token operator">:</span> <span class="token string">'opt-in'</span><span class="token punctuation">,</span> <span class="token comment">// nothing runs unless the fence asks</span>
@@ -1767,7 +1785,7 @@ policy.</p>
 <p>If you want the styles to be real <em>and</em> scoped, write them against the doc system&#39;s theme
 variables (<code>--tosi-bg</code>, <code>--tosi-text</code>, …) rather than literal colours, and scope the selector
 to your example&#39;s own markup.</p>
-<h3>How fences GROUP into examples</h3>
+<h3 id="how-fences-group-into-examples">How fences GROUP into examples</h3>
 <p><strong>Adjacent fences form one <code>&lt;tosi-example&gt;</code>; any prose between them starts a new one.</strong></p>
 <p>So this is one example with three tabs:</p>
 <pre><code>```html
@@ -1787,13 +1805,13 @@ editor, so a test-only example looks like what it is instead of looking broken �
 still not testing the demo you wrote it for.</p>
 <p>One executable script block per example: <code>js</code>, <code>ts</code> and <code>tjs</code> are the same slot, so
 consecutive ones discard all but the last (#139).</p>
-<h2>Syntax highlighting</h2>
+<h2 id="syntax-highlighting">Syntax highlighting</h2>
 <p>Static code blocks are highlighted <strong>at build time</strong>, so the tokens are in the pre-rendered
 HTML, the ePub and the printed page — places a runtime highlighter could never reach. There is
 nothing to configure; it happens.</p>
 <p>Token colours come from the doc-system stylesheet, which ships two contrast-checked palettes (a
 light default and a dark one under <code>.darkmode</code>).</p>
-<h3>A language that ships its own grammar</h3>
+<h3 id="a-language-that-ships-its-own-grammar">A language that ships its own grammar</h3>
 <p>27 languages are built in. If yours is not one of them — a DSL, or a language too young for
 Prism — supply a grammar rather than waiting for us:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> registerGrammar <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
@@ -1810,7 +1828,7 @@ client-side (rather than hard-loaded) highlights with whatever the browser knows
 consumer, import <code>tosijs-ui/doc-system/highlight</code> in your <code>bundleEntry</code> and register there
 too. A CDN <code>&lt;script&gt;</code> consumer has no seam for this yet.</p>
 </blockquote>
-<h3>tosijs-ui and the <code>Prism</code> global</h3>
+<h3 id="tosijs-ui-and-the-prism-global">tosijs-ui and the <code>Prism</code> global</h3>
 <p>From 1.15.0 this package uses <a href="https://prismjs.com/">Prism</a> for highlighting, and Prism is a
 free-global library: its grammar files register against <code>window.Prism</code> at load time, so load
 order decides who owns it.</p>
@@ -1822,11 +1840,11 @@ never set <code>Prism.manual</code> on an instance we did not create, because th
 your own Prism afterwards it will win, and our highlighting stops — that is Prism&#39;s model, not
 a bug we can fix from here. Load yours first, or use <code>registerGrammar</code> to add a language to
 ours instead of bringing a second copy.</p>
-<h3>Highlighting code at runtime</h3>
+<h3 id="highlighting-code-at-runtime">Highlighting code at runtime</h3>
 <p>If code arrives <em>after</em> the build — a fetched snippet, an API response, a chat message — use
 <a href="/highlight-block/"><code>&lt;tosi-highlight&gt;</code></a>, which is a separate subpath import and not in the root
 barrel. If the code is in your markdown you do not need it.</p>
-<h2>Notes &amp; gotchas</h2>
+<h2 id="notes--gotchas">Notes &amp; gotchas</h2>
 <ul>
 <li><strong>Build-time only.</strong> The orchestrator and generators run under Bun and never
 enter a browser bundle. Only the runtime <code>&lt;tosi-doc-system&gt;</code> component ships
@@ -1858,7 +1876,7 @@ write outside the watched paths, or add the file to the watcher&#39;s ignore lis
 why <code>version.ts</code> and <code>icon-data.ts</code> — both written by tosijs-ui&#39;s own <code>prebuild</code> — are
 ignored by the watcher.</li>
 </ul>
-<h2>Where the code lives</h2>
+<h2 id="where-the-code-lives">Where the code lives</h2>
 <p>The extraction is <strong>done</strong>: everything below is in <code>src/doc-system/</code>, and the build
 half is what <code>tosijs-ui/site</code> exports. Nothing here is imported from <code>bin/</code> any more.</p>
 <table>
@@ -2055,6 +2073,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

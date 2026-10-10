@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>month — tosijs-ui</title>
   <meta name="description" content="Component for displaying a month and selecting days within that month." />
   <link rel="canonical" href="https://ui.tosijs.net/month/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>month</h1>
+<h1 id="month">month</h1>
 <p>This is a component for displaying a month and selecting days within that month.</p>
 <p>If the user changes the <code>month</code> or <code>year</code> the component&#39;s <code>monthChanged(year, month)</code>
 method will be called.</p>
@@ -56,7 +56,7 @@ preview.append(tosiMonth({
   box-shadow: 0 0 0 2px hotpink;
 }
 </code></pre>
-<h2><code>selectable</code></h2>
+<h2 id="selectable"><code>selectable</code></h2>
 <p>Setting <code>selectable</code> allows the user to pick individual dates. It&#39;s just a friendlier date picker.</p>
 <p>The value of the component is an ISO date string, as per <code>&lt;input type=&quot;date&quot;&gt;</code>.</p>
 <p><code>week-start</code> defaults to <code>0</code> (Sunday). You can set it to <code>1</code> (Monday) or some other value
@@ -71,25 +71,25 @@ but it is not yet widely supported.</p>
 <pre><code class="language-js">const month = preview.querySelector(&#39;tosi-month&#39;)
 month.addEventListener(&#39;change&#39;, event =&gt; console.log(&#39;date picked&#39;, event.target.value))
 </code></pre>
-<h2><code>range</code></h2>
+<h2 id="range"><code>range</code></h2>
 <p>Setting <code>range</code> allows the user to select date ranges.</p>
 <pre><code class="language-html">&lt;tosi-month range&gt;&lt;/tosi-month&gt;
 </code></pre>
 <pre><code class="language-js">const month = preview.querySelector(&#39;tosi-month&#39;)
 month.addEventListener(&#39;change&#39;, event =&gt; console.log(&#39;date range&#39;, event.target.value))
 </code></pre>
-<h2><code>multiple</code></h2>
+<h2 id="multiple"><code>multiple</code></h2>
 <p>This allows the user to pick multiple individual dates</p>
 <pre><code class="language-html">&lt;tosi-month multiple&gt;&lt;/tosi-month&gt;
 </code></pre>
 <pre><code class="language-js">const month = preview.querySelector(&#39;tosi-month&#39;)
 month.addEventListener(&#39;change&#39;, event =&gt; console.log(&#39;multple dates&#39;, event.target.value))
 </code></pre>
-<h2><code>readonly</code> and <code>disabled</code></h2>
+<h2 id="readonly-and-disabled"><code>readonly</code> and <code>disabled</code></h2>
 <p>These prevent the user from changing the displayed month. This example is <code>readonly</code>.</p>
 <pre><code class="language-html">&lt;tosi-month readonly value=&quot;1976-04-01&quot;&gt;&lt;/tosi-month&gt;
 </code></pre>
-<h2>Form Integration</h2>
+<h2 id="form-integration">Form Integration</h2>
 <p><code>&lt;tosi-month&gt;</code> is form-associated, so it works directly in native forms:</p>
 <pre><code class="language-html">&lt;form id=&quot;date-form&quot; class=&quot;date-form&quot;&gt;
   &lt;label&gt;
@@ -240,6 +240,6 @@ form.addEventListener(&#39;reset&#39;, () =&gt; {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

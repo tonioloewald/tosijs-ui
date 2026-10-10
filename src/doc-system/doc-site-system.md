@@ -1241,6 +1241,8 @@ volume is a build error.
 <!--{ "inset": "_how-examples-work.md" }--> → a fragment file that is not a page
 ```
 
+The part after `#` is the heading's id, the same one an in-page link uses (see "Doc format").
+
 The reference is tried as a document first (filename, slug or title, the same matching
 `parent` uses) and then as a **fragment file**, relative to the page that includes it. A
 fragment is how a passage exists without being a page of its own: a markdown file whose name
@@ -1397,6 +1399,12 @@ exported from `tosijs-ui/site`, and the previous build output is restored):
   the version tosijs-ui pins, not the one your project has installed. Without `strict` this
   now prints a warning; before 1.16.7 it was silent.
 
+- **An in-page link points at nothing.** `[text](#some-heading)` where the page has no such
+  id is a link that looks live and does nothing. The warning names the page and the anchor.
+  Not checked: `#/route` and `#!…` (hash routers), `#top`, and the ids live examples get in
+  the browser (`#example-2`, or a fence's own `#id`). An id that only exists once a live
+  example has rendered its HTML is reported, because the build cannot see it.
+
 One related failure shows up in the browser, not the build. `bundleEntry` replaces the bundle
 that supplied `tosijs` and `tosijs-ui` to live examples. Examples still get `tosijs` (the doc
 system hands them its own copy). They get `tosijs-ui` only if your entry supplies it:
@@ -1438,7 +1446,8 @@ emits `{name}.epub` into the output dir, one chapter per doc in nav order, with 
 Contents page, EPUB3 nav + EPUB2 ncx, and a cover (an explicit `cover` image, or
 one generated from the title + `coverIcon`, an SVG, or failing that your `favicon`; install `@resvg/resvg-js` to
 render the generated one). The doc-browser's settings menu links to it as
-"Download ePub". `bun bin/build-book.ts` builds it standalone. PDF is the
+"Download ePub", at the URL the build wrote it to; a site with several volumes gets a
+submenu with one entry each, and a site that builds no ePub gets no entry. `bun bin/build-book.ts` builds it standalone. PDF is the
 in-browser **Print** button, not a batch job. Print opens with the default volume's
 cover, then the title page and contents. It reads the cover from `/epub-volumes.json`
 and checks the image loads first, so it prints from the title page as before when there
@@ -1520,6 +1529,14 @@ case is fully covered.
   title, then filename. Use **`order`** (a number, **lower first**; default 500)
   to rank items _within_ the same `pin` — e.g. two `"pin": "top"` docs with
   `"order": 1` and `"order": 2`. Siblings inside a section sort the same way.
+- **Every heading has an `id`**, so `[see the errata](#the-1987-errata)` links to a
+  heading on the same page and `/page/#the-1987-errata` links to it from anywhere. The id is
+  the heading's text as GitHub slugs it: lowercased, everything that is not a letter, a
+  number, a space, `-` or `_` dropped, and each space turned into `-`. So "What's new?" is
+  `whats-new` and "Foo & Bar" is `foo--bar`. Letters of any script are kept. A heading
+  repeated on one page gets `-1`, `-2`, and so on, in order. The build warns about an
+  in-page link that matches no id on its page (it fails under `strict`).
+
 ### Which fence languages EXECUTE
 
 **Six languages run. Everything else is display-only.** This catches people out because two

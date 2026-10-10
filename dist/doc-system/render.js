@@ -10,11 +10,20 @@ give that example a stable anchor — see the docMarked renderer below.
 */
 import { Marked, Renderer } from 'marked';
 import { parseFenceInfo } from './example-policy.js';
+import { HeadingIds, headingSlug } from './heading-id.js';
 const baseRenderer = new Renderer();
 let currentBakes;
+// Per-parse, reset in `preprocess` below (same pattern as the footnote state).
+let headingIds = new HeadingIds();
 const docMarked = new Marked();
 docMarked.use({
     renderer: {
+        // Every heading gets an id, so `[text](#that-heading)` resolves — see heading-id.ts.
+        heading(token) {
+            const id = headingIds.next(headingSlug(token));
+            const inner = this.parser.parseInline(token.tokens);
+            return `<h${token.depth}${id ? ` id="${escapeAttr(id)}"` : ''}>${inner}</h${token.depth}>\n`;
+        },
         code(token) {
             // Fence info grammar: `<lang>` optionally with a `:<mode>` and/or `#<id>` in
             // EITHER order — `js`, `css#anchor`, `js:iframe`, `ts:ide#demo`, `ts#demo:ide`.
@@ -84,6 +93,7 @@ docMarked.use({
         preprocess(markdown) {
             footnoteDefs = new Map();
             footnoteOrder = [];
+            headingIds = new HeadingIds();
             return markdown;
         },
         postprocess(html) {

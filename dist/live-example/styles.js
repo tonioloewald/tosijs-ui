@@ -1,4 +1,6 @@
 import { vars } from 'tosijs';
+// One line of 13px monospace with room to breathe (the test status line).
+const TEST_STATUS_HEIGHT = '28px';
 export const liveExampleStyleSpec = {
     ':host': {
         '--tosi-example-height': '320px',
@@ -78,6 +80,60 @@ export const liveExampleStyleSpec = {
         position: 'absolute',
         inset: '0',
         zIndex: '5',
+    },
+    /*
+    The test status line (component.ts, updateTestStatus): one clipped line along the bottom of
+    the example pane, in the inline views only. The preview and a docked console make room for
+    it, so it never covers the console's input or the last line of a rendering.
+    */
+    ':host [part="testStatus"]': {
+        display: 'none',
+    },
+    ':host.-inline-code.-has-test-status:not(.-maximize) [part="testStatus"]': {
+        display: 'block',
+        position: 'absolute',
+        left: '0',
+        right: '0',
+        bottom: '0',
+        zIndex: '6',
+        boxSizing: 'border-box',
+        height: TEST_STATUS_HEIGHT,
+        lineHeight: TEST_STATUS_HEIGHT,
+        padding: `0 ${vars.spacing}`,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        cursor: 'pointer',
+        fontFamily: 'var(--mono-font, monospace)',
+        fontSize: '13px',
+        background: 'var(--code-bg, #fdfdfd)',
+        boxShadow: '0 -1px 0 var(--tosi-example-border-color, #8884)',
+    },
+    /*
+    A failure is the thing to read, so beside a preview it wraps to show what went wrong
+    (scrolling past a few lines). Beside a docked console it stays one line: the console's
+    input sits right above it and must not be covered.
+    */
+    ':host.-inline-code.-has-test-status:not(.-maximize):not(.-console-docked) [part="testStatus"].test-fail': {
+        height: 'auto',
+        minHeight: TEST_STATUS_HEIGHT,
+        maxHeight: `calc(${TEST_STATUS_HEIGHT} * 3)`,
+        overflow: 'auto',
+        whiteSpace: 'normal',
+        overflowWrap: 'anywhere',
+        lineHeight: '1.5',
+        padding: `4px ${vars.spacing}`,
+    },
+    ':host.-inline-code.-has-test-status:not(.-maximize) .preview': {
+        paddingBottom: `calc(${vars.spacing} + ${TEST_STATUS_HEIGHT})`,
+    },
+    ':host.-inline-code.-has-test-status.-console-docked:not(.-maximize) > [part="example"] > .example-console': {
+        bottom: TEST_STATUS_HEIGHT,
+        height: 'auto',
+    },
+    // The floating results panel would sit on top of the line that now says the same thing.
+    ':host.-inline-code.-has-test-status:not(.-maximize):not(.-test-only) [part="testResults"]': {
+        display: 'none',
     },
     ':host .layout-indicator': {
         transition: '0.5s ease-out',

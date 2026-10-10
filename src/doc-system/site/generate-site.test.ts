@@ -116,6 +116,15 @@ describe('docs.json cache-busting', () => {
     expect(await page()).not.toContain('bookVolumes')
   })
 
+  test('the list of ePubs reaches the page config, an empty list included', async () => {
+    // `[]` is how a page says "this site makes no ePub", so it must not be dropped.
+    expect(await page({ ebooks: [] })).toContain('&quot;ebooks&quot;:[]')
+    expect(await page({ ebooks: [{ title: 'T', url: '/t.epub' }] })).toContain(
+      '&quot;url&quot;:&quot;/t.epub&quot;'
+    )
+    expect(await page()).not.toContain('ebooks')
+  })
+
   test('docsStamp is applied to the corpus URL', async () => {
     const html = await page({ docsStamp: 'deadbeef', assetStamp: '9.9.9' })
     expect(html).toContain('docs.json?v=deadbeef')

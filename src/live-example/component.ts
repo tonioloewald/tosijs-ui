@@ -218,15 +218,29 @@ preview.append(
 )
 ```
 ```test
-test('view: code opens the editor in the page, not full-screen', async () => {
+test('the code is open in the page, not full-screen', async () => {
   const example = preview.closest('tosi-example')
   // the editor is built when the example nears the viewport
   example.showInline('code')
   expect(example.classList.contains('-maximize')).toBe(false)
   expect(example.parts.codeEditors.hidden).toBe(false)
-  example.closeCode()
 })
 ```
+
+That example has a `test` block, and its result is the line under the preview. In an inline
+view the tests are part of the lesson, so:
+
+- **The result is on show.** One line under the preview (or the console) gives the count when
+  everything passes and the first failure, in red, when something does not. It covers both the
+  `test` block and a `tjs` example's inline tests, and clicking it opens the tab with the
+  detail. Change `'clicked 0 times'` in the test above to see it go red.
+- **The tests always run**, on every site, whatever the page's tests switch says. Elsewhere
+  that switch is off by default away from localhost; here the result is the reader's feedback.
+  A `tjs` or `ts` example in an inline view therefore loads its transpiler when it runs, where
+  one that is only read does not.
+- **Empty tabs are hidden.** A tab for `html`, `css` or `DOM tests` appears only when the
+  example has that block, so an example that is one block of code shows one source tab. The
+  full-screen code view (the `<>` button) still shows them all, which is where you add one.
 
 `"console"` is for "type a line, see the answer", where the point is a value and not a
 rendering. Try `total * 2` at the prompt:
@@ -1914,6 +1928,7 @@ export class LiveExample extends withAttributes({
 
   private renderTjsTests(): void {
     this.queueOutputRefresh()
+    this.updateTestStatus()
     const view = this.tjsTestsView
     if (!view) return
     const results = this.lastTjsTests
@@ -2120,6 +2135,117 @@ export class LiveExample extends withAttributes({
     // Lets the stylesheet present the results as the example's body rather than as an
     // annotation under an empty preview.
     this.classList.toggle('-test-only', this.isTestOnly)
+  }
+
+  /*
+  One line of test status, where a reader sees it without a click (#219).
+
+  A page that teaches ends each example in a test: change the code, watch it go red, make it
+  pass. In the inline views that result was in the last of seven tabs, cut off at the pane's
+  width. So both kinds of test (the `test` fence's DOM tests and inline tjs tests) report
+  here, under the preview: the count when everything passes, the first failure when not.
+  Shown only in the inline views (the stylesheet decides); elsewhere the toolbar colour and
+  the results panel already do this job.
+  */
+  private updateTestStatus(): void {
+    if (!this.hydrated) return
+    const strip = this.parts.testStatus as HTMLElement
+    const all = [
+      ...(this.testResults?.tests ?? []).map((t) => ({
+        name: t.name,
+        passed: t.passed,
+        error: t.error,
+      })),
+      ...(this.lastTjsTests?.results ?? []).map((t) => ({
+        name: t.description,
+        passed: t.passed,
+        error: t.error,
+      })),
+    ]
+    const failed = all.filter((t) => !t.passed)
+    strip.hidden = all.length === 0
+    this.classList.toggle('-has-test-status', all.length > 0)
+    strip.classList.toggle('test-fail', failed.length > 0)
+    strip.classList.toggle('test-pass', all.length > 0 && failed.length === 0)
+    if (all.length === 0) {
+      strip.textContent = ''
+      return
+    }
+    const text =
+      failed.length === 0
+        ? `✓ ${all.length}/${all.length} ${
+            all.length === 1 ? 'test' : 'tests'
+          } passed`
+        : `✗ ${failed[0].name}${
+            failed[0].error ? ` — ${failed[0].error}` : ''
+          }` +
+          (all.length > 1 ? ` (${failed.length} of ${all.length} failed)` : '')
+    strip.textContent = text
+    strip.title = text // the line is clipped to the pane; the tooltip has all of it
+  }
+
+  // The status line leads to the detail: the tab holding the results it summarises.
+  private showTestsTab = (): void => {
+    if (!this.editorsBuilt) return
+    const { editors } = this.parts
+    const tjsFailed = (this.lastTjsTests?.failed ?? 0) > 0
+    const domHasTests = (this.testResults?.tests.length ?? 0) > 0
+    const body =
+      this.tjsTestsView && (tjsFailed || !domHasTests)
+        ? this.tjsTestsView
+        : this.parts.test
+    const index = editors.bodies.indexOf(body)
+    if (index > -1) editors.value = index
+  }
+
+  /*
+  In the inline views, a source tab with nothing in it is hidden (#219).
+
+  An example that is one `tjs` block showed `html`, `css` and `DOM tests` tabs too: three
+  unexplained words in front of a beginner, in a pane a few hundred pixels wide. The full
+  code view (`showCode`) keeps every tab, since that is where you go to add one.
+
+  `<tosi-tabs>` makes a tab of every child with a `name`, so a hidden tab is a body without
+  one. The `part` is untouched, so `this.parts.html` and friends still resolve.
+  */
+  private syncSourceTabs(): void {
+    if (!this.editorsBuilt) return
+    const inline =
+      this.classList.contains('-inline-code') &&
+      !this.classList.contains('-maximize')
+    const { editors, html, css, test } = this.parts
+    const active = this.activeTab
+    let changed = false
+    for (const [editor, name, value] of [
+      [html, 'html', this.html],
+      [css, 'css', this.css],
+      [test, 'DOM tests', this.test],
+    ] as Array<[HTMLElement, string, string]>) {
+      const hide = inline && (value ?? '').trim() === ''
+      if (hide === !editor.hasAttribute('name')) continue
+      if (hide) {
+        editor.removeAttribute('name')
+        editor.hidden = true
+      } else {
+        editor.setAttribute('name', name)
+      }
+      changed = true
+    }
+    if (!changed) return
+    editors.setupTabs()
+    const index = active ? editors.bodies.indexOf(active) : -1
+    editors.value = index > -1 ? index : 0
+    editors.queueRender()
+  }
+
+  /** Does this example open (or sit) in an inline view? Its tests are then part of the page. */
+  private get teaches(): boolean {
+    const view = this.options.view
+    return (
+      view === 'code' ||
+      view === 'console' ||
+      this.classList.contains('-inline-code')
+    )
   }
 
   undo = () => {
@@ -2375,7 +2501,14 @@ export class LiveExample extends withAttributes({
         hidden: true,
       }),
       // What the run logged, shown in place of a preview that rendered nothing (refreshOutput).
-      div({ part: 'output', role: 'log', hidden: true })
+      div({ part: 'output', role: 'log', hidden: true }),
+      // One line of test status, shown in the inline views (updateTestStatus).
+      div({
+        part: 'testStatus',
+        role: 'status',
+        hidden: true,
+        onClick: this.showTestsTab,
+      })
     ),
     // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
     // who never opens a panel never constructs a <tosi-code> (and never pulls the
@@ -2879,6 +3012,7 @@ export class LiveExample extends withAttributes({
     this.classList.toggle('-vertical', this.offsetHeight > this.offsetWidth)
     this.parts.codeEditors.hidden = false
     this.ensureProductTabs()
+    this.syncSourceTabs()
   }
 
   /*
@@ -2909,6 +3043,7 @@ export class LiveExample extends withAttributes({
     this.parts.codeEditors.hidden = false
     this.ensureProductTabs()
     if (view === 'console') this.dockConsole()
+    this.syncSourceTabs()
   }
 
   private static readonly INLINE_STACK_WIDTH = 560
@@ -2964,6 +3099,7 @@ export class LiveExample extends withAttributes({
   closeCode = () => {
     this.classList.remove('-inline-code')
     this.undockConsole()
+    this.syncSourceTabs()
     if (this.remoteId !== '') {
       // Remote editor window — send close signal to original, then close popup
       this.remoteSync?.sendClose()
@@ -3055,6 +3191,9 @@ export class LiveExample extends withAttributes({
       isBuiltInDialect(this.dialect) &&
       this.dialect !== 'js' &&
       !testManager.enabled.value &&
+      // An inline view shows its inline tjs tests' result, and running them needs the
+      // transpiler: such an example takes the full path on every site.
+      !this.teaches &&
       this.compiledJs !== undefined &&
       this.compiledJsSource === this.js
         ? this.compiledJs
@@ -3204,10 +3343,11 @@ export class LiveExample extends withAttributes({
     A TEST-ONLY example always runs its tests: its results are its body, so with tests off (the
     default anywhere but localhost) it rendered an empty box on every deployed site. For every
     other example the page-wide toggle still decides, because there the results are an overlay.
+    Likewise an example in an inline view (#219): its status line is the reader's feedback.
     */
     if (
       (this.test || executionError) &&
-      (testManager.enabled.value || this.isTestOnly)
+      (testManager.enabled.value || this.isTestOnly || this.teaches)
     ) {
       // Let queued renders (rAF) settle before running tests
       await new Promise((resolve) => requestAnimationFrame(resolve))
@@ -3234,6 +3374,8 @@ export class LiveExample extends withAttributes({
       this.classList.remove('-test-running')
       this.displayTestResults()
     } else {
+      this.testResults = undefined
+      this.updateTestStatus()
       this.classList.remove(
         '-has-tests',
         '-test-running',
@@ -3246,6 +3388,7 @@ export class LiveExample extends withAttributes({
   private displayTestResults(): void {
     const { testResults: resultsEl, exampleWidgets } = this.parts
     const results = this.testResults
+    this.updateTestStatus()
 
     if (!results || results.tests.length === 0) {
       resultsEl.hidden = true

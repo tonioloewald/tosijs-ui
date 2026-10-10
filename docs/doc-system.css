@@ -592,6 +592,9 @@ th, td {
 .doc-nav summary > .doc-link {
   display: inline-block;
   padding-left: calc(var(--spacing) * 0.5);
+  box-sizing: border-box;
+  max-width: calc(100% - 1.5em);
+  vertical-align: top;
 }
 
 .doc-navbar {

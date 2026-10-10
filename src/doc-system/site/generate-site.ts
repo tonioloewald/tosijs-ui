@@ -32,6 +32,7 @@ import {
   docDescription,
   type ExampleBakes,
 } from '../render.js'
+import { deadInPageAnchors, misconfigured } from './build-warnings.js'
 
 declare global {
   var Bun: any
@@ -47,12 +48,20 @@ export interface GenerateSiteConfig {
   liveExamples?: 'auto' | 'opt-in'
   /** directory to write pages into (the served web root, e.g. ./docs) */
   outputDir: string
+  /** `SiteConfig.strict`: a build warning raised here fails the build */
+  strict?: boolean
   projectName?: string
   /**
    * URL of the volume manifest (`/epub-volumes.json`). Print reads the default volume's
    * cover from it; omitted when the site has no ePub or opted out with `printCover: false`.
    */
   bookVolumes?: string
+  /**
+   * The ePubs this build makes (`listEpubVolumes`), for the "Download ePub" menu entry.
+   * `[]` says the site makes none, which removes the entry; leave it unset only if you do
+   * not know (the entry then links to the name derived from `projectName`, as it used to).
+   */
+  ebooks?: Array<{ title: string; url: string }>
   /** site-level description, used as a fallback when a doc has none */
   description?: string
   /** <html lang>, default 'en' */
@@ -508,6 +517,7 @@ export async function generateSite(
       projectLinks: config.projectLinks,
       logo: config.logo,
       bookVolumes: config.bookVolumes,
+      ebooks: config.ebooks,
     })
   )
 
@@ -515,9 +525,17 @@ export async function generateSite(
   // ./generate-css.ts; pages here just <link> to it.
 
   let count = 0
+  const deadAnchors: string[] = []
   for (const doc of docs) {
     const slug = slugMap[doc.filename]
     const dir = slug === '' ? outputDir : `${outputDir}/${slug}`
+    const dead = deadInPageAnchors(renderDocMarkdown(doc.text))
+    if (dead.length)
+      deadAnchors.push(
+        `    ${doc.path || doc.filename}: ${dead
+          .map((d) => `#${d}`)
+          .join(', ')}`
+      )
     await Bun.write(
       `${dir}/index.html`,
       await pageHtml(doc, config, slugMap, configAttr)
@@ -527,6 +545,14 @@ export async function generateSite(
       await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n')
     }
     count += 1
+  }
+  if (deadAnchors.length) {
+    misconfigured(
+      config.strict,
+      `\n⚠️  In-page links that point at nothing on their page. A heading's id is its text,\n` +
+        `    lowercased, punctuation dropped, spaces as "-" (a repeat gets -1, -2, …):\n` +
+        `${deadAnchors.join('\n')}\n`
+    )
   }
 
   // The corpus the component fetches for nav + client-side rendering of other pages.

@@ -1480,6 +1480,13 @@ export async function buildSite(config, opts = {}) {
                 outputDir: PUBLIC,
                 projectName: config.name,
                 bookVolumes: printCoverManifestUrl(config),
+                ebooks: config.epub
+                    ? listEpubVolumes(docs, config).map(({ title, url }) => ({
+                        title,
+                        url,
+                    }))
+                    : [],
+                strict: config.strict,
                 description: config.description,
                 baseUrl: config.baseUrl,
                 lang: config.lang,

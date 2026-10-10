@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>select — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-select&gt; (tosiSelect is the ElementCreator) is a replacement for the lamentable built in &lt;select&gt; element that addresses its various shortcomings." />
   <link rel="canonical" href="https://ui.tosijs.net/select/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>select</h1>
+<h1 id="select">select</h1>
 <p><code>&lt;tosi-select&gt;</code> (<code>tosiSelect</code> is the <code>ElementCreator</code>) is a replacement for the lamentable
 built in <code>&lt;select&gt;</code> element that addresses its various shortcomings.</p>
 <ul>
@@ -154,14 +154,14 @@ test(&#39;captions select has value&#39;, () =&gt; {
   expect(selects[1].value).toBe(&#39;image&#39;)
 })
 </code></pre>
-<h2>Form Integration</h2>
+<h2 id="form-integration">Form Integration</h2>
 <p><code>&lt;tosi-select&gt;</code> is form-associated, meaning it works directly in native <code>&lt;form&gt;</code> elements:</p>
 <pre><code class="language-html">&lt;form&gt;
   &lt;tosi-select name=&quot;choice&quot; options=&quot;a,b,c&quot; required&gt;&lt;/tosi-select&gt;
   &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
 &lt;/form&gt;
 </code></pre>
-<h2><code>options</code></h2>
+<h2 id="options"><code>options</code></h2>
 <pre><code>type OptionRequest = () =&gt; Promise&lt;string | undefined&gt;
 
 export interface SelectOption {
@@ -191,7 +191,7 @@ and picks that option from the keyboard, even while the popup is closed. A pick 
 <li><code>&quot;us=United States,uk=United Kingdom&quot;</code> - value with caption</li>
 <li><code>&quot;us=United States:flag,uk=United Kingdom:flag&quot;</code> - value with caption and icon</li>
 </ul>
-<h2>Attributes</h2>
+<h2 id="attributes">Attributes</h2>
 <p><code>&lt;tosi-select&gt;</code> supports several attributes:</p>
 <ul>
 <li><code>editable</code> lets the user directly edit the value (like a &quot;combo box&quot;).</li>
@@ -202,12 +202,12 @@ and picks that option from the keyboard, even while the popup is closed. A pick 
 <li><code>required</code> marks the field as required for form validation.</li>
 <li><code>name</code> the form field name (for formAssociated support).</li>
 </ul>
-<h2>Events</h2>
+<h2 id="events">Events</h2>
 <p>Picking an option triggers an <code>action</code> event (whether or not this changes the value).</p>
 <p>Changing the value, either by typing in an editable <code>&lt;tosi-select&gt;</code> or picking a new
 value triggers a <code>change</code> event.</p>
 <p>You can look at the console to see the events triggered by the second example.</p>
-<h2>Localization</h2>
+<h2 id="localization">Localization</h2>
 <p><code>&lt;tosi-select&gt;</code> supports the <code>localized</code> attribute which automatically localizes
 options.</p>
 <pre><code class="language-js">const { tosiSelect } = tosijsui
@@ -316,6 +316,6 @@ preview.append(
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

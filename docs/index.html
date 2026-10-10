@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>tosijs-ui — robust, standards-based web components</title>
   <meta name="description" content="A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM." />
   <meta name="keywords" content="web components, custom elements, tosijs, data table, dialog, form, rich text, no virtual dom" />
@@ -31,9 +31,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="localized-strings.txt" data-layout="full-width">
+  <tosi-doc-system docs="docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt" data-layout="full-width">
   <article class="doc-content">
-<h1>tosijs-ui</h1>
+<h1 id="tosijs-ui">tosijs-ui</h1>
 <!--{ "pin": "top", "order": 0, "layout": "full-width", "headTitle": "tosijs-ui — robust, standards-based web components", "description": "A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.", "keywords": "web components, custom elements, tosijs, data table, dialog, form, rich text, no virtual dom" }-->
 
 <p><a href="https://ui.tosijs.net">ui.tosijs.net live demo</a> | <a href="https://tosijs.net">tosijs</a> | <a href="https://discord.gg/ramJ9rgky5">discord</a> | <a href="https://github.com/tonioloewald/tosijs-ui#readme">github</a> | <a href="https://www.npmjs.com/package/tosijs-ui">npm</a></p>
@@ -52,13 +52,13 @@
 1.3.0 renamed everything from <code>xinjs-ui</code>. Both are covered in
 <a href="https://ui.tosijs.net/migrating/">Migrating from older versions</a> — new projects can skip it.</p>
 </blockquote>
-<h2>the tosijs-ui library</h2>
+<h2 id="the-tosijs-ui-library">the tosijs-ui library</h2>
 <p>A set of <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components">web-components</a>
 created with <a href="https://tosijs.net">tosijs</a>, designed to augment what the browser gives you
 for free rather than replace it.</p>
 <p>It works beautifully with other web-component libraries, such as <a href="https://shoelace.style/">shoelace.style</a>.</p>
-<h2>Quick Start</h2>
-<h3>Using npm and a bundler</h3>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="using-npm-and-a-bundler">Using npm and a bundler</h3>
 <p>Add tosijs-ui to your project, e.g.</p>
 <pre><code class="language-bash" data-highlighted><span class="token function">npm</span> <span class="token function">add</span> tosijs-ui
 </code></pre>
@@ -68,7 +68,7 @@ for free rather than replace it.</p>
 
 document<span class="token punctuation">.</span>body<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token function">tosiTable</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
 </code></pre>
-<h3>Using the iife via cdn</h3>
+<h3 id="using-the-iife-via-cdn">Using the iife via cdn</h3>
 <p>The <code>tosijs-ui</code> iife build bundles <code>tosijs</code>, <code>tosijs-ui</code>, <code>marked</code> and — as of 1.7 —
 <strong>CodeMirror</strong> into a single minified javascript source file. You can access <code>xinjs</code> and
 <code>xinjsui</code> as globals which contain all the things exported by <code>tosijs</code> and <code>tosijs-ui</code>.</p>
@@ -128,7 +128,7 @@ in the root barrel. A page that imports a button ships none of it.</p>
 <p>The entire <a href="https://ui.tosijs.net">live documentation site</a> is built with the iife
 bundle — every page is static HTML that loads <code>iife.js</code> and hydrates, so it doubles
 as a working iife example (view source on any page).</p>
-<h2>custom-elements</h2>
+<h2 id="custom-elements">custom-elements</h2>
 <p>The simplest way to use these elements is to simply import the element and then either
 use HTML or the <code>ElementCreator</code> function exported.</p>
 <p>E.g. to use the markdown viewer:</p>
@@ -157,7 +157,7 @@ the correct type.</p>
 <p>The other thing is that <code>tosijs</code> <code>ElementCreator</code> functions are convenient and composable,
 allowing you to build DOM elements with less code than pretty much any other option, including
 JSX, TSX, or HTML.</p>
-<h2>Philosophy</h2>
+<h2 id="philosophy">Philosophy</h2>
 <p>In general, <code>tosijs</code> strives to work <em>with</em> the browser rather than trying to <em>replace</em> it.</p>
 <p>In a similar vein, <code>tosijs-ui</code> comprises a collection of <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components">web-components</a>
 with the goal of augmenting what <em>already</em> works well, and the components are intended to be
@@ -181,7 +181,7 @@ for an <code>&lt;input&gt;</code> or <code>&lt;textarea&gt;</code> (while mitiga
 <code>&lt;select&gt;</code> and <code>&lt;input type=&quot;radio&quot;&gt;</code>). E.g. the <code>&lt;tosi-select&gt;</code> does not suffer from a
 race-condition between having its value set and being given an <code>&lt;option&gt;</code> with the intended value
 and you can differentiate between the user picking a value (<code>action</code>) and the value changing (<code>change</code>).</p>
-<h2>Credits</h2>
+<h2 id="credits">Credits</h2>
 <p><code>tosijs-ui</code> is being developed using <a href="https://bun.sh/">bun</a>.
 <code>bun</code> is crazy fast (based on Webkit&#39;s JS engine, vs. V8), does a lot of stuff
 natively, and runs TypeScript (with import and require) directly.</p>
@@ -282,6 +282,6 @@ natively, and runs TypeScript (with import and require) directly.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="hydrate-q03pvqdy.js"></script>
 </body>
 </html>

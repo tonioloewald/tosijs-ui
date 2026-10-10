@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>segmented select — tosijs-ui</title>
   <meta name="description" content="Fairly general-purpose segmented select control." />
   <link rel="canonical" href="https://ui.tosijs.net/segmented/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>segmented select</h1>
+<h1 id="segmented-select">segmented select</h1>
 <p>This is a fairly general-purpose segmented select control.</p>
 <pre><code class="language-html">&lt;div class=&quot;grid&quot;&gt;
   &lt;tosi-segmented value=&quot;yes&quot; choices=&quot;yes, no, don&#39;t care&quot;&gt;
@@ -99,7 +99,7 @@ test(&#39;multiple segmented has array value&#39;, () =&gt; {
 <blockquote>
 <p>Check the console to see the values being set.</p>
 </blockquote>
-<h2>Form Integration</h2>
+<h2 id="form-integration">Form Integration</h2>
 <p><code>&lt;tosi-segmented&gt;</code> is form-associated, meaning it works directly in native <code>&lt;form&gt;</code> elements:</p>
 <pre><code class="language-html">&lt;form class=&quot;segmented-form&quot;&gt;
   &lt;tosi-segmented name=&quot;choice&quot; choices=&quot;a,b,c&quot; required&gt;&lt;/tosi-segmented&gt;
@@ -114,7 +114,7 @@ form.addEventListener(&#39;submit&#39;, (e) =&gt; {
   form.querySelector(&#39;.output&#39;).textContent = &#39;Submitted: &#39; + data.get(&#39;choice&#39;)
 })
 </code></pre>
-<h2>Properties</h2>
+<h2 id="properties">Properties</h2>
 <ul>
 <li><code>values</code> is an array of values (only really useful if <code>multiple</code> is set to true)</li>
 </ul>
@@ -125,7 +125,7 @@ form.addEventListener(&#39;submit&#39;, (e) =&gt; {
   caption: string
 }
 </code></pre>
-<h2>Attributes</h2>
+<h2 id="attributes">Attributes</h2>
 <ul>
 <li><code>choices</code> is a string of comma-delimited options of the form <code>value=caption:icon</code>,
 where caption and icon are optional</li>
@@ -137,7 +137,7 @@ the user to input their choice. It will be reset to &#39;&#39; if <code>multiple
 <li><code>localized</code> automatically localizes captions</li>
 <li><code>required</code> marks the field as required for form validation</li>
 </ul>
-<h2>Styling</h2>
+<h2 id="styling">Styling</h2>
 <p>The following CSS variables can be used to control customize the <code>&lt;tosi-segmented&gt;</code> component.</p>
 <pre><code>--segmented-align-items
 --segmented-direction
@@ -249,6 +249,6 @@ the user to input their choice. It will be reset to &#39;&#39; if <code>multiple
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>dialog — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-dialog&gt; is a simple wrapper around the standard HTML &lt;dialog&gt; element designed to make creating dialogs as convenient as possible." />
   <link rel="canonical" href="https://ui.tosijs.net/dialog/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>dialog</h1>
+<h1 id="dialog">dialog</h1>
 <p><code>&lt;tosi-dialog&gt;</code> is a simple wrapper around the standard HTML <code>&lt;dialog&gt;</code> element designed
 to make creating dialogs as convenient as possible.</p>
 <pre><code class="language-html">&lt;button&gt;Show Dialog&lt;/button&gt;
@@ -73,7 +73,7 @@ test(&#39;dialog has header slot content&#39;, () =&gt; {
 <p>The dialog always supplies its own <strong>OK</strong> button (<code>part=&quot;ok&quot;</code>, which closes with
 <code>&#39;confirm&#39;</code>). Buttons you put in the <code>footer</code> slot appear <strong>beside</strong> it, not instead of it, so
 add a Cancel button there, not a second OK.</p>
-<h2>Closing</h2>
+<h2 id="closing">Closing</h2>
 <p>Every way a dialog closes — the OK button, <code>close(reason)</code>, a background click when
 <code>closeOnBackgroundClick</code> is set, <strong>Escape</strong>, or a <code>&lt;form method=&quot;dialog&quot;&gt;</code> — goes through the
 same path: <code>dialogWillClose(reason)</code> is called, the <code>showModal()</code> promise resolves with the
@@ -89,7 +89,7 @@ in flight. <code>close()</code> returns whether the dialog closed, or a Promise 
 <p>The browser can close a <code>&lt;dialog&gt;</code> without asking (a <code>&lt;form method=&quot;dialog&quot;&gt;</code> submission, or a
 repeated Escape without fresh user interaction in Chrome). Those cannot be refused; the dialog
 still calls <code>dialogWillClose</code> and resolves, so nothing waits forever.</p>
-<h2>Static Functions</h2>
+<h2 id="static-functions">Static Functions</h2>
 <p><code>TosiDialog</code> provides static async functions to replace the built-in dialogs provided by
 the browser.</p>
 <ul>
@@ -253,6 +253,6 @@ preview.append(
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

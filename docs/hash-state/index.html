@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>hash-state — tosijs-ui</title>
   <meta name="description" content="Key-value state in the page&#39;s URL hash: shareable, bookmarkable, and back/forward work without you writing any of it." />
   <link rel="canonical" href="https://ui.tosijs.net/hash-state/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>hash-state</h1>
+<h1 id="hash-state">hash-state</h1>
 <!--{ "parent": "Helper Libraries" }-->
 
 <p>Key-value state in the page&#39;s URL hash: shareable, bookmarkable, and back/forward work
@@ -74,7 +74,7 @@ test(&#39;typing writes the hash, and the state reads it back&#39;, () =&gt; {
 })
 </code></pre>
 <p>Type in the box and watch the address bar. Reload the page and the value is still there.</p>
-<h2>Two writers fight — so the keys are namespaced</h2>
+<h2 id="two-writers-fight--so-the-keys-are-namespaced">Two writers fight — so the keys are namespaced</h2>
 <p>Everything a <code>hashState</code> writes is prefixed with its <code>namespace</code>, and everything it does not
 recognise is <strong>left alone</strong> on write. Two instances on one page — or a <code>hashState</code> next to a
 hash router — can share the URL without deleting each other&#39;s keys.</p>
@@ -85,21 +85,21 @@ because a doc-system embedded inside another one hijacked its host page&#39;s UR
 </code></pre>
 <p>Same API, same events, no URL. Use it for anything embeddable, where the host page owns the
 address bar.</p>
-<h2>It composes with the router</h2>
+<h2 id="it-composes-with-the-router">It composes with the router</h2>
 <p>The hash is split at the first <code>?</code>: the part before it is the <strong>path</strong> — which
 <a href="/router/"><code>defineRoutes({hashRouting: true})</code></a> matches on — and the part after is the query
 this reads and writes. Neither disturbs the other:</p>
 <pre><code>#/invoices/42?demo.q=widget&amp;demo.sort=date
  └── router ──┘└─────── hashState ────────┘
 </code></pre>
-<h2>History: replace by default</h2>
+<h2 id="history-replace-by-default">History: replace by default</h2>
 <p><code>set</code> and <code>update</code> <strong>replace</strong> the current history entry. A filter box that pushed an entry
 per keystroke would make the back button useless — thirty presses to undo one word.</p>
 <p>Pass <code>{ push: true }</code> when the change is a place the user should be able to come back from,
 such as opening a record:</p>
 <pre><code class="language-typescript" data-highlighted>rows<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">'editing'</span><span class="token punctuation">,</span> id<span class="token punctuation">,</span> <span class="token punctuation">{</span> push<span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
-<h2>API</h2>
+<h2 id="api">API</h2>
 <ul>
 <li><code>hashState({ namespace, mode })</code> — <code>mode</code> is <code>&#39;hash&#39;</code> (default) or <code>&#39;memory&#39;</code></li>
 <li><code>.values</code> — a plain object of this namespace&#39;s current keys</li>
@@ -205,6 +205,6 @@ unsubscribe function</li>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

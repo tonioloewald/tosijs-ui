@@ -71,6 +71,48 @@ import { i18n, setLocale, initLocalization } from '../localize.js';
 // tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
 import './css-var-editor.js';
 const { button, div } = elements;
+const download = (url) => () => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '';
+    link.click();
+};
+/**
+ * The settings menu's "Download ePub" entry, or `null` for none.
+ *
+ * The item used to be unconditional and its URL derived from the project name, so a site
+ * that built no ePub (the default) shipped a menu item that 404s, and a multi-volume site
+ * or one with `basePath` or `epub.title` linked to a file nothing wrote (#218). The site
+ * build now bakes the list of volumes it makes into the page config:
+ *
+ *   - a list   → one item (or, for several volumes, a submenu), at the build's own URLs
+ *   - `[]`     → the site makes no ePub: no item
+ *   - no key   → a hand-written `config` that predates this: the old derived link, unchanged
+ */
+export function epubMenuItem(ebooks, legacyUrl) {
+    if (!Array.isArray(ebooks))
+        return {
+            caption: 'Download ePub',
+            icon: 'book',
+            action: download(legacyUrl),
+        };
+    if (ebooks.length === 0)
+        return null;
+    if (ebooks.length === 1)
+        return {
+            caption: 'Download ePub',
+            icon: 'book',
+            action: download(ebooks[0].url),
+        };
+    return {
+        caption: 'Download ePub',
+        icon: 'book',
+        menuItems: ebooks.map((book) => ({
+            caption: book.title,
+            action: download(book.url),
+        })),
+    };
+}
 const PREFS_KEY = 'tosi-doc-system-prefs';
 /*
 Fetch the corpus, retrying a TRANSIENT failure — without becoming the reason it stays down.
@@ -289,10 +331,12 @@ export class TosiDocSystem extends withAttributes({
                 // Print / ePub of the whole corpus, before a separator + the prefs.
                 let projectName = '';
                 let bookVolumes;
+                let ebooks;
                 try {
                     const parsed = JSON.parse(this.config || '{}');
                     projectName = parsed.projectName || '';
                     bookVolumes = parsed.bookVolumes || undefined;
+                    ebooks = parsed.ebooks;
                 }
                 catch {
                     // ignore — fall through to document.title
@@ -345,16 +389,9 @@ export class TosiDocSystem extends withAttributes({
                         void printWhenReady(win, () => highlightBlocks(win.document, { policy: 'none' }));
                     },
                 });
-                menuItems.push({
-                    caption: 'Download ePub',
-                    icon: 'book',
-                    action: () => {
-                        const link = document.createElement('a');
-                        link.href = `/${slugify(bookTitle)}.epub`;
-                        link.download = '';
-                        link.click();
-                    },
-                });
+                const epubItem = epubMenuItem(ebooks, `/${slugify(bookTitle)}.epub`);
+                if (epubItem)
+                    menuItems.push(epubItem);
                 menuItems.push(null);
                 const localeOptions = i18n.localeOptions.value || [];
                 if (localeOptions.length > 1) {

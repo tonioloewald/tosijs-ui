@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>schema-form — tosijs-ui</title>
   <meta name="description" content="A form generated from a JSON Schema, with validation." />
   <link rel="canonical" href="https://ui.tosijs.net/schema-form/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>schema-form</h1>
+<h1 id="schema-form">schema-form</h1>
 <!--{ "parent": "Components" }-->
 
 <p>A form generated from a <a href="https://json-schema.org/">JSON Schema</a>, with validation.</p>
@@ -61,7 +61,7 @@ shown.textContent = JSON.stringify(schemaForm.value, null, 2)
 
 preview.append(schemaForm, shown)
 </code></pre>
-<h2>The model owns the data</h2>
+<h2 id="the-model-owns-the-data">The model owns the data</h2>
 <p><code>value</code> is the state and <code>change</code> fires when it changes — the same contract as every other
 component here. The inputs are a <strong>view</strong> of <code>value</code>; they are never the source of truth.</p>
 <p>That is not a stylistic preference. Reading data back out of rendered inputs, as most
@@ -74,7 +74,7 @@ schemaForm<span class="token punctuation">.</span>value <span class="token comme
 </code></pre>
 <p>Editing also never mutates the object you handed in — you get a new one, so
 <code>diff(original, schemaForm.value)</code> is a usable dirty check.</p>
-<h2>Validation</h2>
+<h2 id="validation">Validation</h2>
 <p>Errors come from <a href="https://www.npmjs.com/package/tosijs-schema"><code>tosijs-schema</code></a> and appear
 under the field they belong to. <code>validate()</code> returns whether the current value conforms, and
 <code>errors</code> is the list.</p>
@@ -103,7 +103,7 @@ update()
 
 preview.append(schemaForm, report)
 </code></pre>
-<h3>Give it a validator</h3>
+<h3 id="give-it-a-validator">Give it a validator</h3>
 <p>The form does not import a validation library. It asks for two functions, and you supply
 them once, anywhere before or after the form renders:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> setSchemaValidator <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
@@ -134,7 +134,7 @@ browser and kills validation for everyone. There is no third option, so the comp
 for the functions instead of the package. The upside is that they are just functions: an Ajv
 wrapper, a house validator or a test stub all work. <code>tosijs-schema</code> is the one we ship docs
 for, not a requirement.</p>
-<h2>Non-conforming data</h2>
+<h2 id="non-conforming-data">Non-conforming data</h2>
 <p>The form is an <strong>editor, not a gate</strong>. Give it a value that violates its schema and it renders
 that value, validates on load, and marks the offending fields. It does not coerce the data,
 strip it, refuse it, or stop you saving it.</p>
@@ -164,7 +164,7 @@ that looks clean.</li>
 <p>The fix being built for the first two is a panel listing what could not be displayed, with the
 option to purge it. Until then, treat <code>errors</code> as the authority on what is wrong and the fields
 as a partial view of it.</p>
-<h2>No schema? It infers one</h2>
+<h2 id="no-schema-it-infers-one">No schema? It infers one</h2>
 <p>Give it a <code>value</code> and no <code>schema</code> and it derives one with <code>inferSchema</code> from
 the registered validator&#39;s <code>inferSchema</code> — useful for editing a record whose shape you don&#39;t
 have written down. With no validator there is nothing to infer from, and the form says so
@@ -221,7 +221,7 @@ and it has <strong>no <code>required</code></strong>: asserting that a field is 
 it in is exactly the guess that makes inferred schemas reject valid future data.</p>
 <p>It is inferred <strong>once</strong>, so typing never rebuilds the form. Read it back from <code>.schema</code>, edit
 it, and set it again if you want something different — that round trip is the point.</p>
-<h2>Nested objects</h2>
+<h2 id="nested-objects">Nested objects</h2>
 <p>An object property becomes a <code>&lt;details&gt;</code> section, to any depth. Sections start <strong>open</strong> — a
 form whose fields are hidden looks empty, and a user who does not know a section exists cannot
 fill it in.</p>
@@ -276,7 +276,7 @@ test(&#39;editing a nested field writes the nested path and keeps its siblings&#
   expect(nestedForm.value.name).toBe(&#39;Ada&#39;)
 })
 </code></pre>
-<h2>Arrays</h2>
+<h2 id="arrays">Arrays</h2>
 <p>An array property renders its elements with add, remove and reorder controls. Items can be
 scalars or objects, and objects can contain further arrays.</p>
 <p>Editing an array <strong>splices the model</strong>. That is worth stating because the usual approach —
@@ -354,7 +354,7 @@ test(&#39;an array edit does not disturb the rest of the form&#39;, () =&gt; {
   expect(arrayForm.value.tags).toEqual([&#39;urgent&#39;, &#39;paid&#39;])
 })
 </code></pre>
-<h2>Unions</h2>
+<h2 id="unions">Unions</h2>
 <p><code>anyOf</code> and <code>oneOf</code> describe several shapes a value may take, and most of them are not
 &quot;pick a variant&quot; at all. Each is rendered as what it actually is:</p>
 <table>
@@ -490,7 +490,7 @@ test(&#39;unions render as what they actually are&#39;, async () =&gt; {
   )
 })
 </code></pre>
-<h3>When a keyword is not validated, the field says so</h3>
+<h3 id="when-a-keyword-is-not-validated-the-field-says-so">When a keyword is not validated, the field says so</h3>
 <p>A validator enforces a subset of JSON Schema, and the parts outside it are the dangerous ones:
 not an error, not a warning — a value the schema forbids, accepted, with <code>ok === true</code>. So any
 field whose schema uses a keyword the <strong>registered validator</strong> does not check carries a note
@@ -558,7 +558,7 @@ test(&#39;the note tracks the VALIDATOR, not a hard-coded list&#39;, () =&gt; {
   expect(oneOfForm.errors.some((e) =&gt; e.path === &#39;score&#39;)).toBe(true)
 })
 </code></pre>
-<h2>Format plugins</h2>
+<h2 id="format-plugins">Format plugins</h2>
 <p><code>registerFieldPlugin(format, plugin)</code> claims a schema <code>format</code> and renders it yourself. The
 plugin owns the <strong>control</strong>; the form still owns the label and the error slot, so a plugin
 does not have to re-implement either and cannot drift from the rest of the form.</p>
@@ -667,11 +667,11 @@ test(&#39;a plugin registered after the form renders takes effect, styles and al
   expect(control.querySelector(&#39;.percent-readout&#39;).textContent).toBe(&#39;60%&#39;)
 })
 </code></pre>
-<h2>Read-only</h2>
+<h2 id="read-only">Read-only</h2>
 <p><code>readOnly</code> disables the inputs and <strong>hides</strong> the add, remove and reorder controls rather than
 grey them out. A dead row of buttons is a form advertising affordances it will not honour;
 there is nothing to explain if they are not there.</p>
-<h2>Styling</h2>
+<h2 id="styling">Styling</h2>
 <p>Three custom properties, each with a fallback so the component works unstyled:</p>
 <table>
 <thead>
@@ -699,7 +699,7 @@ there is nothing to explain if they are not there.</p>
 </tbody></table>
 <p>Spacing comes from the theme&#39;s <code>--tosi-spacing</code> / <code>--tosi-spacing-sm</code>, so a form matches
 whatever scale the rest of your page is on.</p>
-<h2>Localization</h2>
+<h2 id="localization">Localization</h2>
 <p>The form&#39;s own chrome — the <em>Add …</em> button and the reorder tooltips — goes through
 <a href="/localize/"><code>localize</code></a>, and the form <strong>rebuilds when the locale changes</strong>, so switching
 language does not leave one form behind in the old one.</p>
@@ -709,13 +709,13 @@ and no way to move the placeholder to where their language puts it.</p>
 <p>Labels that come from your <strong>schema</strong> are not localized — a <code>title</code> is your string, and a
 humanised property name is a data name rather than a UI string. Localize them in the schema if
 you need to.</p>
-<h2>What it renders today</h2>
+<h2 id="what-it-renders-today">What it renders today</h2>
 <p>Scalars and enums: <code>string</code> (with <code>format</code> picking the input type), <code>number</code>, <code>integer</code>,
 <code>boolean</code>, <code>enum</code>, <code>const</code>, <strong>nested objects</strong>, <strong>arrays</strong> and <strong>unions</strong>. <strong>Tuple arrays
 (<code>prefixItems</code>) are not supported yet</strong> — a property using one is shown as a placeholder
 saying so, rather than being silently omitted. A field that vanishes is indistinguishable from
 a schema that never mentioned it, which is how an editor loses data without anyone noticing.</p>
-<h2>Properties, methods, events</h2>
+<h2 id="properties-methods-events">Properties, methods, events</h2>
 <ul>
 <li><code>schema</code> — the JSON Schema. Setting it rebuilds the fields.</li>
 <li><code>value</code> — the data. Setting it updates the inputs; it does <strong>not</strong> fire <code>change</code>.</li>
@@ -875,6 +875,6 @@ test(&#39;editing keeps unknown keys, fires change, and does not rebuild under t
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

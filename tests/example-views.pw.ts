@@ -85,3 +85,98 @@ test('in a narrow column the two panes stack', async ({ page }) => {
   expect(bottom!.y).toBeGreaterThanOrEqual(top!.y + top!.height - 1)
   expect(top!.height).toBeGreaterThan(200)
 })
+
+/*
+#219: in an inline view the test result is where a beginner sees it, and the tabs are only
+the ones this example has.
+*/
+const tabNames = (host: any) =>
+  host.evaluate((el: any) =>
+    el.parts.editors.bodies.map((b: Element) => b.getAttribute('name'))
+  )
+
+for (const testsOn of [true, false]) {
+  test(`view: code shows its test result under the preview (page tests ${
+    testsOn ? 'on' : 'off, as on a deployed site'
+  })`, async ({ page }) => {
+    await page.addInitScript(
+      (on) => localStorage.setItem('tosijs-ui-tests-enabled', String(on)),
+      testsOn
+    )
+    await page.goto('/component/')
+    expect(
+      await page.evaluate(() =>
+        document.body.classList.contains('tests-enabled')
+      )
+    ).toBe(testsOn)
+    const host = example(page, 'code')
+    await host.scrollIntoViewIfNeeded()
+    const status = host.locator('[part="testStatus"]')
+    await expect(status).toBeVisible()
+    await expect(status).toHaveText('✓ 1/1 test passed')
+    await expect(status).toHaveClass(/test-pass/)
+
+    // Inside the example pane, along its bottom, and not over the button it reports on.
+    const [strip, pane, button] = await Promise.all([
+      status.boundingBox(),
+      host.locator('[part="example"]').boundingBox(),
+      host.locator('.preview button').boundingBox(),
+    ])
+    expect(
+      Math.abs(strip!.y + strip!.height - (pane!.y + pane!.height))
+    ).toBeLessThan(2)
+    expect(button!.y + button!.height).toBeLessThanOrEqual(strip!.y)
+
+    // A failure is the line, in red, with what went wrong.
+    await host.evaluate((el: any) => {
+      el.test = "test('two is three', () => { expect(2).toBe(3) })"
+      return el.refresh()
+    })
+    await expect(status).toHaveClass(/test-fail/)
+    await expect(status).toContainText('✗ two is three')
+    await expect(status).toContainText('3')
+    // The floating results panel says the same thing; it stays out of the way here.
+    await expect(host.locator('[part="testResults"]')).toBeHidden()
+
+    // Clicking the line opens the tab that has the detail.
+    await status.click()
+    expect(
+      await host.evaluate(
+        (el: any) =>
+          el.parts.editors.bodies[el.parts.editors.value] === el.parts.test
+      )
+    ).toBe(true)
+  })
+}
+
+test('an inline view shows only the tabs the example has; the full view shows them all', async ({
+  page,
+}) => {
+  const host = example(page, 'code')
+  await host.scrollIntoViewIfNeeded()
+  await expect(host.locator('.code-editors')).toBeVisible()
+  // js + its test block, no html or css; the console is a tab here.
+  expect(await tabNames(host)).toEqual(['js', 'DOM tests', 'Console'])
+  expect(
+    await host.evaluate((el: any) => getComputedStyle(el.parts.html).display)
+  ).toBe('none')
+
+  // The console example has one block and its console is docked: one tab.
+  const consoleHost = example(page, 'console')
+  await consoleHost.scrollIntoViewIfNeeded()
+  await expect(consoleHost.locator('.code-editors')).toBeVisible()
+  expect(await tabNames(consoleHost)).toEqual(['js'])
+  // No tests, so no status line taking room from the console.
+  await expect(consoleHost.locator('[part="testStatus"]')).toBeHidden()
+
+  // Full-screen is where you add a block, so every tab is back, in the original order.
+  await host.evaluate((el: any) => el.showCode())
+  expect(await tabNames(host)).toEqual([
+    'js',
+    'html',
+    'css',
+    'DOM tests',
+    'Console',
+  ])
+  await expect(host.locator('[part="testStatus"]')).toBeHidden()
+})

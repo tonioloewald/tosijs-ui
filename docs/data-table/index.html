@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>table — tosijs-ui</title>
   <meta name="description" content="A virtual data-table, configurable via a columns array (which will automatically be generated if not provided), that displays gigantic tables with fixed…" />
   <link rel="canonical" href="https://ui.tosijs.net/data-table/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>table</h1>
+<h1 id="table">table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
 that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.</p>
 <pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
@@ -208,7 +208,7 @@ and $(&#39;tosi-table&#39;).selectedRows`.</p>
   filter?: ArrayFilter
 }
 </code></pre>
-<h2><code>ColumnOptions</code></h2>
+<h2 id="columnoptions"><code>ColumnOptions</code></h2>
 <p>You can configure the table&#39;s columns by providing it an array of <code>ColumnOptions</code>:</p>
 <pre><code>export interface ColumnOptions {
   name?: string
@@ -223,7 +223,7 @@ and $(&#39;tosi-table&#39;).selectedRows`.</p>
   dataCell?: (options: ColumnOptions) =&gt; HTMLElement
 }
 </code></pre>
-<h2>Column value types</h2>
+<h2 id="column-value-types">Column value types</h2>
 <p>Give a column a <code>type</code> and it&#39;s formatted (and aligned) automatically — no hand-rolled
 <code>dataCell</code>. The <code>type</code> is a <a href="value-renderer"><code>valueRenderer</code></a> string:</p>
 <pre><code>[
@@ -268,7 +268,7 @@ preview.append(table)
 <pre><code class="language-css">.preview .-negative { color: #d32f2f; }
 .preview .-zero { opacity: 0.45; }
 </code></pre>
-<h2>Pinned Columns and Rows</h2>
+<h2 id="pinned-columns-and-rows">Pinned Columns and Rows</h2>
 <p>Set <code>pinned: &#39;left&#39;</code> or <code>pinned: &#39;right&#39;</code> on individual columns to pin
 them during horizontal scroll. Pinned columns are sorted to the edges
 automatically. You can also pin/unpin columns via the header menu, or by
@@ -450,7 +450,7 @@ test(&#39;pinned row goes through the same listBinding as virtual rows&#39;, () 
   expect(pinnedRow.hasAttribute(&#39;aria-selected&#39;)).toBe(false)
 })
 </code></pre>
-<h2>Selection</h2>
+<h2 id="selection">Selection</h2>
 <p><code>&lt;tosi-table&gt;</code> supports <code>select</code> and <code>multiple</code> boolean properties allowing rows to be selectable. Selected rows will
 be given the <code>[aria-selected]</code> attribute, so style them as you wish.</p>
 <p><code>multiple</code> select supports shift-clicking and command/meta-clicking.</p>
@@ -482,8 +482,8 @@ replace-selection reported an empty selection, and the listener cleared the reco
 <span class="token punctuation">}</span>
 <span class="token comment">// …and in the handler:  if (this.applying) return</span>
 </code></pre>
-<h2>Row Access</h2>
-<h2>How many rows can it show? (<code>maxVisibleRows</code>)</h2>
+<h2 id="row-access">Row Access</h2>
+<h2 id="how-many-rows-can-it-show-maxvisiblerows">How many rows can it show? (<code>maxVisibleRows</code>)</h2>
 <p>More than you are likely to have. The virtual <code>listBinding</code> renders only the visible window,
 so <strong>the UI cost is O(1) in row count</strong> — 300,000 rows cost the same to scroll as 300. The
 size of the array is simply not what binds.</p>
@@ -523,7 +523,7 @@ currently rendered (virtual scroll)</li>
   table<span class="token punctuation">.</span><span class="token function">getCells</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span><span class="token operator">?.</span><span class="token function">forEach</span><span class="token punctuation">(</span>c <span class="token operator">=></span> c<span class="token punctuation">.</span>classList<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token string">'row-hover'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
-<h3><code>rowRendered</code> callback</h3>
+<h3 id="rowrendered-callback"><code>rowRendered</code> callback</h3>
 <p>For virtual tables, cells are created and destroyed as you scroll. The
 <code>rowRendered</code> callback fires whenever a row&#39;s cells are rendered, letting
 you apply styling that survives virtualisation:</p>
@@ -533,7 +533,7 @@ you apply styling that survives virtualisation:</p>
   <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2>Editing</h2>
+<h2 id="editing">Editing</h2>
 <p>Set <code>editable</code> and the cells become inputs. Give the table a <code>schema</code> and it knows what kind
 of input each column wants and whether an edit is valid.</p>
 <pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
@@ -624,7 +624,7 @@ typed and the cell says it is wrong, rather than the table refusing input and le
 guessing.</p>
 <p>The <code>change</code> event carries <code>{ item, field, oldValue, newValue, error }</code>. Persisting is yours
 to wire — see <a href="/crud/"><code>&lt;tosi-crud&gt;</code></a> for the same edits behind a <code>save()</code> store adapter.</p>
-<h2>Sorting</h2>
+<h2 id="sorting">Sorting</h2>
 <p>By default, the user can sort the table by any column which doesn&#39;t have a <code>sort === false</code>.</p>
 <p>You can set the initial sort by setting the <code>sort</code> value of a specific column to <code>ascending</code>
 or <code>descending</code>.</p>
@@ -632,7 +632,7 @@ or <code>descending</code>.</p>
 to whatever you like, and you can replace the <code>headerCell</code> or set the <code>sort</code> of each column
 to <code>false</code> if you have some specific sorting in mind.</p>
 <p>You can disable sorting controls by adding the <code>nosort</code> attribute to the <code>&lt;tosi-table&gt;</code>.</p>
-<h2>Row Grouping</h2>
+<h2 id="row-grouping">Row Grouping</h2>
 <p>Rows that belong together — the lines of one invoice, the episodes of one series — can be
 <strong>clustered</strong>, striped as a unit, and stripped of the values they all repeat.</p>
 <p>Set <code>rowGroupId</code>, a function from a row to its group&#39;s id:</p>
@@ -651,14 +651,14 @@ not per row. A five-line invoice is one stripe.</li>
 </ul>
 <p>The default styling tints odd groups via <code>--tosi-table-cluster-odd-bg</code>; override that
 variable, or the classes, to taste.</p>
-<h3><code>visibleGroupedRowIds</code></h3>
+<h3 id="visiblegroupedrowids"><code>visibleGroupedRowIds</code></h3>
 <p>An array of group ids that are shown <strong>regardless of the filter</strong>:</p>
 <pre><code class="language-typescript" data-highlighted>table<span class="token punctuation">.</span>visibleGroupedRowIds <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'INV-1001/Acme'</span><span class="token punctuation">]</span>
 </code></pre>
 <p>A search that matches one line of an invoice can then open the whole invoice, without the
 filter having to know anything about grouping. Forced rows are added to the filter&#39;s result
 rather than replacing it, so a filter that ranks as well as selects keeps its ranking.</p>
-<h3><code>nonRepeatingGroupedRowCells</code></h3>
+<h3 id="nonrepeatinggroupedrowcells"><code>nonRepeatingGroupedRowCells</code></h3>
 <p>An array of property names whose columns render <strong>only in the first row of each group</strong>:</p>
 <pre><code class="language-typescript" data-highlighted>table<span class="token punctuation">.</span>nonRepeatingGroupedRowCells <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'invoice'</span><span class="token punctuation">,</span> <span class="token string">'buyer'</span><span class="token punctuation">]</span>
 </code></pre>
@@ -694,7 +694,7 @@ you see.</p>
 <p>For the same decision in JavaScript — inside a <code>dataCell</code> binding or a <code>rowRendered</code>
 callback — <strong><code>table.isFirstInGroup(row)</code></strong> answers it directly. It is always <code>true</code> when the
 table is ungrouped.</p>
-<h3><code>rowGroupCounts</code> — how much of each group is showing</h3>
+<h3 id="rowgroupcounts--how-much-of-each-group-is-showing"><code>rowGroupCounts</code> — how much of each group is showing</h3>
 <p>A cell that reports on its group (&quot;showing 2 of 7&quot;) or offers a <strong>show-all</strong> toggle needs to
 know how many rows the group has, not just how many are on screen. That comparison is the
 one thing a cell renderer cannot make for itself: the filter has already run, so a consumer
@@ -718,7 +718,7 @@ table<span class="token punctuation">.</span>visibleGroupedRowIds <span class="t
 first is precisely when a show-all toggle is worth offering. The map is always a <code>Map</code>
 (empty when ungrouped), so <code>.get()</code> needs no null check. Pinned rows sit outside grouping
 and are not counted.</p>
-<h3>Example</h3>
+<h3 id="example">Example</h3>
 <p>Grouping the emoji table by category and subcategory. It is grouped by <em>inference</em> — only
 <code>nonRepeatingGroupedRowCells</code> is set — so each subcategory is named once and striped as a
 block. Scroll it: the table is virtual, so these rows are created and destroyed as you go,
@@ -863,13 +863,13 @@ test(&#39;category and subcategory are shown once per group, and nothing else is
   expect(repeated).toBeGreaterThan(0)
 })
 </code></pre>
-<h2>Hiding (and Showing) Columns</h2>
+<h2 id="hiding-and-showing-columns">Hiding (and Showing) Columns</h2>
 <p>By default, the user can show / hide columns by clicking via the column header menu.
 You can remove this option by adding the <code>nohide</code> attribute to the <code>&lt;tosi-table&gt;</code></p>
-<h2>Reordering Columns</h2>
+<h2 id="reordering-columns">Reordering Columns</h2>
 <p>By default, the user can reorder columns by dragging them around. You can disable this
 by adding the <code>noreorder</code> attribute to the <code>&lt;tosi-table&gt;</code>.</p>
-<h2>Column Width</h2>
+<h2 id="column-width">Column Width</h2>
 <p>Columns are laid out at the widths you give them, so a table whose columns add up to less
 than its container leaves a strip of blank space on the right. Add the <code>full-width-header</code>
 attribute and the leftover space goes to the last <strong>unpinned</strong> column instead:</p>
@@ -881,7 +881,7 @@ stretching one would push the leftover space back into the middle of the table.<
 scrolls horizontally exactly as it does without the attribute, and every column keeps the
 width it was given. Header and body stay in step either way; they share one
 <code>grid-template-columns</code>.</p>
-<h2>Row Height</h2>
+<h2 id="row-height">Row Height</h2>
 <p>If you set the <code>&lt;tosi-table&gt;</code>&#39;s <code>rowHeight</code> to <code>0</code> it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.</p>
 <p><strong>Do not do this with a large table.</strong> <code>rowHeight: 0</code> switches virtualisation off, so every
@@ -893,7 +893,7 @@ in row count.</p>
 <p>The fix is one line:</p>
 <pre><code class="language-typescript" data-highlighted>table<span class="token punctuation">.</span>rowHeight <span class="token operator">=</span> <span class="token number">30</span> <span class="token comment">// any non-zero height virtualises</span>
 </code></pre>
-<h2>Scroll Stability</h2>
+<h2 id="scroll-stability">Scroll Stability</h2>
 <p>Sorting, filtering, or toggling <code>visibleGroupedRowIds</code> re-renders the table — and the reader
 stays where they were. The table anchors on the <strong>topmost visible row</strong>, not on <code>scrollTop</code>,
 and puts that row back at the same offset afterwards.</p>
@@ -916,7 +916,7 @@ sizes the spacer that gives the scroll container its height a frame later, so th
 clamped against a container that is momentarily one viewport tall. Any correct version had
 to re-apply across frames until it took. That now lives in the component.</p>
 </blockquote>
-<h2>Styling</h2>
+<h2 id="styling">Styling</h2>
 <p>The component uses a flat CSS grid layout where every cell (header, data, pinned)
 is a direct child of the grid container. This means standard CSS works for styling,
 and <code>position: sticky</code> handles all pinning.</p>
@@ -932,7 +932,7 @@ Update any custom CSS targeting those classes:</p>
 <li><code>.td-pinned</code>, <code>.th-pinned</code> → <code>.col-pinned</code></li>
 <li><code>.pin-left</code>, <code>.pin-right</code> → no longer needed (CSS <code>sticky</code> handles positioning)</li>
 </ul>
-<h2>Localization</h2>
+<h2 id="localization">Localization</h2>
 <p><code>&lt;tosi-table&gt;</code> supports the <code>localized</code> attribute which simply causes its default <code>headerCell</code>
 to render a <code>&lt;tosi-localized&gt;</code> element instead of a span for its caption, and localize its
 popup menu.</p>
@@ -1049,6 +1049,6 @@ happy with the untranslated headers.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

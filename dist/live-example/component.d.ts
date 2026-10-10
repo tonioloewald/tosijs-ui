@@ -83,6 +83,49 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
             inset: string;
             zIndex: string;
         };
+        ':host [part="testStatus"]': {
+            display: string;
+        };
+        ':host.-inline-code.-has-test-status:not(.-maximize) [part="testStatus"]': {
+            display: string;
+            position: string;
+            left: string;
+            right: string;
+            bottom: string;
+            zIndex: string;
+            boxSizing: string;
+            height: string;
+            lineHeight: string;
+            padding: string;
+            overflow: string;
+            whiteSpace: string;
+            textOverflow: string;
+            cursor: string;
+            fontFamily: string;
+            fontSize: string;
+            background: string;
+            boxShadow: string;
+        };
+        ':host.-inline-code.-has-test-status:not(.-maximize):not(.-console-docked) [part="testStatus"].test-fail': {
+            height: string;
+            minHeight: string;
+            maxHeight: string;
+            overflow: string;
+            whiteSpace: string;
+            overflowWrap: string;
+            lineHeight: string;
+            padding: string;
+        };
+        ':host.-inline-code.-has-test-status:not(.-maximize) .preview': {
+            paddingBottom: string;
+        };
+        ':host.-inline-code.-has-test-status.-console-docked:not(.-maximize) > [part="example"] > .example-console': {
+            bottom: string;
+            height: string;
+        };
+        ':host.-inline-code.-has-test-status:not(.-maximize):not(.-test-only) [part="testResults"]': {
+            display: string;
+        };
         ':host .layout-indicator': {
             transition: string;
             transform: string;
@@ -530,6 +573,11 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
      */
     private get isTestOnly();
     private updateTestResultsVisibility;
+    private updateTestStatus;
+    private showTestsTab;
+    private syncSourceTabs;
+    /** Does this example open (or sit) in an inline view? Its tests are then part of the page. */
+    private get teaches();
     undo: () => void;
     redo: () => void;
     get isMaximized(): boolean;

@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>localize — tosijs-ui</title>
   <meta name="description" content="Tosijs-ui provides support for localization via the localize method and the &lt;tosi-locale-picker&gt; and &lt;tosi-localized&gt; custom-elements." />
   <link rel="canonical" href="https://ui.tosijs.net/localize/" />
@@ -30,13 +30,13 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>localize</h1>
+<h1 id="localize">localize</h1>
 <p><code>tosijs-ui</code> provides support for localization via the <code>localize</code> method and the <code>&lt;tosi-locale-picker&gt;</code>
 and <code>&lt;tosi-localized&gt;</code> custom-elements.</p>
 <blockquote>
-<h3>Important Note</h3>
+<h3 id="important-note">Important Note</h3>
 <p>This module deals with the <strong>language</strong> used in the user interface. &quot;locale&quot; is
 <em>not the same thing</em>. The (usually) two-letter codes used designate <strong>language</strong>
 and <strong>not locale</strong>.</p>
@@ -44,9 +44,9 @@ and <strong>not locale</strong>.</p>
 and date format. Most European locales use commas where we use decimal points in the US.</p>
 <p>Similarly, <code>ja</code> is the code for the Japanese <strong>language</strong> while <code>jp</code> is the <strong>locale</strong>.</p>
 </blockquote>
-<h2><code>initLocalization(localizationData: string)</code></h2>
+<h2 id="initlocalizationlocalizationdata-string"><code>initLocalization(localizationData: string)</code></h2>
 <p>Enables localization from TSV string data.</p>
-<h2>TosiLocalePicker</h2>
+<h2 id="tosilocalepicker">TosiLocalePicker</h2>
 <p>A selector that lets the user pick from among supported languages.</p>
 <pre><code class="language-html">&lt;h3&gt;Locale Picker&lt;/h3&gt;
 &lt;tosi-locale-picker&gt;&lt;/tosi-locale-picker&gt;
@@ -54,15 +54,15 @@ and date format. Most European locales use commas where we use decimal points in
 &lt;h3&gt;Locale Picker with &lt;code&gt;hide-captions&lt;/code&gt;&lt;/h3&gt;
 &lt;tosi-locale-picker hide-caption&gt;&lt;/tosi-locale-picker&gt;
 </code></pre>
-<h2><code>localize()</code></h2>
+<h2 id="localize-1"><code>localize()</code></h2>
 <p>If you just want to localize a string with code, use <code>localize(s: string): string</code>.</p>
 <p>If the reference string only matches when both are converted to
 lowercase, the output string will also be lowercase.</p>
 <p>E.g. if you have localized <code>Cancel</code> as <code>Annuler</code>, then <code>localize(&quot;cancel&quot;) will output </code>annuler`.</p>
-<h3>ellipses</h3>
+<h3 id="ellipses">ellipses</h3>
 <p>If you end a string with an ellipsis, <code>localize</code> will ignore the ellipsis,
 localize the string, and then append the ellipsis.</p>
-<h3>placeholders</h3>
+<h3 id="placeholders">placeholders</h3>
 <p><code>localize(pattern, values)</code> fills <code>{name}</code> placeholders <strong>after</strong> translating, so the
 translation key is the whole sentence:</p>
 <pre><code class="language-js">import { localize } from &#39;tosijs-ui&#39;
@@ -76,7 +76,7 @@ move the placeholder to where their language puts it. Neither can they fix
 silently imposes it on every language.</p>
 <p>An unknown placeholder is left on screen as <code>{name}</code> rather than blanked, so a typo in a
 translation is visible instead of a hole.</p>
-<h3>whole sentences, with a fallback</h3>
+<h3 id="whole-sentences-with-a-fallback">whole sentences, with a fallback</h3>
 <p>When a caption is built from parts, <code>localizePhrase(key, fragments)</code> asks for the <strong>sentence</strong>
 first and joins the fragments only if nobody has translated it:</p>
 <pre><code class="language-js">import { localizePhrase } from &#39;tosijs-ui&#39;
@@ -129,7 +129,7 @@ language checked, in three different ways:</p>
 sentence key keeps exactly the behaviour it has, because <code>localize</code> returns its input when
 nothing matches; add one row and it upgrades. No existing translation is orphaned, so moving
 to sentence keys does not have to wait for a major version.</p>
-<h2><code>setLocale(language: string)</code></h2>
+<h2 id="setlocalelanguage-string"><code>setLocale(language: string)</code></h2>
 <pre><code class="language-js">import { button, p } from &#39;tosijs&#39;.elements
 import { setLocale } from &#39;tosijs-ui&#39;
 
@@ -167,7 +167,7 @@ preview.append(
 )
 </code></pre>
 <p>If you want to directly set locale, just use <code>setLocale()</code>.</p>
-<h2><code>data-tosi-localized</code> directive</h2>
+<h2 id="data-tosi-localized-directive"><code>data-tosi-localized</code> directive</h2>
 <p>Set the <code>data-tosi-localized</code> attribute on any element with a JSON object mapping
 attribute names to localization keys. The library applies <code>localize()</code> to each
 key and writes the result to the corresponding attribute — immediately when the
@@ -215,7 +215,7 @@ inaccessible by design.</p>
   expect(btn.getAttribute(&#39;title&#39;)).not.toBe(before)
 })
 </code></pre>
-<h2>TosiLocalized</h2>
+<h2 id="tosilocalized">TosiLocalized</h2>
 <p>A span-replacement that automatically localizes its text content.
 By default the case in the localized data is preserved unless the
 reference text is all lowercase, in which case the localized text
@@ -256,7 +256,7 @@ or attribute of the parent element.</p>
 <blockquote>
 <p><code>&lt;tosi-localized&gt;</code> <em>can</em> be used inside the shadowDOM of other custom-elements.</p>
 </blockquote>
-<h2><code>i18n</code></h2>
+<h2 id="i18n"><code>i18n</code></h2>
 <p>All of the data can be bound in the <code>i18n</code> proxy (<code>xin.i18n</code>), including the currently selected
 locale (which will default to <code>navigator.language</code>).</p>
 <p>You can take a look at <code>xin.i18n</code> in the console. <code>i18n</code> can be used to access localization
@@ -266,7 +266,7 @@ locale programmatically (e.g. <code>i18n.locale = &#39;en&#39;</code>).</p>
   i18n.locale = &#39;fr&#39;
 }
 </code></pre>
-<h2>String Annotations (<code>#</code>)</h2>
+<h2 id="string-annotations-">String Annotations (<code>#</code>)</h2>
 <p>Sometimes a single term in your reference language needs different translations
 depending on context. For example, &quot;OK&quot; might translate to both &quot;D&#39;accord&quot; and
 &quot;Bien&quot; in French depending on usage.</p>
@@ -279,7 +279,7 @@ This avoids duplicating translations for languages that don&#39;t need a variant
 (or the cell is empty), it falls back to the base <code>OK</code> translation.</li>
 <li>The <code>#</code> annotation is always stripped from the output — the user never sees it.</li>
 </ul>
-<h3>Literal <code>#</code></h3>
+<h3 id="literal-">Literal <code>#</code></h3>
 <p>An annotation is a <strong>suffix identifier</strong>, so only a <code>#</code> that looks like one is treated as
 one: immediately preceded by a non-space, followed by letters/digits/<code>_</code>/<code>-</code>, running to
 the end of the string. Everything else is literal:</p>
@@ -331,7 +331,7 @@ OK#accept	Bien	&quot;	&quot;
 <li><code>localize(&#39;ok#confirm&#39;)</code> → <code>d&#39;accord</code> (lowercase preserved)</li>
 <li><code>localize(&#39;OK#confirm…&#39;)</code> → <code>D&#39;accord…</code></li>
 </ul>
-<h3>A worked example, from our own table</h3>
+<h3 id="a-worked-example-from-our-own-table">A worked example, from our own table</h3>
 <p>This is not a hypothetical. <code>&lt;tosi-table&gt;</code>&#39;s column-header menu used to ask for the bare
 word <code>Right</code>, and the table shipped with this project had it translated in <strong>the wrong
 sense in four of nine languages</strong>:</p>
@@ -386,7 +386,7 @@ key cannot orphan a translation table that predates it. Annotate freely.</p>
 <p>Name the annotation for the <strong>sense</strong>, not the call site. <code>Right#direction</code> tells a
 translator what to do; <code>Right#1</code> and <code>Right#table-menu</code> tell them where it appears, which
 is not the question they need answered.</p>
-<h2>Creating Localized String Data</h2>
+<h2 id="creating-localized-string-data">Creating Localized String Data</h2>
 <p>You can create your own localization data using any spreadsheet and exporting TSV.</p>
 <p>E.g. you can automatically create localization data
 using something like my <a href="https://docs.google.com/spreadsheets/d/1L0_4g_dDhVCwVVxLzYbMj_H86xSp9lsRCKj7IS9psso/edit?usp=sharing">localized</a>
@@ -467,7 +467,7 @@ the content thus:</p>
 <pre><code>export default `( content of tsv file )`
 </code></pre>
 <p>You use this data using <code>initLocalization()</code>.</p>
-<h2>Leveraging TosiLocalized Automatic Updates</h2>
+<h2 id="leveraging-tosilocalized-automatic-updates">Leveraging TosiLocalized Automatic Updates</h2>
 <p>If you want to leverage TosiLocalized&#39;s automatic updates you simply need to
 implement <code>updateLocale</code> and register yourself with <code>TosiLocalized.allInstances</code>
 (which is a `Set<AbstractLocalized>).</p>
@@ -591,6 +591,6 @@ implement <code>updateLocale</code> and register yourself with <code>TosiLocaliz
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

@@ -217,15 +217,29 @@ preview.append(
 )
 ```
 ```test
-test('view: code opens the editor in the page, not full-screen', async () => {
+test('the code is open in the page, not full-screen', async () => {
   const example = preview.closest('tosi-example')
   // the editor is built when the example nears the viewport
   example.showInline('code')
   expect(example.classList.contains('-maximize')).toBe(false)
   expect(example.parts.codeEditors.hidden).toBe(false)
-  example.closeCode()
 })
 ```
+
+That example has a `test` block, and its result is the line under the preview. In an inline
+view the tests are part of the lesson, so:
+
+- **The result is on show.** One line under the preview (or the console) gives the count when
+  everything passes and the first failure, in red, when something does not. It covers both the
+  `test` block and a `tjs` example's inline tests, and clicking it opens the tab with the
+  detail. Change `'clicked 0 times'` in the test above to see it go red.
+- **The tests always run**, on every site, whatever the page's tests switch says. Elsewhere
+  that switch is off by default away from localhost; here the result is the reader's feedback.
+  A `tjs` or `ts` example in an inline view therefore loads its transpiler when it runs, where
+  one that is only read does not.
+- **Empty tabs are hidden.** A tab for `html`, `css` or `DOM tests` appears only when the
+  example has that block, so an example that is one block of code shows one source tab. The
+  full-screen code view (the `<>` button) still shows them all, which is where you add one.
 
 `"console"` is for "type a line, see the answer", where the point is a value and not a
 rendering. Try `total * 2` at the prompt:

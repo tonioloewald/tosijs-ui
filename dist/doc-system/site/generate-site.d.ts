@@ -14,12 +14,23 @@ export interface GenerateSiteConfig {
     liveExamples?: 'auto' | 'opt-in';
     /** directory to write pages into (the served web root, e.g. ./docs) */
     outputDir: string;
+    /** `SiteConfig.strict`: a build warning raised here fails the build */
+    strict?: boolean;
     projectName?: string;
     /**
      * URL of the volume manifest (`/epub-volumes.json`). Print reads the default volume's
      * cover from it; omitted when the site has no ePub or opted out with `printCover: false`.
      */
     bookVolumes?: string;
+    /**
+     * The ePubs this build makes (`listEpubVolumes`), for the "Download ePub" menu entry.
+     * `[]` says the site makes none, which removes the entry; leave it unset only if you do
+     * not know (the entry then links to the name derived from `projectName`, as it used to).
+     */
+    ebooks?: Array<{
+        title: string;
+        url: string;
+    }>;
     /** site-level description, used as a fallback when a doc has none */
     description?: string;
     /** <html lang>, default 'en' */

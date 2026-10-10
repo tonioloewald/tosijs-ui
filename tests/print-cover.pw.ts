@@ -52,3 +52,28 @@ test('Print as PDF opens with the cover the build wrote', async ({
   expect(cover.width, 'the cover image must load, not 404').toBeGreaterThan(0)
   expect(cover.first, 'the cover is the first page').toBe(true)
 })
+
+test('Download ePub goes to the volume the build made (#218)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/')
+  await page.waitForFunction(() => !!(window as any).__docTestResults)
+  const listed = await page.evaluate(async () =>
+    (
+      await (await fetch('/epub-volumes.json')).json()
+    ).find((v: { book: string }) => v.book === '')
+  )
+  await page.evaluate(() => {
+    const header = [...document.querySelectorAll('button')].filter((b) => {
+      const r = b.getBoundingClientRect()
+      return r.top < 60 && r.width > 0
+    })
+    header[header.length - 1].click()
+  })
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('.tosi-menu').getByText('Download ePub').click(),
+  ])
+  expect(new URL(download.url()).pathname).toBe(listed.url)
+})

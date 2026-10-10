@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>tag-list — tosijs-ui</title>
   <meta name="description" content="Building a tag-list from standard HTML elements is a bit of a nightmare." />
   <link rel="canonical" href="https://ui.tosijs.net/tag-list/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>tag-list</h1>
+<h1 id="tag-list">tag-list</h1>
 <p>Building a tag-list from standard HTML elements is a bit of a nightmare.</p>
 <p><code>&lt;tosi-tag-list&gt;</code> allows you to display an editable or read-only tag list (represented either
 as a comma-delimited string or an array of strings).</p>
@@ -118,18 +118,18 @@ test(&#39;an escaped comma in a value string parses as one tag&#39;, () =&gt; {
   expect(tl.tags).toContain(&#39;New York, NY&#39;)
 })
 </code></pre>
-<h2>Properties</h2>
-<h3><code>value</code>: string | string[]</h3>
+<h2 id="properties">Properties</h2>
+<h3 id="value-string--string"><code>value</code>: string | string[]</h3>
 <p>A comma-delimited list of tags. A tag that itself contains a comma must
 escape it as <code>\,</code> — e.g. <code>value=&quot;New York\, NY,Boston&quot;</code> is two tags. The
 <code>tags</code> accessor handles this escaping for you in both directions.</p>
-<h3><code>tags</code>: string[]</h3>
+<h3 id="tags-string"><code>tags</code>: string[]</h3>
 <p>A read-only property giving the value as an array.</p>
-<h2><code>popSelectMenu</code>: () =&gt; void</h2>
+<h2 id="popselectmenu---void"><code>popSelectMenu</code>: () =&gt; void</h2>
 <p>This is the method called when the user clicks the menu button. By default it displays a
 pick list of tags, but if you wish to customize the behavior, just replace this method — at
 any time, including after the element is on the page.</p>
-<h3><code>available-tags</code>: string | string[]</h3>
+<h3 id="available-tags-string--string"><code>available-tags</code>: string | string[]</h3>
 <p>A list of tags that will be displayed in the popup menu by default. The popup menu
 will always display custom tags (allowing their removal). As with <code>value</code>, a
 comma inside a tag must be escaped as <code>\,</code> when set via the attribute string.</p>
@@ -161,11 +161,11 @@ preview.append(
   expect(getComputedStyle(chips[1]).color).toBe(&#39;rgb(255, 235, 59)&#39;)
 })
 </code></pre>
-<h3><code>editable</code>: boolean</h3>
+<h3 id="editable-boolean"><code>editable</code>: boolean</h3>
 <p>Allows the tag list to be modified via menu and removing tags.</p>
-<h3><code>text-entry</code>: boolean</h3>
+<h3 id="text-entry-boolean"><code>text-entry</code>: boolean</h3>
 <p>If <code>editable</code>, an input field is provided for entering tags directly.</p>
-<h3><code>placeholder</code>: string = &#39;enter tags&#39;</h3>
+<h3 id="placeholder-string--enter-tags"><code>placeholder</code>: string = &#39;enter tags&#39;</h3>
 <p>Placeholder shown on input field.</p>
 
   </article>
@@ -263,6 +263,6 @@ preview.append(
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

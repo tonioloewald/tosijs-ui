@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>theme — tosijs-ui</title>
   <meta name="description" content="The theme system provides consistent CSS variables across all tosijs-ui components, with support for automatic dark mode via tosijs&#39;s Color class and…" />
   <link rel="canonical" href="https://ui.tosijs.net/theme/" />
@@ -30,12 +30,12 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>theme</h1>
+<h1 id="theme">theme</h1>
 <p>The theme system provides consistent CSS variables across all tosijs-ui components,
 with support for automatic dark mode via tosijs&#39;s <code>Color</code> class and <code>invertLuminance</code>.</p>
-<h2>Base Variables</h2>
+<h2 id="base-variables">Base Variables</h2>
 <p>All components use these foundational CSS variables with the <code>--tosi-</code> prefix:</p>
 <table>
 <thead>
@@ -121,7 +121,7 @@ with support for automatic dark mode via tosijs&#39;s <code>Color</code> class a
 <td>Focus outline style</td>
 </tr>
 </tbody></table>
-<h2>Creating Themes</h2>
+<h2 id="creating-themes">Creating Themes</h2>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> Color <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs'</span>
 <span class="token keyword">import</span> <span class="token punctuation">{</span> createTheme<span class="token punctuation">,</span> applyTheme <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
 
@@ -133,7 +133,7 @@ with support for automatic dark mode via tosijs&#39;s <code>Color</code> class a
 
 <span class="token function">applyTheme</span><span class="token punctuation">(</span>myTheme<span class="token punctuation">,</span> <span class="token string">'my-theme'</span><span class="token punctuation">)</span>
 </code></pre>
-<h2>Dark Mode</h2>
+<h2 id="dark-mode">Dark Mode</h2>
 <p>Toggle between light and dark themes. <code>createTheme</code> and <code>createDarkTheme</code> return
 <code>XinStyleSheet</code> objects — ordinary CSS variable maps you can apply however you like:</p>
 <pre><code class="language-html">&lt;label&gt;&lt;input type=&quot;checkbox&quot; class=&quot;dark-toggle&quot;&gt; Dark mode&lt;/label&gt;
@@ -185,7 +185,7 @@ preview.querySelector(&#39;.dark-toggle&#39;).addEventListener(&#39;change&#39;,
   applyToPreview(e.target.checked ? createDarkTheme(colors) : createTheme(colors))
 })
 </code></pre>
-<h2>Component Variables</h2>
+<h2 id="component-variables">Component Variables</h2>
 <p>Each component defines its own variables that derive from base variables.
 For example, tosi-select derives from base:</p>
 <pre><code>--tosi-select-gap: var(--tosi-spacing-sm, 8px);
@@ -288,6 +288,6 @@ For example, tosi-select derives from base:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

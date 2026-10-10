@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>live-theme — tosijs-ui</title>
   <meta name="description" content="A live theme editor that lets you tweak theme colors in real time. Changes apply instantly to the page." />
   <link rel="canonical" href="https://ui.tosijs.net/live-theme/" />
@@ -30,23 +30,23 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>live-theme</h1>
+<h1 id="live-theme">live-theme</h1>
 <blockquote>
 <p><strong>Work in progress</strong> — this component is under active development and its API may change.</p>
 </blockquote>
 <p>A live theme editor that lets you tweak theme colors in real time.
 Changes apply instantly to the page. The editor itself is immune to
 theme changes (it uses hardcoded styles in shadow DOM).</p>
-<h2>Theme Editor</h2>
+<h2 id="theme-editor">Theme Editor</h2>
 <pre><code class="language-html">&lt;tosi-theme-editor&gt;&lt;/tosi-theme-editor&gt;
 </code></pre>
 <pre><code class="language-js">import { tosiThemeEditor, liveTheme } from &#39;tosijs-ui&#39;
 
 preview.append(tosiThemeEditor())
 </code></pre>
-<h2>Programmatic Control</h2>
+<h2 id="programmatic-control">Programmatic Control</h2>
 <p>The <code>liveTheme</code> observable lets you read and write theme values from code:</p>
 <pre><code class="language-js">import { liveTheme } from &#39;tosijs-ui&#39;
 
@@ -57,7 +57,7 @@ preview.append(tosiThemeEditor())
 // Set values programmatically (triggers immediate theme update)
 // liveTheme.accent.value = &#39;#0064d2&#39;
 </code></pre>
-<h2>CSS canary</h2>
+<h2 id="css-canary">CSS canary</h2>
 <p>A smoke test for the whole styling chain — <code>StyleSheet()</code> injection → the <code>vars</code>
 proxy → scaled-var math → <code>createTheme</code>/<code>applyTheme</code> → the cascade → real
 <code>getComputedStyle</code>. Each link is <strong>silent when it breaks</strong> (no throw, no unit-test
@@ -247,6 +247,6 @@ test(&#39;css canary: Color math (inverseLuminance) yields a distinct valid colo
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>Migrating from older versions — tosijs-ui</title>
   <meta name="description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0&#39;s tosijs 1.10 typing and sanitize-by-default, 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
   <link rel="canonical" href="https://ui.tosijs.net/migrating/" />
@@ -30,15 +30,15 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>Migrating from older versions</h1>
+<h1 id="migrating-from-older-versions">Migrating from older versions</h1>
 <!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
 <p>Notices for releases you may be upgrading <em>past</em>. If you are starting fresh, none of
 this applies — go to the <a href="/">Quick Start</a> instead.</p>
 <p>Current releases are described in <a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
-<h2><code>&lt;tosi-md&gt;</code> sanitizes by default — 1.16.0</h2>
+<h2 id="tosi-md-sanitizes-by-default--1160"><code>&lt;tosi-md&gt;</code> sanitizes by default — 1.16.0</h2>
 <p>A <code>&lt;tosi-md&gt;</code> with no <code>sanitize</code> attribute now strips executable content from the rendered
 markdown, and <strong>unwraps custom elements</strong> (their content stays, the element goes). 1.15.3 logged a
 console warning announcing this.</p>
@@ -52,7 +52,7 @@ sanitizing and allow them by name, <code>allowed-elements=&quot;tosi-icon tosi-t
 the point of the change: unsanitized, such text can run script in your page.</li>
 </ul>
 <p><code>tosi-md</code>, <code>tosi-example</code> and <code>tosi-doc-system</code> can&#39;t be allowed; they render raw HTML or run code.</p>
-<h2>tosijs 1.10: components are typed from their attributes — 1.16.0</h2>
+<h2 id="tosijs-110-components-are-typed-from-their-attributes--1160">tosijs 1.10: components are typed from their attributes — 1.16.0</h2>
 <p>tosijs-ui now needs <strong>tosijs <code>^1.10.3</code></strong>; upgrade it alongside. Nothing changes at runtime. What
 changes is what TypeScript knows about a component instance:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">const</span> rating <span class="token operator">=</span> <span class="token function">tosiRating</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -74,7 +74,7 @@ returned an empty string every time.)</p>
 <span class="token keyword">class</span> <span class="token class-name">MyWidget</span> <span class="token keyword">extends</span> <span class="token class-name">withAttributes</span><span class="token punctuation">(</span><span class="token punctuation">{</span> size<span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span> label<span class="token operator">:</span> <span class="token string">''</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token operator">&lt;</span>MyParts<span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
 </code></pre>
 <p>Element-creator arguments are not typed by this: <code>tosiRating({ maxx: 1 })</code> still compiles.</p>
-<h2>The doc-system cluster moved off the root barrel — 1.14.0</h2>
+<h2 id="the-doc-system-cluster-moved-off-the-root-barrel--1140">The doc-system cluster moved off the root barrel — 1.14.0</h2>
 <p>If you import <code>&lt;tosi-code&gt;</code>, the doc browser, <code>&lt;tosi-doc-system&gt;</code> or <code>&lt;live-example&gt;</code> from the
 package root, change the import. Everything else is unaffected.</p>
 <pre><code class="language-typescript" data-highlighted><span class="token comment">// before</span>
@@ -94,7 +94,7 @@ blanket <code>sideEffects: false</code> would tree-shake a bare import down to z
 bundler had to treat them as reachable from <em>any</em> import of the barrel. Measured on a real
 15 MB app bundle: <strong>1.35 MB / 8.9% saved</strong>. The doc site and CDN <code>&lt;script&gt;</code> users are
 unaffected — the IIFE imports all four explicitly.</p>
-<h2>Validation is supplied, not imported — 1.11.0</h2>
+<h2 id="validation-is-supplied-not-imported--1110">Validation is supplied, not imported — 1.11.0</h2>
 <p>If you use <code>&lt;tosi-schema-form&gt;</code>, <code>&lt;tosi-crud&gt;</code> or an editable <code>&lt;tosi-table&gt;</code> <strong>from ESM</strong>, add
 one line. Nothing else changes, and nothing breaks silently — a form with no validator warns
 in the console and reports <code>validationAvailable === false</code>.</p>
@@ -114,7 +114,7 @@ your bundler — which fails the build for anyone who did not install it, includ
 only <code>&lt;tosi-table&gt;</code> — or left external, which cannot resolve in a browser and kills validation
 for everyone. Both were measured; there is no third option. Asking for two functions instead
 of a package also means anything can supply them: an Ajv wrapper, a house validator, a stub.</p>
-<h2><code>tjs-lang</code> peer moves to <code>^0.13.1</code> — 1.11.0</h2>
+<h2 id="tjs-lang-peer-moves-to-0131--1110"><code>tjs-lang</code> peer moves to <code>^0.13.1</code> — 1.11.0</h2>
 <p>Only affects you if you have <code>tjs-lang</code> installed (it is an optional peer, for live examples
 and <code>.tjs</code> sources). <code>^0.12.0</code> could not reach 0.13.x — caret pins the minor on <code>0.x</code> — so an
 adopter on current tjs-lang hit a hard <code>ERESOLVE</code>.</p>
@@ -124,14 +124,14 @@ adopter on current tjs-lang hit a hard <code>ERESOLVE</code>.</p>
 Since 1.11.0 also floors <code>tosijs-schema</code> at <code>^1.8.0</code>, staying on 0.12.0 is the pairing the
 upstream author deprecated it over.</p>
 </blockquote>
-<h2>Edit links are shorter and shorter-lived — 1.11.0</h2>
+<h2 id="edit-links-are-shorter-and-shorter-lived--1110">Edit links are shorter and shorter-lived — 1.11.0</h2>
 <p>Only affects <code>tosijs-ui/site</code> users running <code>bun run tunnel</code>. The token is now <strong>7 Crockford
 base32 characters</strong> instead of 22, and <code>linkTtlMinutes</code> defaults to <strong>5</strong> rather than 15. A
 link minted by an older dev server is not redeemable by a newer one; both live in memory, so
 this only matters across a restart mid-session.</p>
 <p>The token is case-insensitive and forgives the lookalikes — <code>I</code>/<code>L</code> read as <code>1</code>, <code>O</code> as <code>0</code>,
 hyphens ignored — because it is meant to be read off one screen and typed on another.</p>
-<h2><code>Cannot find module</code> under Node — fixed in 1.9.1</h2>
+<h2 id="cannot-find-module-under-node--fixed-in-191"><code>Cannot find module</code> under Node — fixed in 1.9.1</h2>
 <p>If an import of <code>tosijs-ui</code> (any entry point) fails under <strong>Node</strong> with something like:</p>
 <pre><code class="language-text" data-highlighted>Cannot find module '.../dist/doc-system/site/site-config'
 imported from '.../dist/doc-system/site/index.js'
@@ -169,7 +169,7 @@ causes:</p>
 </tr>
 </tbody></table>
 <p>Those three are unchanged in 1.9.1 and are not bugs; only the module <em>resolution</em> was.</p>
-<h2>⚠️ Breaking change in 1.7.0 — <code>&lt;tosi-code&gt;</code> (ACE → CodeMirror 6)</h2>
+<h2 id="️-breaking-change-in-170--tosi-code-ace--codemirror-6">⚠️ Breaking change in 1.7.0 — <code>&lt;tosi-code&gt;</code> (ACE → CodeMirror 6)</h2>
 <p><strong>1.7.0 is a breaking release shipping under a minor version, deliberately.</strong> <code>&lt;tosi-code&gt;</code>
 moved from ACE to CodeMirror 6. <code>value</code>, <code>mode</code>, the <code>change</code> event, <code>disabled</code>, and
 <code>undo</code>/<code>redo</code> are unchanged; the ACE-era <strong><code>theme</code></strong> and <strong><code>options</code></strong> props are <strong>removed</strong> with
@@ -177,10 +177,10 @@ no shim. Dark mode is now automatic (<code>body.darkmode</code>) and styling com
 <code>--text-color</code>. The <code>2.0</code> name is reserved for the tjs-native tosijs port, so this ships as
 1.7.0 — <strong>pin <code>tosijs-ui@1.6</code> to defer.</strong> Full detail and rationale in
 <a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
-<h2>Migrating to v1.3.0</h2>
+<h2 id="migrating-to-v130">Migrating to v1.3.0</h2>
 <p>v1.3.0 completes the rename from <code>xinjs-ui</code> to <code>tosijs-ui</code>. All custom element
 tags now use the <code>tosi-</code> prefix and all exports use <code>Tosi*</code>/<code>tosi*</code> names.</p>
-<h3>Breaking changes</h3>
+<h3 id="breaking-changes">Breaking changes</h3>
 <ul>
 <li><strong>Custom element tags</strong> have changed from <code>&lt;xin-*&gt;</code> to <code>&lt;tosi-*&gt;</code>.
 For example: <code>&lt;xin-select&gt;</code> is now <code>&lt;tosi-select&gt;</code>, <code>&lt;xin-icon&gt;</code> is now
@@ -190,12 +190,12 @@ be updated.</li>
 <li><strong>CSS custom properties</strong> in component <code>styleSpec</code> objects retain <code>--xin-*</code>
 fallbacks for backward compatibility, but new code should use <code>--tosi-*</code>.</li>
 </ul>
-<h3>Deprecated exports still work</h3>
+<h3 id="deprecated-exports-still-work">Deprecated exports still work</h3>
 <p>The old <code>xin*</code> JavaScript exports (<code>xinSelect</code>, <code>xinTabs</code>, <code>xinTable</code>, etc.)
 remain available and will continue to work. Most log a runtime deprecation
 warning; a few are silent aliases marked with JSDoc <code>@deprecated</code>. They will
 be removed in a future major version.</p>
-<h3>Migration checklist</h3>
+<h3 id="migration-checklist">Migration checklist</h3>
 <ol>
 <li>Search your HTML for <code>&lt;xin-</code> and replace with <code>&lt;tosi-</code></li>
 <li>Search your CSS for <code>xin-</code> selectors and update to <code>tosi-</code></li>
@@ -298,6 +298,6 @@ be removed in a future major version.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

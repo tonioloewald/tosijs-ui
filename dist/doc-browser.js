@@ -978,9 +978,16 @@ export function createDocBrowser(options) {
     const scrollToHashExample = () => {
         if (memoryRouting)
             return;
-        const hash = location.hash.replace(/^#/, '');
+        let hash = location.hash.replace(/^#/, '');
         if (!hash)
             return;
+        try {
+            // A heading id can hold non-ASCII letters, which arrive percent-encoded.
+            hash = decodeURIComponent(hash);
+        }
+        catch {
+            // a stray % — look it up as written
+        }
         requestAnimationFrame(() => {
             let el = null;
             try {
@@ -991,6 +998,12 @@ export function createDocBrowser(options) {
             }
             if (!el)
                 return;
+            // A heading (they have ids as of 1.16.11) goes to the top, where a reader expects a
+            // section to start; an example is centred and flashed.
+            if (/^H[1-6]$/.test(el.tagName)) {
+                el.scrollIntoView({ block: 'start' });
+                return;
+            }
             el.scrollIntoView({ block: 'center', behavior: 'smooth' });
             el.classList.add('example-target');
             setTimeout(() => el && el.classList.remove('example-target'), 1600);

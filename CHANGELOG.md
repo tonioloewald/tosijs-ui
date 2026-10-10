@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.16.11
+
+In-page links work, teaching examples show their test result, and "Download ePub" stops
+offering a book that was never built. `dist/iife.js` grows by 1.2 kB gzip.
+
+- **Headings have ids.** Every heading rendered from markdown now carries an `id`, so
+  `[text](#that-heading)` and `/page/#that-heading` go somewhere. Before this they were
+  links that did nothing, with no error anywhere. The id is the GitHub slug of the heading
+  text, with `-1`, `-2` for a repeat on the same page. Arriving at a heading scrolls it to
+  the top of the page.
+- **The build warns about an in-page link that matches nothing** on its page, naming the
+  page and the anchor. Under `strict: true` it fails the build.
+- **An inset's `#anchor` is the heading's id.** `install.md#whats-new` now matches
+  "What's new". The spelling 1.16.9 accepted (`#what-s-new`) still works.
+- **Inline views show the test result** (#219). An example opened with `{"view": "code"}` or
+  `{"view": "console"}` has one line under its preview: the count when its tests pass, the
+  first failure in red when they do not. It covers the `test` block and a `tjs` example's
+  inline tests, and clicking it opens the tab with the detail.
+- **In an inline view the tests always run**, whatever the page's tests switch says (it is off
+  by default away from localhost). A `tjs` or `ts` example in an inline view therefore loads
+  its transpiler on a deployed site, where it used to run from the build's pre-transpiled
+  copy. Examples without a `view` option are unchanged.
+- **Inline views hide empty tabs.** `html`, `css` and `DOM tests` appear only when the
+  example has that block. The full-screen code view still shows them all.
+- **A long section title keeps its arrow.** In the sidebar, a section title that wraps no
+  longer leaves the disclosure triangle alone on a line above it.
+- **"Download ePub" follows the build** (#218). The settings menu links to the ePub at the
+  URL the build wrote, shows a submenu for a site with several volumes, and has no entry on
+  a site that builds none. It used to appear on every site and 404 on those. A hand-written
+  `<tosi-doc-system config>` without the new `ebooks` key keeps the old derived link.
+
 ## 1.16.10
 
 Print now opens with the book cover.

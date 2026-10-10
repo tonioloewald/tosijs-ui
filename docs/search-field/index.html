@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>search-field — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-search-field&gt; is a search box that suggests refinements as you type, in the spirit of Finder&#39;s search field and a search engine&#39;s power-search operators." />
   <link rel="canonical" href="https://ui.tosijs.net/search-field/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>search-field</h1>
+<h1 id="search-field">search-field</h1>
 <p><code>&lt;tosi-search-field&gt;</code> is a search box that suggests <strong>refinements</strong> as you type, in the
 spirit of Finder&#39;s search field and a search engine&#39;s power-search operators. Type <code>doc</code>
 and it offers <em>the text &quot;doc&quot;</em> or <em>Word documents</em>; pick one and it becomes a <strong>tag</strong> in the
@@ -144,7 +144,7 @@ test(&#39;Enter with no hint highlighted is an action, not a tag&#39;, async () 
   field.value = { tags: [], text: &#39;&#39; }
 })
 </code></pre>
-<h2>As a filter</h2>
+<h2 id="as-a-filter">As a filter</h2>
 <p>Give each tag a <code>test(item)</code>, and a <code>textTest</code> for the text left in the field, and the
 field&#39;s <code>filter</code> is ready to hand to a <code>&lt;tosi-table&gt;</code>. Here it filters 3,655 emoji: type
 <code>food</code>, <code>flag</code> or <code>cat</code>, and pick a category or subcategory, or just keep typing to match
@@ -249,34 +249,34 @@ preview.append(div({ class: &#39;emoji-search&#39; }, field, table))
   expect(field.filter(table.array).length).toBe(all)
 })
 </code></pre>
-<h2>Properties</h2>
-<h3><code>hints</code>: SearchHintRule[]</h3>
+<h2 id="properties">Properties</h2>
+<h3 id="hints-searchhintrule"><code>hints</code>: SearchHintRule[]</h3>
 <p>The rules. A rule is <code>(text, tags) =&gt; SearchHint | SearchHint[] | null | undefined</code>, called
 with the trimmed text whenever it changes (rules are not called for empty text). A
 <code>SearchHint</code> is <code>{ caption, tag }</code>: <code>caption</code> is the row in the list, <code>tag</code> is what picking
 it adds to the query.</p>
-<h3><code>value</code>: <code>{ tags: SearchTag[], text: string }</code></h3>
+<h3 id="value--tags-searchtag-text-string-"><code>value</code>: <code>{ tags: SearchTag[], text: string }</code></h3>
 <p>The query. A <code>SearchTag</code> is <code>{ caption, background?, color?, …anything }</code>: the chip shows
 <code>caption</code>, coloured like <code>&lt;tosi-tag-list&gt;</code> chips (given only a <code>background</code>, the text is
 black or white, whichever contrasts more), and everything else is yours to interpret —
 <code>kind</code>, <code>value</code>, a field name, an operator. A tag may carry a <code>test(item)</code> predicate, which
 is what <code>filter</code> uses.</p>
-<h3><code>filter</code>: <code>(items) =&gt; items</code></h3>
+<h3 id="filter-items--items"><code>filter</code>: <code>(items) =&gt; items</code></h3>
 <p>The query as an array filter, for filtering a list or a <code>&lt;tosi-table&gt;</code>: an item passes when
 every tag&#39;s <code>test</code> passes and, if there is text left in the field, <code>textTest(item, text)</code>.
 Tags without a <code>test</code>, and text without a <code>textTest</code>, don&#39;t filter anything.</p>
-<h3><code>textTest</code>: <code>(item, text) =&gt; boolean</code></h3>
+<h3 id="texttest-item-text--boolean"><code>textTest</code>: <code>(item, text) =&gt; boolean</code></h3>
 <p>How the typed text matches an item, for <code>filter</code>.</p>
-<h3><code>placeholder</code>: string = &#39;search&#39;</h3>
+<h3 id="placeholder-string--search"><code>placeholder</code>: string = &#39;search&#39;</h3>
 <p>Shown while the field has no tags and no text.</p>
-<h3><code>disabled</code>: boolean</h3>
-<h2>Events</h2>
+<h3 id="disabled-boolean"><code>disabled</code>: boolean</h3>
+<h2 id="events">Events</h2>
 <ul>
 <li><code>change</code> — the tags changed (a hint was picked, a tag removed, or the field cleared).</li>
 <li><code>input</code> — the text changed (the native event from the inner <code>&lt;input&gt;</code>).</li>
 <li><code>action</code> — Enter was pressed with no hint highlighted: &quot;search now&quot;.</li>
 </ul>
-<h2>Keyboard</h2>
+<h2 id="keyboard">Keyboard</h2>
 <p>Focus stays in the text field throughout; the hints are a listbox it controls.</p>
 <table>
 <thead>
@@ -302,14 +302,14 @@ Tags without a <code>test</code>, and text without a <code>textTest</code>, don&
 <td>in an empty field, remove the last tag</td>
 </tr>
 </tbody></table>
-<h2>Methods</h2>
-<h3><code>clear()</code></h3>
+<h2 id="methods">Methods</h2>
+<h3 id="clear"><code>clear()</code></h3>
 <p>Remove every tag and the text, as the field&#39;s ✕ button does. The button appears whenever
 there is something to clear.</p>
-<h3><code>typeText(text: string)</code></h3>
+<h3 id="typetexttext-string"><code>typeText(text: string)</code></h3>
 <p>Put <code>text</code> in the field as if it had been typed, and update the hints. For tests and
 scripted demos.</p>
-<h3><code>hintCount</code>: number</h3>
+<h3 id="hintcount-number"><code>hintCount</code>: number</h3>
 <p>How many hints are currently listed (0 when the list is closed).</p>
 
   </article>
@@ -407,6 +407,6 @@ scripted demos.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

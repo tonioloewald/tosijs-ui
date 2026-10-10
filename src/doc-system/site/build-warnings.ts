@@ -53,3 +53,50 @@ export function liveFenceLanguages(
   }
   return langs
 }
+
+const unescapeAttr = (s: string): string =>
+  s
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+
+/**
+ * The in-page links (`href="#…"`) in a RENDERED page that point at no id on it.
+ *
+ * A dead in-page anchor is the one broken link a reader cannot tell from a working one: it
+ * is styled as a link, it does nothing, and nothing reports it (board #3178). Asked of the
+ * rendered HTML and not of the markdown, so the ids are the ones the page really carries
+ * (`renderDocMarkdown`, THE renderer) and no second copy of the heading-id rule exists here.
+ *
+ * Not reported, because they are not in-page anchors or resolve only in the browser:
+ * `#/route` and `#!…` (hash routers), a bare `#`, `#top`, and `#example-N` / a fence's own
+ * `#id` (live examples get their ids when the page hydrates).
+ */
+export function deadInPageAnchors(html: string): string[] {
+  const ids = new Set<string>()
+  for (const m of html.matchAll(
+    /<[a-z][^<>]*?\s(?:id|name|data-example-id)="([^"]*)"/gi
+  ))
+    ids.add(unescapeAttr(m[1]))
+  const dead = new Set<string>()
+  for (const m of html.matchAll(/<a\b[^<>]*?\shref="#([^"]*)"/gi)) {
+    let target = unescapeAttr(m[1])
+    try {
+      target = decodeURIComponent(target)
+    } catch {
+      // a stray % — compare it as written
+    }
+    if (
+      !target ||
+      target === 'top' ||
+      /^[/!]/.test(target) ||
+      /^example-\d+$/.test(target) ||
+      ids.has(target)
+    )
+      continue
+    dead.add(target)
+  }
+  return [...dead]
+}

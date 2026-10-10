@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>icons — tosijs-ui</title>
   <meta name="description" content="Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an &lt;svg&gt; element containing a downward-pointing…" />
   <link rel="canonical" href="https://ui.tosijs.net/icons/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>icons</h1>
+<h1 id="icons">icons</h1>
 <div class="center" style="display: flex; gap: 10px; padding: 10px">
   <tosi-icon title="tosijs" icon="tosiFavicon" style="--tosi-icon-size: 128px"></tosi-icon>
   <tosi-icon title="tosijs-ui" icon="tosiUi" style="--tosi-icon-size: 128px"></tosi-icon>
@@ -226,7 +226,7 @@ test(&#39;filter input and prefix select exist&#39;, () =&gt; {
 probably be broken out as a standalone library to allow the use of whatever icons you like
 (its source data is currently generated from an <a href="https://icomoon.com/app">icomoon</a>
 <code>selection.json</code> file, but could just as easily be generated from a directory full of SVGs).</p>
-<h3>Need More Icons?</h3>
+<h3 id="need-more-icons">Need More Icons?</h3>
 <p><a href="https://lucide.dev">lucide</a> is a fork of feather that maintains the style and adds a lot more
 options. Obviously it&#39;s completely compatible with this icon system and generously licensed. A
 good place to find more icons in a pinch.</p>
@@ -234,18 +234,18 @@ good place to find more icons in a pinch.</p>
 <code>stroke=&quot;currentColor&quot;</code>, <code>stroke-width=&quot;2&quot;</code>, round caps and joins — so a downloaded SVG drops
 straight into <code>defineIcons()</code> below and inherits colour and sizing like any built-in. It is
 ISC licensed.</p>
-<h2>Adding and redefining icons</h2>
+<h2 id="adding-and-redefining-icons">Adding and redefining icons</h2>
 <p>Simply pass a map of icon names to svg source strings…</p>
 <pre><code>defineIcons({
   someIcon: &#39;&lt;svg ....&#39;,
   otherIcon: &#39;&lt;svg ...&#39;,
 })
 </code></pre>
-<h3>Icon Classes</h3>
+<h3 id="icon-classes">Icon Classes</h3>
 <p>Icons will be generated with the class <code>tosi-icon</code>.</p>
 <p>You can also assign the classes <code>filled</code>, <code>stroked</code>, and <code>color</code> to icons to set default
 icon styling.</p>
-<h2><code>&lt;tosi-icon&gt;</code></h2>
+<h2 id="tosi-icon"><code>&lt;tosi-icon&gt;</code></h2>
 <p><code>&lt;tosi-icon&gt;</code> is a simple component that lets you embed icons as HTML. Check the CSS tab to see
 how it&#39;s styled.</p>
 <p><code>&lt;tosi-icon&gt;</code> supports four attributes:</p>
@@ -262,7 +262,7 @@ icon is rendered at 32px (so it&#39;s multiplied by 32).</li>
 all coordinates to nearest integer on the assumption that this is plenty precise enough for icons and
 makes everything smaller and easier to compress.</p>
 </blockquote>
-<h2>SVGs as data-urls</h2>
+<h2 id="svgs-as-data-urls">SVGs as data-urls</h2>
 <pre><code class="language-js">import { elements } from &#39;tosijs&#39;
 import { icons, svg2DataUrl } from &#39;tosijs-ui&#39;
 
@@ -302,7 +302,7 @@ utility for converting SVG elements into data-urls (e.g. for incorporation into
 CSS properties. (It&#39;s used by the <code>&lt;tosi-3d&gt;</code> component to render the XR widget.)</p>
 <p>If you&#39;re using <code>SVGElement</code>s created using the <code>icons</code> proxy, you&#39;ll want to provide <code>fill</code> and/or
 <code>stroke</code> values, because images loaded via css properties cannot be styled.</p>
-<h2>Color Icons</h2>
+<h2 id="color-icons">Color Icons</h2>
 <pre><code class="language-html">&lt;tosi-icon icon=&quot;tosiFavicon&quot; class=&quot;demo-icon&quot;&gt;&lt;/tosi-icon&gt;
 &lt;tosi-icon icon=&quot;tosiPlatform&quot; class=&quot;demo-icon recolored&quot;&gt;&lt;/tosi-icon&gt;
 &lt;tosi-icon icon=&quot;tosiXr&quot; class=&quot;demo-icon animated&quot;&gt;&lt;/tosi-icon&gt;
@@ -344,13 +344,13 @@ that, for example, treat all colored icons inside buttons the same way.</p>
 very convoluted way, but in practice this isn&#39;t terribly useful as SVG properties can&#39;t
 be animated by CSS, so this functionality has been stripped out.</p>
 </blockquote>
-<h2>Icon Composition &amp; Math</h2>
+<h2 id="icon-composition--math">Icon Composition &amp; Math</h2>
 <tosi-icon icon="tosi$map50o_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="lock50s75o_10y$shield_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="unLock_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="checkFile" size=128></tosi-icon>
 <tosi-icon icon="spin120Loader40s_30x_brandColorS$cloud" size=128></tosi-icon>
-<h3>Why?</h3>
+<h3 id="why">Why?</h3>
 <p>I needed a pin icon for column pinning in the data table. The only pin
 in the feather set is a map pin, so I created a push-pin icon
 <tosi-icon icon="pin_brandColorS" size=24></tosi-icon>.
@@ -368,7 +368,7 @@ variations on every icon?</p>
 <tosi-icon icon="checkUsers" size=64></tosi-icon>
 <tosi-icon icon="searchMap" size=64></tosi-icon>
 <tosi-icon icon="cancelHeart" size=64></tosi-icon>
-<h3>Icon modifier suffixes</h3>
+<h3 id="icon-modifier-suffixes">Icon modifier suffixes</h3>
 <p>The suffix system is inspired by tosijs&#39;s CSS variable math, where
 <code>borderRadius50</code> becomes <code>calc(var(--border-radius) * 0.5)</code> and
 <code>someColor50o</code> adjusts opacity to 50%. The same <code>value + letter</code>
@@ -391,7 +391,7 @@ convention works for icons:</p>
 </ul>
 <p>Suffixes combine freely: <code>plus50o60s25x25y_f00F</code> = plus at 50% opacity,
 60% scale, shifted 25% right and down, filled red.</p>
-<h3>Stacking icons</h3>
+<h3 id="stacking-icons">Stacking icons</h3>
 <p>Use <code>$</code> to stack icons: <code>overlay$base</code>, or <code>top$middle$bottom</code> for
 multiple layers. The last segment is the base (sets the size), everything
 before it is overlaid on top. Each segment is resolved independently —
@@ -401,7 +401,7 @@ icons[&#39;star45r$circle&#39;]()              // rotated star on a circle
 icons[&#39;lock50s75o_10y$shield&#39;]()       // translucent lock on a shield
 icons[&#39;star25o$lock50o$shield&#39;]()      // three layers
 </code></pre>
-<h3>Icon redirects</h3>
+<h3 id="icon-redirects">Icon redirects</h3>
 <p>Icon definitions that don&#39;t start with <code>&lt;svg</code> are treated as redirects.
 This is how we eliminate redundant SVG files — <code>chevronDown</code> doesn&#39;t
 need its own SVG:</p>
@@ -412,7 +412,7 @@ need its own SVG:</p>
   userAdd: &#39;plus50o60s25x25y$user&#39;,
 })
 </code></pre>
-<h3>Prefix rules</h3>
+<h3 id="prefix-rules">Prefix rules</h3>
 <p>Rules apply named prefixes to icons. Built-in rules use string rewrites
 that feed back into the resolution pipeline:</p>
 <ul>
@@ -426,7 +426,7 @@ that feed back into the resolution pipeline:</p>
 <p>The overlay rules are just string rewrites — for example, <code>unFoo</code>
 becomes <code>slash25o$foo75s75o</code>. <strong>Overlay icons should have a square
 viewBox</strong> for best results on non-square base icons.</p>
-<h3>Custom rules</h3>
+<h3 id="custom-rules">Custom rules</h3>
 <p><code>iconRules</code> is a mutable array. Each rule has a <code>prefix</code> (string or
 RegExp) and an <code>apply</code> function that returns a <strong>string</strong> (resolved
 through the full pipeline), an <strong>Element</strong> (used directly), or <strong>null</strong>
@@ -456,7 +456,7 @@ pipeline (redirects, suffixes, rules, stacking)</li>
 <li><code>wrapIcon(name, parts, ...children)</code> — wrap elements in a composite
 container with proper sizing, <code>pointer-events: none</code>, and <code>data-icon</code></li>
 </ul>
-<h3>Building an icon vocabulary</h3>
+<h3 id="building-an-icon-vocabulary">Building an icon vocabulary</h3>
 <p>You don&#39;t need to spell out the DSL every time. The real power is in
 defining named patterns that become your application&#39;s icon language.
 For example, a <code>remove</code> prefix that overlays a trash icon:</p>
@@ -478,15 +478,15 @@ they&#39;re consistent. If you redesign the trash icon or change
 </code></pre>
 <p>Then just use <code>icons.cloudSync()</code> or <code>&lt;tosi-icon icon=&quot;cloudSync&quot;&gt;</code> —
 the composition is invisible to consumers of the icon.</p>
-<h3>Composites and <code>svg2DataUrl</code></h3>
+<h3 id="composites-and-svg2dataurl">Composites and <code>svg2DataUrl</code></h3>
 <p>Composed icons (stacked, overlay rules) are wrapped in a <code>&lt;span&gt;</code>, not
 a single SVG. <code>svg2DataUrl()</code> will render only the base icon and log a
 console error. Simple suffix transforms and plain icons work normally
 with <code>svg2DataUrl</code>.</p>
-<h2>Missing Icons</h2>
+<h2 id="missing-icons">Missing Icons</h2>
 <p>If you ask for an icon that isn&#39;t defined, the <code>icons</code> proxy will print a warning to console
 and render a <code>square</code> (in fact, <code>icons.square()</code>) as a fallback.</p>
-<h2>Icon Sources</h2>
+<h2 id="icon-sources">Icon Sources</h2>
 <p>Many of these icons are sourced from <a href="https://github.com/feathericons/feather">Feather Icons</a>, but
 all the icons have been processed to have integer coordinates in a <code>viewBox</code> typically scaled to 1024  &times; 1024.</p>
 <p>The corporate logos (Google, etc.) are from a variety of sources, in many cases ultimately from the
@@ -494,11 +494,11 @@ organizations themselves. It&#39;s up to you to use them correctly.</p>
 <p>The remaining icons I have created myself using the excellent but sometimes flawed
 <a href="https://apps.apple.com/us/app/amadine-vector-design-art/id1339198386?mt=12">Amadine</a>
 and before that <a href="https://apps.apple.com/us/app/graphic/id404705039?mt=12">Graphic</a>.</p>
-<h3>Building icon data</h3>
+<h3 id="building-icon-data">Building icon data</h3>
 <p>Use <a href="../make-icon-data/">make-icon-data</a> to generate icon data from SVG files.
 It supports directional folder conventions to auto-generate rotated and flipped
 variants, eliminating redundant SVGs.</p>
-<h3>Feather Icons Copyright Notice</h3>
+<h3 id="feather-icons-copyright-notice">Feather Icons Copyright Notice</h3>
 <p>The MIT License (MIT)</p>
 <p>Copyright (c) 2013-2023 Cole Bemis</p>
 <p>Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -605,6 +605,6 @@ copies or substantial portions of the Software.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>drag &amp; drop — tosijs-ui</title>
   <meta name="description" content="A lightweight library that leverages HTML5 drag and drop behavior." />
   <link rel="canonical" href="https://ui.tosijs.net/drag-and-drop/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>drag &amp; drop</h1>
+<h1 id="drag--drop">drag &amp; drop</h1>
 <p>A lightweight library that leverages HTML5 drag and drop behavior.</p>
 <p>To use it, simply call <code>dragAndDrop.init()</code> (it only needs to be called once,
 but calling it again is harmless).</p>
@@ -47,7 +47,7 @@ are automatically detected and marked.</p>
 <p>You can use <code>dragAndDrop.draggedElement()</code> to get the element being dragged (if it&#39;s
 actually from the page you&#39;re in).</p>
 <blockquote>
-<h3>The beauty of HTML5 drag-and-drop</h3>
+<h3 id="the-beauty-of-html5-drag-and-drop">The beauty of HTML5 drag-and-drop</h3>
 <p>The nice thing about HTML5 drag-and-drop is that it leverages the OS&#39;s drag and
 drop support. This means you can drag from one window to another, from the desktop
 to your app and vice versa. It&#39;s all a matter of configuring the DOM elements.</p>
@@ -67,7 +67,7 @@ to your app and vice versa. It&#39;s all a matter of configuring the DOM element
 <blockquote>
 <p><strong>Note</strong> <code>draggable</code> is has to be set to &quot;true&quot;, <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/draggable">see documentation on draggable</a>.</p>
 </blockquote>
-<h2>Draggable Objects</h2>
+<h2 id="draggable-objects">Draggable Objects</h2>
 <p>To create a draggable element, add <code>draggable=&quot;true&quot;</code>.</p>
 <pre><code>&lt;div draggable=&quot;true&quot;&gt;Drag Me&lt;/div&gt;
 </code></pre>
@@ -81,7 +81,7 @@ to your app and vice versa. It&#39;s all a matter of configuring the DOM element
   data-drag-content=&quot;Surprise!&quot;
 &gt;Drag Me&lt;/div&gt;
 </code></pre>
-<h2>Drop Zones</h2>
+<h2 id="drop-zones">Drop Zones</h2>
 <p>To create a drop zone, use the data-drop attribute set to a semicolon-delimited list
 of mime types:</p>
 <pre><code>&lt;div data-drop=&quot;text/plain&quot;&gt;
@@ -109,7 +109,7 @@ the drop zone node) by adding your own <code>drop</code> event handler.</p>
   }
 })
 </code></pre>
-<h3>Typed Drop Zones Example</h3>
+<h3 id="typed-drop-zones-example">Typed Drop Zones Example</h3>
 <p>In this example, the types are set using <code>data-drag</code> attributes and the drop zones are
 set using <code>data-drop</code> attributes, but everything else is default behavior. You can also
 drop the draggable objects to another window or the desktop, and similarly you can drag
@@ -193,7 +193,7 @@ dragAndDrop.init()
 <p>Note that you can drag between two browser tabs containing this
 example (or between two different browsers) and it will work.</p>
 </blockquote>
-<h3>Reorderable List Example</h3>
+<h3 id="reorderable-list-example">Reorderable List Example</h3>
 <p>This example uses a custom <code>drop</code> event handler. When you sort the spectrum
 into the correct order you &quot;win&quot; and then the items are reshuffled.</p>
 <p>Also notice that the <code>data-drag</code> and <code>data-drop</code> values are set to a
@@ -395,6 +395,6 @@ wouldn&#39;t make sense) a random dragId is assigned to <code>data-drag</code> a
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

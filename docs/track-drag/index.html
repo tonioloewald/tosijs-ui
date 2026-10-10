@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>trackDrag — tosijs-ui</title>
   <meta name="description" content="Sometimes you want to track a mouse-drag or touch-drag operation without messing around. This is how the resizeable columns in &lt;tosi-table&gt; work." />
   <link rel="canonical" href="https://ui.tosijs.net/track-drag/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>trackDrag</h1>
+<h1 id="trackdrag">trackDrag</h1>
 <p>Sometimes you want to track a mouse-drag or touch-drag operation without messing around.
 This is how the resizeable columns in <code>&lt;tosi-table&gt;</code> work.</p>
 <p>Just call <code>trackDrag(event, (dx, dy, event) =&gt; { ... })</code> and you&#39;ll get updates on corresponding events until
@@ -88,7 +88,7 @@ preview.addEventListener(&#39;touchstart&#39;, dragItem, { passive: true } )
 <p>For <code>touch</code> events, <code>dx</code> and <code>dy</code> are based on tracking <code>event.changedTouches[0]</code> which
 is almost certainly what you want.</p>
 <p>To handle multi-touch gestures you will need to track the touches yourself.</p>
-<h2>Do not register your <code>mousedown</code> listener as <code>passive</code></h2>
+<h2 id="do-not-register-your-mousedown-listener-as-passive">Do not register your <code>mousedown</code> listener as <code>passive</code></h2>
 <p>Note the example above: <code>mousedown</code> is added <strong>without</strong> options, <code>touchstart</code> <strong>with</strong>
 <code>{ passive: true }</code>. That asymmetry is load-bearing, not an oversight.</p>
 <p><code>trackDrag</code> calls <code>preventDefault()</code> on the mousedown that starts a drag, and <strong>a passive
@@ -107,10 +107,10 @@ to check.</p>
 console warning about handlers that delay scrolling, and that warning only ever applied to
 <code>touch</code> and <code>wheel</code> — keep it on <code>touchstart</code>, where <code>trackDrag</code> handles the equivalent on
 <code>touchmove</code>.</p>
-<h2>bringToFront</h2>
+<h2 id="bringtofront">bringToFront</h2>
 <p><code>bringToFront(element: HTMLElement, selector = &#39;body *&#39;)</code>  gives the element the highest
 <code>z-index</code> of any element matching the selector (which is passed to findHighestZ).</p>
-<h2>findHighestZ</h2>
+<h2 id="findhighestz">findHighestZ</h2>
 <p><code>findHighestZ(selector = &#39;body *&#39;): number</code> returns the the highest <code>z-index</code> of any element
 matching <code>selector</code>.</p>
 
@@ -209,6 +209,6 @@ matching <code>selector</code>.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

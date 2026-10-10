@@ -15,6 +15,7 @@ import { highlightHtml } from '../highlight.js';
 import { buildSlugMap, pathForSlug, rewriteDocLinks, withBase, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, docDescription, } from '../render.js';
+import { deadInPageAnchors, misconfigured } from './build-warnings.js';
 const escapeAttr = (s) => s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -304,19 +305,31 @@ export async function generateSite(config) {
         projectLinks: config.projectLinks,
         logo: config.logo,
         bookVolumes: config.bookVolumes,
+        ebooks: config.ebooks,
     }));
     // The theme stylesheet (config.stylesUrl) is written separately by
     // ./generate-css.ts; pages here just <link> to it.
     let count = 0;
+    const deadAnchors = [];
     for (const doc of docs) {
         const slug = slugMap[doc.filename];
         const dir = slug === '' ? outputDir : `${outputDir}/${slug}`;
+        const dead = deadInPageAnchors(renderDocMarkdown(doc.text));
+        if (dead.length)
+            deadAnchors.push(`    ${doc.path || doc.filename}: ${dead
+                .map((d) => `#${d}`)
+                .join(', ')}`);
         await Bun.write(`${dir}/index.html`, await pageHtml(doc, config, slugMap, configAttr));
         // The page's own source, for readers that want text rather than a page.
         if (hasMarkdownPage(doc, config)) {
             await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n');
         }
         count += 1;
+    }
+    if (deadAnchors.length) {
+        misconfigured(config.strict, `\n⚠️  In-page links that point at nothing on their page. A heading's id is its text,\n` +
+            `    lowercased, punctuation dropped, spaces as "-" (a repeat gets -1, -2, …):\n` +
+            `${deadAnchors.join('\n')}\n`);
     }
     // The corpus the component fetches for nav + client-side rendering of other pages.
     // Attach each doc's tjs bakes so client-side SPA navigation renders the same hidden

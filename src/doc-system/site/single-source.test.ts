@@ -55,6 +55,20 @@ describe('insets', () => {
     expect(docs[1].text).not.toContain('npm i x')
   })
 
+  test("an anchor is the heading's id on the page; the 1.16.9 spelling still matches", () => {
+    const install =
+      "# Install\n\n## What's new in `v2`?\n\nnews\n\n## Other\n\nother\n"
+    for (const anchor of ['whats-new-in-v2', 'what-s-new-in-v2']) {
+      const docs = [
+        doc('install.md', install),
+        doc('a.md', `<!--{ "inset": "install.md#${anchor}" }-->\n`),
+      ]
+      resolveInsets(docs)
+      expect(docs[1].text).toContain('news')
+      expect(docs[1].text).not.toContain('other')
+    }
+  })
+
   test("the inset page's live examples arrive as fences, so they run where inset", () => {
     const docs = [
       doc(

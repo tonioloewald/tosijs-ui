@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>menu — tosijs-ui</title>
   <meta name="description" content="Being able to pop a menu up anywhere is just so nice, and tosijs-ui allows menus to be generated on-the-fly, and even supports hierarchical menus." />
   <link rel="canonical" href="https://ui.tosijs.net/menu/" />
@@ -30,12 +30,12 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>menu</h1>
+<h1 id="menu">menu</h1>
 <p>Being able to pop a menu up anywhere is just so nice, and <code>tosijs-ui</code> allows menus
 to be generated on-the-fly, and even supports hierarchical menus.</p>
-<h2>popMenu and <code>&lt;tosi-menu&gt;</code></h2>
+<h2 id="popmenu-and-tosi-menu">popMenu and <code>&lt;tosi-menu&gt;</code></h2>
 <p><code>popMenu({target, menuItems, …})</code> will spawn a menu from a target.</p>
 <p>The <code>&lt;tosi-menu&gt;</code> component places creates a trigger button, hosts
 menuItems, and (because it persists in the DOM) supports keyboard
@@ -210,7 +210,7 @@ preview.append(
   margin: 5px;
 }
 </code></pre>
-<h2>Overflow test</h2>
+<h2 id="overflow-test">Overflow test</h2>
 <pre><code class="language-js">import { popMenu, icons, postNotification } from &#39;tosijs-ui&#39;
 import { elements } from &#39;tosijs&#39;
 
@@ -235,7 +235,7 @@ preview.querySelector(&#39;button&#39;).addEventListener(&#39;click&#39;, (event
   Big Menu Test
 &lt;/button&gt;
 </code></pre>
-<h2>popMenu({target, width, menuItems…})</h2>
+<h2 id="popmenutarget-width-menuitems">popMenu({target, width, menuItems…})</h2>
 <pre><code>export interface PopMenuOptions {
   target: HTMLElement
   menuItems: MenuItem[]
@@ -250,7 +250,7 @@ preview.querySelector(&#39;button&#39;).addEventListener(&#39;click&#39;, (event
 }
 </code></pre>
 <p><code>popMenu</code> will spawn a menu on a target element. A menu is just a <code>MenuItem[]</code>.</p>
-<h2>MenuItem</h2>
+<h2 id="menuitem">MenuItem</h2>
 <p>A <code>MenuItem</code> can be one of four things:</p>
 <ul>
 <li><code>null</code> denotes a separator</li>
@@ -260,7 +260,7 @@ is a url (string) or an event handler (function).</li>
 <li>A <code>() =&gt; HTMLElement</code> function returns a custom element to embed inline in
 the menu (see <code>MenuElement</code> below).</li>
 </ul>
-<h3>MenuAction</h3>
+<h3 id="menuaction">MenuAction</h3>
 <p>Note that popMenu does not implement shortcuts for you (yet!).</p>
 <pre><code>interface MenuAction {
   caption: string
@@ -273,7 +273,7 @@ the menu (see <code>MenuElement</code> below).</li>
   properties?: ElementProps
 }
 </code></pre>
-<h3>SubMenu</h3>
+<h3 id="submenu">SubMenu</h3>
 <pre><code>interface SubMenu {
   caption: string
   enabled?: () =&gt; boolean
@@ -283,7 +283,7 @@ the menu (see <code>MenuElement</code> below).</li>
   properties?: ElementProps
 }
 </code></pre>
-<h3>MenuElement</h3>
+<h3 id="menuelement">MenuElement</h3>
 <p>For embedding a custom widget inline in a menu — e.g. a <code>&lt;tosi-segmented&gt;</code> for
 quick option-picking — pass a function that returns an <code>HTMLElement</code>:</p>
 <pre><code>type MenuElement = () =&gt; HTMLElement
@@ -324,7 +324,7 @@ btn.addEventListener(&#39;click&#39;, () =&gt; {
 
 preview.append(btn)
 </code></pre>
-<h3>Keyboard Shortcuts</h3>
+<h3 id="keyboard-shortcuts">Keyboard Shortcuts</h3>
 <p>If a menu is embodied in a <code>&lt;tosi-menu&gt;</code> it is supported by keyboard
 shortcuts. Both text and symbolic shortcut descriptions are supported,
 e.g.</p>
@@ -334,7 +334,7 @@ e.g.</p>
 <li><code>^F</code> or <code>ctrl-f</code></li>
 <li><code>⌥x</code>, <code>⎇x</code>, <code>alt-x</code> or <code>option-x</code></li>
 </ul>
-<h2>Theming ONE component&#39;s menus</h2>
+<h2 id="theming-one-components-menus">Theming ONE component&#39;s menus</h2>
 <p>Menu metrics are all theme variables — <code>--menu-item-height</code>, <code>--menu-item-padding</code>,
 <code>--menu-bg</code>, <code>--menu-inset</code>, <code>--menu-separator-margin</code>, <code>--menu-item-gap</code>. Setting them on
 your component <strong>does not work</strong>, and it is worth knowing why rather than concluding they are
@@ -359,7 +359,7 @@ component reaching out to re-theme the page around it is the wrong direction.</p
 apply at the top level and silently revert one level down.</p>
 <p><code>&lt;tosi-select&gt;</code> takes the same <code>menu-class</code> attribute for its listbox, which mounts the same
 way.</p>
-<h2>Localization</h2>
+<h2 id="localization">Localization</h2>
 <p>If you set <code>localized: true</code> in <code>PopMenuOptions</code> then menu captions will be be
 passed through <code>localize</code>. You&#39;ll need to provide the appropriate localized strings,
 of course.</p>
@@ -405,7 +405,7 @@ const target = button(
 )
 preview.append(target)
 </code></pre>
-<h2>Why another menu library?!</h2>
+<h2 id="why-another-menu-library">Why another menu library?!</h2>
 <p>Support for menus is sadly lacking in HTML, and unfortunately there&#39;s a huge conceptual problem
 with menus implemented the way React and React-influenced libraries work, i.e. you need
 to have an instance of a menu &quot;wrapped around&quot; the DOM element that triggers it, whereas
@@ -416,13 +416,13 @@ menu with every row of a large table. Either you end up having an enormous DOM (
 or you have to painfully swap out components on-the-fly.</p>
 <p>And, finally, submenus are darn useful for any serious app.</p>
 <p>For this reason, <code>tosijs-ui</code> has its own menu implementation.</p>
-<h2>Drop Menus</h2>
+<h2 id="drop-menus">Drop Menus</h2>
 <p><code>popDropMenu</code> extends the menu system to support drag-and-drop. A single <code>menuItems</code>
 array can serve both click navigation (via <code>popMenu</code>) and drag-to-drop (via <code>popDropMenu</code>).</p>
 <p>Items with <code>acceptsDrop</code> (array of MIME types) participate in drop mode.
 Items with <code>dropAction</code> are valid drop targets. Submenus auto-disclose when
 a matching drag hovers over them.</p>
-<h3>DropMenu Interfaces</h3>
+<h3 id="dropmenu-interfaces">DropMenu Interfaces</h3>
 <p><code>MenuAction</code> and <code>SubMenu</code> gain two optional fields:</p>
 <pre><code>acceptsDrop?: string[]    // MIME types this item accepts
 dropAction?: (dataTransfer: DataTransfer) =&gt; void
@@ -433,7 +433,7 @@ dropAction?: (dataTransfer: DataTransfer) =&gt; void
 <li>A <strong>MenuAction</strong> with <code>dropAction</code> is a drop target</li>
 <li>Items without <code>acceptsDrop</code> are shown disabled in drop mode (or hidden if <code>hideDisabled</code> is set)</li>
 </ul>
-<h3>popDropMenu({target, menuItems, dataTypes, …})</h3>
+<h3 id="popdropmenutarget-menuitems-datatypes-">popDropMenu({target, menuItems, dataTypes, …})</h3>
 <pre><code>export interface PopDropMenuOptions extends PopMenuOptions {
   dataTypes: readonly string[]  // MIME types from the current drag
 }
@@ -443,18 +443,18 @@ then opens the menu in drop mode. Non-matching items are shown
 disabled by default; set <code>hideDisabled: true</code> to remove them entirely.</p>
 <p><code>disclosureDelay</code> (ms, default 200) controls how long a drag must hover
 over a submenu before it auto-discloses.</p>
-<h3>hideDisabled</h3>
+<h3 id="hidedisabled">hideDisabled</h3>
 <p>By default (<code>hideDisabled: false</code>), non-matching items remain visible but disabled.
 This preserves spatial stability — items don&#39;t jump around as you drag different
 types. Set <code>hideDisabled: true</code> to hide them entirely for a cleaner menu.</p>
 <p>Applies symmetrically to both <code>filterForDrop</code> and <code>filterForClick</code>.</p>
-<h3>filterForDrop / filterForClick</h3>
+<h3 id="filterfordrop--filterforclick">filterForDrop / filterForClick</h3>
 <pre><code>filterForDrop(items: MenuItem[], dataTypes: readonly string[], hideDisabled?: boolean): MenuItem[]
 filterForClick(items: MenuItem[], hideDisabled?: boolean): MenuItem[]
 </code></pre>
 <p>Utility functions to filter a single menu definition for each mode.
 When <code>hideDisabled</code> is false (default), non-matching items are kept but disabled.</p>
-<h3>TosiMenu accepts-drop</h3>
+<h3 id="tosimenu-accepts-drop">TosiMenu accepts-drop</h3>
 <p>Set <code>accepts-drop</code> (semicolon-delimited MIME types) on <code>&lt;tosi-menu&gt;</code> to auto-open
 in drop mode when a matching drag enters. Set <code>dropAction</code> to accept drops
 directly on the trigger (e.g. saving to the root folder). Set <code>disclosure-delay</code>
@@ -463,7 +463,7 @@ directly on the trigger (e.g. saving to the root folder). Set <code>disclosure-d
 
 menuElement.dropAction = (data) =&gt; saveToRoot(data)
 </code></pre>
-<h3>Drop Menu Example</h3>
+<h3 id="drop-menu-example">Drop Menu Example</h3>
 <pre><code class="language-js">import { popMenu, popDropMenu, tosiMenu, dragAndDrop, icons, postNotification } from &#39;tosijs-ui&#39;
 import { elements } from &#39;tosijs&#39;
 
@@ -643,7 +643,7 @@ are hidden entirely. &quot;Text Files&quot; only accepts .txt, &quot;HTML Files&
 only accepts .html. Subfolders are randomly generated each time
 a folder is disclosed (dynamic <code>menuItems</code>).</p>
 </blockquote>
-<h2>Shadow DOM</h2>
+<h2 id="shadow-dom">Shadow DOM</h2>
 <p>Menus work when triggered from inside a shadow DOM. Clicking outside
 the menu dismisses it; clicking the shadow DOM target toggles it.</p>
 <pre><code class="language-js">import { popMenu, removeLastMenu } from &#39;tosijs-ui&#39;
@@ -710,7 +710,7 @@ test(&#39;shadow DOM menu: open and dismiss&#39;, async () =&gt; {
   removeLastMenu(0)
 })
 </code></pre>
-<h2>Menu Item Tooltips</h2>
+<h2 id="menu-item-tooltips">Menu Item Tooltips</h2>
 <p>Add <code>tooltip</code> to any menu item to show a tooltip on hover (requires
 <code>initTooltips()</code>).</p>
 <pre><code class="language-js">import { elements } from &#39;tosijs&#39;
@@ -834,6 +834,6 @@ preview.append(btn)
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

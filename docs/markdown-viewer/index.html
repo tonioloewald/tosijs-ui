@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>markdown — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-md&gt; renders markdown using marked." />
   <link rel="canonical" href="https://ui.tosijs.net/markdown-viewer/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>markdown</h1>
+<h1 id="markdown">markdown</h1>
 <p><code>&lt;tosi-md&gt;</code> renders markdown using <a href="https://www.npmjs.com/package/marked">marked</a>.</p>
 <p><code>&lt;tosi-md&gt;</code> renders <a href="https://www.markdownguide.org/">markdown</a> anywhere, either using the
 <code>src</code> attribute to load the file asynchronously, or rendering the text inside it.</p>
@@ -54,7 +54,7 @@ world
 }
 </code></pre>
 <p>Note that, by default, <code>&lt;tosi-md&gt;</code> will use its <code>textContent</code> (not its <code>innerHTML</code>) as its source.</p>
-<h2><code>sanitize</code> — on by default</h2>
+<h2 id="sanitize--on-by-default"><code>sanitize</code> — on by default</h2>
 <p>Markdown can contain raw HTML, and <code>&lt;tosi-md&gt;</code> renders whatever the markdown produces. For text
 <strong>you did not write</strong> (issue bodies, comments, anything from a user or an API), unsanitized
 rendering is a stored XSS: <code>&lt;img src=x onerror=…&gt;</code> or a <code>javascript:</code> link runs in your page.</p>
@@ -72,17 +72,17 @@ element keeps whatever attributes the markdown&#39;s author gave it, so allow on
 <code>tosi-md</code>, <code>tosi-example</code> and <code>tosi-doc-system</code> are never allowed: they render raw HTML or run code.</p>
 <p><code>sanitize=&quot;off&quot;</code> renders the HTML as-is. Use it only for markdown you control, for example
 markup that embeds a <code>&lt;form&gt;</code> (see <code>elements</code> below).</p>
-<h2>rendering markdown from a url</h2>
+<h2 id="rendering-markdown-from-a-url">rendering markdown from a url</h2>
 <p>Again, like an <code>&lt;img&gt;</code> tag, you can simply set a <code>&lt;tosi-md&gt;</code>&#39;s <code>src</code> attribute to a URL pointing
 to markdown source and it will load it asynchronously and render it.</p>
 <pre><code>&lt;tosi-md src=&quot;/path/to/file.md&quot;&gt;
 </code></pre>
-<h2>setting its <code>value</code></h2>
+<h2 id="setting-its-value">setting its <code>value</code></h2>
 <p>Or, just set the element&#39;s <code>value</code> and it will render it for you. You can try
 this in the console, e.g.</p>
 <pre><code>$(&#39;.preview tosi-md&#39;).value = &#39;testing\n\n## this is a test&#39;
 </code></pre>
-<h2>elements</h2>
+<h2 id="elements">elements</h2>
 <p><code>&lt;tosi-md&gt;</code> also (optionally) allows the embedding of inline HTML elements without blocking markdown
 rendering, so that you can embed specific elements while retaining markdown. You need to explicitly set
 the <code>elements</code> property, and for markdown rendering not to be blocked, the html elements need to
@@ -108,7 +108,7 @@ fill in this field.
 })
 </code></pre>
 <p>In this case <code>&lt;tosi-md&gt;</code> uses its <code>innerHTML</code> and not its <code>textContent</code>.</p>
-<h2>context and template variables</h2>
+<h2 id="context-and-template-variables">context and template variables</h2>
 <p><code>&lt;tosi-md&gt;</code> also supports <strong>template</strong> values. You need to provide data to the element in the form
 of <code>context</code> (an arbitrary object, or a JSON string), and then embed the template text using
 handlebars-style doubled curly braces, e.g. <code>{{path.to.value}}</code>.</p>
@@ -223,6 +223,6 @@ Oh, and nested templates {{nested}}.
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

@@ -666,6 +666,51 @@ describe('the inline views', () => {
     )
   })
 
+  test('the status line reports DOM tests and inline tjs tests together (#219)', async () => {
+    await quietly(() =>
+      withoutObserver(async () => {
+        const example = await opened({ view: 'code' })
+        const strip = example.parts.testStatus as HTMLElement
+        // no tests of either kind: no line, and no room reserved for one
+        expect(strip.hidden).toBe(true)
+        expect(example.classList.contains('-has-test-status')).toBe(false)
+
+        example.testResults = {
+          passed: 1,
+          failed: 0,
+          tests: [{ name: 'renders', passed: true }],
+        }
+        example.lastTjsTests = {
+          passed: 2,
+          failed: 0,
+          results: [
+            { description: 'adds', passed: true },
+            { description: 'subtracts', passed: true },
+          ],
+        }
+        example.updateTestStatus()
+        expect(strip.hidden).toBe(false)
+        expect(strip.textContent).toBe('✓ 3/3 tests passed')
+        expect(strip.classList.contains('test-pass')).toBe(true)
+
+        // The first failure is the line, whichever kind of test it came from.
+        example.lastTjsTests.results[1] = {
+          description: 'subtracts',
+          passed: false,
+          error: 'Expected 1 but got 3',
+        }
+        example.updateTestStatus()
+        expect(strip.textContent).toBe(
+          '✗ subtracts — Expected 1 but got 3 (1 of 3 failed)'
+        )
+        expect(strip.classList.contains('test-fail')).toBe(true)
+        expect(strip.classList.contains('test-pass')).toBe(false)
+        expect(strip.title).toBe(strip.textContent)
+        example.remove()
+      })
+    )
+  })
+
   test('no view option, or an unknown one, leaves the example as it was', async () => {
     await quietly(() =>
       withoutObserver(async () => {

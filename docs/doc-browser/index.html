@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>doc-browser — tosijs-ui</title>
   <meta name="description" content="The tosijs-ui library provides everything you need to create a self-documented testbed similar to the tosijs-ui documentation site." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-browser/" />
@@ -30,14 +30,14 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>doc-browser</h1>
+<h1 id="doc-browser">doc-browser</h1>
 <p>The <code>tosijs-ui</code> library provides everything you need to create a self-documented testbed similar
 to the <a href="https://ui.tosijs.net">tosijs-ui documentation site</a>. It&#39;s like Storybook but much simpler
 to set up and maintain.</p>
-<h2>Quick Start</h2>
-<h3>1. Extract Documentation</h3>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="1-extract-documentation">1. Extract Documentation</h3>
 <p>Use the CLI tool to extract documentation from your source files:</p>
 <pre><code class="language-bash" data-highlighted>npx tosijs-ui-docs <span class="token parameter variable">--dirs</span> src,README.md <span class="token parameter variable">--output</span> docs.json
 </code></pre>
@@ -46,7 +46,7 @@ to set up and maintain.</p>
 <li><code>.md</code> files (uses entire content)</li>
 <li>Multi-line comments starting with <code>/*#</code> in <code>.ts</code>, <code>.js</code>, <code>.css</code> files</li>
 </ul>
-<h3>2. Create Your Doc Browser</h3>
+<h3 id="2-create-your-doc-browser">2. Create Your Doc Browser</h3>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> createDocBrowser <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-browser'</span>
 <span class="token keyword">import</span> <span class="token operator">*</span> <span class="token keyword">as</span> mylib <span class="token keyword">from</span> <span class="token string">'./my-library.js'</span>
 <span class="token keyword">import</span> docs <span class="token keyword">from</span> <span class="token string">'./docs.json'</span>
@@ -63,7 +63,7 @@ to set up and maintain.</p>
 
 document<span class="token punctuation">.</span>body<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>browser<span class="token punctuation">)</span>
 </code></pre>
-<h3>3. Add Live Examples in Your Docs</h3>
+<h3 id="3-add-live-examples-in-your-docs">3. Add Live Examples in Your Docs</h3>
 <p>In your source files or markdown, use code fences. Any sequence of
 html, js, and css code examples will be turned in to a live, interactive
 example.</p>
@@ -94,8 +94,8 @@ export const myComponent = MyComponent.elementCreator({
   tag: &#39;my-component&#39;
 })
 </code></pre>
-<h2>Documentation Format</h2>
-<h3>Inline Comments</h3>
+<h2 id="documentation-format">Documentation Format</h2>
+<h3 id="inline-comments">Inline Comments</h3>
 <p>Start multi-line comments with <code>/*#</code> to mark them as documentation:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token comment">/*#
 # Component Name
@@ -103,14 +103,14 @@ export const myComponent = MyComponent.elementCreator({
 Description and examples go here...
 *‎/
 </span></code></pre>
-<h3>Metadata</h3>
+<h3 id="metadata">Metadata</h3>
 <p>Control sort order with JSON metadata:</p>
 <pre><code>&lt;!--{ &quot;pin&quot;: &quot;bottom&quot; }--&gt;
 </code></pre>
 <p>or</p>
 <pre><code>/*{ &quot;pin&quot;: &quot;bottom&quot; }*‎/
 </code></pre>
-<h2>Programmatic API</h2>
+<h2 id="programmatic-api">Programmatic API</h2>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> extractDocs<span class="token punctuation">,</span> saveDocsJSON <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
 
 <span class="token keyword">const</span> docs <span class="token operator">=</span> <span class="token function">extractDocs</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
@@ -124,7 +124,7 @@ Description and examples go here...
 <span class="token keyword">import</span> <span class="token punctuation">{</span> createDocBrowser <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-browser'</span>
 <span class="token keyword">const</span> browser <span class="token operator">=</span> <span class="token function">createDocBrowser</span><span class="token punctuation">(</span><span class="token punctuation">{</span> docs<span class="token punctuation">,</span> context<span class="token operator">:</span> <span class="token punctuation">{</span> mylib <span class="token punctuation">}</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
-<h2>createDocBrowser Options</h2>
+<h2 id="createdocbrowser-options">createDocBrowser Options</h2>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">interface</span> <span class="token class-name">DocBrowserOptions</span> <span class="token punctuation">{</span>
   docs<span class="token operator">:</span> Doc<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment">// Array of documentation objects</span>
   context<span class="token operator">?</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">any</span><span class="token operator">></span> <span class="token comment">// Modules for live examples</span>
@@ -145,7 +145,7 @@ Description and examples go here...
   <span class="token punctuation">[</span>key<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">|</span> <span class="token keyword">undefined</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2>See Also</h2>
+<h2 id="see-also">See Also</h2>
 <p>The <code>tosijs-ui</code> demo is a complete working example. See:</p>
 <ul>
 <li><code>/tosijs-site.config.ts</code> - How this repo configures its doc site (<code>defineSiteConfig</code> / <code>tosijs-ui/site</code>)</li>
@@ -248,6 +248,6 @@ Description and examples go here...
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

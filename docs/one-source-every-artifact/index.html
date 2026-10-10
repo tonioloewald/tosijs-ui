@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>One Source — tosijs-ui</title>
   <meta name="description" content="How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files." />
   <link rel="canonical" href="https://ui.tosijs.net/one-source-every-artifact/" />
@@ -30,12 +30,12 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"top","order":600,"title":"One Source","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files."}-->
 
-<h1>One Source</h1>
-<h2>Every Artifact</h2>
+<h1 id="one-source">One Source</h1>
+<h2 id="every-artifact">Every Artifact</h2>
 <p>Here is a description of this documentation system. It may sound like it&#39;s either insanely impractical or a wish list:</p>
 <p>It is a <strong>one-step build</strong> that produces a fast, SEO-friendly website; the same
 site is a <strong>test bed</strong> that runs and asserts its own examples; those examples are
@@ -48,7 +48,7 @@ of it is <strong>a folder of static files.</strong></p>
 <p>That list reads like a pitch because each item is normally somebody&#39;s whole
 product, and products that claim seven things are usually bad at seven things.
 So here is <em>why it&#39;s true</em>, which is the only thing that makes it believable.</p>
-<h2>It&#39;s not seven features. It&#39;s one mechanism.</h2>
+<h2 id="its-not-seven-features-its-one-mechanism">It&#39;s not seven features. It&#39;s one mechanism.</h2>
 <p>Every capability above is a <strong>projection of a single source</strong>. You write markdown
 files and <code>/*#</code> doc-comments in your code. One extraction pass reads that corpus,
 and everything else is a different way of <em>weaving</em> the same input:</p>
@@ -63,7 +63,7 @@ and everything else is a different way of <em>weaving</em> the same input:</p>
 <p>Nobody is <em>integrating</em> these outputs. They fall out of the same pass, so the
 marginal cost of each is roughly zero. Add a doc-comment and you have
 simultaneously written a web page, a test, a book chapter, and a playground.</p>
-<h2>The whole thing, running inside itself</h2>
+<h2 id="the-whole-thing-running-inside-itself">The whole thing, running inside itself</h2>
 <p>The clearest demo is the system embedded in its own page. Below is a complete,
 live <code>&lt;tosi-doc-system&gt;</code> — the same browser you&#39;re reading this in — loading the
 same corpus, in an isolated (memory-routed) instance. Note the <code>config</code> attribute:
@@ -84,7 +84,7 @@ browser, and needs no server:</p>
 <p>That is the tell that it&#39;s honest engineering rather than a kitchen sink: the
 things that are expensive to maintain separately are here <em>free</em>, because they
 are not separate — the page can contain the entire system.</p>
-<h2>…therefore what you get</h2>
+<h2 id="therefore-what-you-get">…therefore what you get</h2>
 <p><strong>It&#39;s just static files.</strong> The site is pre-rendered — one real HTML page per
 doc, with proper <code>&lt;head&gt;</code> metadata, readable with JavaScript disabled, plus
 <code>sitemap.xml</code>, <code>robots.txt</code>, and an <code>llms.txt</code> index for agents. &quot;SEO&quot; here is
@@ -116,7 +116,7 @@ to their live, editable versions</strong> on the site.</p>
 <p><strong>An agent can debug it.</strong> Turn on <code>haltijaDev</code> and the dev server gives a coding
 agent eyes and hands on the <em>actual running page</em> — live DOM, console, network,
 and screen capture — with no browser extension and nothing added to your bundle.</p>
-<h2>Literate programming that finally has somewhere to live</h2>
+<h2 id="literate-programming-that-finally-has-somewhere-to-live">Literate programming that finally has somewhere to live</h2>
 <p>The idea is old and keeps getting reinvented, always brilliantly, always
 incompletely, always at the cost of a bespoke apparatus:</p>
 <ul>
@@ -252,6 +252,6 @@ them as side effects of writing a doc-comment.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

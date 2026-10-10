@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>rating — tosijs-ui</title>
   <meta name="description" content="TosiRating / &lt;tosi-rating&gt; provides a drop-in replacement for an &lt;input&gt; that renders a rating using icons." />
   <link rel="canonical" href="https://ui.tosijs.net/rating/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>rating</h1>
+<h1 id="rating">rating</h1>
 <p><code>TosiRating</code> / <code>&lt;tosi-rating&gt;</code> provides a drop-in replacement for an <code>&lt;input&gt;</code>
 that renders a rating using icons.</p>
 <pre><code class="language-js">const { tosiRating } = tosijsui
@@ -66,7 +66,7 @@ test(&#39;rating has correct max&#39;, () =&gt; {
   opacity: 0.25;
 }
 </code></pre>
-<h2>Attributes</h2>
+<h2 id="attributes">Attributes</h2>
 <ul>
 <li><code>icon-size</code> (24 by default) determines the height of the control and along with <code>max</code> its width</li>
 <li><code>max</code> maximum rating</li>
@@ -82,14 +82,14 @@ test(&#39;rating has correct max&#39;, () =&gt; {
 <li><code>required</code> (false by default) marks the field as required for form validation</li>
 <li><code>name</code> the form field name (for formAssociated support)</li>
 </ul>
-<h2>Form Integration</h2>
+<h2 id="form-integration">Form Integration</h2>
 <p><code>&lt;tosi-rating&gt;</code> is form-associated, meaning it works directly in native <code>&lt;form&gt;</code> elements:</p>
 <pre><code class="language-html">&lt;form&gt;
   &lt;tosi-rating name=&quot;rating&quot; required&gt;&lt;/tosi-rating&gt;
   &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
 &lt;/form&gt;
 </code></pre>
-<h2>Keyboard</h2>
+<h2 id="keyboard">Keyboard</h2>
 <p><code>&lt;tosi-rating&gt;</code> should be fully keyboard navigable (and, I hope, accessible).</p>
 <p>The up key increases the rating, down descreases it. This is the same
 as the behavior of <code>&lt;input type=&quot;number&quot;&gt;</code>, <a href="https://shoelace.style/components/rating/">Shoelace&#39;s rating widget</a>,
@@ -190,6 +190,6 @@ and (in my opinion) common sense, but  not like <a href="https://mui.com/materia
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

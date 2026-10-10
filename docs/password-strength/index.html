@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>password strength — tosijs-ui</title>
   <meta name="description" content="Just wrap it a &lt;tosi-password-strength&gt; element around an &lt;input&gt; and it will gauge its content strength as a password." />
   <link rel="canonical" href="https://ui.tosijs.net/password-strength/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>password strength</h1>
+<h1 id="password-strength">password strength</h1>
 <p>Just wrap it a <code>&lt;tosi-password-strength&gt;</code> element around an <code>&lt;input&gt;</code>
 and it will gauge its content strength as a password. It will also
 let you <strong>securely verify</strong> that the password hasn&#39;t been breached.</p>
@@ -103,7 +103,7 @@ breach.addEventListener(&#39;click&#39;, async () =&gt; {
   background: red;
 }
 </code></pre>
-<h2>Algorithm</h2>
+<h2 id="algorithm">Algorithm</h2>
 <p>The password is assessed to have a strength based on:</p>
 <ul>
 <li><strong>length</strong> one point for at least <code>goodLength</code> characters long.</li>
@@ -113,14 +113,14 @@ breach.addEventListener(&#39;click&#39;, async () =&gt; {
 <li><strong>^[a-zA-Z0-9]]</strong> one point for containing some other kind of character</li>
 </ul>
 <p>A password smaller than <code>minLength</code> is an automatic <code>0</code>.</p>
-<h2>Attributes</h2>
+<h2 id="attributes">Attributes</h2>
 <ul>
 <li><code>minLength</code> defaults to <code>8</code></li>
 <li><code>goodLength</code> defaults to <code>12</code></li>
 <li><code>indicatorColors</code> six HTML colors, separated by commas, defaults to <code>&#39;#f00,#f40,#f80,#ef0,#8f0,#0d4&#39;</code></li>
 <li><code>descriptionColors</code> six HTML colors, sepeated by commans, defaults to <code>&#39;#000,#000,#000,#000,#000,#fff&#39;</code></li>
 </ul>
-<h2>Properties</h2>
+<h2 id="properties">Properties</h2>
 <ul>
 <li><code>value</code>, <code>strength</code> is a number from 0 to 5</li>
 <li><code>issues</code> is a structure which you can use to generate feedback</li>
@@ -134,7 +134,7 @@ breach.addEventListener(&#39;click&#39;, async () =&gt; {
   noSpecial: boolean,
 }
 </code></pre>
-<h2>Customizing / Localizing Strings</h2>
+<h2 id="customizing--localizing-strings">Customizing / Localizing Strings</h2>
 <p>The following properties control the feedback generated.</p>
 <pre><code>issueDescriptions = {
   tooShort: &#39;too short&#39;,
@@ -154,7 +154,7 @@ breach.addEventListener(&#39;click&#39;, async () =&gt; {
   &#39;very strong&#39;,
 ]
 </code></pre>
-<h2><code>isBreached()</code></h2>
+<h2 id="isbreached"><code>isBreached()</code></h2>
 <p><code>&lt;tosi-password-strength&gt;</code> also provides an <code>isBreached(): Promise&lt;boolean&gt;</code> method
 which uses <a href="https://weakpass.com/">weakpass.com&#39;s API</a> to tell you if the password has been
 breached.</p>
@@ -162,7 +162,7 @@ breached.</p>
 <p>Note that <code>isBreached</code> does not send the plain-text password anywhere. It uses <strong>SHA-1</strong>
 to hash the password and then sends that for lookup.</p>
 </blockquote>
-<h2>Utility Functions</h2>
+<h2 id="utility-functions">Utility Functions</h2>
 <p>Two functions used internally for querying <a href="https://weakpass.com/">Weakpass,com</a> are
 provided in case they&#39;re useful on their own.</p>
 <p><code>isBreached(password: striing): Promise&lt;boolean&gt;</code> will return <code>true</code> if the password is
@@ -264,6 +264,6 @@ found in Weakpass&#39;s database (and spit out extra info to the console).</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

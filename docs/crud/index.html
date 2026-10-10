@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>crud — tosijs-ui</title>
   <meta name="description" content="Search, list, edit — &lt;tosi-table&gt; and &lt;tosi-schema-form&gt; over a store you supply." />
   <link rel="canonical" href="https://ui.tosijs.net/crud/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>crud</h1>
+<h1 id="crud">crud</h1>
 <!--{ "parent": "Components" }-->
 
 <p>Search, list, edit — <a href="/data-table/"><code>&lt;tosi-table&gt;</code></a> and
@@ -106,7 +106,7 @@ test(&#39;search, select, edit, save — and the URL remembers where you were&#3
   expect(crud.rows.length).toBe(1)
 })
 </code></pre>
-<h2>The store is the only thing you have to write</h2>
+<h2 id="the-store-is-the-only-thing-you-have-to-write">The store is the only thing you have to write</h2>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">interface</span> <span class="token class-name">CrudStore</span> <span class="token punctuation">{</span>
   <span class="token function">list</span><span class="token punctuation">(</span>query<span class="token operator">:</span> <span class="token punctuation">{</span> search<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Promise</span><span class="token operator">&lt;</span><span class="token builtin">any</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">></span>
   save<span class="token operator">?</span><span class="token punctuation">(</span>record<span class="token operator">:</span> <span class="token builtin">any</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Promise</span><span class="token operator">&lt;</span><span class="token builtin">any</span><span class="token operator">></span>     <span class="token comment">// returns the saved record</span>
@@ -119,7 +119,7 @@ methods. Omit <code>save</code> and the form is read-only; omit <code>delete</co
 <p><code>save</code> returns the saved record because the server usually knows things the client does not:
 the id of a new record, a timestamp, a computed field. That returned record is what the form
 then holds.</p>
-<h2>The parts stay usable on their own</h2>
+<h2 id="the-parts-stay-usable-on-their-own">The parts stay usable on their own</h2>
 <p><code>&lt;tosi-crud&gt;</code> composes public components and exposes them — <code>.table</code> and <code>.form</code> are the real
 elements, so anything you can do to a <code>&lt;tosi-table&gt;</code> you can do here:</p>
 <pre><code class="language-js">import { tosiCrud } from &#39;tosijs-ui&#39;
@@ -154,7 +154,7 @@ test(&#39;the composed parts are reachable, and the wrapper does not undo you&#3
 as a guard:</p>
 <p>It is a convenience, never the only way to reach them. Compose the three yourself when your
 layout wants something else — that is a supported thing to do, not a fallback.</p>
-<h2>Schema: give one, or let it infer</h2>
+<h2 id="schema-give-one-or-let-it-infer">Schema: give one, or let it infer</h2>
 <p>With a <code>schema</code>, the form renders it and the table takes its columns <strong>from the schema</strong> —
 which is better than the table&#39;s own inference, because that reads <code>Object.keys(array[0])</code> and
 so loses the column for any property the first row happens not to have.</p>
@@ -208,14 +208,14 @@ test(&#39;columns come from the schema, titles and all&#39;, () =&gt; {
   expect(stock.querySelector(&#39;.crud-save&#39;).hidden).toBe(false)
 })
 </code></pre>
-<h2>The URL remembers where you were</h2>
+<h2 id="the-url-remembers-where-you-were">The URL remembers where you were</h2>
 <p>The search term and the selected record&#39;s id live in the page hash via
 <a href="/hash-state/"><code>hashState</code></a>, so a filtered list with a record open is a link you can send
 someone. Set <code>hashNamespace</code> to keep two of them from colliding, or <code>hashMode=&quot;memory&quot;</code> to
 keep the URL out of it entirely.</p>
 <p>Typing <strong>replaces</strong> the current history entry; selecting a record <strong>pushes</strong> one — so back
 takes you out of the record you opened rather than un-typing your search one letter at a time.</p>
-<h2>Failures are shown, never swallowed</h2>
+<h2 id="failures-are-shown-never-swallowed">Failures are shown, never swallowed</h2>
 <p>If <code>list</code>, <code>save</code> or <code>delete</code> rejects, the message is displayed and an <code>error</code> event is
 dispatched with <code>{ operation, error }</code>. Nothing is retried behind your back and nothing
 reports success on a failure.</p>
@@ -273,7 +273,7 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
   expect(slow.querySelector(&#39;.crud-status&#39;).textContent).toBe(&#39;the server said no&#39;)
 })
 </code></pre>
-<h2>Properties, methods, events</h2>
+<h2 id="properties-methods-events">Properties, methods, events</h2>
 <ul>
 <li><code>store</code> — the adapter. Setting it re-lists.</li>
 <li><code>schema</code> — optional JSON Schema for the form and the table&#39;s columns.</li>
@@ -383,6 +383,6 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

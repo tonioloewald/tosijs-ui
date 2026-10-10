@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>forms — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-form&gt; and &lt;tosi-field&gt; can be used to quickly create forms complete with client-side validation." />
   <link rel="canonical" href="https://ui.tosijs.net/form/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>forms</h1>
+<h1 id="forms">forms</h1>
 <p><code>&lt;tosi-form&gt;</code> and <code>&lt;tosi-field&gt;</code> can be used to quickly create forms complete with
 <a href="https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#built-in_form_validation_examples">client-side validation</a>.</p>
 <pre><code class="language-js">const form = preview.querySelector(&#39;tosi-form&#39;)
@@ -161,7 +161,7 @@ preview.querySelector(&#39;.submit&#39;).addEventListener(&#39;click&#39;, form.
   box-shadow: inset 0 0 0 2px #F008;
 }
 </code></pre>
-<h2><code>&lt;tosi-form&gt;</code></h2>
+<h2 id="tosi-form"><code>&lt;tosi-form&gt;</code></h2>
 <p><code>&lt;tosi-form&gt;</code> prevents the default form behavior when a <code>submit</code> event is triggered and instead validates the
 form contents (generating feedback if desired) and calls its <code>submitCallback(value: {[key: string]: any}, isValid: boolean): void</code>
 method.</p>
@@ -170,7 +170,7 @@ event on the <code>&lt;tosi-form&gt;</code> (in addition to any events fired by 
 <p><code>&lt;tosi-form&gt;</code> instances have <code>value</code> and <code>isValid</code> properties you can access any time. Note that <code>isValid</code> is computed
 and triggers form validation.</p>
 <p><code>&lt;tosi-form&gt;</code> has <code>header</code> and <code>footer</code> <code>&lt;slot&gt;</code>s in addition to default <code>&lt;slot&gt;</code>, which is tucked inside a <code>&lt;form&gt;</code> element.</p>
-<h2><code>&lt;tosi-field&gt;</code></h2>
+<h2 id="tosi-field"><code>&lt;tosi-field&gt;</code></h2>
 <p><code>&lt;tosi-field&gt;</code> is a simple web-component with no shadowDOM that combines an <code>&lt;input&gt;</code> field wrapped with a <code>&lt;label&gt;</code>. Any
 content of the custom-element will become the <code>caption</code> or you can simply set the <code>caption</code> attribute.</p>
 <p>You can replace the default <code>&lt;input&gt;</code> field by adding an element to the slot <code>input</code> (it&#39;s a <code>tosiSlot</code>) whereupon
@@ -188,7 +188,7 @@ is used to drive form-validation.)</p>
 <p>The <code>text</code> type populates the <code>input</code> slot with a <code>&lt;textarea&gt;</code> element.</p>
 <p>The <code>color</code> type populates the <code>input</code> slot with a <code>&lt;tosi-color&gt;</code> element (and thus supports colors with alpha values).</p>
 <tosi-css-var-editor element-selector="tosi-field" target-selector=".preview"></tosi-css-var-editor>
-<h2>Native Form Integration</h2>
+<h2 id="native-form-integration">Native Form Integration</h2>
 <p>The following components support native form integration via <code>formAssociated</code>:</p>
 <ul>
 <li><code>&lt;tosi-rating&gt;</code> - star ratings</li>
@@ -291,7 +291,7 @@ form.addEventListener(&#39;reset&#39;, () =&gt; {
   TosiDialog.alert(&#39;Form has been reset&#39;, &#39;Reset&#39;)
 })
 </code></pre>
-<h2>Using formAssociated Components with tosi-form</h2>
+<h2 id="using-formassociated-components-with-tosi-form">Using formAssociated Components with tosi-form</h2>
 <p>While the formAssociated components work with native <code>&lt;form&gt;</code> elements, using them with <code>&lt;tosi-form&gt;</code>
 provides additional benefits:</p>
 <ul>
@@ -503,6 +503,6 @@ preview.querySelector(&#39;.set-values-btn&#39;).addEventListener(&#39;click&#39
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

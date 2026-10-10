@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>example</h1>
+<h1 id="example">example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
 started life as a super lightweight, easier-to-embed implementation of
 <a href="https://b8rjs.com">b8rjs&#39;s fiddle component</a>—which I dearly missed—but now the student
@@ -59,7 +59,7 @@ preview.append(&#39;Try editing some code and hitting refresh…&#39;)
   to { color: red }
 }
 </code></pre>
-<h2>How examples run: one shared page (read this)</h2>
+<h2 id="how-examples-run-one-shared-page-read-this">How examples run: one shared page (read this)</h2>
 <p>By default every example on a page runs <strong>inline — in the page&#39;s own document and
 JavaScript realm</strong>, not in a sandbox. Each example gets its own <code>preview</code> element
 (and its <code>css</code> is scoped to that preview), but they all share the one <code>tosijs</code>
@@ -88,7 +88,7 @@ examples may have left their elements in the DOM.</li>
 it does <strong>not</strong> isolate tosijs <em>state</em>: the <code>tosijs</code>/<code>tosijs-ui</code> handed to an iframe
 example are still the host page&#39;s module instances, so <code>tosi()</code> singletons stay
 shared. Namespacing is the fix for state; <code>iframe</code> is the fix for DOM/CSS bleed.</p>
-<h2>Source dialects: <code>js</code>, <code>tjs</code>, <code>ts</code></h2>
+<h2 id="source-dialects-js-tjs-ts">Source dialects: <code>js</code>, <code>tjs</code>, <code>ts</code></h2>
 <p>The executable block&#39;s fence language picks how the source is compiled before it
 runs, via <a href="https://www.npmjs.com/package/tjs-lang">tjs-lang</a>:</p>
 <ul>
@@ -125,7 +125,7 @@ preview.append(div({ class: &#39;badge&#39; }, badge(&#39;count&#39;, 42)))
 example the equivalent is written inside a comment (so it survives <code>tsc</code>) — but
 that comment form can&#39;t appear inside a doc comment like this one, since the
 test&#39;s own closing delimiter would end the doc comment.</p>
-<h2>The console</h2>
+<h2 id="the-console">The console</h2>
 <p>Each example has a <strong>Console</strong> tab beside its code (open the code panel with the <code>&lt;&gt;</code> button).
 It shows what the example logged, and it is a REPL: type an expression and press Enter to
 evaluate it in the example&#39;s scope, as in the browser&#39;s console. On a phone, where browsers
@@ -202,7 +202,7 @@ left over from that setup where a browser console shows <code>undefined</code>, 
 both the setup and <code>await</code> shows <code>undefined</code>. An expression, which is what a console is
 mostly for, shows its value.</li>
 </ul>
-<h2>Opening with the code showing</h2>
+<h2 id="opening-with-the-code-showing">Opening with the code showing</h2>
 <p>An example normally opens as its preview, and the <code>&lt;&gt;</code> button opens the code full-screen.
 A page that is teaching wants the code and its effect in view together, in the page. Ask for
 that with a fence option on the example&#39;s source block, written after the language:
@@ -221,15 +221,29 @@ preview.append(
   })
 )
 </code></pre>
-<pre><code class="language-test">test(&#39;view: code opens the editor in the page, not full-screen&#39;, async () =&gt; {
+<pre><code class="language-test">test(&#39;the code is open in the page, not full-screen&#39;, async () =&gt; {
   const example = preview.closest(&#39;tosi-example&#39;)
   // the editor is built when the example nears the viewport
   example.showInline(&#39;code&#39;)
   expect(example.classList.contains(&#39;-maximize&#39;)).toBe(false)
   expect(example.parts.codeEditors.hidden).toBe(false)
-  example.closeCode()
 })
 </code></pre>
+<p>That example has a <code>test</code> block, and its result is the line under the preview. In an inline
+view the tests are part of the lesson, so:</p>
+<ul>
+<li><strong>The result is on show.</strong> One line under the preview (or the console) gives the count when
+everything passes and the first failure, in red, when something does not. It covers both the
+<code>test</code> block and a <code>tjs</code> example&#39;s inline tests, and clicking it opens the tab with the
+detail. Change <code>&#39;clicked 0 times&#39;</code> in the test above to see it go red.</li>
+<li><strong>The tests always run</strong>, on every site, whatever the page&#39;s tests switch says. Elsewhere
+that switch is off by default away from localhost; here the result is the reader&#39;s feedback.
+A <code>tjs</code> or <code>ts</code> example in an inline view therefore loads its transpiler when it runs, where
+one that is only read does not.</li>
+<li><strong>Empty tabs are hidden.</strong> A tab for <code>html</code>, <code>css</code> or <code>DOM tests</code> appears only when the
+example has that block, so an example that is one block of code shows one source tab. The
+full-screen code view (the <code>&lt;&gt;</code> button) still shows them all, which is where you add one.</li>
+</ul>
 <p><code>&quot;console&quot;</code> is for &quot;type a line, see the answer&quot;, where the point is a value and not a
 rendering. Try <code>total * 2</code> at the prompt:</p>
 <pre data-example-options="{&quot;view&quot;:&quot;console&quot;}"><code class="language-js">const total = [1, 2, 3].reduce((sum, n) =&gt; sum + n, 0)
@@ -247,7 +261,7 @@ source, in every view.</li>
 <li>In an ePub or in print an example is its code listing; the view option changes nothing
 there.</li>
 </ul>
-<h2>Adding a dialect</h2>
+<h2 id="adding-a-dialect">Adding a dialect</h2>
 <p><code>js</code>, <code>tjs</code> and <code>ts</code> are the built-in entries of a <strong>dialect registry</strong>, and a site can add
 its own with <code>registerDialect</code> from <code>tosijs-ui/live-example</code>. A fence in a registered
 language then becomes a live example like any other: it groups with <code>html</code>, <code>css</code> and
@@ -339,7 +353,7 @@ test(&#39;its docs appear in a Docs tab once the code panel is open&#39;, async 
   expect(docs.textContent).toContain(&#39;stressed&#39;)
 })
 </code></pre>
-<h2>Inline WebAssembly (SIMD)</h2>
+<h2 id="inline-webassembly-simd">Inline WebAssembly (SIMD)</h2>
 <p>A <code>tjs</code> example can drop a hot loop into <strong>WebAssembly</strong> with a <code>wasm { … } fallback { … }</code> block — compiled to bytecode <em>at transpile time</em>, embedded as base64, and run
 in your browser. No Emscripten, no <code>.wasm</code> file, no build step, no server.</p>
 <p>WASM earns its keep with <strong>SIMD</strong>: scalar WASM roughly ties the JS JIT, but a
@@ -523,7 +537,7 @@ test(&#39;the wasm kernel actually compiled (no silent fallback to JS)&#39;, asy
   expect(compiled.length).toBeGreaterThan(0)
 })
 </code></pre>
-<h2>Execution modes</h2>
+<h2 id="execution-modes">Execution modes</h2>
 <p>An example runs in one of three modes. Signal the mode on a code fence with
 <code>```&lt;lang&gt;:&lt;mode&gt;</code> — <code>```js:iframe</code>, <code>```css:ide</code> — on <strong>any</strong> block in the
 group; the first mode in the group wins (contradictory modes across a group are an
@@ -549,7 +563,7 @@ imported dependencies are sandboxed — the way tjs-lang&#39;s playgrounds do it
 service worker intercepting imports) are a possible future option. For <strong>actual
 examples</strong> the shared-page default is usually the nicer behavior: it shows off tosi&#39;s
 isolation and lets you poke demos through the live global state.</em></p>
-<h2>Test Blocks</h2>
+<h2 id="test-blocks">Test Blocks</h2>
 <p>Add ```<code>test</code> code blocks to write inline tests that run against the preview:</p>
 <pre><code class="language-html">&lt;button class=&quot;demo-btn&quot;&gt;Click me&lt;/button&gt;
 </code></pre>
@@ -578,7 +592,7 @@ test(&#39;slow test shows running state&#39;, async () =&gt; {
 <li><code>waitFor(selector, timeout?)</code> - wait for an element to appear (default 1s timeout)</li>
 <li>All context libraries (tosijs, tosijs-ui, etc.)</li>
 </ul>
-<h3>Tests run CONCURRENTLY — one <code>test()</code> per flow</h3>
+<h3 id="tests-run-concurrently--one-test-per-flow">Tests run CONCURRENTLY — one <code>test()</code> per flow</h3>
 <p>Each <code>test()</code> body is invoked <strong>as it is registered</strong>, and async bodies are gathered with
 <code>Promise.all</code>. So test 2&#39;s synchronous body runs while test 1 is sitting at its first
 <code>await</code>, and tests in <em>other examples on the same page</em> overlap too.</p>
@@ -605,7 +619,7 @@ block&#39;s mutation. Nothing about the code changed; the timing did.</p>
 absolutes, since another example may be adding elements while you look. And a test that
 leaves global state behind can perturb a concurrent one — clean up inside the test that made
 the mess.</p>
-<h3>Async Tests</h3>
+<h3 id="async-tests">Async Tests</h3>
 <p>Tests can be async functions. Use <code>waitMs</code> for simple delays and <code>waitFor</code> to wait
 for dynamically created elements:</p>
 <pre><code class="language-html">&lt;button class=&quot;async-btn&quot;&gt;Load Data&lt;/button&gt;
@@ -630,7 +644,7 @@ test(&#39;waitMs delays execution&#39;, async () =&gt; {
   expect(Date.now() - start).toBeGreaterThan(40)
 })
 </code></pre>
-<h3>A test-only example shows its results</h3>
+<h3 id="a-test-only-example-shows-its-results">A test-only example shows its results</h3>
 <p>A <code>```test</code> fence with nothing beside it has no preview to render. Rather than an empty box
 — which reads as a broken example and hides the one thing the block is there to show — the
 results become the example&#39;s body:</p>
@@ -644,7 +658,7 @@ test(&#39;…including several of them&#39;, () =&gt; {
 </code></pre>
 <p>Useful for documenting a pure function, an invariant, or a behaviour that has no visual
 output. The example above is a real one — it runs on every build of this page.</p>
-<h2><code>context</code></h2>
+<h2 id="context"><code>context</code></h2>
 <p>A <code>&lt;tosi-example&gt;</code> is given a <code>context</code> object which is the set of values available
 in the javascript&#39;s execution context. The context always includes <code>preview</code>.</p>
 <pre><code>import * as tosijs from &#39;tosijs&#39;
@@ -751,6 +765,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>

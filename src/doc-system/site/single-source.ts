@@ -23,6 +23,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { marked } from 'marked'
 import { buildSlugMap, resolveParent, slugify } from '../routing.js'
+import { headingSlug, slugOfHeadingText } from '../heading-id.js'
 import { mayHaveSingleSourceDirective } from '../book-target.js'
 
 export class SingleSourceError extends Error {
@@ -130,8 +131,16 @@ export function isSingleSourceDirective(json: string): boolean {
 
 const mayHaveDirective = mayHaveSingleSourceDirective
 
-const headingSlug = (token: any): string =>
+/*
+An inset's `#anchor` names a heading by the id the page gives it (`headingSlug`, THE rule).
+The spelling insets shipped with in 1.16.9 is still accepted: it differs only where a heading
+has punctuation ("What's new" was `what-s-new`, and is `whats-new` on the page).
+*/
+const legacyHeadingSlug = (token: any): string =>
   slugify(String(token.text ?? '').replace(/`/g, ''))
+const headingMatches = (token: any, anchor: string): boolean =>
+  headingSlug(token) === slugOfHeadingText(anchor) ||
+  legacyHeadingSlug(token) === slugify(anchor)
 
 /*
 What an inset contributes: the passage, not its place in some other page's outline.
@@ -167,9 +176,8 @@ function bodyOf(text: string, anchor: string | undefined, ref: string): string {
       .join('')
       .trim()
   }
-  const want = slugify(anchor)
   const start = tokens.findIndex(
-    (t) => t.type === 'heading' && headingSlug(t) === want
+    (t) => t.type === 'heading' && headingMatches(t, anchor)
   )
   if (start < 0) {
     const have = tokens

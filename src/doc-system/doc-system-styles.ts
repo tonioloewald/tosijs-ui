@@ -668,6 +668,15 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       display: 'inline-block',
       // push the summary text in a bit less than a normal doc-link
       paddingLeft: 'calc(var(--spacing) * 0.5)',
+      /*
+      Room for the disclosure triangle on the same line (#219). An inline-block as wide as
+      its text does not fit beside the marker once the title is long, so the whole link
+      dropped to the next line and left the triangle alone on a row of its own, which reads
+      as an empty nav entry. Capped, it stays beside the triangle and wraps inside itself.
+      */
+      boxSizing: 'border-box',
+      maxWidth: 'calc(100% - 1.5em)',
+      verticalAlign: 'top',
     },
     // Declarative header link list — shown for no-JS, removed on hydration.
     '.doc-navbar': {

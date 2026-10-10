@@ -94,6 +94,59 @@ interface DocSystemConfig {
   logo?: string
   /** URL of the site's `epub-volumes.json`; Print reads its cover from it */
   bookVolumes?: string
+  /** the ePubs the site build makes; see `epubMenuItem` */
+  ebooks?: Ebook[]
+}
+
+export interface Ebook {
+  title: string
+  url: string
+}
+
+const download = (url: string) => (): void => {
+  const link = document.createElement('a')
+  link.href = url
+  link.download = ''
+  link.click()
+}
+
+/**
+ * The settings menu's "Download ePub" entry, or `null` for none.
+ *
+ * The item used to be unconditional and its URL derived from the project name, so a site
+ * that built no ePub (the default) shipped a menu item that 404s, and a multi-volume site
+ * or one with `basePath` or `epub.title` linked to a file nothing wrote (#218). The site
+ * build now bakes the list of volumes it makes into the page config:
+ *
+ *   - a list   → one item (or, for several volumes, a submenu), at the build's own URLs
+ *   - `[]`     → the site makes no ePub: no item
+ *   - no key   → a hand-written `config` that predates this: the old derived link, unchanged
+ */
+export function epubMenuItem(
+  ebooks: Ebook[] | undefined,
+  legacyUrl: string
+): Record<string, unknown> | null {
+  if (!Array.isArray(ebooks))
+    return {
+      caption: 'Download ePub',
+      icon: 'book',
+      action: download(legacyUrl),
+    }
+  if (ebooks.length === 0) return null
+  if (ebooks.length === 1)
+    return {
+      caption: 'Download ePub',
+      icon: 'book',
+      action: download(ebooks[0].url),
+    }
+  return {
+    caption: 'Download ePub',
+    icon: 'book',
+    menuItems: ebooks.map((book) => ({
+      caption: book.title,
+      action: download(book.url),
+    })),
+  }
 }
 
 const PREFS_KEY = 'tosi-doc-system-prefs'
@@ -350,10 +403,12 @@ export class TosiDocSystem extends withAttributes({
           // Print / ePub of the whole corpus, before a separator + the prefs.
           let projectName = ''
           let bookVolumes: string | undefined
+          let ebooks: Ebook[] | undefined
           try {
             const parsed = JSON.parse(this.config || '{}')
             projectName = parsed.projectName || ''
             bookVolumes = parsed.bookVolumes || undefined
+            ebooks = parsed.ebooks
           } catch {
             // ignore — fall through to document.title
           }
@@ -411,16 +466,8 @@ export class TosiDocSystem extends withAttributes({
               )
             },
           })
-          menuItems.push({
-            caption: 'Download ePub',
-            icon: 'book',
-            action: () => {
-              const link = document.createElement('a')
-              link.href = `/${slugify(bookTitle)}.epub`
-              link.download = ''
-              link.click()
-            },
-          })
+          const epubItem = epubMenuItem(ebooks, `/${slugify(bookTitle)}.epub`)
+          if (epubItem) menuItems.push(epubItem)
           menuItems.push(null)
 
           const localeOptions = (i18n.localeOptions.value as any[]) || []

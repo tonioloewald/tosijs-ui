@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=306336c5c471" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
   <title>release-notes — tosijs-ui</title>
   <meta name="description" content="Assembles a CHANGELOG section from annotations in commit messages, so release notes stop being something you write from memory at the end — and stop being…" />
   <link rel="canonical" href="https://ui.tosijs.net/release-notes/" />
@@ -30,9 +30,9 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=34095e5abf41" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=01a0da1efae7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>release-notes</h1>
+<h1 id="release-notes">release-notes</h1>
 <!--{ "parent": "Appendices" }-->
 
 <p>Assembles a CHANGELOG section from <strong>annotations in commit messages</strong>, so release notes
@@ -43,7 +43,7 @@ tosijs-release-notes --check       # verify every annotation is accounted for (e
 tosijs-release-notes --since=v1.8.0
 tosijs-release-notes --write       # prepend the section to CHANGELOG.md
 </code></pre>
-<h2>The annotation</h2>
+<h2 id="the-annotation">The annotation</h2>
 <p>Put one bullet in the commit body per <strong>separately interesting</strong> thing:</p>
 <pre><code>fix(tunnel): one port resolver for server and bin
 
@@ -93,14 +93,14 @@ three bullets, and a conventional-commit prefix can only ever represent one of t
 </tbody></table>
 <p><code>closes #12</code> / <code>fixes #12</code> anywhere in a bullet is collected, so the release step knows
 which issues to close.</p>
-<h2>Why not generate the prose too</h2>
+<h2 id="why-not-generate-the-prose-too">Why not generate the prose too</h2>
 <p>Because the sentence worth reading is <em>&quot;1.8.0&#39;s site entry point does not import at all in
 a clean install — upgrade whether or not you want the new feature&quot;</em>, and nothing derives
 that from a diff. So this assembles a <strong>skeleton and a coverage gate</strong>, and a human (or
 agent) writes the paragraph that says who should care. <code>--check</code> fails when an annotation
 since the last tag appears nowhere in the new section, which kills forgetting without
 pretending to automate judgement.</p>
-<h2><code>--check</code> also flags claims a diff does not support</h2>
+<h2 id="--check-also-flags-claims-a-diff-does-not-support"><code>--check</code> also flags claims a diff does not support</h2>
 <p>A commit whose bullets claim <code>[fix]</code> or <code>[new]</code> while its diff touches only markdown is
 reported. This is not a style rule: three entries in tosijs-ui&#39;s own 1.9.0 notes described
 fixes that were never written, and the worst of them — an auth gate — was asserted by a
@@ -202,6 +202,6 @@ catches is expensive.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nv5xxf6q.js"></script>
+  <script type="module" src="../hydrate-q03pvqdy.js"></script>
 </body>
 </html>
