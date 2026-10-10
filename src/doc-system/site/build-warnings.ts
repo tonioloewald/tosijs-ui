@@ -71,18 +71,37 @@ const unescapeAttr = (s: string): string =>
  * (`renderDocMarkdown`, THE renderer) and no second copy of the heading-id rule exists here.
  *
  * Not reported, because they are not in-page anchors or resolve only in the browser:
- * `#/route` and `#!…` (hash routers), a bare `#`, `#top`, and `#example-N` / a fence's own
- * `#id` (live examples get their ids when the page hydrates).
+ * `#/route` and `#!…` (hash routers), a bare `#`, `#top`, and `#example-N` (live examples
+ * are numbered when the page hydrates). A fence's own `#id` is on the rendered page and is
+ * checked like any other id.
+ *
+ * Tags are read with their attributes in any order and any quoting. What it cannot see is
+ * an id that only exists once a script has run; such a link is reported.
  */
+// One HTML start tag, attributes and all. Quoted values may hold `>`, which is why this is
+// not `<[^>]*>`.
+const START_TAG =
+  /<([a-z][a-z0-9-]*)((?:\s+[^\s"'<>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*\/?>/gi
+const ATTRIBUTE =
+  /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
+
 export function deadInPageAnchors(html: string): string[] {
   const ids = new Set<string>()
-  for (const m of html.matchAll(
-    /<[a-z][^<>]*?\s(?:id|name|data-example-id)="([^"]*)"/gi
-  ))
-    ids.add(unescapeAttr(m[1]))
+  const links: string[] = []
+  for (const tag of html.matchAll(START_TAG)) {
+    const name = tag[1].toLowerCase()
+    for (const attr of tag[2].matchAll(ATTRIBUTE)) {
+      const key = attr[1].toLowerCase()
+      const value = unescapeAttr(attr[2] ?? attr[3] ?? attr[4] ?? '')
+      if (key === 'id' || key === 'data-example-id') ids.add(value)
+      // `name` is an anchor target on <a> only; on a form field it is a field name.
+      else if (key === 'name' && name === 'a') ids.add(value)
+      else if (key === 'href' && name === 'a' && value.startsWith('#'))
+        links.push(value.slice(1))
+    }
+  }
   const dead = new Set<string>()
-  for (const m of html.matchAll(/<a\b[^<>]*?\shref="#([^"]*)"/gi)) {
-    let target = unescapeAttr(m[1])
+  for (let target of links) {
     try {
       target = decodeURIComponent(target)
     } catch {

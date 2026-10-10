@@ -939,7 +939,10 @@ import { listEpubVolumes, epubVolumeIdentity } from 'tosijs-ui/site'
 If you run your own build in place of `buildSite`, `attachCovers(volumes, filesInOutputDir,
 basePath)` adds the cover fields for the covers `buildEpub` wrote, and
 `printCoverManifestUrl(config)` is the value to pass `generateSite` as `bookVolumes` so Print
-can find them (the manifest is `VOLUME_MANIFEST`, `epub-volumes.json`).
+can find them (the manifest is `VOLUME_MANIFEST`, `epub-volumes.json`). Pass `ebooks` too:
+`listEpubVolumes(docs, config)` mapped to `{ title, url }`, or `[]` for a site with no ePub.
+It is what the settings menu's "Download ePub" entry is built from; left unset, the entry
+links to a name derived from `projectName`, which is a 404 on a site that builds no book.
 
 > **Do not hard-code the filename.** It is _derived_ — `<project>-<volume>.epub` — so a
 > hand-written link rots the moment a volume is renamed, and rots silently, since nothing
@@ -1401,9 +1404,9 @@ exported from `tosijs-ui/site`, and the previous build output is restored):
 
 - **An in-page link points at nothing.** `[text](#some-heading)` where the page has no such
   id is a link that looks live and does nothing. The warning names the page and the anchor.
-  Not checked: `#/route` and `#!…` (hash routers), `#top`, and the ids live examples get in
-  the browser (`#example-2`, or a fence's own `#id`). An id that only exists once a live
-  example has rendered its HTML is reported, because the build cannot see it.
+  Not checked: `#/route` and `#!…` (hash routers), `#top`, and `#example-2`, the number a
+  live example gets in the browser. An id that only exists once a script has run (a live
+  example rendering its HTML, say) is reported, because the build cannot see it.
 
 One related failure shows up in the browser, not the build. `bundleEntry` replaces the bundle
 that supplied `tosijs` and `tosijs-ui` to live examples. Examples still get `tosijs` (the doc
@@ -1534,7 +1537,9 @@ case is fully covered.
   the heading's text as GitHub slugs it: lowercased, everything that is not a letter, a
   number, a space, `-` or `_` dropped, and each space turned into `-`. So "What's new?" is
   `whats-new` and "Foo & Bar" is `foo--bar`. Letters of any script are kept. A heading
-  repeated on one page gets `-1`, `-2`, and so on, in order. The build warns about an
+  repeated on one page gets `-1`, `-2`, and so on, in order. An entity such as `&copy;` adds
+  nothing to the id, and a heading that would be `example-2` gets `example-2-1`, since that id
+  belongs to the page's second live example. The build warns about an
   in-page link that matches no id on its page (it fails under `strict`).
 
 ### Which fence languages EXECUTE

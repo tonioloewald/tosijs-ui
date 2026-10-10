@@ -24,6 +24,7 @@ export function headingText(token: any): string {
 /** GitHub-flavoured slug of some heading text. May be empty (a heading of punctuation). */
 export function slugOfHeadingText(text: string): string {
   return text
+    .replace(/&(?:#\d+|#x[\da-f]+|[a-z][a-z\d]*);/gi, '') // an entity is not its name
     .trim()
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\p{M}\s_-]/gu, '')
@@ -41,8 +42,12 @@ export class HeadingIds {
   next(slug: string): string {
     if (!slug) return ''
     let id = slug
+    // `example-N` belongs to the page's live examples: a heading "Example 2" must not take
+    // the id a deep link to the second example resolves to.
+    const taken = (candidate: string): boolean =>
+      this.seen.has(candidate) || /^example-\d+$/.test(candidate)
     // A suffixed id can itself collide with a later literal heading ("Usage 1").
-    while (this.seen.has(id)) {
+    while (taken(id)) {
       const n = (this.seen.get(slug) ?? 0) + 1
       this.seen.set(slug, n)
       id = `${slug}-${n}`

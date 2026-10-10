@@ -231,8 +231,9 @@ view the tests are part of the lesson, so:
   detail. Change the expected text in the **DOM tests** tab to see it go red.
 - **The tests always run**, on every site, whatever the page's tests switch says. Elsewhere
   that switch is off by default away from localhost; here the result is the reader's feedback.
-  A `tjs` or `ts` example in an inline view therefore loads its transpiler when it runs, where
-  one that is only read does not.
+  A `tjs` example with inline tests therefore loads its transpiler when it runs in an inline
+  view; elsewhere it runs from the copy the build transpiled (`ts` always transpiles in the
+  page).
 - **Empty tabs are hidden.** A tab for `html`, `css` or `DOM tests` appears only when the
   example has that block, so an example that is one block of code shows one source tab. The
   full-screen code view (the `<>` button) still shows them all, which is where you add one.

@@ -232,8 +232,9 @@ view the tests are part of the lesson, so:
   detail. Change the expected text in the **DOM tests** tab to see it go red.
 - **The tests always run**, on every site, whatever the page's tests switch says. Elsewhere
   that switch is off by default away from localhost; here the result is the reader's feedback.
-  A `tjs` or `ts` example in an inline view therefore loads its transpiler when it runs, where
-  one that is only read does not.
+  A `tjs` example with inline tests therefore loads its transpiler when it runs in an inline
+  view; elsewhere it runs from the copy the build transpiled (`ts` always transpiles in the
+  page).
 - **Empty tabs are hidden.** A tab for `html`, `css` or `DOM tests` appears only when the
   example has that block, so an example that is one block of code shows one source tab. The
   full-screen code view (the `<>` button) still shows them all, which is where you add one.
@@ -1925,6 +1926,23 @@ export class LiveExample extends withAttributes({
   private renderTjsTests(): void {
     this.queueOutputRefresh()
     this.updateTestStatus()
+    /*
+    The tab is made when its results arrive, if the panel was set up first. An inline view
+    opens (and sets up its tabs) as it nears the viewport, which on a deployed site is while
+    the first run is still waiting for the transpiler: the test count was 0 then, so the
+    status line reported a failure whose tab did not exist.
+    */
+    if (
+      !this.tjsTestsView &&
+      this.inlineTjsTestCount > 0 &&
+      this.productTabsReady &&
+      this.jsOutEditor
+    ) {
+      this.tjsTestsView = div({ name: 'tjs tests', class: 'tjs-test-results' })
+      this.jsOutEditor.after(this.tjsTestsView)
+      this.parts.editors.setupTabs()
+      this.parts.editors.queueRender()
+    }
     const view = this.tjsTestsView
     if (!view) return
     const results = this.lastTjsTests
@@ -3000,6 +3018,7 @@ export class LiveExample extends withAttributes({
 
   toggleMaximize = () => {
     this.classList.toggle('-maximize')
+    this.syncSourceTabs()
   }
 
   showCode = () => {
@@ -3188,8 +3207,9 @@ export class LiveExample extends withAttributes({
       this.dialect !== 'js' &&
       !testManager.enabled.value &&
       // An inline view shows its inline tjs tests' result, and running them needs the
-      // transpiler: such an example takes the full path on every site.
-      !this.teaches &&
+      // transpiler: such an example takes the full path on every site. Only when its source
+      // could hold a test, though (the word is in it): one that cannot keeps the fast path.
+      !(this.teaches && /\btest\b/.test(this.js)) &&
       this.compiledJs !== undefined &&
       this.compiledJsSource === this.js
         ? this.compiledJs
@@ -3473,16 +3493,20 @@ export class LiveExample extends withAttributes({
       this.pendingShowDefaultTab = true
       return
     }
-    const { editors } = this.parts
-    if (this.js !== '') {
-      editors.value = 0
-    } else if (this.html !== '') {
-      editors.value = 1
-    } else if (this.css !== '') {
-      editors.value = 2
-    } else if (this.test !== '') {
-      editors.value = 3
-    }
+    // By body, not by position: an inline view hides the empty source tabs (syncSourceTabs).
+    const { editors, js, html, css, test } = this.parts
+    const body =
+      this.js !== ''
+        ? js
+        : this.html !== ''
+        ? html
+        : this.css !== ''
+        ? css
+        : this.test !== ''
+        ? test
+        : undefined
+    const index = body ? editors.bodies.indexOf(body) : -1
+    if (index > -1) editors.value = index
   }
 
   render(): void {

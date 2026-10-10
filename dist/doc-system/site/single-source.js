@@ -23,7 +23,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { marked } from 'marked';
 import { buildSlugMap, resolveParent, slugify } from '../routing.js';
-import { headingSlug, slugOfHeadingText } from '../heading-id.js';
+import { HeadingIds, headingSlug, slugOfHeadingText } from '../heading-id.js';
 import { mayHaveSingleSourceDirective } from '../book-target.js';
 export class SingleSourceError extends Error {
     constructor(message) {
@@ -151,7 +151,13 @@ function bodyOf(text, anchor, ref) {
             .join('')
             .trim();
     }
-    const start = tokens.findIndex((t) => t.type === 'heading' && headingMatches(t, anchor));
+    // By the id the page gives it first (so `#usage-1` names the second "Usage"), then by slug.
+    const ids = new HeadingIds();
+    const pageIds = tokens.map((t) => t.type === 'heading' ? ids.next(headingSlug(t)) : '');
+    const byId = pageIds.indexOf(slugOfHeadingText(anchor));
+    const start = byId > -1
+        ? byId
+        : tokens.findIndex((t) => t.type === 'heading' && headingMatches(t, anchor));
     if (start < 0) {
         const have = tokens
             .filter((t) => t.type === 'heading')

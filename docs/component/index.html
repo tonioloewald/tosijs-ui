@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=9c1da296a8f2" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=0aad99431b07" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=209441ef38ed" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="example">example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -234,8 +234,9 @@ everything passes and the first failure, in red, when something does not. It cov
 detail. Change the expected text in the <strong>DOM tests</strong> tab to see it go red.</li>
 <li><strong>The tests always run</strong>, on every site, whatever the page&#39;s tests switch says. Elsewhere
 that switch is off by default away from localhost; here the result is the reader&#39;s feedback.
-A <code>tjs</code> or <code>ts</code> example in an inline view therefore loads its transpiler when it runs, where
-one that is only read does not.</li>
+A <code>tjs</code> example with inline tests therefore loads its transpiler when it runs in an inline
+view; elsewhere it runs from the copy the build transpiled (<code>ts</code> always transpiles in the
+page).</li>
 <li><strong>Empty tabs are hidden.</strong> A tab for <code>html</code>, <code>css</code> or <code>DOM tests</code> appears only when the
 example has that block, so an example that is one block of code shows one source tab. The
 full-screen code view (the <code>&lt;&gt;</code> button) still shows them all, which is where you add one.</li>
@@ -761,6 +762,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-q03pvqdy.js"></script>
+  <script type="module" src="../hydrate-fz04wv2s.js"></script>
 </body>
 </html>

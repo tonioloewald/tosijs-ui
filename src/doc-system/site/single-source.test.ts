@@ -69,6 +69,18 @@ describe('insets', () => {
     }
   })
 
+  test('a repeated heading is named by the id the page gives it', () => {
+    const docs = [
+      doc('g.md', '# G\n\n## Usage\n\nfirst\n\n## Usage\n\nsecond\n'),
+      doc('a.md', '<!--{ "inset": "g.md#usage-1" }-->\n'),
+      doc('b.md', '<!--{ "inset": "g.md#usage" }-->\n'),
+    ]
+    resolveInsets(docs)
+    expect(docs[1].text).toContain('second')
+    expect(docs[1].text).not.toContain('first')
+    expect(docs[2].text).toContain('first')
+  })
+
   test("the inset page's live examples arrive as fences, so they run where inset", () => {
     const docs = [
       doc(

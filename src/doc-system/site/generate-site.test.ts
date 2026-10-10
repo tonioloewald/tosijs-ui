@@ -125,6 +125,28 @@ describe('docs.json cache-busting', () => {
     expect(await page()).not.toContain('ebooks')
   })
 
+  test('a dead in-page link warns, and fails the build under strict', async () => {
+    const docs = [
+      {
+        filename: 'README.md',
+        title: 'Home',
+        path: 'README.md',
+        text: '# Home\n\n## Real\n\n[ok](#real) [dead](#unreal)',
+      },
+    ]
+    const warned: string[] = []
+    const warn = console.warn
+    console.warn = (...args: unknown[]) => void warned.push(args.join(' '))
+    try {
+      await page({ docs })
+    } finally {
+      console.warn = warn
+    }
+    expect(warned.join('\n')).toContain('README.md: #unreal')
+    expect(warned.join('\n')).not.toContain('#real')
+    await expect(page({ docs, strict: true })).rejects.toThrow(/#unreal/)
+  })
+
   test('docsStamp is applied to the corpus URL', async () => {
     const html = await page({ docsStamp: 'deadbeef', assetStamp: '9.9.9' })
     expect(html).toContain('docs.json?v=deadbeef')

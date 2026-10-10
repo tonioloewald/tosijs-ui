@@ -180,3 +180,40 @@ test('an inline view shows only the tabs the example has; the full view shows th
   ])
   await expect(host.locator('[part="testStatus"]')).toBeHidden()
 })
+
+test('a tjs inline-test failure has a tab to open, even when the view opened before the run finished', async ({
+  page,
+}) => {
+  /*
+  On a deployed site (tests off) an inline view opens as it nears the viewport, while the
+  first run is still waiting for the transpiler. The tabs were set up then, with no test
+  results yet, and the "tjs tests" tab was never added: the status line reported a failure
+  and clicking it did nothing.
+  */
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+  await page.goto('/component/')
+  const host = page.locator('tosi-example:has(.preview .badge)').first()
+  await host.scrollIntoViewIfNeeded()
+  await expect(host.locator('.preview .badge')).toBeVisible()
+  // Open the view first (no inline tests have run: tests are off and the build baked it)…
+  await host.evaluate((el: any) => el.showInline('code'))
+  expect(await tabNames(host)).not.toContain('tjs tests')
+  // …then the run that finds a failing inline test.
+  await host.evaluate((el: any) => {
+    el.js = el.js.replace("toBe('count: 42')", "toBe('count: 43')")
+    return el.refresh()
+  })
+  const status = host.locator('[part="testStatus"]')
+  await expect(status).toHaveClass(/test-fail/)
+  await expect(status).toContainText('✗ badge formats label and number')
+  expect(await tabNames(host)).toContain('tjs tests')
+  await status.click()
+  expect(
+    await host.evaluate((el: any) =>
+      el.parts.editors.bodies[el.parts.editors.value].getAttribute('name')
+    )
+  ).toBe('tjs tests')
+  await expect(host.locator('.tjs-test-results')).toContainText('✗ badge')
+})

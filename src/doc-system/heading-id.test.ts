@@ -12,6 +12,10 @@ test('a heading slug is the GitHub one: punctuation dropped, spaces to hyphens',
   // Letters are letters in every script; an ASCII-only slug left these headings with no id.
   expect(slugOfHeadingText('Käyttö ja 日本語')).toBe('käyttö-ja-日本語')
   expect(slugOfHeadingText('???')).toBe('')
+  // An entity is the character it stands for, never its name: GitHub gives no "amp" or "copy".
+  expect(slugOfHeadingText('Fish &amp; Chips &copy; &#169;')).toBe(
+    'fish--chips'
+  )
 })
 
 test('the slug is of the text a reader sees, not the markdown', () => {
@@ -26,6 +30,11 @@ test('a repeated heading gets -1, -2, and a suffixed id never collides with a li
   expect(
     ['usage', 'usage', 'usage-1', 'usage', ''].map((s) => ids.next(s))
   ).toEqual(['usage', 'usage-1', 'usage-1-1', 'usage-2', ''])
+})
+
+test("`example-N` is a live example's id on the page; a heading never takes it", () => {
+  expect(new HeadingIds().next('example-2')).toBe('example-2-1')
+  expect(renderDocMarkdown('## Example 2')).toContain('id="example-2-1"')
 })
 
 test('rendered headings carry ids, fresh for every page', () => {
@@ -55,4 +64,20 @@ test('an in-page link that matches no id is reported; one that matches is not', 
     ].join('\n\n')
   )
   expect(deadInPageAnchors(html)).toEqual(['the-1986-errata'])
+})
+
+test('raw HTML is read with its attributes in any order and any quoting', () => {
+  const html = [
+    // a second id-like attribute, single quotes, no quotes, and a `>` inside a value
+    '<input name="field" id="bar">',
+    "<div id='single'></div>",
+    '<div id=bare></div>',
+    '<span title="a > b" id="after-gt"></span>',
+    '<a name="named"></a>',
+    '<a href="#bar">1</a> <a href="#single">2</a> <a href="#bare">3</a>',
+    '<a href="#after-gt">4</a> <a href="#named">5</a>',
+    // a form field's name is not an anchor, and unquoted or single-quoted links are links
+    "<a href='#field'>6</a> <a href=#nowhere>7</a>",
+  ].join('\n')
+  expect(deadInPageAnchors(html).sort()).toEqual(['field', 'nowhere'])
 })

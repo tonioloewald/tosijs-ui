@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=a4b4b5157763" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=9c1da296a8f2" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=0aad99431b07" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=209441ef38ed" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1103,7 +1103,10 @@ sets <code>epub.output</code> writes the cover beside that file where the manife
 </code></pre>
 <p>If you run your own build in place of <code>buildSite</code>, <code>attachCovers(volumes, filesInOutputDir, basePath)</code> adds the cover fields for the covers <code>buildEpub</code> wrote, and
 <code>printCoverManifestUrl(config)</code> is the value to pass <code>generateSite</code> as <code>bookVolumes</code> so Print
-can find them (the manifest is <code>VOLUME_MANIFEST</code>, <code>epub-volumes.json</code>).</p>
+can find them (the manifest is <code>VOLUME_MANIFEST</code>, <code>epub-volumes.json</code>). Pass <code>ebooks</code> too:
+<code>listEpubVolumes(docs, config)</code> mapped to <code>{ title, url }</code>, or <code>[]</code> for a site with no ePub.
+It is what the settings menu&#39;s &quot;Download ePub&quot; entry is built from; left unset, the entry
+links to a name derived from <code>projectName</code>, which is a 404 on a site that builds no book.</p>
 <blockquote>
 <p><strong>Do not hard-code the filename.</strong> It is <em>derived</em> — <code>&lt;project&gt;-&lt;volume&gt;.epub</code> — so a
 hand-written link rots the moment a volume is renamed, and rots silently, since nothing
@@ -1550,9 +1553,9 @@ now prints a warning; before 1.16.7 it was silent.</p>
 </li>
 <li><p><strong>An in-page link points at nothing.</strong> <code>[text](#some-heading)</code> where the page has no such
 id is a link that looks live and does nothing. The warning names the page and the anchor.
-Not checked: <code>#/route</code> and <code>#!…</code> (hash routers), <code>#top</code>, and the ids live examples get in
-the browser (<code>#example-2</code>, or a fence&#39;s own <code>#id</code>). An id that only exists once a live
-example has rendered its HTML is reported, because the build cannot see it.</p>
+Not checked: <code>#/route</code> and <code>#!…</code> (hash routers), <code>#top</code>, and <code>#example-2</code>, the number a
+live example gets in the browser. An id that only exists once a script has run (a live
+example rendering its HTML, say) is reported, because the build cannot see it.</p>
 </li>
 </ul>
 <p>One related failure shows up in the browser, not the build. <code>bundleEntry</code> replaces the bundle
@@ -1700,7 +1703,9 @@ heading on the same page and <code>/page/#the-1987-errata</code> links to it fro
 the heading&#39;s text as GitHub slugs it: lowercased, everything that is not a letter, a
 number, a space, <code>-</code> or <code>_</code> dropped, and each space turned into <code>-</code>. So &quot;What&#39;s new?&quot; is
 <code>whats-new</code> and &quot;Foo &amp; Bar&quot; is <code>foo--bar</code>. Letters of any script are kept. A heading
-repeated on one page gets <code>-1</code>, <code>-2</code>, and so on, in order. The build warns about an
+repeated on one page gets <code>-1</code>, <code>-2</code>, and so on, in order. An entity such as <code>&amp;copy;</code> adds
+nothing to the id, and a heading that would be <code>example-2</code> gets <code>example-2-1</code>, since that id
+belongs to the page&#39;s second live example. The build warns about an
 in-page link that matches no id on its page (it fails under <code>strict</code>).</li>
 </ul>
 <h3 id="which-fence-languages-execute">Which fence languages EXECUTE</h3>
@@ -2073,6 +2078,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-q03pvqdy.js"></script>
+  <script type="module" src="../hydrate-fz04wv2s.js"></script>
 </body>
 </html>

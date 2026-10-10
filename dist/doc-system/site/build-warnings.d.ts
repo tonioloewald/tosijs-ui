@@ -21,16 +21,4 @@ export declare function misconfigured(strict: boolean | undefined, message: stri
 export declare function liveFenceLanguages(docs: Array<{
     text?: string;
 }>, policy?: ExamplePolicy): Set<string>;
-/**
- * The in-page links (`href="#…"`) in a RENDERED page that point at no id on it.
- *
- * A dead in-page anchor is the one broken link a reader cannot tell from a working one: it
- * is styled as a link, it does nothing, and nothing reports it (board #3178). Asked of the
- * rendered HTML and not of the markdown, so the ids are the ones the page really carries
- * (`renderDocMarkdown`, THE renderer) and no second copy of the heading-id rule exists here.
- *
- * Not reported, because they are not in-page anchors or resolve only in the browser:
- * `#/route` and `#!…` (hash routers), a bare `#`, `#top`, and `#example-N` / a fence's own
- * `#id` (live examples get their ids when the page hydrates).
- */
 export declare function deadInPageAnchors(html: string): string[];
