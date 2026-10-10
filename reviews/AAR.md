@@ -412,3 +412,24 @@ gap, recorded rather than hidden.
   rendering of the inline views, per-volume `only` targets. Review follow-ups are board #3133;
   tjs-lang #3134 asks for a separable runtime prelude so a console line keeps tjs values.
 - **Approval lapsed the 60-minute wait a fifth time;** `verify_only=true` green.
+
+## 1.16.10 (2026-10-10) — Print opens with the book cover; the name was derived twice again
+
+- **Scope:** the maintainer noticed Print as PDF had no cover. The ePub build now writes its
+  cover beside the book, `/epub-volumes.json` lists it, and Print opens with it;
+  `epub: { printCover: false }` opts out. Illustrating the ePub and Print from live examples
+  was scoped and filed as board #3146, not built.
+- **The pre-tag review (GO with follow-ups) found the cover filename derived in two places
+  that disagreed** for a WebP cover, a missing cover file and a build with no rasterizer. The
+  same class as 1.16.9's second copy of the ignore rule. Fixed by reading the name back from
+  the output dir after the ePubs are built; nothing predicts it.
+- **The scoped re-review found the fix made Print wait on an untimed fetch,** so a stalled
+  connection left a blank popup. Bounded at 3s. It also caught that a volume named "cover"
+  writes `<stem>-cover.epub`, which the read-back accepted as a cover image.
+- **Dropping the inline `onerror`** came from the review's completeness gaps: a CSP would
+  block it in the popup. Print loads the image before using it.
+- **Lanes:** unit 1769 tests; Playwright 432 in 3.1m; consumer 54 checks; test-browser 77
+  over 18 pages. CI and the dry run green on the tagged commit at the first attempt.
+- **Approval landed inside the wait this time;** the run's own verify job was green.
+- **Open on board #3151:** Print pagination with the cover is checked only in Chromium; a
+  corpus with no default volume prints without a cover; "Download ePub" still derives its URL.
