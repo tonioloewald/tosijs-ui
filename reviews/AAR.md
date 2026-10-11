@@ -433,3 +433,33 @@ gap, recorded rather than hidden.
 - **Approval landed inside the wait this time;** the run's own verify job was green.
 - **Open on board #3151:** Print pagination with the cover is checked only in Chromium; a
   corpus with no default volume prints without a cover; "Download ePub" still derives its URL.
+
+## 1.16.11 (2026-10-11) — heading ids, a test result on show; my own fix hung the build
+
+- **Scope:** every rendered heading gets a GitHub-style `id` and the build warns on a dead
+  in-page link (board #3178); inline example views show one test status line, always run
+  their tests, and hide empty tabs; a wrapped sidebar title keeps its arrow (GitHub #219);
+  "Download ePub" follows what the build wrote (GitHub #218).
+- **The pre-tag review (GO with follow-ups) found a status line that led nowhere:** on a
+  deployed site a failing inline `tjs` test showed, but its tab was created only at setup,
+  before the first run finished. The tab is now created when results arrive.
+- **The scoped re-review BLOCKed on a fix made for the first review.** Reserving `example-N`
+  ids inside `HeadingIds.next` looped forever on a second heading titled "Example", hanging
+  the build and the reader's tab. The reservation was removed, not patched; the overlap it
+  was meant to prevent is a build-warning task on board #3226. A second scoped re-review
+  cleared it.
+- **The full Playwright lane caught what the review did not:** the docs example's own test
+  called `showInline`, and inline-view tests now run for every reader, so CodeMirror loaded
+  at page load (`tests/editor-defer.pw.ts`). A test inside an inline-view example is now
+  reader-path code.
+- **`release-check` exited 1 once** on a `[change]` bullet the CHANGELOG had worded
+  differently; reworded.
+- **Shipped as a patch with three `[change]` bullets** (inset anchors match page ids, inline
+  views always run tests, empty tabs hidden). All three touch only surfaces new in 1.16.9;
+  the maintainer approved it as a patch on 2026-10-11.
+- **Lanes:** unit 1785 tests; Playwright 462 passed, 15 skipped; consumer 54 checks;
+  test-browser 77 over 18 pages. CI and the dry run green on the tagged commit.
+- **Approval lapsed the 60-minute wait** (staged 2026-10-10, approved the next day);
+  `verify_only=true` run for the verification.
+- **Open on board #3226:** a heading can share an id with a live example; heading ids repeat
+  across chapters in Print; the hang regression test would hang, not fail.
