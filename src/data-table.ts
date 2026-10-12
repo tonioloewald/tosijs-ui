@@ -983,7 +983,8 @@ table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
 - The element is built once per expansion and kept while the row stays expanded, so
   scrolling it out of view and back does not reset what the reader did inside it. It is
   dropped when the row collapses or the table's `array` is replaced.
-- Expansion follows the row object, so it survives sorting and filtering. Set
+- Expansion follows the row object, so it survives sorting, filtering, and a new `array`
+  that still holds the row. Set
   **`rowId = (row) => string`** as well and it survives reloading the data, and
   **`expandedRowIds`** can be read and set. Assigning it fires no events: they report a
   toggle, not a restore.
@@ -1769,6 +1770,7 @@ export class TosiTable extends withAttributes({
   }
 
   private _pendingExpandedIds: string[] | null = null
+  private _warnedPendingIds = false
 
   /**
    * Ids of the expanded rows. Needs `rowId`; without one this reads empty. Assigning it
@@ -1792,12 +1794,21 @@ export class TosiTable extends withAttributes({
   }
 
   /*
-  The data was replaced. Details were built from the old rows, so they go; and without a
-  `rowId` the expansion set holds the old row OBJECTS, which no new row can match.
+  The data was replaced. Without a `rowId` expansion follows the row OBJECT, so a row that
+  is still in the new data stays expanded with its detail, and one that is gone is
+  forgotten (it could never match again, and holding it would keep the old data alive).
+  With a `rowId` the ids carry over, and `detailFor` rebuilds any detail whose row object
+  changed.
   */
-  private forgetDetails(): void {
-    this._detailEls.clear()
-    if (!this._rowId) this._expanded.clear()
+  private forgetDetails(next: any[]): void {
+    if (this._rowId || this._expanded.size === 0) return
+    const present = new Set(next)
+    for (const row of [...this._expanded]) {
+      if (!present.has(row)) {
+        this._expanded.delete(row)
+        this._detailEls.delete(row)
+      }
+    }
   }
 
   private detailKey(row: any): unknown {
@@ -1817,18 +1828,19 @@ export class TosiTable extends withAttributes({
   toggleRowDetail(row: any, open?: boolean): void {
     if (row == null || !this._rowDetail) return
     const raw = tosiValue(row)
-    // Pinned rows are not expandable, and neither is a row `rowHasDetail` rules out.
+    // Pinned rows are not expandable.
     if (
       this.effectivePinnedTopData.includes(raw) ||
       this.effectivePinnedBottomData.includes(raw)
     ) {
       return
     }
-    if (open !== false && this.rowHasDetail && !this.rowHasDetail(raw)) return
     const key = this.detailKey(raw)
     const was = this._expanded.has(key)
     const want = open ?? !was
     if (want === was) return
+    // Collapsing is always allowed; opening is not, on a row `rowHasDetail` rules out.
+    if (want && this.rowHasDetail && !this.rowHasDetail(raw)) return
     let element = this._detailEls.get(key) ?? null
     if (want) {
       element = this.detailFor(raw, key)
@@ -1909,7 +1921,8 @@ export class TosiTable extends withAttributes({
   private syncDetail(rowEl: Element, row: any): void {
     /*
     A row of a scroll area this table has already replaced. Its list binding updates on a
-    throttle, so it can stamp once more after a re-render, and a detail container is ONE
+    throttle, so it can stamp once more after a re-render (reported upstream on the tosijs
+    board, #3230), and a detail container is ONE
     element: appending it here would take it out of the live row and into a detached one.
     */
     if (rowEl.closest('.scroll-area.-stale')) return
@@ -2061,7 +2074,7 @@ export class TosiTable extends withAttributes({
     ) {
       this.queueRender()
     }
-    if (this._array !== array) this.forgetDetails()
+    if (this._array !== array) this.forgetDetails(array || [])
     this._array = array || []
     this._columns = columns || null
     this._filter = filter || passThru
@@ -2246,8 +2259,9 @@ export class TosiTable extends withAttributes({
   }
 
   set array(newArray: any[]) {
-    this.forgetDetails()
-    this._array = tosiValue(newArray)
+    const next = tosiValue(newArray)
+    if (next !== this._array) this.forgetDetails(next)
+    this._array = next
     this.queueRender()
   }
 
@@ -4218,6 +4232,12 @@ export class TosiTable extends withAttributes({
     // Column layout
     const cols = this.visibleColumns
     if (cols.length === 0) return
+    if (this._pendingExpandedIds?.length && !this._warnedPendingIds) {
+      this._warnedPendingIds = true
+      console.warn(
+        '<tosi-table>: expandedRowIds is set but there is no rowId to match the ids against; they apply once rowId is set.'
+      )
+    }
     const stickyInfo = this.computeStickyInfo(cols)
     // Before setColumnWidths, so the widths describe the cells this render is about to build.
     this._renderedCols = cols

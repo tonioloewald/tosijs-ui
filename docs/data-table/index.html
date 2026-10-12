@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=98f90feb3d7b" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=9077a0e9563a" data-tosi-doc-system />
   <title>table — tosijs-ui</title>
   <meta name="description" content="A virtual data-table, configurable via a columns array (which will automatically be generated if not provided), that displays gigantic tables with fixed…" />
   <link rel="canonical" href="https://ui.tosijs.net/data-table/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=ef961ad93b27" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=dd5df2cdc92d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="table">table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
@@ -899,7 +899,8 @@ state.</li>
 <li>The element is built once per expansion and kept while the row stays expanded, so
 scrolling it out of view and back does not reset what the reader did inside it. It is
 dropped when the row collapses or the table&#39;s <code>array</code> is replaced.</li>
-<li>Expansion follows the row object, so it survives sorting and filtering. Set
+<li>Expansion follows the row object, so it survives sorting, filtering, and a new <code>array</code>
+that still holds the row. Set
 <strong><code>rowId = (row) =&gt; string</code></strong> as well and it survives reloading the data, and
 <strong><code>expandedRowIds</code></strong> can be read and set. Assigning it fires no events: they report a
 toggle, not a restore.</li>
@@ -1173,6 +1174,6 @@ happy with the untranslated headers.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-fswtgmy8.js"></script>
+  <script type="module" src="../hydrate-6p7w62ht.js"></script>
 </body>
 </html>

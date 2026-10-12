@@ -1956,11 +1956,14 @@ export class TosiSchemaForm extends withAttributes({
             )
           }
           const { editor } = curatedField(entry)
-          // Only for a path that is shown: an unknown one keeps its placeholder, and an
-          // editor there would write a property the schema does not describe.
-          const shown = nodes.some(
-            (n) => n.path === path && n.kind !== 'unsupported'
-          )
+          /*
+          Only for a path the schema describes and the form shows. An unknown path keeps
+          its placeholder: an editor there would write a property the schema does not have.
+          A property the form merely has no built-in control for (an untyped one, a tuple)
+          is exactly what an editor is for, so that one does get it.
+          */
+          const shown =
+            !unknown.includes(path) && nodes.some((n) => n.path === path)
           if (editor && shown) this._editors.set(path, editorPlugin(editor))
         }
         this._hiddenErrorSlot = div({

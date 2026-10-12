@@ -273,6 +273,7 @@ export declare class TosiTable extends TosiTable_base {
     get rowId(): ((row: any) => string) | null;
     set rowId(fn: ((row: any) => string) | null);
     private _pendingExpandedIds;
+    private _warnedPendingIds;
     /**
      * Ids of the expanded rows. Needs `rowId`; without one this reads empty. Assigning it
      * fires no `rowexpand` / `rowcollapse`: those report a toggle, not a restore.

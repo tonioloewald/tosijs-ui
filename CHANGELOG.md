@@ -32,8 +32,8 @@ schema form can show a hand-picked set of fields. Both are off until you ask for
   now shows it there, a missing required value included, as it does for built-in controls.
 - **Fixed: `readOnly` on a schema form did not reach a plugin control that is a custom
   element, or a `<textarea>`.** Both are now locked with the rest of the form, through
-  `disabled` or, for a component that has only that, `readOnly`. The form releases only
-  what it locked: a control a plugin disabled itself stays disabled.
+  `disabled` or, for a component that has only that, `readOnly`. Of these, the form
+  releases only what it locked: one a plugin disabled itself stays disabled.
 
 `dist/iife.js` grows by about 2.5 kB gzip.
 

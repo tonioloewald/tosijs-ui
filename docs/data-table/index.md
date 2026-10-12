@@ -982,7 +982,8 @@ table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
 - The element is built once per expansion and kept while the row stays expanded, so
   scrolling it out of view and back does not reset what the reader did inside it. It is
   dropped when the row collapses or the table's `array` is replaced.
-- Expansion follows the row object, so it survives sorting and filtering. Set
+- Expansion follows the row object, so it survives sorting, filtering, and a new `array`
+  that still holds the row. Set
   **`rowId = (row) => string`** as well and it survives reloading the data, and
   **`expandedRowIds`** can be read and set. Assigning it fires no events: they report a
   toggle, not a restore.

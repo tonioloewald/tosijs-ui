@@ -415,3 +415,37 @@ test('pinned rows have no toggle; ids given before rowId still apply', async ({
   })
   expect(state).toEqual({ events: 0, pinnedExpanded: false, ids: ['r1'] })
 })
+
+test('without rowId, expansion follows the row object through a new array', async ({
+  page,
+}) => {
+  await makeTable(page)
+  const state = await page.evaluate(async () => {
+    const table = document.querySelector('#detailed') as any
+    const tick = () => new Promise((r) => setTimeout(r, 200))
+    table.rowId = null
+    await tick()
+    const [, , keep, drop] = table.array
+    table.toggleRowDetail(keep)
+    table.toggleRowDetail(drop)
+    // the same objects, less one: the kept row stays open, the dropped one is forgotten
+    table.array = table.array.filter((r: any) => r !== drop)
+    await tick()
+    const afterFilter = {
+      keep: table.isRowExpanded(keep),
+      drop: table.isRowExpanded(drop),
+      shown: table.querySelectorAll('.tr-detail').length,
+    }
+    // a row rowHasDetail now rules out can still be collapsed
+    table.rowHasDetail = () => false
+    table.toggleRowDetail(keep)
+    const collapsed = table.isRowExpanded(keep)
+    table.toggleRowDetail(keep)
+    return { afterFilter, collapsed, reopened: table.isRowExpanded(keep) }
+  })
+  expect(state).toEqual({
+    afterFilter: { keep: true, drop: false, shown: 1 },
+    collapsed: false,
+    reopened: false,
+  })
+})

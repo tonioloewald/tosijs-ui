@@ -20,6 +20,7 @@ async function makeForm(page: any) {
           priority: { type: 'integer', minimum: 0, maximum: 5 },
           notes: { type: 'string' },
           hidden: { type: 'integer' },
+          meta: {},
         },
         required: ['priority', 'name'],
       },
@@ -28,6 +29,8 @@ async function makeForm(page: any) {
         name: 'Name',
         priority: { caption: 'Priority', editor: tosiRating },
         'no.such.path': { caption: 'Ghost', editor: tosiRating },
+        // described by the schema, but with no type: only an editor can show it
+        meta: { editor: () => document.createElement('textarea') },
       },
     })
     Object.assign(form.style, {
@@ -121,7 +124,18 @@ test('an unknown path shows a placeholder, never an editor', async ({
   await expect(page.locator('#curated .schema-unsupported')).toContainText(
     'no.such.path'
   )
-  await expect(page.locator('#curated [data-plugin]')).toHaveCount(1)
+  await expect(
+    page.locator('#curated [data-plugin="no.such.path"]')
+  ).toHaveCount(0)
+  // ...but a property the schema has and the form has no control for does get its editor
+  const meta = page.locator('#curated textarea[data-plugin="meta"]')
+  await expect(meta).toHaveCount(1)
+  await meta.fill('free text')
+  expect(
+    await page.evaluate(
+      () => (document.querySelector('#curated') as any).value.meta
+    )
+  ).toBe('free text')
 })
 
 test('readOnly locks a component editor and gives it back', async ({
