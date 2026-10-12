@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.16.13
+
+Documentation only; no library code changed.
+
+- **Better examples for the two 1.16.12 features**, in the package's doc comments and
+  `llms.txt` as well as on the site. The table's row detail example now opens each invoice to
+  a nested `<tosi-table>` of its line items with a totals line. The curated form example
+  starts from a valid value and has **View only** and **Every field** toggles; the
+  hidden-error case is a separate, smaller example.
+
 ## 1.16.12
 
 Two additions for task-focused screens: a table row can open to show a detail element, and a
