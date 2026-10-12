@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=dd5df2cdc92d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=dd88540e00ea" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="table">table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
@@ -980,8 +980,10 @@ preview.append(invoiceTable, log)
 <pre><code class="language-test">const table = preview.querySelector(&#39;tosi-table&#39;)
 await waitMs(300)
 
-test(&#39;a row expands to its detail and collapses again&#39;, () =&gt; {
+test(&#39;a row expands to its detail and collapses again&#39;, async () =&gt; {
   const row = table.array[3]
+  // rows are stamped a frame or more after the table mounts, later on a busy machine
+  for (let i = 0; i &lt; 50 &amp;&amp; !table.getCells(row); i += 1) await waitMs(100)
   const events = []
   const record = (event) =&gt; events.push(event.type + &#39;:&#39; + event.detail.row.id)
   table.addEventListener(&#39;rowexpand&#39;, record)

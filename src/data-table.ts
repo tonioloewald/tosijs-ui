@@ -1069,8 +1069,10 @@ preview.append(invoiceTable, log)
 const table = preview.querySelector('tosi-table')
 await waitMs(300)
 
-test('a row expands to its detail and collapses again', () => {
+test('a row expands to its detail and collapses again', async () => {
   const row = table.array[3]
+  // rows are stamped a frame or more after the table mounts, later on a busy machine
+  for (let i = 0; i < 50 && !table.getCells(row); i += 1) await waitMs(100)
   const events = []
   const record = (event) => events.push(event.type + ':' + event.detail.row.id)
   table.addEventListener('rowexpand', record)

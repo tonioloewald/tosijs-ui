@@ -80,7 +80,11 @@ test('off localhost, turning tests on runs the page showing now', async ({
       ).join(', ')}`
     ).toBeTruthy()
     expect(entry.tests.length).toBeGreaterThan(3)
-    expect(entry.totalFailed).toBe(0)
+    expect(
+      entry.totalFailed,
+      // name what failed: a bare count is no use for a failure that comes and goes
+      JSON.stringify(entry.tests.filter((t: any) => !t.passed))
+    ).toBe(0)
     expect(results.failed).toBe(0)
   } finally {
     await browser.close()
