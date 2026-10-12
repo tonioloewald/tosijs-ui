@@ -190,6 +190,29 @@ test('expansion survives scrolling away, a sort, and new row objects', async ({
   })
   await expect(page.locator('#detailed .tr-detail')).toHaveCount(1)
 
+  // A sort that keeps the row in view, then a filter that keeps it at all.
+  await page.evaluate(() => {
+    const table = document.querySelector('#detailed') as any
+    table.sort = (a: any, b: any) =>
+      Number(a.id.slice(1)) < 10 && Number(b.id.slice(1)) < 10
+        ? Number(b.id.slice(1)) - Number(a.id.slice(1))
+        : Number(a.id.slice(1)) - Number(b.id.slice(1))
+  })
+  await expect(page.locator('#detailed .tr-detail')).toHaveCount(1)
+  await expect(field).toHaveValue('typed by the reader')
+  await page.evaluate(() => {
+    const table = document.querySelector('#detailed') as any
+    table.filter = (rows: any[]) => rows.filter((r) => r.id.endsWith('3'))
+  })
+  await expect(page.locator('#detailed .tr-detail')).toHaveCount(1)
+  await expect(field).toHaveValue('typed by the reader')
+  await page.evaluate(() => {
+    const table = document.querySelector('#detailed') as any
+    table.filter = (rows: any[]) => rows
+    table.sort = undefined
+  })
+  await expect(page.locator('#detailed .tr-detail')).toHaveCount(1)
+
   // New row objects with the same ids: still expanded, and rebuilt from the new data.
   await page.evaluate(() => {
     const table = document.querySelector('#detailed') as any
@@ -222,4 +245,173 @@ test('keyboard: Enter on the toggle cell expands; Tab from the last cell enters 
   // Arrow keys inside the detail belong to the input, not to the grid.
   await page.keyboard.press('ArrowDown')
   await expect(page.locator('#detailed .my-detail input')).toBeFocused()
+})
+
+test('a press inside a detail at a column edge does not resize the column', async ({
+  page,
+}) => {
+  await makeTable(page)
+  await page.evaluate(() => {
+    const table = document.querySelector('#detailed') as any
+    table.expandedRowIds = ['r2']
+  })
+  const detail = page.locator('#detailed .tr-detail')
+  await expect(detail).toHaveCount(1)
+  const box = (await detail.boundingBox())!
+  const area = (await page.locator('#detailed .scroll-area').boundingBox())!
+  // x = 240 is the edge between the 40px toggle column and the 200px name column
+  const x = area.x + 240
+  const y = box.y + box.height - 20
+  const widths = () =>
+    page.evaluate(() =>
+      (document.querySelector('#detailed') as any).columns.map(
+        (c: any) => c.width
+      )
+    )
+  const before = await widths()
+  await page.mouse.move(x, y)
+  expect(
+    await page.evaluate(
+      () => (document.querySelector('#detailed') as HTMLElement).style.cursor
+    )
+  ).toBe('')
+  await page.mouse.down()
+  await page.mouse.move(x + 60, y, { steps: 4 })
+  await page.mouse.up()
+  expect(await widths()).toEqual(before)
+
+  // The same press on a cell row DOES find the edge: the guard is the detail, not the x.
+  const row = (await page
+    .locator('#detailed .scroll-area > .tr')
+    .first()
+    .boundingBox())!
+  await page.mouse.move(x, row.y + 10)
+  expect(
+    await page.evaluate(
+      () => (document.querySelector('#detailed') as HTMLElement).style.cursor
+    )
+  ).toBe('col-resize')
+})
+
+test('a table inside a detail keeps its own selection', async ({ page }) => {
+  await makeTable(page)
+  await page.evaluate(() => {
+    const outer = document.querySelector('#detailed') as any
+    outer.rowDetail = () => {
+      const inner = document.createElement('tosi-table') as any
+      inner.className = 'inner'
+      inner.array = [
+        { k: 'a', v: 1 },
+        { k: 'b', v: 2 },
+      ]
+      inner.columns = [
+        { prop: 'k', width: 80, pinned: 'left' },
+        { prop: 'v', width: 80 },
+      ]
+      inner.rowHeight = 0
+      inner.select = true
+      inner.style.height = '100px'
+      return inner
+    }
+    outer.expandedRowIds = ['r2']
+  })
+  const inner = page.locator('#detailed .inner')
+  await expect(inner.locator('.td')).toHaveCount(4)
+  const marks = () =>
+    page.evaluate(() => {
+      const inner = document.querySelector('#detailed .inner')!
+      return [...inner.querySelectorAll('.tr')].map((r) =>
+        r.hasAttribute('aria-selected')
+      )
+    })
+  await inner.locator('.td', { hasText: 'b' }).click()
+  // header, a, b
+  expect(await marks()).toEqual([false, false, true])
+  // select the owning outer row, then another one
+  await page
+    .locator('#detailed .scroll-area > .tr > .td', { hasText: 'row 2' })
+    .first()
+    .click()
+  expect(await marks()).toEqual([false, false, true])
+  await page
+    .locator('#detailed .scroll-area > .tr > .td', { hasText: 'row 0' })
+    .first()
+    .click()
+  expect(await marks()).toEqual([false, false, true])
+  expect(
+    await page.evaluate(
+      () => (document.querySelector('#detailed') as any).selectedRows.length
+    )
+  ).toBe(1)
+  // the inner pinned cell keeps the inner table's sticky offset
+  expect(
+    await page.evaluate(
+      () =>
+        (
+          document.querySelector(
+            '#detailed .inner .td.col-pinned'
+          ) as HTMLElement
+        ).style.left
+    )
+  ).toBe('0px')
+})
+
+test('pinned rows have no toggle; ids given before rowId still apply', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.waitForFunction(() => !!customElements.get('tosi-table'))
+  await page.evaluate(() => {
+    const { tosiTable } = (window as any).xinjsui
+    const rows = Array.from({ length: 50 }, (_, i) => ({
+      id: `r${i}`,
+      name: `row ${i}`,
+    }))
+    const table = tosiTable({
+      id: 'pinned',
+      rowHeight: 30,
+      // deliberately before rowId: a creator assigns in key order
+      expandedRowIds: ['r1', 'r4'],
+      rowId: (row: any) => row.id,
+      rowDetail: (row: any) => {
+        if (row.id === 'r4') return null
+        const el = document.createElement('div')
+        el.textContent = 'detail of ' + row.name
+        return el
+      },
+      array: rows,
+      pinnedTopRows: [{ id: 'top', name: 'totals' }],
+      columns: [
+        { prop: 'x', width: 40, expander: true },
+        { prop: 'name', width: 200 },
+      ],
+      style: {
+        position: 'fixed',
+        top: '0',
+        left: '0',
+        zIndex: '2000',
+        height: '300px',
+        width: '400px',
+        background: 'white',
+      },
+    })
+    document.body.append(table)
+  })
+  await expect(page.locator('#pinned .tr-detail')).toHaveText('detail of row 1')
+  await expect(
+    page.locator('#pinned .tbody-pinned-top .row-expander')
+  ).toHaveCount(0)
+  const state = await page.evaluate(() => {
+    const table = document.querySelector('#pinned') as any
+    let events = 0
+    table.addEventListener('rowexpand', () => (events += 1))
+    table.toggleRowDetail(table.pinnedTopRows[0])
+    return {
+      events,
+      pinnedExpanded: table.isRowExpanded(table.pinnedTopRows[0]),
+      // r4's detail was null, so it is not left marked as expanded
+      ids: table.expandedRowIds,
+    }
+  })
+  expect(state).toEqual({ events: 0, pinnedExpanded: false, ids: ['r1'] })
 })

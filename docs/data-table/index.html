@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=b5c82c01be25" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=98f90feb3d7b" data-tosi-doc-system />
   <title>table — tosijs-ui</title>
   <meta name="description" content="A virtual data-table, configurable via a columns array (which will automatically be generated if not provided), that displays gigantic tables with fixed…" />
   <link rel="canonical" href="https://ui.tosijs.net/data-table/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=955d7562f9ce" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ef961ad93b27" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="table">table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
@@ -890,8 +890,10 @@ payload.</p>
 table<span class="token punctuation">.</span>columns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">{</span> prop<span class="token operator">:</span> <span class="token string">'detail'</span><span class="token punctuation">,</span> width<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">,</span> expander<span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token operator">...</span>columns<span class="token punctuation">]</span>
 </code></pre>
 <ul>
-<li>A column with <strong><code>expander: true</code></strong> renders the disclosure toggle. Or call
-<strong><code>table.toggleRowDetail(row, open?)</code></strong> from anything you like, such as a row double-click.</li>
+<li>A column with <strong><code>expander: true</code></strong> renders the disclosure toggle (it needs <code>rowDetail</code>;
+without one the toggle is hidden). Or call <strong><code>table.toggleRowDetail(row, open?)</code></strong> from
+anything you like, such as a row double-click. <strong><code>table.isRowExpanded(row)</code></strong> reads the
+state.</li>
 <li><strong><code>rowHasDetail = (row) =&gt; boolean</code></strong> hides the toggle on rows that have nothing to show.</li>
 <li><strong><code>rowexpand</code></strong> and <strong><code>rowcollapse</code></strong> events carry <code>detail: { row, element }</code>.</li>
 <li>The element is built once per expansion and kept while the row stays expanded, so
@@ -899,7 +901,8 @@ scrolling it out of view and back does not reset what the reader did inside it. 
 dropped when the row collapses or the table&#39;s <code>array</code> is replaced.</li>
 <li>Expansion follows the row object, so it survives sorting and filtering. Set
 <strong><code>rowId = (row) =&gt; string</code></strong> as well and it survives reloading the data, and
-<strong><code>expandedRowIds</code></strong> can be read and set.</li>
+<strong><code>expandedRowIds</code></strong> can be read and set. Assigning it fires no events: they report a
+toggle, not a restore.</li>
 <li>The detail stays in view while the columns scroll sideways. Clicks and keys inside it are
 left alone: they do not select the row or move the cell focus. <code>Tab</code> from a row&#39;s last
 cell goes into its detail.</li>
@@ -1170,6 +1173,6 @@ happy with the untranslated headers.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-h2f0dtgt.js"></script>
+  <script type="module" src="../hydrate-fswtgmy8.js"></script>
 </body>
 </html>

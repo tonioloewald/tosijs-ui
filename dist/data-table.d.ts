@@ -249,6 +249,8 @@ export declare class TosiTable extends TosiTable_base {
     private _expanded;
     /** One detail container per expanded row, kept so its state survives scrolling. */
     private _detailEls;
+    /** The row each detail was built from: a detail is only as current as its row. */
+    private _detailRows;
     private _detailCount;
     /**
      * Builds the element shown under an expanded row, from that row's data. Return `null`
@@ -270,9 +272,14 @@ export declare class TosiTable extends TosiTable_base {
      */
     get rowId(): ((row: any) => string) | null;
     set rowId(fn: ((row: any) => string) | null);
-    /** Ids of the expanded rows. Needs `rowId`; without one this is always empty. */
+    private _pendingExpandedIds;
+    /**
+     * Ids of the expanded rows. Needs `rowId`; without one this reads empty. Assigning it
+     * fires no `rowexpand` / `rowcollapse`: those report a toggle, not a restore.
+     */
     get expandedRowIds(): string[];
     set expandedRowIds(ids: string[] | null);
+    private forgetDetails;
     private detailKey;
     isRowExpanded(row: any): boolean;
     /**

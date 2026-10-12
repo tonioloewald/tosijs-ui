@@ -7,6 +7,7 @@ testable without a form. A curation only chooses what is SHOWN. The form still h
 validates the whole value, so a property that is not shown keeps its value and can still be
 in error; `hiddenErrors` is what lets the form say so.
 */
+export const CURATED_KEYS = ['caption', 'help', 'readOnly', 'editor'];
 export function curatedField(entry) {
     return entry === true
         ? {}
@@ -36,8 +37,18 @@ export function findNode(nodes, path) {
 export function curateNodes(nodes, fields) {
     const curated = [];
     const unknown = [];
+    const overlapping = [];
+    const within = (a, b) => a === b || a.startsWith(b + '.');
     for (const [path, entry] of Object.entries(fields)) {
         const { caption } = curatedField(entry);
+        /*
+        An object and one of its own properties cannot both be shown: the property would have
+        two controls, and the form keeps one control per path. The first one named wins.
+        */
+        if (curated.some((n) => within(path, n.path) || within(n.path, path))) {
+            overlapping.push(path);
+            continue;
+        }
         const node = findNode(nodes, path);
         if (!node) {
             unknown.push(path);
@@ -54,7 +65,7 @@ export function curateNodes(nodes, fields) {
         }
         curated.push(caption === undefined ? node : { ...node, label: caption });
     }
-    return { nodes: curated, unknown };
+    return { nodes: curated, unknown, overlapping };
 }
 /**
  * Errors the form has no field to show under: the value is invalid somewhere the curation
@@ -71,12 +82,20 @@ const isNativeControl = (el) => el instanceof HTMLInputElement ||
 export function editorPlugin(editor) {
     if (typeof editor !== 'function')
         return editor;
+    /*
+    What the model last held for each editor, so an `input` followed by the `change` a blur
+    sends writes once. BOTH directions update it: a value pushed in from outside is a new
+    baseline, or the next edit back to the earlier value would be taken for a repeat and
+    dropped.
+    */
+    const held = new WeakMap();
     const put = (el, value) => {
         const next = isNativeControl(el)
             ? value == null
                 ? ''
                 : String(value)
             : value;
+        held.set(el, next);
         if (el.value !== next)
             el.value = next;
     };
@@ -84,14 +103,13 @@ export function editorPlugin(editor) {
         render({ value, set }) {
             const el = editor();
             put(el, value);
-            let last = value;
             const commit = (event) => {
                 // The editor's own event stops here; the form fires its own `change`.
                 event.stopPropagation();
                 const next = el.value;
-                if (Object.is(next, last))
+                if (Object.is(next, held.get(el)))
                     return;
-                last = next;
+                held.set(el, next);
                 set(next);
             };
             el.addEventListener('input', commit);

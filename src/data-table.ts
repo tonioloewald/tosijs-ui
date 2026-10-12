@@ -974,8 +974,10 @@ table.rowDetail = (row) => invoiceLines({ invoice: row }) // any element; null =
 table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
 ```
 
-- A column with **`expander: true`** renders the disclosure toggle. Or call
-  **`table.toggleRowDetail(row, open?)`** from anything you like, such as a row double-click.
+- A column with **`expander: true`** renders the disclosure toggle (it needs `rowDetail`;
+  without one the toggle is hidden). Or call **`table.toggleRowDetail(row, open?)`** from
+  anything you like, such as a row double-click. **`table.isRowExpanded(row)`** reads the
+  state.
 - **`rowHasDetail = (row) => boolean`** hides the toggle on rows that have nothing to show.
 - **`rowexpand`** and **`rowcollapse`** events carry `detail: { row, element }`.
 - The element is built once per expansion and kept while the row stays expanded, so
@@ -983,7 +985,8 @@ table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
   dropped when the row collapses or the table's `array` is replaced.
 - Expansion follows the row object, so it survives sorting and filtering. Set
   **`rowId = (row) => string`** as well and it survives reloading the data, and
-  **`expandedRowIds`** can be read and set.
+  **`expandedRowIds`** can be read and set. Assigning it fires no events: they report a
+  toggle, not a restore.
 - The detail stays in view while the columns scroll sideways. Clicks and keys inside it are
   left alone: they do not select the row or move the cell focus. `Tab` from a row's last
   cell goes into its detail.
@@ -1718,6 +1721,8 @@ export class TosiTable extends withAttributes({
   private _expanded = new Set<unknown>()
   /** One detail container per expanded row, kept so its state survives scrolling. */
   private _detailEls = new Map<unknown, HTMLElement>()
+  /** The row each detail was built from: a detail is only as current as its row. */
+  private _detailRows = new WeakMap<HTMLElement, unknown>()
   private _detailCount = 0
 
   /**
@@ -1756,23 +1761,27 @@ export class TosiTable extends withAttributes({
   set rowId(fn: ((row: any) => string) | null) {
     if (this._rowId === fn) return
     this._rowId = fn
-    this._expanded.clear()
+    // Ids assigned before there was a `rowId` (a creator sets props in key order) apply now.
+    this._expanded = new Set(fn ? this._pendingExpandedIds ?? [] : [])
+    this._pendingExpandedIds = null
     this._detailEls.clear()
     this.queueRender()
   }
 
-  /** Ids of the expanded rows. Needs `rowId`; without one this is always empty. */
+  private _pendingExpandedIds: string[] | null = null
+
+  /**
+   * Ids of the expanded rows. Needs `rowId`; without one this reads empty. Assigning it
+   * fires no `rowexpand` / `rowcollapse`: those report a toggle, not a restore.
+   */
   get expandedRowIds(): string[] {
     return this._rowId ? ([...this._expanded] as string[]) : []
   }
 
   set expandedRowIds(ids: string[] | null) {
     if (!this._rowId) {
-      if (ids && ids.length > 0) {
-        console.warn(
-          '<tosi-table>: expandedRowIds needs a rowId function to map ids to rows; ignored.'
-        )
-      }
+      // Held until `rowId` is set; without one there is nothing to match an id against.
+      this._pendingExpandedIds = ids ? [...tosiValue(ids)] : null
       return
     }
     this._expanded = new Set(ids ? tosiValue(ids) : [])
@@ -1780,6 +1789,15 @@ export class TosiTable extends withAttributes({
       if (!this._expanded.has(key)) this._detailEls.delete(key)
     }
     this.syncStampedDetails()
+  }
+
+  /*
+  The data was replaced. Details were built from the old rows, so they go; and without a
+  `rowId` the expansion set holds the old row OBJECTS, which no new row can match.
+  */
+  private forgetDetails(): void {
+    this._detailEls.clear()
+    if (!this._rowId) this._expanded.clear()
   }
 
   private detailKey(row: any): unknown {
@@ -1799,6 +1817,14 @@ export class TosiTable extends withAttributes({
   toggleRowDetail(row: any, open?: boolean): void {
     if (row == null || !this._rowDetail) return
     const raw = tosiValue(row)
+    // Pinned rows are not expandable, and neither is a row `rowHasDetail` rules out.
+    if (
+      this.effectivePinnedTopData.includes(raw) ||
+      this.effectivePinnedBottomData.includes(raw)
+    ) {
+      return
+    }
+    if (open !== false && this.rowHasDetail && !this.rowHasDetail(raw)) return
     const key = this.detailKey(raw)
     const was = this._expanded.has(key)
     const want = open ?? !was
@@ -1839,8 +1865,14 @@ export class TosiTable extends withAttributes({
 
   /** The detail container for a row, built on first use. `null` when the row has none. */
   private detailFor(raw: any, key: unknown): HTMLElement | null {
+    /*
+    Reused only for the row OBJECT it was built from. With a `rowId`, replacing the data
+    gives the same key a new row, and a row of the old data can still be stamped once more
+    before the table re-renders; a cache that trusted the key alone handed the new row a
+    detail built from the old one.
+    */
     const cached = this._detailEls.get(key)
-    if (cached) return cached
+    if (cached && this._detailRows.get(cached) === raw) return cached
     const content = this._rowDetail?.(raw)
     if (!content) return null
     this._detailCount += 1
@@ -1853,6 +1885,7 @@ export class TosiTable extends withAttributes({
       content
     )
     this._detailEls.set(key, container)
+    this._detailRows.set(container, raw)
     return container
   }
 
@@ -1874,9 +1907,17 @@ export class TosiTable extends withAttributes({
   created and destroyed as the table scrolls) and when a row is toggled.
   */
   private syncDetail(rowEl: Element, row: any): void {
+    /*
+    A row of a scroll area this table has already replaced. Its list binding updates on a
+    throttle, so it can stamp once more after a re-render, and a detail container is ONE
+    element: appending it here would take it out of the live row and into a detached one.
+    */
+    if (rowEl.closest('.scroll-area.-stale')) return
     const raw = tosiValue(row)
     const expanded = this._rowDetail != null && this.isRowExpanded(raw)
     const detail = expanded ? this.detailFor(raw, this.detailKey(raw)) : null
+    // `rowDetail` returned null for a row marked expanded (through `expandedRowIds`, say).
+    if (expanded && !detail) this._expanded.delete(this.detailKey(raw))
     for (const child of Array.from(rowEl.children)) {
       if (child.classList.contains('tr-detail') && child !== detail) {
         child.remove()
@@ -1888,9 +1929,12 @@ export class TosiTable extends withAttributes({
     if (toggle) {
       toggle.setAttribute('aria-expanded', String(detail != null))
       if (detail) toggle.setAttribute('aria-controls', detail.id)
-      else toggle.removeAttribute('aria-controls')
+      else
+        toggle.removeAttribute('aria-controls')
+        // No toggle where pressing it would do nothing.
       ;(toggle as HTMLElement).hidden =
-        this.rowHasDetail != null && !this.rowHasDetail(raw)
+        this._rowDetail == null ||
+        (this.rowHasDetail != null && !this.rowHasDetail(raw))
     }
   }
 
@@ -2017,7 +2061,7 @@ export class TosiTable extends withAttributes({
     ) {
       this.queueRender()
     }
-    if (this._array !== array) this._detailEls.clear()
+    if (this._array !== array) this.forgetDetails()
     this._array = array || []
     this._columns = columns || null
     this._filter = filter || passThru
@@ -2202,8 +2246,7 @@ export class TosiTable extends withAttributes({
   }
 
   set array(newArray: any[]) {
-    // Details were built from the old rows' data.
-    this._detailEls.clear()
+    this.forgetDetails()
     this._array = tosiValue(newArray)
     this.queueRender()
   }
@@ -2846,14 +2889,16 @@ export class TosiTable extends withAttributes({
     }
     if (col.expander) {
       // The row's own binding (`syncDetail`) keeps the button's state; nothing binds here.
-      return span(
-        {
-          class: this.cellClasses('td', si) + ' expander-cell',
-          role: 'gridcell',
-          tabindex: -1,
-          ariaColindex: String(colIndex + 1),
-          style,
-        } as any,
+      const cell = span({
+        class: this.cellClasses('td', si) + ' expander-cell',
+        role: 'gridcell',
+        tabindex: -1,
+        ariaColindex: String(colIndex + 1),
+        style,
+      } as any)
+      // A pinned row (`grouped` false) is not expandable, so its cell stays empty.
+      if (!grouped) return cell
+      cell.append(
         button(
           {
             class: 'row-expander',
@@ -2868,6 +2913,7 @@ export class TosiTable extends withAttributes({
           icons.chevronRight()
         )
       )
+      return cell
     }
     if (this.columnEditable(col)) {
       return this.buildEditableCell(col, colIndex, si, style, repeats)
@@ -2969,6 +3015,10 @@ export class TosiTable extends withAttributes({
       this.buildCell(col, i, stickyInfo[i], item, grouped)
     )
     const selectBindingFn = this.selectBinding
+    // `grouped` is false only for pinned rows, which are not expandable. A table with no
+    // `rowDetail` and no expander column has nothing to sync, so its rows skip it entirely.
+    const detailed =
+      grouped && (this._rowDetail != null || cols.some((col) => col.expander))
     const props: any = { class: rowClass }
     // `item` here is the placeholder proxy from template-build time. The
     // actual stamped row's item is delivered to toDOM as the second arg
@@ -2980,8 +3030,7 @@ export class TosiTable extends withAttributes({
         toDOM: (rowEl: Element, value: any) => {
           selectBindingFn(rowEl, value)
           if (grouped) this.tagClusterParity(rowEl, value)
-          // `grouped` is false only for pinned rows, which are not expandable.
-          if (grouped && value != null) this.syncDetail(rowEl, value)
+          if (detailed && value != null) this.syncDetail(rowEl, value)
           const fn = this.rowRendered
           if (fn) {
             fn(value, this.rowCells(rowEl))
@@ -3135,6 +3184,8 @@ export class TosiTable extends withAttributes({
 
   getColumn(event: any): ColumnOptions | undefined {
     if (!this._scrollArea) return undefined
+    // A pointer inside a row's detail is not over a column edge, whatever its x.
+    if (this.inDetail(event.target)) return undefined
     const pointerX =
       (event.touches !== undefined ? event.touches[0].clientX : event.clientX) -
       this._scrollArea.getBoundingClientRect().x
@@ -3306,11 +3357,13 @@ export class TosiTable extends withAttributes({
   }
 
   private updateSelectionVisuals() {
-    // Apply selection state to every body row currently in the DOM. Header
-    // rows live inside .thead and don't have a list-instance, so itemFor
-    // returns null and they're skipped.
+    // Apply selection state to every body row of THIS table currently in the DOM.
+    // Header rows live inside .thead and don't have a list-instance, so itemFor
+    // returns null and they're skipped. Rows inside a detail belong to whatever
+    // is in it (another table, say) and are left alone.
     const rows = this._scrollArea?.querySelectorAll('.tr') ?? []
     for (const row of rows) {
+      if (this.inDetail(row)) continue
       const item = this.itemFor(row)
       if (item != null) {
         this.selectBinding(row, item)
@@ -3451,6 +3504,7 @@ export class TosiTable extends withAttributes({
     const previous = (tosiValue(this.rowData.visible) as any[]) ?? []
     for (const el of area.querySelectorAll('.tr')) {
       if (el.closest('.thead') || el.classList.contains('row-pinned')) continue
+      if (this.inDetail(el)) continue
       const rect = el.getBoundingClientRect()
       if (rect.height === 0 || rect.bottom <= areaTop) continue
       const item = tosiValue(getListItem(el))
@@ -3658,6 +3712,7 @@ export class TosiTable extends withAttributes({
     const toggle = isHeader ? null : target.querySelector('.row-expander')
     if (
       toggle &&
+      !(toggle as HTMLElement).hidden &&
       el === target &&
       (event.key === 'Enter' || event.key === ' ')
     ) {
@@ -3818,6 +3873,7 @@ export class TosiTable extends withAttributes({
     // Update sticky positions for column-pinned cells across all regions
     const stickyInfo = this.computeStickyInfo(cols)
     for (const cell of this.querySelectorAll('.col-pinned')) {
+      if (this.inDetail(cell)) continue
       const ci = parseInt(cell.getAttribute('aria-colindex') || '', 10) - 1
       if (!isNaN(ci) && stickyInfo[ci]) {
         const si = stickyInfo[ci]
@@ -4075,6 +4131,8 @@ export class TosiTable extends withAttributes({
     super.render()
     // Before the DOM the reader was scrolling ceases to exist.
     this.captureScrollAnchor()
+    // The old list can stamp a row once more after it is replaced; see `syncDetail`.
+    this._scrollArea?.classList.add('-stale')
     this.textContent = ''
 
     // Resolve data sources

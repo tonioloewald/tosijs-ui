@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=b5c82c01be25" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=98f90feb3d7b" data-tosi-doc-system />
   <title>schema-form — tosijs-ui</title>
   <meta name="description" content="A form generated from a JSON Schema, with validation." />
   <link rel="canonical" href="https://ui.tosijs.net/schema-form/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=955d7562f9ce" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ef961ad93b27" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="schema-form">schema-form</h1>
 <!--{ "parent": "Components" }-->
@@ -688,9 +688,11 @@ number and format constraints, and the caption when you give none.</li>
 shows that whole property.</li>
 <li><strong><code>editor</code></strong> is a function that returns an element with a <code>value</code> property and a <code>change</code>
 event, which is what every element creator in this library is. Its <code>value</code> must be of the
-schema&#39;s type. Pass a <a href="#format-plugins">field plugin</a> object (<code>{ render, sync }</code>) for full control.</li>
+schema&#39;s type: a native <code>&lt;input&gt;</code> yields strings, so use one for string properties only. Pass a <a href="#format-plugins">field plugin</a> object (<code>{ render, sync }</code>) for full control.</li>
 <li><strong><code>readOnly</code></strong> on one field is a presentation choice, not a security boundary: the value is
 still writable through <code>form.value</code>.</li>
+<li>Name an object or one of its properties, not both: the first one listed is shown and the
+console warns about the other.</li>
 <li>A path the schema does not describe renders as a placeholder that says so, and the console
 warns. A field that silently fails to appear looks the same as one nobody asked for.</li>
 </ul>
@@ -840,6 +842,7 @@ whatever scale the rest of your page is on.</p>
 <p>The form&#39;s own chrome — the <em>Add …</em> button and the reorder tooltips — goes through
 <a href="/localize/"><code>localize</code></a>, and the form <strong>rebuilds when the locale changes</strong>, so switching
 language does not leave one form behind in the old one.</p>
+<p>A curated form adds one more string, <code>Problems in fields not shown here</code>.</p>
 <p>The add button&#39;s key is the whole sentence, <code>Add {item}</code>, with the item name interpolated
 afterwards. Building it as <code>&#39;Add &#39; + label</code> would leave a translator with a dangling fragment
 and no way to move the placeholder to where their language puts it.</p>
@@ -1013,6 +1016,6 @@ test(&#39;editing keeps unknown keys, fires change, and does not rebuild under t
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-h2f0dtgt.js"></script>
+  <script type="module" src="../hydrate-fswtgmy8.js"></script>
 </body>
 </html>

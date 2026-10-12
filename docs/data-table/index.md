@@ -973,8 +973,10 @@ table.rowDetail = (row) => invoiceLines({ invoice: row }) // any element; null =
 table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
 ```
 
-- A column with **`expander: true`** renders the disclosure toggle. Or call
-  **`table.toggleRowDetail(row, open?)`** from anything you like, such as a row double-click.
+- A column with **`expander: true`** renders the disclosure toggle (it needs `rowDetail`;
+  without one the toggle is hidden). Or call **`table.toggleRowDetail(row, open?)`** from
+  anything you like, such as a row double-click. **`table.isRowExpanded(row)`** reads the
+  state.
 - **`rowHasDetail = (row) => boolean`** hides the toggle on rows that have nothing to show.
 - **`rowexpand`** and **`rowcollapse`** events carry `detail: { row, element }`.
 - The element is built once per expansion and kept while the row stays expanded, so
@@ -982,7 +984,8 @@ table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
   dropped when the row collapses or the table's `array` is replaced.
 - Expansion follows the row object, so it survives sorting and filtering. Set
   **`rowId = (row) => string`** as well and it survives reloading the data, and
-  **`expandedRowIds`** can be read and set.
+  **`expandedRowIds`** can be read and set. Assigning it fires no events: they report a
+  toggle, not a restore.
 - The detail stays in view while the columns scroll sideways. Clicks and keys inside it are
   left alone: they do not select the row or move the cell focus. `Tab` from a row's last
   cell goes into its detail.

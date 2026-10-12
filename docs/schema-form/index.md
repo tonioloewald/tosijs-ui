@@ -711,9 +711,11 @@ form.fields = {
   shows that whole property.
 - **`editor`** is a function that returns an element with a `value` property and a `change`
   event, which is what every element creator in this library is. Its `value` must be of the
-  schema's type. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
+  schema's type: a native `<input>` yields strings, so use one for string properties only. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
 - **`readOnly`** on one field is a presentation choice, not a security boundary: the value is
   still writable through `form.value`.
+- Name an object or one of its properties, not both: the first one listed is shown and the
+  console warns about the other.
 - A path the schema does not describe renders as a placeholder that says so, and the console
   warns. A field that silently fails to appear looks the same as one nobody asked for.
 
@@ -856,6 +858,8 @@ whatever scale the rest of your page is on.
 The form's own chrome — the *Add …* button and the reorder tooltips — goes through
 [`localize`](/localize/), and the form **rebuilds when the locale changes**, so switching
 language does not leave one form behind in the old one.
+
+A curated form adds one more string, `Problems in fields not shown here`.
 
 The add button's key is the whole sentence, `Add {item}`, with the item name interpolated
 afterwards. Building it as `'Add ' + label` would leave a translator with a dangling fragment

@@ -13,7 +13,8 @@ schema form can show a hand-picked set of fields. Both are off until you ask for
   kept while the row is scrolled out of view, and the toggled row keeps its place on screen.
   Expansion follows the row through sorting and filtering; with `rowId` it also survives a
   reload of the data, and `expandedRowIds` can be read and set. `rowHasDetail` hides the
-  toggle on rows with nothing to show. Pinned rows are not expandable.
+  toggle on rows with nothing to show. Pinned rows are not expandable. A table placed in a
+  detail keeps its own selection, editing and column resizing.
 - **The scrollbar of a table with `rowDetail` is approximate.** Rows are no longer all one
   height, so the table places them by interpolation (tosijs's variable-height list). A table
   that does not set `rowDetail` is unchanged.
@@ -21,15 +22,20 @@ schema form can show a hand-picked set of fields. Both are off until you ask for
   the schema to `{ caption, help, readOnly, editor }`, in display order, and the form shows
   only those. Controls, choices, `required` and constraints still come from the schema.
   `editor` is any function returning an element with a `value` and a `change` event, such as
-  an element creator from this library, or a field plugin object.
+  an element creator from this library, or a field plugin object. The editor's `value` must be
+  of the schema's type, so a native `<input>` suits string properties only.
 - **A curated form still owns the whole value.** Properties that are not shown keep their
   values, the whole value is validated, and an error in a property that is not shown is
   listed above the fields. A path the schema does not describe renders as a placeholder that
   says so.
 - **Fixed: an error on a plugin-rendered field was never shown** under that field. The form
-  now shows it there, as it does for built-in controls.
-- **Fixed: `readOnly` on a schema form did not disable a custom-element plugin control or a
-  `<textarea>`** inside a plugin. Both are now disabled with the rest of the form.
+  now shows it there, a missing required value included, as it does for built-in controls.
+- **Fixed: `readOnly` on a schema form did not reach a plugin control that is a custom
+  element, or a `<textarea>`.** Both are now locked with the rest of the form, through
+  `disabled` or, for a component that has only that, `readOnly`. The form releases only
+  what it locked: a control a plugin disabled itself stays disabled.
+
+`dist/iife.js` grows by about 2.5 kB gzip.
 
 ## 1.16.11
 

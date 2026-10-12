@@ -139,3 +139,47 @@ test('a FieldPlugin editor is used as it is', () => {
   const plugin = { render: () => document.createElement('div'), sync() {} }
   expect(editorPlugin(plugin)).toBe(plugin)
 })
+
+test('an editor edit back to an earlier value is written after an outside change', () => {
+  const plugin = editorPlugin(() => document.createElement('input'))
+  const sets: unknown[] = []
+  const el = plugin.render({
+    schema: {} as JSONSchema,
+    path: 'name',
+    label: 'Name',
+    required: false,
+    value: 'a',
+    set: (v) => sets.push(v),
+    elements: {} as any,
+  }) as HTMLInputElement
+  const type = (text: string) => {
+    el.value = text
+    el.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+  type('b')
+  // the form's value is set back from outside (another record, a revert)
+  plugin.sync(el, 'a')
+  type('b')
+  expect(sets).toEqual(['b', 'b'])
+})
+
+test('an object and one of its properties cannot both be curated', () => {
+  const { nodes, overlapping } = curateNodes(fieldsFor(schema), {
+    thresholds: true,
+    'thresholds.default': 'Default',
+    name: true,
+  })
+  expect(nodes.map((n) => n.path)).toEqual(['thresholds', 'name'])
+  expect(overlapping).toEqual(['thresholds.default'])
+  // either order: the first one named wins
+  const other = curateNodes(fieldsFor(schema), {
+    'thresholds.default': 'Default',
+    thresholds: true,
+  })
+  expect(other.nodes.map((n) => n.path)).toEqual(['thresholds.default'])
+  expect(other.overlapping).toEqual(['thresholds'])
+  // sibling names that merely share a prefix do not overlap
+  expect(
+    curateNodes(fieldsFor(schema), { name: true, tags: true }).overlapping
+  ).toEqual([])
+})

@@ -13,7 +13,11 @@ export interface CuratedField {
     help?: string;
     /** Show the value without letting it be edited in this form. Not a security boundary. */
     readOnly?: boolean;
-    /** Render the property with this editor in place of the built-in control. */
+    /**
+     * Render the property with this editor in place of the built-in control. Its `value`
+     * must be of the schema's type: a native `<input>` yields strings, so it suits string
+     * properties only.
+     */
     editor?: FieldEditor;
 }
 /**
@@ -21,6 +25,7 @@ export interface CuratedField {
  * it. A string is shorthand for `{ caption }`, and `true` for "as the schema describes it".
  */
 export type FieldCuration = Record<string, CuratedField | string | true>;
+export declare const CURATED_KEYS: string[];
 export declare function curatedField(entry: CuratedField | string | true): CuratedField;
 /**
  * The node at a path. A path runs through object properties only: an array, a union or a
@@ -35,6 +40,7 @@ export declare function findNode(nodes: Node[], path: string): Node | undefined;
 export declare function curateNodes(nodes: Node[], fields: FieldCuration): {
     nodes: Node[];
     unknown: string[];
+    overlapping: string[];
 };
 /**
  * Errors the form has no field to show under: the value is invalid somewhere the curation

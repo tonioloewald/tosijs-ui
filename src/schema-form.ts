@@ -712,9 +712,11 @@ form.fields = {
   shows that whole property.
 - **`editor`** is a function that returns an element with a `value` property and a `change`
   event, which is what every element creator in this library is. Its `value` must be of the
-  schema's type. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
+  schema's type: a native `<input>` yields strings, so use one for string properties only. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
 - **`readOnly`** on one field is a presentation choice, not a security boundary: the value is
   still writable through `form.value`.
+- Name an object or one of its properties, not both: the first one listed is shown and the
+  console warns about the other.
 - A path the schema does not describe renders as a placeholder that says so, and the console
   warns. A field that silently fails to appear looks the same as one nobody asked for.
 
@@ -858,6 +860,8 @@ The form's own chrome — the *Add …* button and the reorder tooltips — goes
 [`localize`](/localize/), and the form **rebuilds when the locale changes**, so switching
 language does not leave one form behind in the old one.
 
+A curated form adds one more string, `Problems in fields not shown here`.
+
 The add button's key is the whole sentence, `Add {item}`, with the item name interpolated
 afterwards. Building it as `'Add ' + label` would leave a translator with a dangling fragment
 and no way to move the placeholder to where their language puts it.
@@ -995,6 +999,7 @@ import {
   curatedField,
   editorPlugin,
   hiddenErrors,
+  CURATED_KEYS,
   type FieldCuration,
 } from './schema-form/curate.js'
 export type {
@@ -1129,6 +1134,7 @@ export class TosiSchemaForm extends withAttributes({
   /** Custom editors by path, as plugins. Consulted before the `format` plugins. */
   private _editors = new Map<string, FieldPlugin>()
   private _hiddenErrorSlot: HTMLElement | null = null
+  private _hiddenErrorSignature = ''
 
   /**
    * Show only these properties. Keys are paths into the schema (`thresholds.default`), in
@@ -1193,7 +1199,9 @@ export class TosiSchemaForm extends withAttributes({
       this._errors = []
       return
     }
-    const paths = this._fields.map((f) => f.path)
+    // Every path with an error slot, which includes plugin and custom-editor fields: a
+    // "Missing x" is re-keyed onto its field only when that field is known.
+    const paths = [...this._fields.map((f) => f.path), ...this._index.keys()]
     this._errors = collectErrors(
       (onError) =>
         validator.validate(this._value, this._schema, {
@@ -1608,13 +1616,28 @@ export class TosiSchemaForm extends withAttributes({
     // A curated field can be read-only on its own (`[data-locked]`).
     const locked = (el: Element) =>
       this.readOnly || el.closest('[data-locked]') != null
-    for (const el of this.querySelectorAll('input, select, textarea')) {
+    for (const el of this.querySelectorAll('input, select')) {
       ;(el as HTMLInputElement).disabled = locked(el)
     }
-    // A custom editor that is itself a component is disabled through its own property.
-    for (const el of this.querySelectorAll('[data-plugin]')) {
-      if (el.tagName.includes('-') && 'disabled' in el) {
-        ;(el as any).disabled = locked(el)
+    /*
+    A textarea, or a custom editor that is itself a component, is locked through its own
+    `disabled` (or, failing that, `readOnly`) property. The form only undoes what it did: one a plugin disabled for its own reasons
+    stays disabled when the form is editable.
+    */
+    for (const el of this.querySelectorAll('textarea, [data-plugin]')) {
+      if (el.tagName !== 'TEXTAREA' && !el.tagName.includes('-')) continue
+      // Components differ in which they implement; `<tosi-rating>` has only `readonly`.
+      const prop = ['disabled', 'readOnly', 'readonly'].find((p) => p in el)
+      if (!prop) continue
+      const control = el as any
+      if (locked(el)) {
+        if (!control[prop]) {
+          control[prop] = true
+          control.dataset.lockedByForm = ''
+        }
+      } else if ('lockedByForm' in control.dataset) {
+        control[prop] = false
+        delete control.dataset.lockedByForm
       }
     }
     for (const el of this.querySelectorAll(
@@ -1806,6 +1829,10 @@ export class TosiSchemaForm extends withAttributes({
     const slot = this._hiddenErrorSlot
     if (!slot) return
     const hidden = hiddenErrors(this._errors, this._index.keys())
+    // Unchanged on most keystrokes, and this is a live region: do not re-announce it.
+    const signature = JSON.stringify(hidden)
+    if (signature === this._hiddenErrorSignature) return
+    this._hiddenErrorSignature = signature
     slot.hidden = hidden.length === 0
     slot.replaceChildren(
       ...(hidden.length === 0
@@ -1895,19 +1922,46 @@ export class TosiSchemaForm extends withAttributes({
       this._nodes = fieldsFor(this._schema)
       this._editors.clear()
       this._hiddenErrorSlot = null
+      this._hiddenErrorSignature = ''
       if (this._curation) {
-        const { nodes, unknown } = curateNodes(this._nodes, this._curation)
+        const { nodes, unknown, overlapping } = curateNodes(
+          this._nodes,
+          this._curation
+        )
         this._nodes = nodes
+        const warn = (problem: string) =>
+          console.warn(`<tosi-schema-form>: \`fields\` ${problem}`)
         if (unknown.length > 0) {
-          console.warn(
-            `<tosi-schema-form>: \`fields\` names ${
-              unknown.length
-            } path(s) the schema does not describe: ${unknown.join(', ')}`
+          warn(
+            `names path(s) the schema does not describe: ${unknown.join(', ')}`
+          )
+        }
+        if (overlapping.length > 0) {
+          warn(
+            `names a property and something inside it; the first is shown, skipped: ${overlapping.join(
+              ', '
+            )}`
           )
         }
         for (const [path, entry] of Object.entries(this._curation)) {
+          const extra =
+            typeof entry === 'object'
+              ? Object.keys(entry).filter((k) => !CURATED_KEYS.includes(k))
+              : []
+          if (extra.length > 0) {
+            warn(
+              `['${path}'] has unknown key(s) ${extra.join(
+                ', '
+              )}; the keys are ${CURATED_KEYS.join(', ')}`
+            )
+          }
           const { editor } = curatedField(entry)
-          if (editor) this._editors.set(path, editorPlugin(editor))
+          // Only for a path that is shown: an unknown one keeps its placeholder, and an
+          // editor there would write a property the schema does not describe.
+          const shown = nodes.some(
+            (n) => n.path === path && n.kind !== 'unsupported'
+          )
+          if (editor && shown) this._editors.set(path, editorPlugin(editor))
         }
         this._hiddenErrorSlot = div({
           class: 'schema-hidden-errors',

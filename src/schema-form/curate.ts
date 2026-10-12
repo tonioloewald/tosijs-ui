@@ -25,7 +25,11 @@ export interface CuratedField {
   help?: string
   /** Show the value without letting it be edited in this form. Not a security boundary. */
   readOnly?: boolean
-  /** Render the property with this editor in place of the built-in control. */
+  /**
+   * Render the property with this editor in place of the built-in control. Its `value`
+   * must be of the schema's type: a native `<input>` yields strings, so it suits string
+   * properties only.
+   */
   editor?: FieldEditor
 }
 
@@ -34,6 +38,8 @@ export interface CuratedField {
  * it. A string is shorthand for `{ caption }`, and `true` for "as the schema describes it".
  */
 export type FieldCuration = Record<string, CuratedField | string | true>
+
+export const CURATED_KEYS = ['caption', 'help', 'readOnly', 'editor']
 
 export function curatedField(
   entry: CuratedField | string | true
@@ -67,11 +73,21 @@ export function findNode(nodes: Node[], path: string): Node | undefined {
 export function curateNodes(
   nodes: Node[],
   fields: FieldCuration
-): { nodes: Node[]; unknown: string[] } {
+): { nodes: Node[]; unknown: string[]; overlapping: string[] } {
   const curated: Node[] = []
   const unknown: string[] = []
+  const overlapping: string[] = []
+  const within = (a: string, b: string) => a === b || a.startsWith(b + '.')
   for (const [path, entry] of Object.entries(fields)) {
     const { caption } = curatedField(entry)
+    /*
+    An object and one of its own properties cannot both be shown: the property would have
+    two controls, and the form keeps one control per path. The first one named wins.
+    */
+    if (curated.some((n) => within(path, n.path) || within(n.path, path))) {
+      overlapping.push(path)
+      continue
+    }
     const node = findNode(nodes, path)
     if (!node) {
       unknown.push(path)
@@ -88,7 +104,7 @@ export function curateNodes(
     }
     curated.push(caption === undefined ? node : { ...node, label: caption })
   }
-  return { nodes: curated, unknown }
+  return { nodes: curated, unknown, overlapping }
 }
 
 /**
@@ -111,25 +127,32 @@ const isNativeControl = (el: HTMLElement): boolean =>
 /** A `FieldEditor` as the plugin the form already knows how to host. */
 export function editorPlugin(editor: FieldEditor): FieldPlugin {
   if (typeof editor !== 'function') return editor
+  /*
+  What the model last held for each editor, so an `input` followed by the `change` a blur
+  sends writes once. BOTH directions update it: a value pushed in from outside is a new
+  baseline, or the next edit back to the earlier value would be taken for a repeat and
+  dropped.
+  */
+  const held = new WeakMap<HTMLElement, unknown>()
   const put = (el: HTMLElement, value: unknown): void => {
     const next = isNativeControl(el)
       ? value == null
         ? ''
         : String(value)
       : value
+    held.set(el, next)
     if ((el as any).value !== next) (el as any).value = next
   }
   return {
     render({ value, set }) {
       const el = editor()
       put(el, value)
-      let last = value
       const commit = (event: Event): void => {
         // The editor's own event stops here; the form fires its own `change`.
         event.stopPropagation()
         const next = (el as any).value
-        if (Object.is(next, last)) return
-        last = next
+        if (Object.is(next, held.get(el))) return
+        held.set(el, next)
         set(next)
       }
       el.addEventListener('input', commit)

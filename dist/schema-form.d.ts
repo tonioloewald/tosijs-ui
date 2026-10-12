@@ -120,6 +120,7 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     /** Custom editors by path, as plugins. Consulted before the `format` plugins. */
     private _editors;
     private _hiddenErrorSlot;
+    private _hiddenErrorSignature;
     /**
      * Show only these properties. Keys are paths into the schema (`thresholds.default`), in
      * display order; each value is `{ caption?, help?, readOnly?, editor? }`, a caption
