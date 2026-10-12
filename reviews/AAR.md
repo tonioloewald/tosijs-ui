@@ -463,3 +463,31 @@ gap, recorded rather than hidden.
   `verify_only=true` run for the verification.
 - **Open on board #3226:** a heading can share an id with a live example; heading ids repeat
   across chapters in Print; the hang regression test would hang, not fail.
+
+## 1.16.12 (2026-10-12)
+
+- **Shipped:** table row detail (`rowDetail`, `expander` column, GitHub #220) and curated
+  schema forms (`fields` map, GitHub #221). Published and verified by a `verify_only` run.
+- **Review:** two rounds, both GO_WITH_FOLLOWUPS. Round one found four majors (a function
+  editor dropping an edit after an outside change, a press in a detail resizing a column, the
+  outer table rewriting a nested table's selection marks and sticky offsets, missing-required
+  errors on editor fields going to the hidden list). Round two found one major introduced by
+  a round-one fix: the unknown-path guard refused editors on real `unsupported` properties.
+- **The published 1.16.12 is the FIRST cut (ff4a976f4), not the re-cut.** The maintainer
+  asked for a re-cut with better doc examples; the tag was moved to 9fd7ed192 and the stage
+  step failed with `409 Cannot stage previously published version`, because the first cut
+  was still staged and held the version. The staged first cut was then approved. The tag
+  was moved back to ff4a976f4 so it matches the registry; the tarball's `dist/` is
+  byte-identical to that commit.
+- **A staged version holds its number.** Re-cutting after staging needs the staged copy
+  rejected on npmjs.com first, or a new version number. Moving the tag is not enough.
+- **The improved examples are on main and the doc site, not in the 1.16.12 package.** The
+  difference is two doc comments (`src/data-table.ts`, `src/schema-form.ts`); no library
+  code differs.
+- **Firefox delays frames in the background doc-test iframe:** an inline test that waited a
+  fixed 100ms for a re-render failed there and passed in Chromium. It now polls.
+- **Lanes (first cut):** unit 1795; Playwright 498 passed, 15 skipped; consumer 54 checks;
+  test-browser 82 over 18 pages. An intermittent doc-test failure seen three times during
+  development was never identified; `off-localhost-tests.pw.ts` now names failing tests.
+- **Open:** board #3229 (follow-ups, including `<tosi-form schema>` not built), tosijs
+  #3230 (variable-height list gaps), #2454 (`fields` versus `x-tosi` annotations).
