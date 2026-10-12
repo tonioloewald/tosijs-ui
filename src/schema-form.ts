@@ -687,6 +687,152 @@ test('a plugin registered after the form renders takes effect, styles and all', 
 })
 ```
 
+## Curated forms
+
+A schema-form shows every property the schema describes. That is right for an admin view and
+wrong for a task-focused one: a panel with four fields from a two-hundred-property
+configuration, an onboarding step, a review dialog.
+
+Set **`fields`** to choose what is shown. It is a map from **paths** into the schema to how
+each one should appear, and its order is the display order:
+
+```typescript
+form.fields = {
+  'thresholds.default': { caption: 'Default threshold', help: 'Between 0 and 1.' },
+  'routing.mode': 'How invoices are routed', // a string is just a caption
+  'routing.priority': { editor: tosiRating }, // a custom editor
+  owner: { readOnly: true }, // shown, not editable here
+  notify: true, // exactly as the schema describes it
+}
+```
+
+- Everything else still comes from the schema: the control, `enum` choices, `required`,
+  number and format constraints, and the caption when you give none.
+- A path runs through object properties (`a.b.c`). Naming an object, an array or a union
+  shows that whole property.
+- **`editor`** is a function that returns an element with a `value` property and a `change`
+  event, which is what every element creator in this library is. Its `value` must be of the
+  schema's type. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
+- **`readOnly`** on one field is a presentation choice, not a security boundary: the value is
+  still writable through `form.value`.
+- A path the schema does not describe renders as a placeholder that says so, and the console
+  warns. A field that silently fails to appear looks the same as one nobody asked for.
+
+**The form still owns the whole value.** Properties you do not show keep their values, and
+the whole value is validated. An error in a property that is not shown is listed above the
+fields, so a curated form cannot quietly save a value that does not conform. `errors` and
+`validate()` always describe the whole value.
+
+Set `fields = null` to show everything again.
+
+```js
+import { tosiSchemaForm, tosiRating } from 'tosijs-ui'
+
+const configSchema = {
+  type: 'object',
+  properties: {
+    owner: { type: 'string' },
+    thresholds: {
+      type: 'object',
+      properties: {
+        default: { type: 'number', minimum: 0, maximum: 1 },
+        escalate: { type: 'number', minimum: 0, maximum: 1 },
+      },
+      required: ['default'],
+    },
+    routing: {
+      type: 'object',
+      properties: {
+        mode: { type: 'string', enum: ['manual', 'assisted', 'automatic'] },
+        priority: { type: 'integer', minimum: 0, maximum: 5 },
+        retries: { type: 'integer', minimum: 0 },
+      },
+    },
+    audit: { type: 'object', properties: { retainDays: { type: 'integer' } } },
+  },
+}
+
+const curatedForm = tosiSchemaForm({
+  schema: configSchema,
+  value: {
+    owner: 'finance-ops',
+    thresholds: { default: 0.8, escalate: 0.95 },
+    routing: { mode: 'assisted', priority: 3, retries: 2 },
+    audit: { retainDays: 'ninety' }, // not shown, and not valid
+  },
+  fields: {
+    'thresholds.default': {
+      caption: 'Default threshold',
+      help: 'Predictions below this go to a person. Between 0 and 1.',
+    },
+    'routing.mode': 'How invoices are routed',
+    'routing.priority': { caption: 'Priority', editor: tosiRating },
+    owner: { caption: 'Owned by', readOnly: true },
+  },
+})
+
+const curatedValue = document.createElement('pre')
+const showCurated = () => {
+  curatedValue.textContent = JSON.stringify(curatedForm.value, null, 2)
+}
+curatedForm.addEventListener('change', showCurated)
+showCurated()
+
+preview.append(curatedForm, curatedValue)
+```
+```test
+const curatedForm = await waitFor('tosi-schema-form')
+await waitMs(100)
+
+test('a curated form shows the chosen fields, in order, under the chosen captions', () => {
+  const shown = [...curatedForm.querySelectorAll('[data-field]')]
+  expect(shown.map((el) => el.dataset.field)).toEqual([
+    'thresholds.default',
+    'routing.mode',
+    'routing.priority',
+    'owner',
+  ])
+  expect(shown[0].querySelector('label').textContent).toBe('Default threshold')
+  expect(shown[0].querySelector('.schema-help').textContent).toContain('Between 0 and 1')
+  // the control still comes from the schema
+  expect(curatedForm.querySelector('[data-path="thresholds.default"]').type).toBe('number')
+  expect(curatedForm.querySelector('[data-path="routing.mode"]').tagName).toBe('SELECT')
+  expect(curatedForm.querySelector('[data-path="owner"]').disabled).toBe(true)
+  expect(curatedForm.querySelector('[data-path="routing.mode"]').disabled).toBe(false)
+})
+
+test('editing one field keeps everything that is not shown', () => {
+  const mode = curatedForm.querySelector('[data-path="routing.mode"]')
+  mode.value = 'automatic'
+  mode.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(curatedForm.value.routing).toEqual({ mode: 'automatic', priority: 3, retries: 2 })
+  expect(curatedForm.value.thresholds.escalate).toBe(0.95)
+  expect(curatedForm.value.audit.retainDays).toBe('ninety')
+})
+
+test('a custom editor reads and writes the value', () => {
+  const rating = curatedForm.querySelector('[data-plugin="routing.priority"]')
+  expect(rating.tagName).toBe('TOSI-RATING')
+  expect(rating.value).toBe(3)
+  let fired = 0
+  const count = () => (fired += 1)
+  curatedForm.addEventListener('change', count)
+  rating.value = 5
+  rating.dispatchEvent(new Event('change', { bubbles: true }))
+  curatedForm.removeEventListener('change', count)
+  expect(curatedForm.value.routing.priority).toBe(5)
+  expect(fired).toBe(1)
+})
+
+test('an error in a field that is not shown is listed, not hidden', () => {
+  if (!curatedForm.validationAvailable) return
+  expect(curatedForm.validate()).toBe(false)
+  const summary = curatedForm.querySelector('.schema-hidden-errors')
+  expect(summary.hidden).toBe(false)
+  expect(summary.textContent).toContain('audit.retainDays')
+})
+```
+
 ## Read-only
 
 `readOnly` disables the inputs and **hides** the add, remove and reorder controls rather than
@@ -733,6 +879,7 @@ a schema that never mentioned it, which is how an editor loses data without anyo
 - `schema` — the JSON Schema. Setting it rebuilds the fields.
 - `value` — the data. Setting it updates the inputs; it does **not** fire `change`.
 - `readOnly` — disables the inputs.
+- `fields` — a curation: which properties to show, in order, with captions and editors.
 - `errors` — `{ path, message }[]` for the current value.
 - `validate()` — `true` when the value conforms.
 - `change` — fires when the user edits a field.
@@ -843,6 +990,18 @@ import {
   schemaUsesFormat,
   type FieldPlugin,
 } from './schema-form/plugins.js'
+import {
+  curateNodes,
+  curatedField,
+  editorPlugin,
+  hiddenErrors,
+  type FieldCuration,
+} from './schema-form/curate.js'
+export type {
+  FieldCuration,
+  CuratedField,
+  FieldEditor,
+} from './schema-form/curate.js'
 export {
   registerFieldPlugin,
   type FieldPlugin,
@@ -859,6 +1018,8 @@ const {
   details,
   summary,
   button,
+  ul,
+  li,
   form: formElement,
 } = elements
 
@@ -912,6 +1073,16 @@ export class TosiSchemaForm extends withAttributes({
       opacity: '0.7',
       fontStyle: 'italic',
     },
+    ':host .schema-help': { fontSize: '0.85em', opacity: '0.7' },
+    ':host .schema-hidden-errors': {
+      fontSize: '0.9em',
+      color: 'var(--tosi-error, #c00)',
+    },
+    ':host .schema-hidden-errors[hidden]': { display: 'none' },
+    ':host .schema-hidden-errors ul': {
+      margin: '2px 0 0',
+      paddingLeft: '1.2em',
+    },
     ':host .schema-add': { justifySelf: 'start' },
     ':host .schema-empty': {
       fontSize: '0.9em',
@@ -948,6 +1119,37 @@ export class TosiSchemaForm extends withAttributes({
     string,
     { control: HTMLElement; wrapper: HTMLElement; errorSlot: HTMLElement }
   >()
+
+  /*
+  Curation (#221): which properties to show, in what order, under what captions, and through
+  which editors. Applied to the node list, so everything downstream (building, syncing,
+  errors) works on the curated nodes exactly as it does on the full ones.
+  */
+  private _curation: FieldCuration | null = null
+  /** Custom editors by path, as plugins. Consulted before the `format` plugins. */
+  private _editors = new Map<string, FieldPlugin>()
+  private _hiddenErrorSlot: HTMLElement | null = null
+
+  /**
+   * Show only these properties. Keys are paths into the schema (`thresholds.default`), in
+   * display order; each value is `{ caption?, help?, readOnly?, editor? }`, a caption
+   * string, or `true`. `null` shows everything the schema describes.
+   *
+   * The form still holds and validates the WHOLE value: a property that is not shown keeps
+   * its value, and an error in one is listed above the fields.
+   */
+  get fields(): FieldCuration | null {
+    return this._curation
+  }
+
+  set fields(fields: FieldCuration | null) {
+    this._curation = fields ?? null
+    this.rebuild()
+  }
+
+  private pluginFor(node: Node): FieldPlugin | undefined {
+    return this._editors.get(node.path) ?? fieldPlugin(node.schema?.format)
+  }
 
   get schema(): JSONSchema {
     return this._schema
@@ -1062,7 +1264,7 @@ export class TosiSchemaForm extends withAttributes({
     property whatever shape it is, so a plugin can render something the form has no control
     for at all (its own `unsupported` placeholder is the fallback, not the ceiling).
     */
-    const plugin = fieldPlugin(node.schema?.format)
+    const plugin = this.pluginFor(node)
     if (plugin) return this.buildPluginField(node, plugin)
     if (node.kind === 'array') return this.buildArray(node)
     if (node.kind === 'union') return this.buildUnion(node)
@@ -1364,7 +1566,7 @@ export class TosiSchemaForm extends withAttributes({
       nodes.flatMap((node) => {
         // A plugin-claimed node is a LEAF whatever its shape — the plugin renders it whole,
         // so the form must not also expand its children into fields nobody rendered.
-        if (fieldPlugin(node.schema?.format)) return [node]
+        if (this.pluginFor(node)) return [node]
         if (node.kind === 'union')
           return [node, ...expand(branchFields(node, this._value))]
         if (node.kind === 'array') {
@@ -1382,14 +1584,14 @@ export class TosiSchemaForm extends withAttributes({
   /** Every leaf that carries a value — the union pickers are structure, not data. */
   private allFields(): Field[] {
     return this.expanded().filter(
-      (node) => node.kind !== 'union' && !fieldPlugin(node.schema?.format)
+      (node) => node.kind !== 'union' && !this.pluginFor(node)
     ) as Field[]
   }
 
   /** The plugin-rendered fields, which sync through the plugin rather than the DOM. */
   private pluginFields(): Array<{ node: Node; plugin: FieldPlugin }> {
     return this.expanded().flatMap((node) => {
-      const plugin = fieldPlugin(node.schema?.format)
+      const plugin = this.pluginFor(node)
       return plugin ? [{ node, plugin }] : []
     })
   }
@@ -1403,13 +1605,22 @@ export class TosiSchemaForm extends withAttributes({
   its SF-5.) Whole-form and idempotent, so it can run after any partial refill.
   */
   private applyReadOnly(): void {
-    for (const el of this.querySelectorAll('input, select')) {
-      ;(el as HTMLInputElement).disabled = this.readOnly
+    // A curated field can be read-only on its own (`[data-locked]`).
+    const locked = (el: Element) =>
+      this.readOnly || el.closest('[data-locked]') != null
+    for (const el of this.querySelectorAll('input, select, textarea')) {
+      ;(el as HTMLInputElement).disabled = locked(el)
+    }
+    // A custom editor that is itself a component is disabled through its own property.
+    for (const el of this.querySelectorAll('[data-plugin]')) {
+      if (el.tagName.includes('-') && 'disabled' in el) {
+        ;(el as any).disabled = locked(el)
+      }
     }
     for (const el of this.querySelectorAll(
       '.schema-item-controls, .schema-add'
     )) {
-      ;(el as HTMLElement).hidden = this.readOnly
+      ;(el as HTMLElement).hidden = locked(el)
     }
   }
 
@@ -1571,21 +1782,59 @@ export class TosiSchemaForm extends withAttributes({
   }
 
   private syncErrors(): void {
-    for (const field of this._fields) {
-      /*
-      The error span is held, not re-found. `wrapper.querySelector('.schema-error')` was the
-      LAST per-field selector call on the keystroke path — scoped to the wrapper, so linear
-      rather than the quadratic root scans this index replaced, but still one DOM query per
-      field per keystroke (1600 fields = 1600 queries, per keystroke, to set at most a handful
-      of messages). `errorSlot` was named in the review's fix and simply not carried through.
-      */
-      const entry = this._index.get(field.path)
-      if (!entry) continue
-      const message = errorFor(this._errors, field.path)
+    /*
+    Walks the index, not `_fields`: the index holds every path with an error slot, which
+    includes plugin and custom-editor fields. `_fields` leaves those out, so an error on one
+    was never shown. The slot is held, not re-found, so this stays one pass with no DOM
+    queries on the keystroke path.
+    */
+    for (const [path, entry] of this._index) {
+      const message = errorFor(this._errors, path)
       entry.wrapper.classList.toggle('-invalid', Boolean(message))
       entry.errorSlot.textContent = message ?? ''
       entry.errorSlot.hidden = !message
     }
+    this.syncHiddenErrors()
+  }
+
+  /*
+  A curated form can be invalid somewhere it does not show. Saying nothing would let a
+  curated view save a value that does not conform, so those errors are listed above the
+  fields. An uncurated form shows every property and has no such slot.
+  */
+  private syncHiddenErrors(): void {
+    const slot = this._hiddenErrorSlot
+    if (!slot) return
+    const hidden = hiddenErrors(this._errors, this._index.keys())
+    slot.hidden = hidden.length === 0
+    slot.replaceChildren(
+      ...(hidden.length === 0
+        ? []
+        : [
+            span(localize('Problems in fields not shown here')),
+            ul(
+              ...hidden.map((error) =>
+                li(
+                  error.path ? `${error.path}: ${error.message}` : error.message
+                )
+              )
+            ),
+          ])
+    )
+  }
+
+  /** Build one curated node, with the help line and lock its curation entry asks for. */
+  private buildCurated(node: Node): HTMLElement {
+    const el = this.buildNode(node)
+    const entry = curatedField(this._curation?.[node.path] ?? true)
+    if (entry.help) {
+      const help = span({ class: 'schema-help' }, entry.help)
+      const errorSlot = this._index.get(node.path)?.errorSlot
+      if (errorSlot?.parentElement === el) el.insertBefore(help, errorSlot)
+      else el.append(help)
+    }
+    if (entry.readOnly) el.dataset.locked = ''
+    return el
   }
 
   content = null
@@ -1644,6 +1893,28 @@ export class TosiSchemaForm extends withAttributes({
     }
     if (this._builtFor !== this._schema) {
       this._nodes = fieldsFor(this._schema)
+      this._editors.clear()
+      this._hiddenErrorSlot = null
+      if (this._curation) {
+        const { nodes, unknown } = curateNodes(this._nodes, this._curation)
+        this._nodes = nodes
+        if (unknown.length > 0) {
+          console.warn(
+            `<tosi-schema-form>: \`fields\` names ${
+              unknown.length
+            } path(s) the schema does not describe: ${unknown.join(', ')}`
+          )
+        }
+        for (const [path, entry] of Object.entries(this._curation)) {
+          const { editor } = curatedField(entry)
+          if (editor) this._editors.set(path, editorPlugin(editor))
+        }
+        this._hiddenErrorSlot = div({
+          class: 'schema-hidden-errors',
+          role: 'alert',
+          hidden: true,
+        })
+      }
       this._index.clear()
       this.textContent = ''
       /*
@@ -1671,7 +1942,12 @@ export class TosiSchemaForm extends withAttributes({
                       )
                 ),
               ]
-            : this._nodes.map((n) => this.buildNode(n)))
+            : [
+                ...(this._hiddenErrorSlot ? [this._hiddenErrorSlot] : []),
+                ...this._nodes.map((n) =>
+                  this._curation ? this.buildCurated(n) : this.buildNode(n)
+                ),
+              ])
         )
       )
       this._builtFor = this._schema

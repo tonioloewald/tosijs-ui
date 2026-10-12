@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.16.12
+
+Two additions for task-focused screens: a table row can open to show a detail element, and a
+schema form can show a hand-picked set of fields. Both are off until you ask for them.
+
+- **`<tosi-table>` rows can expand to a detail element** (#220). Set
+  `rowDetail = (row) => element` and each row can open to show that element underneath it,
+  across the full width of the table. A column with `expander: true` renders the toggle;
+  `toggleRowDetail(row, open?)` does it from code, and `rowexpand` / `rowcollapse` report it.
+  The detail stays in view while the columns scroll sideways, is built once per expansion and
+  kept while the row is scrolled out of view, and the toggled row keeps its place on screen.
+  Expansion follows the row through sorting and filtering; with `rowId` it also survives a
+  reload of the data, and `expandedRowIds` can be read and set. `rowHasDetail` hides the
+  toggle on rows with nothing to show. Pinned rows are not expandable.
+- **The scrollbar of a table with `rowDetail` is approximate.** Rows are no longer all one
+  height, so the table places them by interpolation (tosijs's variable-height list). A table
+  that does not set `rowDetail` is unchanged.
+- **`<tosi-schema-form>` takes a `fields` map for curated forms** (#221). It maps paths into
+  the schema to `{ caption, help, readOnly, editor }`, in display order, and the form shows
+  only those. Controls, choices, `required` and constraints still come from the schema.
+  `editor` is any function returning an element with a `value` and a `change` event, such as
+  an element creator from this library, or a field plugin object.
+- **A curated form still owns the whole value.** Properties that are not shown keep their
+  values, the whole value is validated, and an error in a property that is not shown is
+  listed above the fields. A path the schema does not describe renders as a placeholder that
+  says so.
+- **Fixed: an error on a plugin-rendered field was never shown** under that field. The form
+  now shows it there, as it does for built-in controls.
+- **Fixed: `readOnly` on a schema form did not disable a custom-element plugin control or a
+  `<textarea>`** inside a plugin. Both are now disabled with the rest of the form.
+
 ## 1.16.11
 
 In-page links work, teaching examples show their test result, and "Download ePub" stops

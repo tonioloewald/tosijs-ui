@@ -2,6 +2,8 @@ import { ElementCreator } from 'tosijs';
 import type { JSONSchema } from './schema-form/json-schema.js';
 import { type FieldError } from './schema-form/fields.js';
 export { setSchemaValidator, schemaValidationAvailable, type SchemaValidator, } from './schema-form/validator.js';
+import { type FieldCuration } from './schema-form/curate.js';
+export type { FieldCuration, CuratedField, FieldEditor, } from './schema-form/curate.js';
 export { registerFieldPlugin, type FieldPlugin, type FieldPluginContext, } from './schema-form/plugins.js';
 declare const TosiSchemaForm_base: import("tosijs").WithAttributes<{
     readOnly: boolean;
@@ -77,6 +79,21 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
             opacity: string;
             fontStyle: string;
         };
+        ':host .schema-help': {
+            fontSize: string;
+            opacity: string;
+        };
+        ':host .schema-hidden-errors': {
+            fontSize: string;
+            color: string;
+        };
+        ':host .schema-hidden-errors[hidden]': {
+            display: string;
+        };
+        ':host .schema-hidden-errors ul': {
+            margin: string;
+            paddingLeft: string;
+        };
         ':host .schema-add': {
             justifySelf: string;
         };
@@ -99,6 +116,21 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private _builtFor;
     private _errors;
     private _index;
+    private _curation;
+    /** Custom editors by path, as plugins. Consulted before the `format` plugins. */
+    private _editors;
+    private _hiddenErrorSlot;
+    /**
+     * Show only these properties. Keys are paths into the schema (`thresholds.default`), in
+     * display order; each value is `{ caption?, help?, readOnly?, editor? }`, a caption
+     * string, or `true`. `null` shows everything the schema describes.
+     *
+     * The form still holds and validates the WHOLE value: a property that is not shown keeps
+     * its value, and an error in one is listed above the fields.
+     */
+    get fields(): FieldCuration | null;
+    set fields(fields: FieldCuration | null);
+    private pluginFor;
     get schema(): JSONSchema;
     set schema(schema: JSONSchema);
     get value(): any;
@@ -137,6 +169,9 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private syncValues;
     private syncPlugins;
     private syncErrors;
+    private syncHiddenErrors;
+    /** Build one curated node, with the help line and lock its curation entry asks for. */
+    private buildCurated;
     content: null;
     private _localeListener;
     connectedCallback(): void;

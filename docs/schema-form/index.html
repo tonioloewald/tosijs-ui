@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=fffb52cc7012" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=b5c82c01be25" data-tosi-doc-system />
   <title>schema-form — tosijs-ui</title>
   <meta name="description" content="A form generated from a JSON Schema, with validation." />
   <link rel="canonical" href="https://ui.tosijs.net/schema-form/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e8b17a4cbc38" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=955d7562f9ce" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="schema-form">schema-form</h1>
 <!--{ "parent": "Components" }-->
@@ -667,6 +667,143 @@ test(&#39;a plugin registered after the form renders takes effect, styles and al
   expect(control.querySelector(&#39;.percent-readout&#39;).textContent).toBe(&#39;60%&#39;)
 })
 </code></pre>
+<h2 id="curated-forms">Curated forms</h2>
+<p>A schema-form shows every property the schema describes. That is right for an admin view and
+wrong for a task-focused one: a panel with four fields from a two-hundred-property
+configuration, an onboarding step, a review dialog.</p>
+<p>Set <strong><code>fields</code></strong> to choose what is shown. It is a map from <strong>paths</strong> into the schema to how
+each one should appear, and its order is the display order:</p>
+<pre><code class="language-typescript" data-highlighted>form<span class="token punctuation">.</span>fields <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token string-property property">'thresholds.default'</span><span class="token operator">:</span> <span class="token punctuation">{</span> caption<span class="token operator">:</span> <span class="token string">'Default threshold'</span><span class="token punctuation">,</span> help<span class="token operator">:</span> <span class="token string">'Between 0 and 1.'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token string-property property">'routing.mode'</span><span class="token operator">:</span> <span class="token string">'How invoices are routed'</span><span class="token punctuation">,</span> <span class="token comment">// a string is just a caption</span>
+  <span class="token string-property property">'routing.priority'</span><span class="token operator">:</span> <span class="token punctuation">{</span> editor<span class="token operator">:</span> tosiRating <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// a custom editor</span>
+  owner<span class="token operator">:</span> <span class="token punctuation">{</span> readOnly<span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// shown, not editable here</span>
+  notify<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token comment">// exactly as the schema describes it</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<ul>
+<li>Everything else still comes from the schema: the control, <code>enum</code> choices, <code>required</code>,
+number and format constraints, and the caption when you give none.</li>
+<li>A path runs through object properties (<code>a.b.c</code>). Naming an object, an array or a union
+shows that whole property.</li>
+<li><strong><code>editor</code></strong> is a function that returns an element with a <code>value</code> property and a <code>change</code>
+event, which is what every element creator in this library is. Its <code>value</code> must be of the
+schema&#39;s type. Pass a <a href="#format-plugins">field plugin</a> object (<code>{ render, sync }</code>) for full control.</li>
+<li><strong><code>readOnly</code></strong> on one field is a presentation choice, not a security boundary: the value is
+still writable through <code>form.value</code>.</li>
+<li>A path the schema does not describe renders as a placeholder that says so, and the console
+warns. A field that silently fails to appear looks the same as one nobody asked for.</li>
+</ul>
+<p><strong>The form still owns the whole value.</strong> Properties you do not show keep their values, and
+the whole value is validated. An error in a property that is not shown is listed above the
+fields, so a curated form cannot quietly save a value that does not conform. <code>errors</code> and
+<code>validate()</code> always describe the whole value.</p>
+<p>Set <code>fields = null</code> to show everything again.</p>
+<pre><code class="language-js">import { tosiSchemaForm, tosiRating } from &#39;tosijs-ui&#39;
+
+const configSchema = {
+  type: &#39;object&#39;,
+  properties: {
+    owner: { type: &#39;string&#39; },
+    thresholds: {
+      type: &#39;object&#39;,
+      properties: {
+        default: { type: &#39;number&#39;, minimum: 0, maximum: 1 },
+        escalate: { type: &#39;number&#39;, minimum: 0, maximum: 1 },
+      },
+      required: [&#39;default&#39;],
+    },
+    routing: {
+      type: &#39;object&#39;,
+      properties: {
+        mode: { type: &#39;string&#39;, enum: [&#39;manual&#39;, &#39;assisted&#39;, &#39;automatic&#39;] },
+        priority: { type: &#39;integer&#39;, minimum: 0, maximum: 5 },
+        retries: { type: &#39;integer&#39;, minimum: 0 },
+      },
+    },
+    audit: { type: &#39;object&#39;, properties: { retainDays: { type: &#39;integer&#39; } } },
+  },
+}
+
+const curatedForm = tosiSchemaForm({
+  schema: configSchema,
+  value: {
+    owner: &#39;finance-ops&#39;,
+    thresholds: { default: 0.8, escalate: 0.95 },
+    routing: { mode: &#39;assisted&#39;, priority: 3, retries: 2 },
+    audit: { retainDays: &#39;ninety&#39; }, // not shown, and not valid
+  },
+  fields: {
+    &#39;thresholds.default&#39;: {
+      caption: &#39;Default threshold&#39;,
+      help: &#39;Predictions below this go to a person. Between 0 and 1.&#39;,
+    },
+    &#39;routing.mode&#39;: &#39;How invoices are routed&#39;,
+    &#39;routing.priority&#39;: { caption: &#39;Priority&#39;, editor: tosiRating },
+    owner: { caption: &#39;Owned by&#39;, readOnly: true },
+  },
+})
+
+const curatedValue = document.createElement(&#39;pre&#39;)
+const showCurated = () =&gt; {
+  curatedValue.textContent = JSON.stringify(curatedForm.value, null, 2)
+}
+curatedForm.addEventListener(&#39;change&#39;, showCurated)
+showCurated()
+
+preview.append(curatedForm, curatedValue)
+</code></pre>
+<pre><code class="language-test">const curatedForm = await waitFor(&#39;tosi-schema-form&#39;)
+await waitMs(100)
+
+test(&#39;a curated form shows the chosen fields, in order, under the chosen captions&#39;, () =&gt; {
+  const shown = [...curatedForm.querySelectorAll(&#39;[data-field]&#39;)]
+  expect(shown.map((el) =&gt; el.dataset.field)).toEqual([
+    &#39;thresholds.default&#39;,
+    &#39;routing.mode&#39;,
+    &#39;routing.priority&#39;,
+    &#39;owner&#39;,
+  ])
+  expect(shown[0].querySelector(&#39;label&#39;).textContent).toBe(&#39;Default threshold&#39;)
+  expect(shown[0].querySelector(&#39;.schema-help&#39;).textContent).toContain(&#39;Between 0 and 1&#39;)
+  // the control still comes from the schema
+  expect(curatedForm.querySelector(&#39;[data-path=&quot;thresholds.default&quot;]&#39;).type).toBe(&#39;number&#39;)
+  expect(curatedForm.querySelector(&#39;[data-path=&quot;routing.mode&quot;]&#39;).tagName).toBe(&#39;SELECT&#39;)
+  expect(curatedForm.querySelector(&#39;[data-path=&quot;owner&quot;]&#39;).disabled).toBe(true)
+  expect(curatedForm.querySelector(&#39;[data-path=&quot;routing.mode&quot;]&#39;).disabled).toBe(false)
+})
+
+test(&#39;editing one field keeps everything that is not shown&#39;, () =&gt; {
+  const mode = curatedForm.querySelector(&#39;[data-path=&quot;routing.mode&quot;]&#39;)
+  mode.value = &#39;automatic&#39;
+  mode.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+  expect(curatedForm.value.routing).toEqual({ mode: &#39;automatic&#39;, priority: 3, retries: 2 })
+  expect(curatedForm.value.thresholds.escalate).toBe(0.95)
+  expect(curatedForm.value.audit.retainDays).toBe(&#39;ninety&#39;)
+})
+
+test(&#39;a custom editor reads and writes the value&#39;, () =&gt; {
+  const rating = curatedForm.querySelector(&#39;[data-plugin=&quot;routing.priority&quot;]&#39;)
+  expect(rating.tagName).toBe(&#39;TOSI-RATING&#39;)
+  expect(rating.value).toBe(3)
+  let fired = 0
+  const count = () =&gt; (fired += 1)
+  curatedForm.addEventListener(&#39;change&#39;, count)
+  rating.value = 5
+  rating.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
+  curatedForm.removeEventListener(&#39;change&#39;, count)
+  expect(curatedForm.value.routing.priority).toBe(5)
+  expect(fired).toBe(1)
+})
+
+test(&#39;an error in a field that is not shown is listed, not hidden&#39;, () =&gt; {
+  if (!curatedForm.validationAvailable) return
+  expect(curatedForm.validate()).toBe(false)
+  const summary = curatedForm.querySelector(&#39;.schema-hidden-errors&#39;)
+  expect(summary.hidden).toBe(false)
+  expect(summary.textContent).toContain(&#39;audit.retainDays&#39;)
+})
+</code></pre>
 <h2 id="read-only">Read-only</h2>
 <p><code>readOnly</code> disables the inputs and <strong>hides</strong> the add, remove and reorder controls rather than
 grey them out. A dead row of buttons is a form advertising affordances it will not honour;
@@ -720,6 +857,7 @@ a schema that never mentioned it, which is how an editor loses data without anyo
 <li><code>schema</code> — the JSON Schema. Setting it rebuilds the fields.</li>
 <li><code>value</code> — the data. Setting it updates the inputs; it does <strong>not</strong> fire <code>change</code>.</li>
 <li><code>readOnly</code> — disables the inputs.</li>
+<li><code>fields</code> — a curation: which properties to show, in order, with captions and editors.</li>
 <li><code>errors</code> — <code>{ path, message }[]</code> for the current value.</li>
 <li><code>validate()</code> — <code>true</code> when the value conforms.</li>
 <li><code>change</code> — fires when the user edits a field.</li>
@@ -875,6 +1013,6 @@ test(&#39;editing keeps unknown keys, fires change, and does not rebuild under t
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-s7c5e74s.js"></script>
+  <script type="module" src="../hydrate-h2f0dtgt.js"></script>
 </body>
 </html>

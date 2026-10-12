@@ -38,9 +38,17 @@ export interface ColumnOptions {
      * table has no business reaching into it.
      */
     editable?: boolean;
+    /**
+     * Render this column as the row's disclosure toggle for `rowDetail`. The cell holds one
+     * button; `prop` is unused (give it any unique string) and the header is left blank
+     * unless you set `name`.
+     */
+    expander?: boolean;
     headerCell?: (options: ColumnOptions) => HTMLElement;
     dataCell?: (options: ColumnOptions) => HTMLElement;
 }
+/** Builds the element shown under an expanded row. `null` means the row has no detail. */
+export type RowDetailFn = (row: any) => HTMLElement | null;
 export interface TableData {
     columns?: ColumnOptions[] | null;
     array: any[];
@@ -164,6 +172,46 @@ export declare class TosiTable extends TosiTable_base {
         ':host .row-edge-top': {
             boxShadow: string;
         };
+        ':host .scroll-area.has-row-detail': {
+            containerType: string;
+        };
+        ':host .tr.row-expanded': {
+            height: string;
+        };
+        ':host .tr-detail': {
+            gridColumn: string;
+            position: string;
+            left: string;
+            width: string;
+            boxSizing: string;
+            padding: string;
+            background: string;
+            boxShadow: string;
+        };
+        ':host .td.expander-cell': {
+            justifyContent: string;
+            padding: number;
+        };
+        ':host .row-expander': {
+            color: string;
+            background: string;
+            boxShadow: string;
+            padding: number;
+            display: string;
+            alignItems: string;
+            justifyContent: string;
+            width: string;
+            height: string;
+        };
+        ':host .row-expander[hidden]': {
+            display: string;
+        };
+        ':host .row-expander > *': {
+            transition: string;
+        };
+        ':host .row-expander[aria-expanded="true"] > *': {
+            transform: string;
+        };
         ':host .th .menu-trigger': {
             color: string;
             background: string;
@@ -195,6 +243,55 @@ export declare class TosiTable extends TosiTable_base {
     get schema(): JSONSchema | null;
     set schema(schema: JSONSchema | null);
     selectionChanged: SelectCallback;
+    private _rowDetail;
+    private _rowId;
+    /** Keys of the expanded rows: `rowId(row)` when there is a `rowId`, else the row itself. */
+    private _expanded;
+    /** One detail container per expanded row, kept so its state survives scrolling. */
+    private _detailEls;
+    private _detailCount;
+    /**
+     * Builds the element shown under an expanded row, from that row's data. Return `null`
+     * for a row with no detail. Called once per expansion: the element is kept while the row
+     * stays expanded (scrolling it out of view and back does not rebuild it) and dropped when
+     * the row collapses or the table's `array` is replaced.
+     */
+    get rowDetail(): RowDetailFn | null;
+    set rowDetail(fn: RowDetailFn | null);
+    /**
+     * Which rows have a detail, for the `expander` column: a row this returns `false` for
+     * gets no toggle. Unset, every row gets one.
+     */
+    rowHasDetail: ((row: any) => boolean) | null;
+    /**
+     * A stable id for a row. Without it expansion follows the row OBJECT, which is enough
+     * for sorting and filtering; with it expansion also survives replacing `array` with new
+     * objects, and `expandedRowIds` can be read and set.
+     */
+    get rowId(): ((row: any) => string) | null;
+    set rowId(fn: ((row: any) => string) | null);
+    /** Ids of the expanded rows. Needs `rowId`; without one this is always empty. */
+    get expandedRowIds(): string[];
+    set expandedRowIds(ids: string[] | null);
+    private detailKey;
+    isRowExpanded(row: any): boolean;
+    /**
+     * Expand or collapse a row's detail (`open` omitted toggles). Fires `rowexpand` or
+     * `rowcollapse` with `detail: { row, element }`. The toggled row keeps its place on
+     * screen.
+     */
+    toggleRowDetail(row: any, open?: boolean): void;
+    /** The detail container for a row, built on first use. `null` when the row has none. */
+    private detailFor;
+    private stampedRow;
+    /** A row's cells: its children, less the detail that an expanded row also holds. */
+    private rowCells;
+    private syncDetail;
+    private syncStampedDetails;
+    /** Have the virtual list re-measure its rows after one changed height. */
+    private remeasureRows;
+    /** Is this event target inside one of THIS table's row details? */
+    private inDetail;
     rowRendered: ((item: any, cells: HTMLElement[]) => void) | null;
     private selectedKey;
     private selectBinding;

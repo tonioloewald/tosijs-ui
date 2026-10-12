@@ -962,6 +962,135 @@ scrolls horizontally exactly as it does without the attribute, and every column 
 width it was given. Header and body stay in step either way; they share one
 `grid-template-columns`.
 
+## Row Detail
+
+Set **`rowDetail`** to a function that builds an element from a row, and each row can be
+expanded to show that element underneath it, across the full width of the table. This is the
+master/detail pattern: an invoice that opens to its line items, a log entry that opens to its
+payload.
+
+```typescript
+table.rowDetail = (row) => invoiceLines({ invoice: row }) // any element; null = no detail
+table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
+```
+
+- A column with **`expander: true`** renders the disclosure toggle. Or call
+  **`table.toggleRowDetail(row, open?)`** from anything you like, such as a row double-click.
+- **`rowHasDetail = (row) => boolean`** hides the toggle on rows that have nothing to show.
+- **`rowexpand`** and **`rowcollapse`** events carry `detail: { row, element }`.
+- The element is built once per expansion and kept while the row stays expanded, so
+  scrolling it out of view and back does not reset what the reader did inside it. It is
+  dropped when the row collapses or the table's `array` is replaced.
+- Expansion follows the row object, so it survives sorting and filtering. Set
+  **`rowId = (row) => string`** as well and it survives reloading the data, and
+  **`expandedRowIds`** can be read and set.
+- The detail stays in view while the columns scroll sideways. Clicks and keys inside it are
+  left alone: they do not select the row or move the cell focus. `Tab` from a row's last
+  cell goes into its detail.
+- Pinned top and bottom rows are not expandable.
+
+**The scrollbar becomes approximate.** While `rowDetail` is set, rows are no longer all the
+same height, so the table places them by interpolation instead of exact arithmetic. With
+nothing expanded you will not notice. Scrolling past a tall expanded row moves it out in one
+step when its top edge leaves the view. If your details are tall, keep few of them open.
+
+Style the detail area with `--tosi-table-detail-bg` and `--tosi-table-detail-padding`, or
+target `.tr-detail`. Add `Details` to your localized strings.
+
+```js
+import { tosiTable } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { div, table, tr, td, th, b } = elements
+
+const invoices = Array.from({ length: 2000 }, (_, i) => ({
+  id: `INV-${1000 + i}`,
+  buyer: ['Acme', 'Globex', 'Initech', 'Umbrella'][i % 4],
+  lines: Array.from({ length: 1 + (i % 4) }, (_, n) => ({
+    item: ['Widget', 'Gasket', 'Sprocket', 'Flange'][(i + n) % 4],
+    qty: 1 + ((i + n) % 5),
+    price: 12.5 * (1 + ((i * 7 + n) % 9)),
+  })),
+}))
+for (const invoice of invoices) {
+  invoice.total = invoice.lines.reduce((sum, l) => sum + l.qty * l.price, 0)
+}
+
+const invoiceTable = tosiTable({
+  style: { height: '320px' },
+  rowHeight: 32,
+  select: true,
+  array: invoices,
+  columns: [
+    { prop: 'detail', width: 40, expander: true },
+    { prop: 'id', name: 'Invoice', width: 120 },
+    { prop: 'buyer', width: 160 },
+    { prop: 'total', width: 120, type: 'currency(USD)' },
+  ],
+  rowId: (row) => row.id,
+  rowDetail: (row) =>
+    table(
+      { class: 'invoice-lines' },
+      tr(th('Item'), th('Qty'), th('Price')),
+      ...row.lines.map((line) =>
+        tr(td(line.item), td(String(line.qty)), td(line.price.toFixed(2)))
+      )
+    ),
+})
+invoiceTable.expandedRowIds = ['INV-1001']
+
+const log = div({ class: 'detail-log' }, 'Expand a row.')
+invoiceTable.addEventListener('rowexpand', (event) => {
+  log.replaceChildren('Expanded ', b(event.detail.row.id))
+})
+invoiceTable.addEventListener('rowcollapse', (event) => {
+  log.replaceChildren('Collapsed ', b(event.detail.row.id))
+})
+
+preview.append(invoiceTable, log)
+```
+```css
+.preview .invoice-lines {
+  border-collapse: collapse;
+}
+.preview .invoice-lines :is(td, th) {
+  padding: 2px 16px 2px 0;
+  text-align: left;
+}
+.preview .detail-log {
+  padding: 8px 0;
+}
+```
+```test
+const table = preview.querySelector('tosi-table')
+await waitMs(300)
+
+test('a row expands to its detail and collapses again', () => {
+  const row = table.array[3]
+  const events = []
+  const record = (event) => events.push(event.type + ':' + event.detail.row.id)
+  table.addEventListener('rowexpand', record)
+  table.addEventListener('rowcollapse', record)
+
+  const before = table.querySelectorAll('.tr-detail').length
+  table.toggleRowDetail(row)
+  expect(table.isRowExpanded(row)).toBe(true)
+  expect(table.querySelectorAll('.tr-detail').length).toBe(before + 1)
+  expect(table.expandedRowIds).toContain('INV-1003')
+  // the detail is not one of the row's cells
+  expect(table.getCells(row).length).toBe(table.visibleColumns.length)
+  const toggle = table.getCells(row)[0].querySelector('.row-expander')
+  expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  const detail = document.getElementById(toggle.getAttribute('aria-controls'))
+  expect(detail.textContent).toContain('Qty')
+
+  toggle.click()
+  expect(table.isRowExpanded(row)).toBe(false)
+  expect(table.querySelectorAll('.tr-detail').length).toBe(before)
+  expect(events.join(' ')).toBe('rowexpand:INV-1003 rowcollapse:INV-1003')
+})
+```
+
 ## Row Height
 
 If you set the `<tosi-table>`'s `rowHeight` to `0` it will render all its elements (i.e. not be virtual). This is
@@ -1046,6 +1175,7 @@ You'll need to make sure your localized strings include:
 - Left
 - Right
 - Column Options
+- Details
 
 As well as any column names you want localized — these are also used as the accessible name
 (`aria-label`) of each editable cell, so an editable table wants them present even if you are
@@ -1354,6 +1484,54 @@ export class TosiTable extends withAttributes({
         ':host .row-edge-top': {
             boxShadow: '0 -1px 0 var(--tosi-table-edge-color, #0002)',
         },
+        /*
+        A row's detail is a child of the row that spans every column, on an implicit second grid
+        line. The cells keep their fixed height, so only the row grows.
+    
+        It is sticky to the left edge and exactly as wide as the scroll area (`100cqw`; the
+        scroll area is the query container only while `rowDetail` is set), so it stays put while
+        the cells scroll sideways under it.
+        */
+        ':host .scroll-area.has-row-detail': {
+            containerType: 'inline-size',
+        },
+        ':host .tr.row-expanded': {
+            height: 'auto',
+        },
+        ':host .tr-detail': {
+            gridColumn: '1 / -1',
+            position: 'sticky',
+            left: '0',
+            width: '100cqw',
+            boxSizing: 'border-box',
+            padding: varDefault.tosiTableDetailPadding('var(--tosi-spacing-sm, 8px) var(--tosi-spacing, 16px)'),
+            background: varDefault.tosiTableDetailBg('color-mix(in srgb, var(--tosi-text, #000) 4%, var(--tosi-bg, #fff))'),
+            boxShadow: 'inset 0 1px 0 var(--tosi-table-edge-color, #0002)',
+        },
+        ':host .td.expander-cell': {
+            justifyContent: 'center',
+            padding: 0,
+        },
+        ':host .row-expander': {
+            color: 'currentColor',
+            background: 'none',
+            boxShadow: 'none',
+            padding: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+        },
+        ':host .row-expander[hidden]': {
+            display: 'none',
+        },
+        ':host .row-expander > *': {
+            transition: 'transform 0.15s ease-out',
+        },
+        ':host .row-expander[aria-expanded="true"] > *': {
+            transform: 'rotate(90deg)',
+        },
         ':host .th .menu-trigger': {
             color: 'currentColor',
             background: 'none',
@@ -1392,6 +1570,213 @@ export class TosiTable extends withAttributes({
     selectionChanged = () => {
         /* do not care */
     };
+    /*
+    Row detail (master/detail, #220).
+  
+    The detail is a child of the row's own element, so the list stays one element per item and
+    the row simply gets taller. That is what tosijs's variable-height virtual list is for: with
+    `minHeight` set, rows render at their natural height and the scroll position is
+    interpolated. The table switches to that mode only while `rowDetail` is set, because the
+    price is an approximate scrollbar, and a table without details should keep its exact one.
+    */
+    _rowDetail = null;
+    _rowId = null;
+    /** Keys of the expanded rows: `rowId(row)` when there is a `rowId`, else the row itself. */
+    _expanded = new Set();
+    /** One detail container per expanded row, kept so its state survives scrolling. */
+    _detailEls = new Map();
+    _detailCount = 0;
+    /**
+     * Builds the element shown under an expanded row, from that row's data. Return `null`
+     * for a row with no detail. Called once per expansion: the element is kept while the row
+     * stays expanded (scrolling it out of view and back does not rebuild it) and dropped when
+     * the row collapses or the table's `array` is replaced.
+     */
+    get rowDetail() {
+        return this._rowDetail;
+    }
+    set rowDetail(fn) {
+        if (this._rowDetail === fn)
+            return;
+        this._rowDetail = fn;
+        this._detailEls.clear();
+        if (!fn)
+            this._expanded.clear();
+        this.queueRender();
+    }
+    /**
+     * Which rows have a detail, for the `expander` column: a row this returns `false` for
+     * gets no toggle. Unset, every row gets one.
+     */
+    rowHasDetail = null;
+    /**
+     * A stable id for a row. Without it expansion follows the row OBJECT, which is enough
+     * for sorting and filtering; with it expansion also survives replacing `array` with new
+     * objects, and `expandedRowIds` can be read and set.
+     */
+    get rowId() {
+        return this._rowId;
+    }
+    set rowId(fn) {
+        if (this._rowId === fn)
+            return;
+        this._rowId = fn;
+        this._expanded.clear();
+        this._detailEls.clear();
+        this.queueRender();
+    }
+    /** Ids of the expanded rows. Needs `rowId`; without one this is always empty. */
+    get expandedRowIds() {
+        return this._rowId ? [...this._expanded] : [];
+    }
+    set expandedRowIds(ids) {
+        if (!this._rowId) {
+            if (ids && ids.length > 0) {
+                console.warn('<tosi-table>: expandedRowIds needs a rowId function to map ids to rows; ignored.');
+            }
+            return;
+        }
+        this._expanded = new Set(ids ? tosiValue(ids) : []);
+        for (const key of [...this._detailEls.keys()]) {
+            if (!this._expanded.has(key))
+                this._detailEls.delete(key);
+        }
+        this.syncStampedDetails();
+    }
+    detailKey(row) {
+        const raw = tosiValue(row);
+        return this._rowId ? this._rowId(raw) : raw;
+    }
+    isRowExpanded(row) {
+        return row != null && this._expanded.has(this.detailKey(row));
+    }
+    /**
+     * Expand or collapse a row's detail (`open` omitted toggles). Fires `rowexpand` or
+     * `rowcollapse` with `detail: { row, element }`. The toggled row keeps its place on
+     * screen.
+     */
+    toggleRowDetail(row, open) {
+        if (row == null || !this._rowDetail)
+            return;
+        const raw = tosiValue(row);
+        const key = this.detailKey(raw);
+        const was = this._expanded.has(key);
+        const want = open ?? !was;
+        if (want === was)
+            return;
+        let element = this._detailEls.get(key) ?? null;
+        if (want) {
+            element = this.detailFor(raw, key);
+            if (!element)
+                return;
+            this._expanded.add(key);
+        }
+        else {
+            this._expanded.delete(key);
+            this._detailEls.delete(key);
+        }
+        const rowEl = this.stampedRow(raw);
+        const top = rowEl?.getBoundingClientRect().top;
+        if (rowEl)
+            this.syncDetail(rowEl, raw);
+        this.remeasureRows();
+        /*
+        Keep the toggled row where it was. A variable-height list places its rows by
+        interpolation, so a row that changes height moves every row, itself included, by an
+        amount that depends on how far down the list is scrolled.
+        */
+        if (top !== undefined && this._scrollArea) {
+            for (let i = 0; i < 3; i += 1) {
+                const now = this.stampedRow(raw)?.getBoundingClientRect().top;
+                if (now === undefined || Math.abs(now - top) < 1)
+                    break;
+                this._scrollArea.scrollTop += now - top;
+                this.remeasureRows();
+            }
+        }
+        this.dispatchEvent(new CustomEvent(want ? 'rowexpand' : 'rowcollapse', {
+            bubbles: true,
+            detail: { row: raw, element: element?.firstElementChild ?? null },
+        }));
+    }
+    /** The detail container for a row, built on first use. `null` when the row has none. */
+    detailFor(raw, key) {
+        const cached = this._detailEls.get(key);
+        if (cached)
+            return cached;
+        const content = this._rowDetail?.(raw);
+        if (!content)
+            return null;
+        this._detailCount += 1;
+        const container = div({
+            class: 'tr-detail',
+            id: `${this.instanceId}-detail-${this._detailCount}`,
+            role: 'region',
+        }, content);
+        this._detailEls.set(key, container);
+        return container;
+    }
+    stampedRow(raw) {
+        if (!this._scrollArea)
+            return undefined;
+        const group = getListBinding(this._scrollArea)?.itemToElement.get(raw);
+        return group?.[0];
+    }
+    /** A row's cells: its children, less the detail that an expanded row also holds. */
+    rowCells(rowEl) {
+        return Array.from(rowEl.children).filter((el) => !el.classList.contains('tr-detail'));
+    }
+    /*
+    Make one stamped row agree with the expansion state. Runs when a row is stamped (rows are
+    created and destroyed as the table scrolls) and when a row is toggled.
+    */
+    syncDetail(rowEl, row) {
+        const raw = tosiValue(row);
+        const expanded = this._rowDetail != null && this.isRowExpanded(raw);
+        const detail = expanded ? this.detailFor(raw, this.detailKey(raw)) : null;
+        for (const child of Array.from(rowEl.children)) {
+            if (child.classList.contains('tr-detail') && child !== detail) {
+                child.remove();
+            }
+        }
+        if (detail && detail.parentElement !== rowEl)
+            rowEl.append(detail);
+        rowEl.classList.toggle('row-expanded', detail != null);
+        const toggle = rowEl.querySelector(':scope > .td > .row-expander');
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', String(detail != null));
+            if (detail)
+                toggle.setAttribute('aria-controls', detail.id);
+            else
+                toggle.removeAttribute('aria-controls');
+            toggle.hidden =
+                this.rowHasDetail != null && !this.rowHasDetail(raw);
+        }
+    }
+    syncStampedDetails() {
+        if (!this._scrollArea)
+            return;
+        for (const rowEl of this._scrollArea.querySelectorAll(':scope > .tr')) {
+            const item = getListItem(rowEl);
+            if (item != null)
+                this.syncDetail(rowEl, item);
+        }
+        this.remeasureRows();
+    }
+    /** Have the virtual list re-measure its rows after one changed height. */
+    remeasureRows() {
+        if (!this._scrollArea)
+            return;
+        const binding = getListBinding(this._scrollArea);
+        binding?.update(binding.array, true);
+    }
+    /** Is this event target inside one of THIS table's row details? */
+    inDetail(target) {
+        if (!(target instanceof Element))
+            return false;
+        const detail = target.closest('.tr-detail');
+        return detail != null && this.contains(detail);
+    }
     rowRendered = null;
     selectedKey = Symbol('selected');
     selectBinding = (elt, obj) => {
@@ -1460,7 +1845,7 @@ export class TosiTable extends withAttributes({
                 const row = rowEls[0];
                 let cached = this._rowCellsCache.get(row);
                 if (!cached) {
-                    cached = Array.from(row.children);
+                    cached = this.rowCells(row);
                     this._rowCellsCache.set(row, cached);
                 }
                 return cached;
@@ -1482,6 +1867,8 @@ export class TosiTable extends withAttributes({
             this._filter !== filter) {
             this.queueRender();
         }
+        if (this._array !== array)
+            this._detailEls.clear();
         this._array = array || [];
         this._columns = columns || null;
         this._filter = filter || passThru;
@@ -1626,6 +2013,8 @@ export class TosiTable extends withAttributes({
         return this._array;
     }
     set array(newArray) {
+        // Details were built from the old rows' data.
+        this._detailEls.clear();
         this._array = tosiValue(newArray);
         this.queueRender();
     }
@@ -1967,6 +2356,8 @@ export class TosiTable extends withAttributes({
     cell.
     */
     handleCellChange = (event) => {
+        if (this.inDetail(event.target))
+            return;
         const el = event.target.closest('[data-edit-prop]');
         if (!el)
             return;
@@ -2184,6 +2575,26 @@ export class TosiTable extends withAttributes({
             this.applyGridCellAttrs(cell, colIndex, si, style, repeats);
             return cell;
         }
+        if (col.expander) {
+            // The row's own binding (`syncDetail`) keeps the button's state; nothing binds here.
+            return span({
+                class: this.cellClasses('td', si) + ' expander-cell',
+                role: 'gridcell',
+                tabindex: -1,
+                ariaColindex: String(colIndex + 1),
+                style,
+            }, button({
+                class: 'row-expander',
+                type: 'button',
+                ariaExpanded: 'false',
+                ...this.labelAttrs('Details', 'aria-label'),
+                onClick: (event) => {
+                    const item = getListItem(event.target);
+                    if (item != null)
+                        this.toggleRowDetail(item);
+                },
+            }, icons.chevronRight()));
+        }
         if (this.columnEditable(col)) {
             return this.buildEditableCell(col, colIndex, si, style, repeats);
         }
@@ -2282,9 +2693,12 @@ export class TosiTable extends withAttributes({
                     selectBindingFn(rowEl, value);
                     if (grouped)
                         this.tagClusterParity(rowEl, value);
+                    // `grouped` is false only for pinned rows, which are not expandable.
+                    if (grouped && value != null)
+                        this.syncDetail(rowEl, value);
                     const fn = this.rowRendered;
                     if (fn) {
-                        fn(value, Array.from(rowEl.children));
+                        fn(value, this.rowCells(rowEl));
                     }
                 },
             },
@@ -2306,7 +2720,8 @@ export class TosiTable extends withAttributes({
                 sortIcon = icons.sortDescending();
                 break;
         }
-        const menuButton = !(this.nosort && this.nohide)
+        // An expander column has nothing to sort by and should not be hidden by accident.
+        const menuButton = !(this.nosort && this.nohide) && !col.expander
             ? button({
                 class: 'menu-trigger',
                 ...this.labelAttrs('Column Options'),
@@ -2325,7 +2740,11 @@ export class TosiTable extends withAttributes({
                 ariaSort,
                 ariaColindex: String(colIndex + 1),
                 style: this.cellStyle(col, si),
-            }, this.captionSpan({ style: { flex: '1' } }, typeof col.name === 'string' ? col.name : col.prop), menuButton);
+            }, this.captionSpan({ style: { flex: '1' } }, typeof col.name === 'string'
+                ? col.name
+                : col.expander
+                    ? ''
+                    : col.prop), menuButton);
         if (col.headerCell !== undefined) {
             this.applyGridCellAttrs(cell, colIndex, si, this.cellStyle(col, si));
             cell.classList.remove('td');
@@ -2560,6 +2979,10 @@ export class TosiTable extends withAttributes({
         }
         const { target } = event;
         if (!(target instanceof HTMLElement)) {
+            return;
+        }
+        // A click in a row's detail, or on its disclosure toggle, is not a click on the row.
+        if (this.inDetail(target) || target.closest('.row-expander')) {
             return;
         }
         const pickedItem = this.itemFor(target);
@@ -2824,6 +3247,9 @@ export class TosiTable extends withAttributes({
     }
     handleKeyNav = (event) => {
         const el = event.target;
+        // Keys pressed inside a row's detail belong to whatever is in it.
+        if (this.inDetail(el))
+            return;
         /*
         Grid navigation must not steal keys from an editable cell.
     
@@ -2885,6 +3311,27 @@ export class TosiTable extends withAttributes({
         }
         let nextRow = rowIndex;
         let nextCol = colIndex;
+        const toggle = isHeader ? null : target.querySelector('.row-expander');
+        if (toggle &&
+            el === target &&
+            (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            toggle.click();
+            return;
+        }
+        /*
+        Tab out of the last cell of an expanded row goes INTO its detail, which follows the
+        cells in the DOM; the detail would otherwise be unreachable by keyboard.
+        */
+        if (event.key === 'Tab' &&
+            !event.shiftKey &&
+            !isHeader &&
+            colIndex === cols - 1 &&
+            target
+                .closest('.tr')
+                ?.querySelector(':scope > .tr-detail :is(a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"]))')) {
+            return;
+        }
         switch (event.key) {
             case 'ArrowUp':
                 nextRow = meta ? 0 : Math.max(-1, rowIndex - 1);
@@ -3348,7 +3795,12 @@ export class TosiTable extends withAttributes({
         // virtualisation observes the same scroll container that sticky cells
         // stick against.
         const visibleBinding = this.rowData.visible.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo), this.rowHeight > 0
-            ? { virtual: { height: this.rowHeight } }
+            ? {
+                virtual: this._rowDetail
+                    ? // Variable-height rows: an expanded row is taller than `rowHeight`.
+                        { height: this.rowHeight, minHeight: this.rowHeight }
+                    : { height: this.rowHeight },
+            }
             : /*
               `rowHeight: 0` IS the author saying "render every row" (documented for small tables
               and variable row heights), so say so to tosijs rather than have it warn about a choice
@@ -3358,7 +3810,10 @@ export class TosiTable extends withAttributes({
                 {
                     nonVirtualReason: 'rowHeight: 0 — the author chose to render every row (<tosi-table> warns past 1,000)',
                 });
-        this._scrollArea = div({ class: 'scroll-area', part: 'visibleRows' }, ...[
+        this._scrollArea = div({
+            class: this._rowDetail ? 'scroll-area has-row-detail' : 'scroll-area',
+            part: 'visibleRows',
+        }, ...[
             this._head,
             this._tbodyTop,
             ...visibleBinding,

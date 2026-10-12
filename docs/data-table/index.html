@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=fffb52cc7012" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=b5c82c01be25" data-tosi-doc-system />
   <title>table — tosijs-ui</title>
   <meta name="description" content="A virtual data-table, configurable via a columns array (which will automatically be generated if not provided), that displays gigantic tables with fixed…" />
   <link rel="canonical" href="https://ui.tosijs.net/data-table/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e8b17a4cbc38" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=955d7562f9ce" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="table">table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
@@ -881,6 +881,126 @@ stretching one would push the leftover space back into the middle of the table.<
 scrolls horizontally exactly as it does without the attribute, and every column keeps the
 width it was given. Header and body stay in step either way; they share one
 <code>grid-template-columns</code>.</p>
+<h2 id="row-detail">Row Detail</h2>
+<p>Set <strong><code>rowDetail</code></strong> to a function that builds an element from a row, and each row can be
+expanded to show that element underneath it, across the full width of the table. This is the
+master/detail pattern: an invoice that opens to its line items, a log entry that opens to its
+payload.</p>
+<pre><code class="language-typescript" data-highlighted>table<span class="token punctuation">.</span><span class="token function-variable function">rowDetail</span> <span class="token operator">=</span> <span class="token punctuation">(</span>row<span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token function">invoiceLines</span><span class="token punctuation">(</span><span class="token punctuation">{</span> invoice<span class="token operator">:</span> row <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment">// any element; null = no detail</span>
+table<span class="token punctuation">.</span>columns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">{</span> prop<span class="token operator">:</span> <span class="token string">'detail'</span><span class="token punctuation">,</span> width<span class="token operator">:</span> <span class="token number">40</span><span class="token punctuation">,</span> expander<span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token operator">...</span>columns<span class="token punctuation">]</span>
+</code></pre>
+<ul>
+<li>A column with <strong><code>expander: true</code></strong> renders the disclosure toggle. Or call
+<strong><code>table.toggleRowDetail(row, open?)</code></strong> from anything you like, such as a row double-click.</li>
+<li><strong><code>rowHasDetail = (row) =&gt; boolean</code></strong> hides the toggle on rows that have nothing to show.</li>
+<li><strong><code>rowexpand</code></strong> and <strong><code>rowcollapse</code></strong> events carry <code>detail: { row, element }</code>.</li>
+<li>The element is built once per expansion and kept while the row stays expanded, so
+scrolling it out of view and back does not reset what the reader did inside it. It is
+dropped when the row collapses or the table&#39;s <code>array</code> is replaced.</li>
+<li>Expansion follows the row object, so it survives sorting and filtering. Set
+<strong><code>rowId = (row) =&gt; string</code></strong> as well and it survives reloading the data, and
+<strong><code>expandedRowIds</code></strong> can be read and set.</li>
+<li>The detail stays in view while the columns scroll sideways. Clicks and keys inside it are
+left alone: they do not select the row or move the cell focus. <code>Tab</code> from a row&#39;s last
+cell goes into its detail.</li>
+<li>Pinned top and bottom rows are not expandable.</li>
+</ul>
+<p><strong>The scrollbar becomes approximate.</strong> While <code>rowDetail</code> is set, rows are no longer all the
+same height, so the table places them by interpolation instead of exact arithmetic. With
+nothing expanded you will not notice. Scrolling past a tall expanded row moves it out in one
+step when its top edge leaves the view. If your details are tall, keep few of them open.</p>
+<p>Style the detail area with <code>--tosi-table-detail-bg</code> and <code>--tosi-table-detail-padding</code>, or
+target <code>.tr-detail</code>. Add <code>Details</code> to your localized strings.</p>
+<pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+const { div, table, tr, td, th, b } = elements
+
+const invoices = Array.from({ length: 2000 }, (_, i) =&gt; ({
+  id: `INV-${1000 + i}`,
+  buyer: [&#39;Acme&#39;, &#39;Globex&#39;, &#39;Initech&#39;, &#39;Umbrella&#39;][i % 4],
+  lines: Array.from({ length: 1 + (i % 4) }, (_, n) =&gt; ({
+    item: [&#39;Widget&#39;, &#39;Gasket&#39;, &#39;Sprocket&#39;, &#39;Flange&#39;][(i + n) % 4],
+    qty: 1 + ((i + n) % 5),
+    price: 12.5 * (1 + ((i * 7 + n) % 9)),
+  })),
+}))
+for (const invoice of invoices) {
+  invoice.total = invoice.lines.reduce((sum, l) =&gt; sum + l.qty * l.price, 0)
+}
+
+const invoiceTable = tosiTable({
+  style: { height: &#39;320px&#39; },
+  rowHeight: 32,
+  select: true,
+  array: invoices,
+  columns: [
+    { prop: &#39;detail&#39;, width: 40, expander: true },
+    { prop: &#39;id&#39;, name: &#39;Invoice&#39;, width: 120 },
+    { prop: &#39;buyer&#39;, width: 160 },
+    { prop: &#39;total&#39;, width: 120, type: &#39;currency(USD)&#39; },
+  ],
+  rowId: (row) =&gt; row.id,
+  rowDetail: (row) =&gt;
+    table(
+      { class: &#39;invoice-lines&#39; },
+      tr(th(&#39;Item&#39;), th(&#39;Qty&#39;), th(&#39;Price&#39;)),
+      ...row.lines.map((line) =&gt;
+        tr(td(line.item), td(String(line.qty)), td(line.price.toFixed(2)))
+      )
+    ),
+})
+invoiceTable.expandedRowIds = [&#39;INV-1001&#39;]
+
+const log = div({ class: &#39;detail-log&#39; }, &#39;Expand a row.&#39;)
+invoiceTable.addEventListener(&#39;rowexpand&#39;, (event) =&gt; {
+  log.replaceChildren(&#39;Expanded &#39;, b(event.detail.row.id))
+})
+invoiceTable.addEventListener(&#39;rowcollapse&#39;, (event) =&gt; {
+  log.replaceChildren(&#39;Collapsed &#39;, b(event.detail.row.id))
+})
+
+preview.append(invoiceTable, log)
+</code></pre>
+<pre><code class="language-css">.preview .invoice-lines {
+  border-collapse: collapse;
+}
+.preview .invoice-lines :is(td, th) {
+  padding: 2px 16px 2px 0;
+  text-align: left;
+}
+.preview .detail-log {
+  padding: 8px 0;
+}
+</code></pre>
+<pre><code class="language-test">const table = preview.querySelector(&#39;tosi-table&#39;)
+await waitMs(300)
+
+test(&#39;a row expands to its detail and collapses again&#39;, () =&gt; {
+  const row = table.array[3]
+  const events = []
+  const record = (event) =&gt; events.push(event.type + &#39;:&#39; + event.detail.row.id)
+  table.addEventListener(&#39;rowexpand&#39;, record)
+  table.addEventListener(&#39;rowcollapse&#39;, record)
+
+  const before = table.querySelectorAll(&#39;.tr-detail&#39;).length
+  table.toggleRowDetail(row)
+  expect(table.isRowExpanded(row)).toBe(true)
+  expect(table.querySelectorAll(&#39;.tr-detail&#39;).length).toBe(before + 1)
+  expect(table.expandedRowIds).toContain(&#39;INV-1003&#39;)
+  // the detail is not one of the row&#39;s cells
+  expect(table.getCells(row).length).toBe(table.visibleColumns.length)
+  const toggle = table.getCells(row)[0].querySelector(&#39;.row-expander&#39;)
+  expect(toggle.getAttribute(&#39;aria-expanded&#39;)).toBe(&#39;true&#39;)
+  const detail = document.getElementById(toggle.getAttribute(&#39;aria-controls&#39;))
+  expect(detail.textContent).toContain(&#39;Qty&#39;)
+
+  toggle.click()
+  expect(table.isRowExpanded(row)).toBe(false)
+  expect(table.querySelectorAll(&#39;.tr-detail&#39;).length).toBe(before)
+  expect(events.join(&#39; &#39;)).toBe(&#39;rowexpand:INV-1003 rowcollapse:INV-1003&#39;)
+})
+</code></pre>
 <h2 id="row-height">Row Height</h2>
 <p>If you set the <code>&lt;tosi-table&gt;</code>&#39;s <code>rowHeight</code> to <code>0</code> it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.</p>
@@ -949,6 +1069,7 @@ popup menu.</p>
 <li>Left</li>
 <li>Right</li>
 <li>Column Options</li>
+<li>Details</li>
 </ul>
 <p>As well as any column names you want localized — these are also used as the accessible name
 (<code>aria-label</code>) of each editable cell, so an editable table wants them present even if you are
@@ -1049,6 +1170,6 @@ happy with the untranslated headers.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-s7c5e74s.js"></script>
+  <script type="module" src="../hydrate-h2f0dtgt.js"></script>
 </body>
 </html>

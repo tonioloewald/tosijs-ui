@@ -961,6 +961,135 @@ scrolls horizontally exactly as it does without the attribute, and every column 
 width it was given. Header and body stay in step either way; they share one
 `grid-template-columns`.
 
+## Row Detail
+
+Set **`rowDetail`** to a function that builds an element from a row, and each row can be
+expanded to show that element underneath it, across the full width of the table. This is the
+master/detail pattern: an invoice that opens to its line items, a log entry that opens to its
+payload.
+
+```typescript
+table.rowDetail = (row) => invoiceLines({ invoice: row }) // any element; null = no detail
+table.columns = [{ prop: 'detail', width: 40, expander: true }, ...columns]
+```
+
+- A column with **`expander: true`** renders the disclosure toggle. Or call
+  **`table.toggleRowDetail(row, open?)`** from anything you like, such as a row double-click.
+- **`rowHasDetail = (row) => boolean`** hides the toggle on rows that have nothing to show.
+- **`rowexpand`** and **`rowcollapse`** events carry `detail: { row, element }`.
+- The element is built once per expansion and kept while the row stays expanded, so
+  scrolling it out of view and back does not reset what the reader did inside it. It is
+  dropped when the row collapses or the table's `array` is replaced.
+- Expansion follows the row object, so it survives sorting and filtering. Set
+  **`rowId = (row) => string`** as well and it survives reloading the data, and
+  **`expandedRowIds`** can be read and set.
+- The detail stays in view while the columns scroll sideways. Clicks and keys inside it are
+  left alone: they do not select the row or move the cell focus. `Tab` from a row's last
+  cell goes into its detail.
+- Pinned top and bottom rows are not expandable.
+
+**The scrollbar becomes approximate.** While `rowDetail` is set, rows are no longer all the
+same height, so the table places them by interpolation instead of exact arithmetic. With
+nothing expanded you will not notice. Scrolling past a tall expanded row moves it out in one
+step when its top edge leaves the view. If your details are tall, keep few of them open.
+
+Style the detail area with `--tosi-table-detail-bg` and `--tosi-table-detail-padding`, or
+target `.tr-detail`. Add `Details` to your localized strings.
+
+```js
+import { tosiTable } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { div, table, tr, td, th, b } = elements
+
+const invoices = Array.from({ length: 2000 }, (_, i) => ({
+  id: `INV-${1000 + i}`,
+  buyer: ['Acme', 'Globex', 'Initech', 'Umbrella'][i % 4],
+  lines: Array.from({ length: 1 + (i % 4) }, (_, n) => ({
+    item: ['Widget', 'Gasket', 'Sprocket', 'Flange'][(i + n) % 4],
+    qty: 1 + ((i + n) % 5),
+    price: 12.5 * (1 + ((i * 7 + n) % 9)),
+  })),
+}))
+for (const invoice of invoices) {
+  invoice.total = invoice.lines.reduce((sum, l) => sum + l.qty * l.price, 0)
+}
+
+const invoiceTable = tosiTable({
+  style: { height: '320px' },
+  rowHeight: 32,
+  select: true,
+  array: invoices,
+  columns: [
+    { prop: 'detail', width: 40, expander: true },
+    { prop: 'id', name: 'Invoice', width: 120 },
+    { prop: 'buyer', width: 160 },
+    { prop: 'total', width: 120, type: 'currency(USD)' },
+  ],
+  rowId: (row) => row.id,
+  rowDetail: (row) =>
+    table(
+      { class: 'invoice-lines' },
+      tr(th('Item'), th('Qty'), th('Price')),
+      ...row.lines.map((line) =>
+        tr(td(line.item), td(String(line.qty)), td(line.price.toFixed(2)))
+      )
+    ),
+})
+invoiceTable.expandedRowIds = ['INV-1001']
+
+const log = div({ class: 'detail-log' }, 'Expand a row.')
+invoiceTable.addEventListener('rowexpand', (event) => {
+  log.replaceChildren('Expanded ', b(event.detail.row.id))
+})
+invoiceTable.addEventListener('rowcollapse', (event) => {
+  log.replaceChildren('Collapsed ', b(event.detail.row.id))
+})
+
+preview.append(invoiceTable, log)
+```
+```css
+.preview .invoice-lines {
+  border-collapse: collapse;
+}
+.preview .invoice-lines :is(td, th) {
+  padding: 2px 16px 2px 0;
+  text-align: left;
+}
+.preview .detail-log {
+  padding: 8px 0;
+}
+```
+```test
+const table = preview.querySelector('tosi-table')
+await waitMs(300)
+
+test('a row expands to its detail and collapses again', () => {
+  const row = table.array[3]
+  const events = []
+  const record = (event) => events.push(event.type + ':' + event.detail.row.id)
+  table.addEventListener('rowexpand', record)
+  table.addEventListener('rowcollapse', record)
+
+  const before = table.querySelectorAll('.tr-detail').length
+  table.toggleRowDetail(row)
+  expect(table.isRowExpanded(row)).toBe(true)
+  expect(table.querySelectorAll('.tr-detail').length).toBe(before + 1)
+  expect(table.expandedRowIds).toContain('INV-1003')
+  // the detail is not one of the row's cells
+  expect(table.getCells(row).length).toBe(table.visibleColumns.length)
+  const toggle = table.getCells(row)[0].querySelector('.row-expander')
+  expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  const detail = document.getElementById(toggle.getAttribute('aria-controls'))
+  expect(detail.textContent).toContain('Qty')
+
+  toggle.click()
+  expect(table.isRowExpanded(row)).toBe(false)
+  expect(table.querySelectorAll('.tr-detail').length).toBe(before)
+  expect(events.join(' ')).toBe('rowexpand:INV-1003 rowcollapse:INV-1003')
+})
+```
+
 ## Row Height
 
 If you set the `<tosi-table>`'s `rowHeight` to `0` it will render all its elements (i.e. not be virtual). This is
@@ -1045,6 +1174,7 @@ You'll need to make sure your localized strings include:
 - Left
 - Right
 - Column Options
+- Details
 
 As well as any column names you want localized — these are also used as the accessible name
 (`aria-label`) of each editable cell, so an editable table wants them present even if you are

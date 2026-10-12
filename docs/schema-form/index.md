@@ -686,6 +686,152 @@ test('a plugin registered after the form renders takes effect, styles and all', 
 })
 ```
 
+## Curated forms
+
+A schema-form shows every property the schema describes. That is right for an admin view and
+wrong for a task-focused one: a panel with four fields from a two-hundred-property
+configuration, an onboarding step, a review dialog.
+
+Set **`fields`** to choose what is shown. It is a map from **paths** into the schema to how
+each one should appear, and its order is the display order:
+
+```typescript
+form.fields = {
+  'thresholds.default': { caption: 'Default threshold', help: 'Between 0 and 1.' },
+  'routing.mode': 'How invoices are routed', // a string is just a caption
+  'routing.priority': { editor: tosiRating }, // a custom editor
+  owner: { readOnly: true }, // shown, not editable here
+  notify: true, // exactly as the schema describes it
+}
+```
+
+- Everything else still comes from the schema: the control, `enum` choices, `required`,
+  number and format constraints, and the caption when you give none.
+- A path runs through object properties (`a.b.c`). Naming an object, an array or a union
+  shows that whole property.
+- **`editor`** is a function that returns an element with a `value` property and a `change`
+  event, which is what every element creator in this library is. Its `value` must be of the
+  schema's type. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
+- **`readOnly`** on one field is a presentation choice, not a security boundary: the value is
+  still writable through `form.value`.
+- A path the schema does not describe renders as a placeholder that says so, and the console
+  warns. A field that silently fails to appear looks the same as one nobody asked for.
+
+**The form still owns the whole value.** Properties you do not show keep their values, and
+the whole value is validated. An error in a property that is not shown is listed above the
+fields, so a curated form cannot quietly save a value that does not conform. `errors` and
+`validate()` always describe the whole value.
+
+Set `fields = null` to show everything again.
+
+```js
+import { tosiSchemaForm, tosiRating } from 'tosijs-ui'
+
+const configSchema = {
+  type: 'object',
+  properties: {
+    owner: { type: 'string' },
+    thresholds: {
+      type: 'object',
+      properties: {
+        default: { type: 'number', minimum: 0, maximum: 1 },
+        escalate: { type: 'number', minimum: 0, maximum: 1 },
+      },
+      required: ['default'],
+    },
+    routing: {
+      type: 'object',
+      properties: {
+        mode: { type: 'string', enum: ['manual', 'assisted', 'automatic'] },
+        priority: { type: 'integer', minimum: 0, maximum: 5 },
+        retries: { type: 'integer', minimum: 0 },
+      },
+    },
+    audit: { type: 'object', properties: { retainDays: { type: 'integer' } } },
+  },
+}
+
+const curatedForm = tosiSchemaForm({
+  schema: configSchema,
+  value: {
+    owner: 'finance-ops',
+    thresholds: { default: 0.8, escalate: 0.95 },
+    routing: { mode: 'assisted', priority: 3, retries: 2 },
+    audit: { retainDays: 'ninety' }, // not shown, and not valid
+  },
+  fields: {
+    'thresholds.default': {
+      caption: 'Default threshold',
+      help: 'Predictions below this go to a person. Between 0 and 1.',
+    },
+    'routing.mode': 'How invoices are routed',
+    'routing.priority': { caption: 'Priority', editor: tosiRating },
+    owner: { caption: 'Owned by', readOnly: true },
+  },
+})
+
+const curatedValue = document.createElement('pre')
+const showCurated = () => {
+  curatedValue.textContent = JSON.stringify(curatedForm.value, null, 2)
+}
+curatedForm.addEventListener('change', showCurated)
+showCurated()
+
+preview.append(curatedForm, curatedValue)
+```
+```test
+const curatedForm = await waitFor('tosi-schema-form')
+await waitMs(100)
+
+test('a curated form shows the chosen fields, in order, under the chosen captions', () => {
+  const shown = [...curatedForm.querySelectorAll('[data-field]')]
+  expect(shown.map((el) => el.dataset.field)).toEqual([
+    'thresholds.default',
+    'routing.mode',
+    'routing.priority',
+    'owner',
+  ])
+  expect(shown[0].querySelector('label').textContent).toBe('Default threshold')
+  expect(shown[0].querySelector('.schema-help').textContent).toContain('Between 0 and 1')
+  // the control still comes from the schema
+  expect(curatedForm.querySelector('[data-path="thresholds.default"]').type).toBe('number')
+  expect(curatedForm.querySelector('[data-path="routing.mode"]').tagName).toBe('SELECT')
+  expect(curatedForm.querySelector('[data-path="owner"]').disabled).toBe(true)
+  expect(curatedForm.querySelector('[data-path="routing.mode"]').disabled).toBe(false)
+})
+
+test('editing one field keeps everything that is not shown', () => {
+  const mode = curatedForm.querySelector('[data-path="routing.mode"]')
+  mode.value = 'automatic'
+  mode.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(curatedForm.value.routing).toEqual({ mode: 'automatic', priority: 3, retries: 2 })
+  expect(curatedForm.value.thresholds.escalate).toBe(0.95)
+  expect(curatedForm.value.audit.retainDays).toBe('ninety')
+})
+
+test('a custom editor reads and writes the value', () => {
+  const rating = curatedForm.querySelector('[data-plugin="routing.priority"]')
+  expect(rating.tagName).toBe('TOSI-RATING')
+  expect(rating.value).toBe(3)
+  let fired = 0
+  const count = () => (fired += 1)
+  curatedForm.addEventListener('change', count)
+  rating.value = 5
+  rating.dispatchEvent(new Event('change', { bubbles: true }))
+  curatedForm.removeEventListener('change', count)
+  expect(curatedForm.value.routing.priority).toBe(5)
+  expect(fired).toBe(1)
+})
+
+test('an error in a field that is not shown is listed, not hidden', () => {
+  if (!curatedForm.validationAvailable) return
+  expect(curatedForm.validate()).toBe(false)
+  const summary = curatedForm.querySelector('.schema-hidden-errors')
+  expect(summary.hidden).toBe(false)
+  expect(summary.textContent).toContain('audit.retainDays')
+})
+```
+
 ## Read-only
 
 `readOnly` disables the inputs and **hides** the add, remove and reorder controls rather than
@@ -732,6 +878,7 @@ a schema that never mentioned it, which is how an editor loses data without anyo
 - `schema` — the JSON Schema. Setting it rebuilds the fields.
 - `value` — the data. Setting it updates the inputs; it does **not** fire `change`.
 - `readOnly` — disables the inputs.
+- `fields` — a curation: which properties to show, in order, with captions and editors.
 - `errors` — `{ path, message }[]` for the current value.
 - `validate()` — `true` when the value conforms.
 - `change` — fires when the user edits a field.
