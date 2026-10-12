@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=dd88540e00ea" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=9a4f9738e38a" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="schema-form">schema-form</h1>
 <!--{ "parent": "Components" }-->
@@ -701,7 +701,12 @@ the whole value is validated. An error in a property that is not shown is listed
 fields, so a curated form cannot quietly save a value that does not conform. <code>errors</code> and
 <code>validate()</code> always describe the whole value.</p>
 <p>Set <code>fields = null</code> to show everything again.</p>
+<p>Tick <strong>View only</strong> below to turn the same curated form into a viewer, and <strong>Every field</strong> to
+see what the schema describes when nothing is curated.</p>
 <pre><code class="language-js">import { tosiSchemaForm, tosiRating } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+const { div, label, input, pre } = elements
 
 const configSchema = {
   type: &#39;object&#39;,
@@ -727,33 +732,80 @@ const configSchema = {
   },
 }
 
+const fields = {
+  &#39;thresholds.default&#39;: {
+    caption: &#39;Default threshold&#39;,
+    help: &#39;Predictions below this go to a person. Between 0 and 1.&#39;,
+  },
+  &#39;routing.mode&#39;: &#39;How invoices are routed&#39;,
+  &#39;routing.priority&#39;: { caption: &#39;Priority&#39;, editor: tosiRating },
+  owner: { caption: &#39;Owned by&#39;, readOnly: true },
+}
+
 const curatedForm = tosiSchemaForm({
   schema: configSchema,
   value: {
     owner: &#39;finance-ops&#39;,
     thresholds: { default: 0.8, escalate: 0.95 },
     routing: { mode: &#39;assisted&#39;, priority: 3, retries: 2 },
-    audit: { retainDays: &#39;ninety&#39; }, // not shown, and not valid
+    audit: { retainDays: 90 },
   },
-  fields: {
-    &#39;thresholds.default&#39;: {
-      caption: &#39;Default threshold&#39;,
-      help: &#39;Predictions below this go to a person. Between 0 and 1.&#39;,
-    },
-    &#39;routing.mode&#39;: &#39;How invoices are routed&#39;,
-    &#39;routing.priority&#39;: { caption: &#39;Priority&#39;, editor: tosiRating },
-    owner: { caption: &#39;Owned by&#39;, readOnly: true },
-  },
+  fields,
 })
 
-const curatedValue = document.createElement(&#39;pre&#39;)
+const curatedValue = pre({ class: &#39;curated-value&#39; })
 const showCurated = () =&gt; {
   curatedValue.textContent = JSON.stringify(curatedForm.value, null, 2)
 }
 curatedForm.addEventListener(&#39;change&#39;, showCurated)
 showCurated()
 
-preview.append(curatedForm, curatedValue)
+preview.append(
+  div(
+    { class: &#39;curated-options&#39; },
+    label(
+      input({
+        type: &#39;checkbox&#39;,
+        class: &#39;view-only&#39;,
+        onChange(event) {
+          curatedForm.readOnly = event.target.checked
+        },
+      }),
+      &#39; View only&#39;
+    ),
+    label(
+      input({
+        type: &#39;checkbox&#39;,
+        class: &#39;every-field&#39;,
+        onChange(event) {
+          curatedForm.fields = event.target.checked ? null : fields
+        },
+      }),
+      &#39; Every field&#39;
+    )
+  ),
+  div({ class: &#39;curated-demo&#39; }, curatedForm, curatedValue)
+)
+</code></pre>
+<pre><code class="language-css">.preview .curated-options {
+  display: flex;
+  gap: 16px;
+  padding: 0 0 12px;
+}
+.preview .curated-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+.preview .curated-demo tosi-schema-form {
+  flex: 1 1 280px;
+}
+.preview .curated-value {
+  flex: 0 1 240px;
+  margin: 0;
+  font-size: 12px;
+}
 </code></pre>
 <pre><code class="language-test">const curatedForm = await waitFor(&#39;tosi-schema-form&#39;)
 await waitMs(100)
@@ -773,6 +825,8 @@ test(&#39;a curated form shows the chosen fields, in order, under the chosen cap
   expect(curatedForm.querySelector(&#39;[data-path=&quot;routing.mode&quot;]&#39;).tagName).toBe(&#39;SELECT&#39;)
   expect(curatedForm.querySelector(&#39;[data-path=&quot;owner&quot;]&#39;).disabled).toBe(true)
   expect(curatedForm.querySelector(&#39;[data-path=&quot;routing.mode&quot;]&#39;).disabled).toBe(false)
+  // a conforming value shows no problems
+  expect(curatedForm.querySelector(&#39;.schema-hidden-errors&#39;).hidden).toBe(true)
 })
 
 test(&#39;editing one field keeps everything that is not shown&#39;, () =&gt; {
@@ -781,7 +835,9 @@ test(&#39;editing one field keeps everything that is not shown&#39;, () =&gt; {
   mode.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
   expect(curatedForm.value.routing).toEqual({ mode: &#39;automatic&#39;, priority: 3, retries: 2 })
   expect(curatedForm.value.thresholds.escalate).toBe(0.95)
-  expect(curatedForm.value.audit.retainDays).toBe(&#39;ninety&#39;)
+  expect(curatedForm.value.audit.retainDays).toBe(90)
+  mode.value = &#39;assisted&#39;
+  mode.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
 })
 
 test(&#39;a custom editor reads and writes the value&#39;, () =&gt; {
@@ -793,15 +849,67 @@ test(&#39;a custom editor reads and writes the value&#39;, () =&gt; {
   curatedForm.addEventListener(&#39;change&#39;, count)
   rating.value = 5
   rating.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
-  curatedForm.removeEventListener(&#39;change&#39;, count)
   expect(curatedForm.value.routing.priority).toBe(5)
   expect(fired).toBe(1)
+  rating.value = 3
+  rating.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
+  curatedForm.removeEventListener(&#39;change&#39;, count)
 })
 
+test(&#39;the same form is a viewer, and shows every field on request&#39;, async () =&gt; {
+  const toggle = (selector, checked) =&gt; {
+    const box = preview.querySelector(selector)
+    box.checked = checked
+    box.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
+  }
+  // the form re-renders on a frame, which a background page may delay
+  const settled = async (check) =&gt; {
+    for (let i = 0; i &lt; 50 &amp;&amp; !check(); i += 1) await waitMs(100)
+    return check()
+  }
+  const disabled = (path) =&gt; curatedForm.querySelector(`[data-path=&quot;${path}&quot;]`)?.disabled
+  const shows = (path) =&gt; curatedForm.querySelector(`[data-path=&quot;${path}&quot;]`) != null
+
+  toggle(&#39;.view-only&#39;, true)
+  expect(await settled(() =&gt; disabled(&#39;routing.mode&#39;) === true)).toBe(true)
+  toggle(&#39;.view-only&#39;, false)
+  expect(await settled(() =&gt; disabled(&#39;routing.mode&#39;) === false)).toBe(true)
+  expect(disabled(&#39;owner&#39;)).toBe(true)
+
+  toggle(&#39;.every-field&#39;, true)
+  expect(await settled(() =&gt; shows(&#39;audit.retainDays&#39;))).toBe(true)
+  toggle(&#39;.every-field&#39;, false)
+  expect(await settled(() =&gt; !shows(&#39;audit.retainDays&#39;))).toBe(true)
+  expect(curatedForm.querySelectorAll(&#39;[data-field]&#39;).length).toBe(4)
+})
+</code></pre>
+<h3 id="a-problem-in-a-field-that-is-not-shown">A problem in a field that is not shown</h3>
+<p>This value arrives with an <code>audit.retainDays</code> that is not an integer. The form shows one
+field, and still reports the problem:</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+const hiddenErrorForm = tosiSchemaForm({
+  schema: {
+    type: &#39;object&#39;,
+    properties: {
+      owner: { type: &#39;string&#39; },
+      audit: { type: &#39;object&#39;, properties: { retainDays: { type: &#39;integer&#39; } } },
+    },
+  },
+  value: { owner: &#39;finance-ops&#39;, audit: { retainDays: &#39;ninety&#39; } },
+  fields: { owner: &#39;Owned by&#39; },
+})
+hiddenErrorForm.validate()
+
+preview.append(hiddenErrorForm)
+</code></pre>
+<pre><code class="language-test">const hiddenErrorForm = await waitFor(&#39;tosi-schema-form&#39;)
+await waitMs(100)
+
 test(&#39;an error in a field that is not shown is listed, not hidden&#39;, () =&gt; {
-  if (!curatedForm.validationAvailable) return
-  expect(curatedForm.validate()).toBe(false)
-  const summary = curatedForm.querySelector(&#39;.schema-hidden-errors&#39;)
+  if (!hiddenErrorForm.validationAvailable) return
+  expect(hiddenErrorForm.validate()).toBe(false)
+  const summary = hiddenErrorForm.querySelector(&#39;.schema-hidden-errors&#39;)
   expect(summary.hidden).toBe(false)
   expect(summary.textContent).toContain(&#39;audit.retainDays&#39;)
 })

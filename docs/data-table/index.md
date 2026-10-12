@@ -1004,41 +1004,65 @@ target `.tr-detail`. Add `Details` to your localized strings.
 import { tosiTable } from 'tosijs-ui'
 import { elements } from 'tosijs'
 
-const { div, table, tr, td, th, b } = elements
+const { div, span, b } = elements
 
 const invoices = Array.from({ length: 2000 }, (_, i) => ({
   id: `INV-${1000 + i}`,
   buyer: ['Acme', 'Globex', 'Initech', 'Umbrella'][i % 4],
-  lines: Array.from({ length: 1 + (i % 4) }, (_, n) => ({
-    item: ['Widget', 'Gasket', 'Sprocket', 'Flange'][(i + n) % 4],
-    qty: 1 + ((i + n) % 5),
-    price: 12.5 * (1 + ((i * 7 + n) % 9)),
-  })),
+  lines: Array.from({ length: 1 + (i % 4) }, (_, n) => {
+    const qty = 1 + ((i + n) % 5)
+    const price = 12.5 * (1 + ((i * 7 + n) % 9))
+    return {
+      item: ['Widget', 'Gasket', 'Sprocket', 'Flange'][(i + n) % 4],
+      qty,
+      price,
+      amount: qty * price,
+    }
+  }),
 }))
 for (const invoice of invoices) {
-  invoice.total = invoice.lines.reduce((sum, l) => sum + l.qty * l.price, 0)
+  invoice.total = invoice.lines.reduce((sum, line) => sum + line.amount, 0)
 }
 
+const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+
+// The detail is a component built from the row: here, a table of its line items.
+const invoiceDetail = (invoice) =>
+  div(
+    { class: 'invoice-detail' },
+    tosiTable({
+      rowHeight: 0,
+      nosort: true,
+      nohide: true,
+      noreorder: true,
+      array: invoice.lines,
+      columns: [
+        { prop: 'item', name: 'Item', width: 160 },
+        { prop: 'qty', name: 'Qty', width: 70, type: 'number' },
+        { prop: 'price', name: 'Unit price', width: 110, type: 'currency(USD)' },
+        { prop: 'amount', name: 'Amount', width: 110, type: 'currency(USD)' },
+      ],
+    }),
+    div(
+      { class: 'invoice-total' },
+      span(`${invoice.lines.length} line${invoice.lines.length === 1 ? '' : 's'}, billed to ${invoice.buyer}`),
+      b('Total ', usd.format(invoice.total))
+    )
+  )
+
 const invoiceTable = tosiTable({
-  style: { height: '320px' },
+  style: { height: '360px' },
   rowHeight: 32,
   select: true,
   array: invoices,
   columns: [
     { prop: 'detail', width: 40, expander: true },
     { prop: 'id', name: 'Invoice', width: 120 },
-    { prop: 'buyer', width: 160 },
-    { prop: 'total', width: 120, type: 'currency(USD)' },
+    { prop: 'buyer', name: 'Buyer', width: 160 },
+    { prop: 'total', name: 'Total', width: 120, type: 'currency(USD)' },
   ],
   rowId: (row) => row.id,
-  rowDetail: (row) =>
-    table(
-      { class: 'invoice-lines' },
-      tr(th('Item'), th('Qty'), th('Price')),
-      ...row.lines.map((line) =>
-        tr(td(line.item), td(String(line.qty)), td(line.price.toFixed(2)))
-      )
-    ),
+  rowDetail: invoiceDetail,
 })
 invoiceTable.expandedRowIds = ['INV-1001']
 
@@ -1053,12 +1077,13 @@ invoiceTable.addEventListener('rowcollapse', (event) => {
 preview.append(invoiceTable, log)
 ```
 ```css
-.preview .invoice-lines {
-  border-collapse: collapse;
+.preview .invoice-detail {
+  max-width: 480px;
 }
-.preview .invoice-lines :is(td, th) {
-  padding: 2px 16px 2px 0;
-  text-align: left;
+.preview .invoice-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0 0;
 }
 .preview .detail-log {
   padding: 8px 0;
@@ -1087,7 +1112,8 @@ test('a row expands to its detail and collapses again', async () => {
   const toggle = table.getCells(row)[0].querySelector('.row-expander')
   expect(toggle.getAttribute('aria-expanded')).toBe('true')
   const detail = document.getElementById(toggle.getAttribute('aria-controls'))
-  expect(detail.textContent).toContain('Qty')
+  expect(detail.textContent).toContain('billed to Umbrella')
+  expect(detail.querySelector('tosi-table').array).toBe(row.lines)
 
   toggle.click()
   expect(table.isRowExpanded(row)).toBe(false)

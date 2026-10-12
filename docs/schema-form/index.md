@@ -726,8 +726,14 @@ fields, so a curated form cannot quietly save a value that does not conform. `er
 
 Set `fields = null` to show everything again.
 
+Tick **View only** below to turn the same curated form into a viewer, and **Every field** to
+see what the schema describes when nothing is curated.
+
 ```js
 import { tosiSchemaForm, tosiRating } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { div, label, input, pre } = elements
 
 const configSchema = {
   type: 'object',
@@ -753,33 +759,81 @@ const configSchema = {
   },
 }
 
+const fields = {
+  'thresholds.default': {
+    caption: 'Default threshold',
+    help: 'Predictions below this go to a person. Between 0 and 1.',
+  },
+  'routing.mode': 'How invoices are routed',
+  'routing.priority': { caption: 'Priority', editor: tosiRating },
+  owner: { caption: 'Owned by', readOnly: true },
+}
+
 const curatedForm = tosiSchemaForm({
   schema: configSchema,
   value: {
     owner: 'finance-ops',
     thresholds: { default: 0.8, escalate: 0.95 },
     routing: { mode: 'assisted', priority: 3, retries: 2 },
-    audit: { retainDays: 'ninety' }, // not shown, and not valid
+    audit: { retainDays: 90 },
   },
-  fields: {
-    'thresholds.default': {
-      caption: 'Default threshold',
-      help: 'Predictions below this go to a person. Between 0 and 1.',
-    },
-    'routing.mode': 'How invoices are routed',
-    'routing.priority': { caption: 'Priority', editor: tosiRating },
-    owner: { caption: 'Owned by', readOnly: true },
-  },
+  fields,
 })
 
-const curatedValue = document.createElement('pre')
+const curatedValue = pre({ class: 'curated-value' })
 const showCurated = () => {
   curatedValue.textContent = JSON.stringify(curatedForm.value, null, 2)
 }
 curatedForm.addEventListener('change', showCurated)
 showCurated()
 
-preview.append(curatedForm, curatedValue)
+preview.append(
+  div(
+    { class: 'curated-options' },
+    label(
+      input({
+        type: 'checkbox',
+        class: 'view-only',
+        onChange(event) {
+          curatedForm.readOnly = event.target.checked
+        },
+      }),
+      ' View only'
+    ),
+    label(
+      input({
+        type: 'checkbox',
+        class: 'every-field',
+        onChange(event) {
+          curatedForm.fields = event.target.checked ? null : fields
+        },
+      }),
+      ' Every field'
+    )
+  ),
+  div({ class: 'curated-demo' }, curatedForm, curatedValue)
+)
+```
+```css
+.preview .curated-options {
+  display: flex;
+  gap: 16px;
+  padding: 0 0 12px;
+}
+.preview .curated-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+.preview .curated-demo tosi-schema-form {
+  flex: 1 1 280px;
+}
+.preview .curated-value {
+  flex: 0 1 240px;
+  margin: 0;
+  font-size: 12px;
+}
 ```
 ```test
 const curatedForm = await waitFor('tosi-schema-form')
@@ -800,6 +854,8 @@ test('a curated form shows the chosen fields, in order, under the chosen caption
   expect(curatedForm.querySelector('[data-path="routing.mode"]').tagName).toBe('SELECT')
   expect(curatedForm.querySelector('[data-path="owner"]').disabled).toBe(true)
   expect(curatedForm.querySelector('[data-path="routing.mode"]').disabled).toBe(false)
+  // a conforming value shows no problems
+  expect(curatedForm.querySelector('.schema-hidden-errors').hidden).toBe(true)
 })
 
 test('editing one field keeps everything that is not shown', () => {
@@ -808,7 +864,9 @@ test('editing one field keeps everything that is not shown', () => {
   mode.dispatchEvent(new Event('input', { bubbles: true }))
   expect(curatedForm.value.routing).toEqual({ mode: 'automatic', priority: 3, retries: 2 })
   expect(curatedForm.value.thresholds.escalate).toBe(0.95)
-  expect(curatedForm.value.audit.retainDays).toBe('ninety')
+  expect(curatedForm.value.audit.retainDays).toBe(90)
+  mode.value = 'assisted'
+  mode.dispatchEvent(new Event('input', { bubbles: true }))
 })
 
 test('a custom editor reads and writes the value', () => {
@@ -820,15 +878,72 @@ test('a custom editor reads and writes the value', () => {
   curatedForm.addEventListener('change', count)
   rating.value = 5
   rating.dispatchEvent(new Event('change', { bubbles: true }))
-  curatedForm.removeEventListener('change', count)
   expect(curatedForm.value.routing.priority).toBe(5)
   expect(fired).toBe(1)
+  rating.value = 3
+  rating.dispatchEvent(new Event('change', { bubbles: true }))
+  curatedForm.removeEventListener('change', count)
 })
 
+test('the same form is a viewer, and shows every field on request', async () => {
+  const toggle = (selector, checked) => {
+    const box = preview.querySelector(selector)
+    box.checked = checked
+    box.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+  // the form re-renders on a frame, which a background page may delay
+  const settled = async (check) => {
+    for (let i = 0; i < 50 && !check(); i += 1) await waitMs(100)
+    return check()
+  }
+  const disabled = (path) => curatedForm.querySelector(`[data-path="${path}"]`)?.disabled
+  const shows = (path) => curatedForm.querySelector(`[data-path="${path}"]`) != null
+
+  toggle('.view-only', true)
+  expect(await settled(() => disabled('routing.mode') === true)).toBe(true)
+  toggle('.view-only', false)
+  expect(await settled(() => disabled('routing.mode') === false)).toBe(true)
+  expect(disabled('owner')).toBe(true)
+
+  toggle('.every-field', true)
+  expect(await settled(() => shows('audit.retainDays'))).toBe(true)
+  toggle('.every-field', false)
+  expect(await settled(() => !shows('audit.retainDays'))).toBe(true)
+  expect(curatedForm.querySelectorAll('[data-field]').length).toBe(4)
+})
+```
+
+### A problem in a field that is not shown
+
+This value arrives with an `audit.retainDays` that is not an integer. The form shows one
+field, and still reports the problem:
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+
+const hiddenErrorForm = tosiSchemaForm({
+  schema: {
+    type: 'object',
+    properties: {
+      owner: { type: 'string' },
+      audit: { type: 'object', properties: { retainDays: { type: 'integer' } } },
+    },
+  },
+  value: { owner: 'finance-ops', audit: { retainDays: 'ninety' } },
+  fields: { owner: 'Owned by' },
+})
+hiddenErrorForm.validate()
+
+preview.append(hiddenErrorForm)
+```
+```test
+const hiddenErrorForm = await waitFor('tosi-schema-form')
+await waitMs(100)
+
 test('an error in a field that is not shown is listed, not hidden', () => {
-  if (!curatedForm.validationAvailable) return
-  expect(curatedForm.validate()).toBe(false)
-  const summary = curatedForm.querySelector('.schema-hidden-errors')
+  if (!hiddenErrorForm.validationAvailable) return
+  expect(hiddenErrorForm.validate()).toBe(false)
+  const summary = hiddenErrorForm.querySelector('.schema-hidden-errors')
   expect(summary.hidden).toBe(false)
   expect(summary.textContent).toContain('audit.retainDays')
 })
