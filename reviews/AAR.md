@@ -558,3 +558,34 @@ gap, recorded rather than hidden.
 - **Lanes:** unit 1823; Playwright 558 passed, 15 skipped; consumer 55 checks; test-browser
   85 over 18 pages. CI and the dry run green on the tagged commit.
 - **Open:** board #3253 (deferrals); #3248 awaiting tosijs's confirmation.
+
+## 1.16.16 (2026-10-13)
+
+- **Shipped:** GitHub #216 item 3 (a console line's own value and its JavaScript, from a
+  transform's `prelude` / `body`), #210 item 5 (`export` removed from `tjs` and `ts`
+  examples via tjs-lang's `stripExports`), the tjs-lang peer range widened to admit the
+  0.14 release candidates, and the dev-server paragraph removed from `llms.txt` (the
+  maintainer's ruling). Published and verified; tag `06b322011`.
+- **The first review BLOCKed** on two things: the build check stripped `export` for `tjs`
+  but not `ts` (a second transpile route that the fix had not reached), and `release-check`
+  was red on wording. It also found the notes pointing adopters at a tjs-lang the peer
+  range refused under npm.
+- **A lane failure found a defect older than the release.** `off-localhost-tests.pw.ts`
+  failed on the release commit and then 2 runs in 5 alone. Cause: a run replaced by a newer
+  one went on to run its tests against a detached preview and never returned. The scoped
+  review of that fix found the neighbouring case (replaced DURING its tests, writing stale
+  results), also fixed. Two releases earlier a failure of this kind was recorded as a flake
+  of unknown cause.
+- **The doc-test count fell 85 → 83** after the fix. Compared by test name against the
+  previous commit: two tests had been recorded twice. A falling count was checked, not
+  assumed benign.
+- **Mistakes in the work:** `git checkout <file>` to undo a mutation reverted an
+  uncommitted fix along with it (redone; mutations are now undone from a saved copy); a
+  test's stand-in setup ended in a declaration where the real one ends in an assignment,
+  so its mutation check passed while holding nothing; `shapeTjsOutput(…, undefined)` meant
+  "use the default", not "none", and only failed once the real tjs-lang was installed.
+- **Verified against the real dependency by swapping it in:** rc.5 installed temporarily,
+  the new tests on three browsers and the whole Chromium lane, then the pin restored.
+- **Lanes (final tree):** unit 1835; Playwright 561 passed, 24 skipped; consumer 55 checks;
+  test-browser 83 over 18 pages. CI and the dry run green on the tagged commit.
+- **Open:** board #3268 (deferrals), #3272 (#210 item 7); #216 and #210 await tjs-lang.
