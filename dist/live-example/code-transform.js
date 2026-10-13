@@ -373,7 +373,17 @@ export function loadTjsDocs() {
                 if (m &&
                     typeof m.generateDocsMarkdown === 'function' &&
                     typeof m.tjs === 'function') {
-                    return (source) => m.generateDocsMarkdown(source, m.tjs(source, { dialect: 'tjs', runTests: false }).types);
+                    return (source) => {
+                        const { types } = m.tjs(source, {
+                            dialect: 'tjs',
+                            runTests: false,
+                        });
+                        // Nothing declared, nothing to document, so no Docs tab. The generator would
+                        // answer with a sentence saying so, and most examples declare no function.
+                        if (!types || Object.keys(types).length === 0)
+                            return '';
+                        return m.generateDocsMarkdown(source, types);
+                    };
                 }
             }
             catch {

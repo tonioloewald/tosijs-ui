@@ -961,6 +961,13 @@ docs, nothing an adopter's own product UI depends on, and no API was removed.
 the build it fails was already producing a broken site. Two copies of CodeMirror blank every
 `<tosi-code>`, so failing a `bundleEntry` + `strict` build on them breaks nothing that worked.
 
+**Ruled for 1.16.17 (the maintainer's call):** pin tjs-lang to the 0.14 release candidate
+("release quality code waiting for documentation"), shipped as a patch. Note what this one
+costs, because it does NOT pass the 1.16.2 test cleanly: a CDN-path site whose `tjs` examples
+use something 0.14 refuses has to change them, or install `tjs-lang@0.13.13` to stay put.
+The notes say so. Do not cite it as precedent for moving a pinned dependency across a
+breaking line in a patch without the maintainer deciding it.
+
 **Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
 about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
 removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a

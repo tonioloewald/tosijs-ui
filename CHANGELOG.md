@@ -2,13 +2,24 @@
 
 ## 1.16.17
 
-- **The pinned tjs-lang is 0.14.0-rc.5** (it was 0.13.13). This is the version a doc site
-  loads from a CDN when it does not serve its own copy, and the one this package builds and
-  tests with. What that turns on for `tjs` and `ts` examples, all of it already
+- **The pinned tjs-lang is 0.14.0-rc.5; it was 0.13.13.** That is the devDependency this
+  package builds and tests with, and `TJS_VERSION`, which sites without their own copy load
+  from a CDN. What it turns on for `tjs` and `ts` examples on those sites, all of it
   feature-detected in 1.16.16: examples written as modules run (`export` is removed), a
   console line shows its own value and offers the JavaScript it became, and a built-in
-  `tjs` example gains a **Docs** tab beside its code, generated from its signatures. A site
-  that installs its own tjs-lang is unaffected: it runs the version it installed.
+  `tjs` example that declares a function gains a **Docs** tab beside its code, generated
+  from its signatures.
+- **What can break, and how to stay where you were.** tjs-lang 0.14 refuses some code that
+  0.13 accepted, with no compatibility switch: `||` in a type (a union is spelled `|`),
+  `unsafe var` and `unsafe eval`, and a `wasm` block that cannot compile, among others. Its
+  [changelog](https://github.com/tonioloewald/tjs-lang/blob/main/CHANGELOG.md) lists them
+  under "what breaks". A `tjs` example using one of those stops compiling on a site that
+  loads tjs-lang from the CDN. To keep the old transpiler, install `tjs-lang@0.13.13` in
+  your project: the build copies the installed tjs-lang next to your pages and the page
+  prefers that copy to the CDN. A site that already installs its own tjs-lang is
+  unaffected.
+- The transpiler bundle a page with `tjs` or `ts` examples downloads is larger: 169 kB to
+  194 kB gzip. `dist/iife.js` is unchanged, and pages without such examples load neither.
 - The peer range is unchanged (`^0.13.1 || ^0.14.0-rc.5`).
 
 ## 1.16.16
