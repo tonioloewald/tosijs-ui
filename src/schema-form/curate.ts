@@ -31,15 +31,51 @@ export interface CuratedField {
    * properties only.
    */
   editor?: FieldEditor
+  /**
+   * Curate what is INSIDE an object, an array or a union. Paths are relative to the
+   * property: for an array, to each of its items; for a union, to the branch the value
+   * currently matches.
+   */
+  fields?: FieldCuration
+  /** An object or array panel starts closed. */
+  collapsed?: boolean
+  /** For a union: `false` hides the variant picker, leaving the active branch's fields. */
+  picker?: boolean
+}
+
+/**
+ * A titled panel grouping some of the curated fields. Its key in the curation is an id
+ * (the panel's `data-section`), not a path, and its `fields` use the same paths as the
+ * entries around it.
+ */
+export interface CuratedSection {
+  section: string
+  fields: FieldCuration
+  /** The panel starts closed. */
+  collapsed?: boolean
 }
 
 /**
  * Paths into the schema (`thresholds.default`), in display order, each mapped to how to show
  * it. A string is shorthand for `{ caption }`, and `true` for "as the schema describes it".
  */
-export type FieldCuration = Record<string, CuratedField | string | true>
+export type FieldCuration = {
+  [path: string]: CuratedField | CuratedSection | string | true
+}
 
-export const CURATED_KEYS = ['caption', 'help', 'readOnly', 'editor']
+export const CURATED_KEYS = [
+  'caption',
+  'help',
+  'readOnly',
+  'editor',
+  'fields',
+  'collapsed',
+  'picker',
+]
+export const SECTION_KEYS = ['section', 'fields', 'collapsed']
+
+export const isSection = (entry: unknown): entry is CuratedSection =>
+  typeof entry === 'object' && entry !== null && 'section' in entry
 
 export function curatedField(
   entry: CuratedField | string | true
@@ -52,8 +88,8 @@ export function curatedField(
 }
 
 /**
- * The node at a path. A path runs through object properties only: an array, a union or a
- * plugin-claimed property is chosen whole, since what is inside one depends on the value.
+ * The node at a path. A path runs through object properties only: what is inside an array
+ * or a union depends on the value, so those are reached through their entry's own `fields`.
  */
 export function findNode(nodes: Node[], path: string): Node | undefined {
   for (const node of nodes) {
@@ -65,46 +101,115 @@ export function findNode(nodes: Node[], path: string): Node | undefined {
   return undefined
 }
 
+export interface Curated {
+  nodes: Node[]
+  /** Paths the schema does not describe. Each renders as a placeholder that says so. */
+  unknown: string[]
+  /** Paths skipped because they are, contain, or are inside one already shown. */
+  overlapping: string[]
+  /** Entries carrying keys the curation does not have. */
+  badKeys: Array<{ path: string; keys: string[] }>
+  /** The entry for each path that is shown, by absolute path. */
+  entries: Map<string, CuratedField>
+}
+
 /**
  * The curated nodes, in the curation's order. A path the schema does not describe becomes
  * an `unsupported` placeholder that says so and is listed in `unknown`: a field that
  * silently fails to appear looks the same as one that was never asked for.
+ *
+ * `base` is the path the curation's own paths are relative to (an array item, a union).
+ * `elsewhere` answers "is this path described, only not here?", which is how a union's
+ * curation can name fields of a branch the value does not currently match: those are left
+ * out without a placeholder.
  */
 export function curateNodes(
   nodes: Node[],
-  fields: FieldCuration
-): { nodes: Node[]; unknown: string[]; overlapping: string[] } {
-  const curated: Node[] = []
-  const unknown: string[] = []
-  const overlapping: string[] = []
-  const within = (a: string, b: string) => a === b || a.startsWith(b + '.')
-  for (const [path, entry] of Object.entries(fields)) {
-    const { caption } = curatedField(entry)
-    /*
-    An object and one of its own properties cannot both be shown: the property would have
-    two controls, and the form keeps one control per path. The first one named wins.
-    */
-    if (curated.some((n) => within(path, n.path) || within(n.path, path))) {
-      overlapping.push(path)
-      continue
-    }
-    const node = findNode(nodes, path)
-    if (!node) {
-      unknown.push(path)
-      const placeholder: Field = {
-        path,
-        label: caption ?? path,
-        kind: 'unsupported',
-        schema: {} as Field['schema'],
-        required: false,
-        reason: `The schema describes no property at "${path}".`,
-      }
-      curated.push(placeholder)
-      continue
-    }
-    curated.push(caption === undefined ? node : { ...node, label: caption })
+  fields: FieldCuration,
+  base = '',
+  elsewhere?: (path: string) => boolean
+): Curated {
+  const result: Curated = {
+    nodes: [],
+    unknown: [],
+    overlapping: [],
+    badKeys: [],
+    entries: new Map(),
   }
-  return { nodes: curated, unknown, overlapping }
+  /*
+  One control per path. A property and something inside it cannot both be shown, in the
+  main area or across sections; the first one named wins.
+  */
+  const taken: string[] = []
+  const within = (a: string, b: string) => a === b || a.startsWith(b + '.')
+  const extraKeys = (entry: object, known: string[], path: string): void => {
+    const keys = Object.keys(entry).filter((k) => !known.includes(k))
+    if (keys.length > 0) result.badKeys.push({ path, keys })
+  }
+  const walk = (curation: FieldCuration, out: Node[]): void => {
+    for (const [key, raw] of Object.entries(curation)) {
+      if (isSection(raw)) {
+        extraKeys(raw, SECTION_KEYS, key)
+        const children: Node[] = []
+        walk(raw.fields ?? {}, children)
+        out.push({
+          kind: 'group',
+          path: '',
+          label: raw.section,
+          required: false,
+          schema: {} as Field['schema'],
+          children,
+          section: key,
+          ...(raw.collapsed ? { collapsed: true } : {}),
+        })
+        continue
+      }
+      const entry = curatedField(raw)
+      const path = base ? `${base}.${key}` : key
+      if (typeof raw === 'object') extraKeys(raw, CURATED_KEYS, path)
+      if (taken.some((t) => within(path, t) || within(t, path))) {
+        result.overlapping.push(path)
+        continue
+      }
+      let node = findNode(nodes, path)
+      if (!node) {
+        if (elsewhere?.(path)) continue
+        taken.push(path)
+        result.unknown.push(path)
+        const placeholder: Field = {
+          path,
+          label: entry.caption ?? key,
+          kind: 'unsupported',
+          schema: {} as Field['schema'],
+          required: false,
+          reason: `The schema describes no property at "${path}".`,
+        }
+        out.push(placeholder)
+        // No editor: it would write a property the schema does not have.
+        result.entries.set(path, { help: entry.help })
+        continue
+      }
+      taken.push(path)
+      if (entry.caption !== undefined) node = { ...node, label: entry.caption }
+      if (entry.fields && 'children' in node) {
+        const inner = curateNodes(
+          node.children,
+          entry.fields,
+          node.path,
+          elsewhere
+        )
+        node = { ...node, children: inner.nodes }
+        result.unknown.push(...inner.unknown)
+        result.overlapping.push(...inner.overlapping)
+        result.badKeys.push(...inner.badKeys)
+        for (const [p, e] of inner.entries) result.entries.set(p, e)
+      }
+      result.entries.set(path, entry)
+      out.push(node)
+    }
+  }
+  walk(fields, result.nodes)
+  return result
 }
 
 /**
@@ -124,9 +229,20 @@ const isNativeControl = (el: HTMLElement): boolean =>
   el instanceof HTMLSelectElement ||
   el instanceof HTMLTextAreaElement
 
-/** A `FieldEditor` as the plugin the form already knows how to host. */
+const editorPlugins = new WeakMap<() => HTMLElement, FieldPlugin>()
+
+/** A `FieldEditor` as the plugin the form already knows how to host, one per editor. */
 export function editorPlugin(editor: FieldEditor): FieldPlugin {
   if (typeof editor !== 'function') return editor
+  let plugin = editorPlugins.get(editor)
+  if (!plugin) {
+    plugin = functionPlugin(editor)
+    editorPlugins.set(editor, plugin)
+  }
+  return plugin
+}
+
+function functionPlugin(editor: () => HTMLElement): FieldPlugin {
   /*
   What the model last held for each editor, so an `input` followed by the `change` a blur
   sends writes once. BOTH directions update it: a value pushed in from outside is a new

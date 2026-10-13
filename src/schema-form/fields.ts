@@ -39,6 +39,10 @@ export interface FieldGroup {
   required: boolean
   schema: JSONSchema
   children: Node[]
+  /** A curated section, not a property: its id. `path` is then empty. See `curate.ts`. */
+  section?: string
+  /** The panel starts closed. */
+  collapsed?: boolean
 }
 
 /** An array property: its item schema, and the fields for each current element. */

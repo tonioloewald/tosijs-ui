@@ -708,7 +708,8 @@ form.fields = {
 - Everything else still comes from the schema: the control, `enum` choices, `required`,
   number and format constraints, and the caption when you give none.
 - A path runs through object properties (`a.b.c`). Naming an object, an array or a union
-  shows that whole property.
+  shows that whole property, unless its entry has its own `fields`
+  ([below](#inside-arrays-and-unions)).
 - **`editor`** is a function that returns an element with a `value` property and a `change`
   event, which is what every element creator in this library is. Its `value` must be of the
   schema's type: a native `<input>` yields strings, so use one for string properties only. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
@@ -949,6 +950,299 @@ test('an error in a field that is not shown is listed, not hidden', () => {
 })
 ```
 
+### Inside arrays and unions
+
+What is inside an array or a union depends on the value, so a path cannot run through one.
+Give the property's entry its own **`fields`** instead. Its paths are relative: for an array,
+to **each item**; for a union, to **the branch the value currently matches**.
+
+```typescript
+form.fields = {
+  thresholds: {
+    caption: 'Thresholds',
+    fields: {
+      value: 'Threshold', // thresholds[i].value, for every item
+      'when.company': { caption: 'Company', readOnly: true },
+    },
+  },
+  rule: {
+    picker: false, // hide the variant picker
+    fields: { amount: 'Amount', rate: 'Rate' }, // each branch shows the ones it has
+  },
+}
+```
+
+- Items keep the properties you do not show, and Add, remove and reorder work as before.
+- An error in an item property that is not shown is listed above the fields by its real
+  path (`thresholds.0.note`).
+- A union's `fields` covers every branch. A path the active branch lacks is left out; a path
+  **no** branch has renders the placeholder and warns.
+- `fields` on an object entry works the same way, and keeps the object's panel.
+- `collapsed: true` on an object or array entry starts its panel closed.
+
+### Sections
+
+An entry with a **`section`** title is a panel that groups some of the fields. Its key is an
+id (the panel's `data-section`, for styling), not a path, and the paths in its `fields` are
+the same paths you would use outside it.
+
+```typescript
+form.fields = {
+  owner: 'Owned by',
+  advanced: {
+    section: 'Advanced',
+    collapsed: true,
+    fields: { 'routing.retries': 'Retries', 'audit.retainDays': 'Keep for (days)' },
+  },
+}
+```
+
+A section starts open unless you say `collapsed: true`. A closed section gets the class
+`-invalid`, and a red title, while a field inside it is in error, so collapsing one cannot
+hide a problem. Sections can sit inside an array's or a union's `fields` too.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { div, pre } = elements
+
+const rulesForm = tosiSchemaForm({
+  schema: {
+    type: 'object',
+    properties: {
+      owner: { type: 'string' },
+      thresholds: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            when: {
+              type: 'object',
+              properties: {
+                company: { type: 'string' },
+                account: { type: 'string' },
+              },
+            },
+            value: { type: 'number', minimum: 0, maximum: 1 },
+            note: { type: 'string' },
+          },
+        },
+      },
+      routing: {
+        type: 'object',
+        properties: { retries: { type: 'integer', minimum: 0 } },
+      },
+      audit: { type: 'object', properties: { retainDays: { type: 'integer' } } },
+    },
+  },
+  value: {
+    owner: 'finance-ops',
+    thresholds: [
+      { when: { company: 'Acme', account: '4000' }, value: 0.8, note: 'agreed in March' },
+      { when: { company: 'Globex', account: '5000' }, value: 0.65, note: '' },
+    ],
+    routing: { retries: 2 },
+    audit: { retainDays: 90 },
+  },
+  fields: {
+    thresholds: {
+      caption: 'Thresholds',
+      fields: {
+        'when.company': { caption: 'Company', readOnly: true },
+        value: { caption: 'Threshold', help: 'Between 0 and 1.' },
+      },
+    },
+    advanced: {
+      section: 'Advanced',
+      collapsed: true,
+      fields: {
+        'routing.retries': 'Retries',
+        'audit.retainDays': 'Keep audit records for (days)',
+      },
+    },
+  },
+})
+
+const rulesValue = pre({ class: 'rules-value' })
+const showRules = () => {
+  rulesValue.textContent = JSON.stringify(rulesForm.value, null, 2)
+}
+rulesForm.addEventListener('change', showRules)
+showRules()
+
+preview.append(div({ class: 'rules-demo' }, rulesForm, rulesValue))
+```
+```css
+.preview .rules-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+.preview .rules-demo tosi-schema-form {
+  flex: 1 1 280px;
+}
+.preview .rules-value {
+  flex: 0 1 260px;
+  margin: 0;
+  font-size: 12px;
+}
+```
+```test
+const rulesForm = await waitFor('tosi-schema-form')
+await waitMs(100)
+
+test('each array item shows the curated fields, and a section groups the rest', () => {
+  const shown = [...rulesForm.querySelectorAll('[data-field]')].map((el) => el.dataset.field)
+  expect(shown).toEqual([
+    'thresholds.0.when.company',
+    'thresholds.0.value',
+    'thresholds.1.when.company',
+    'thresholds.1.value',
+    'routing.retries',
+    'audit.retainDays',
+  ])
+  expect(rulesForm.querySelector('[data-path="thresholds.0.when.company"]').disabled).toBe(true)
+  const section = rulesForm.querySelector('details[data-section="advanced"]')
+  expect(section.open).toBe(false)
+  expect(section.querySelector('summary').textContent).toBe('Advanced')
+  expect(section.querySelector('[data-field="routing.retries"]')).not.toBe(null)
+
+  const threshold = rulesForm.querySelector('[data-path="thresholds.1.value"]')
+  threshold.value = '0.7'
+  threshold.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(rulesForm.value.thresholds[1]).toEqual({
+    when: { company: 'Globex', account: '5000' },
+    value: 0.7,
+    note: '',
+  })
+  threshold.value = '0.65'
+  threshold.dispatchEvent(new Event('input', { bubbles: true }))
+})
+```
+
+## Proposals
+
+A review screen shows what someone, or something, wants to change and lets a person decide.
+Set **`proposals`** to a map from path to `{ value, reason?, source? }`, and each one appears
+under its field with **Accept** and **Reject**:
+
+```typescript
+form.proposals = {
+  'thresholds.default': {
+    value: 0.9,
+    reason: 'Three false escalations last week.',
+    source: 'triage agent',
+  },
+}
+```
+
+- `form.value` stays the **current** value. Accepting writes the proposed value and fires
+  `proposalaccept`, then `change`; rejecting fires `proposalreject` and leaves the value
+  alone. Both carry `detail: { path, proposal }`, and both remove the entry from
+  `form.proposals`.
+- `acceptProposal(path)` and `rejectProposal(path)` do the same from code.
+- Paths are value paths, so an array item is `thresholds.0.value`. They work with or without
+  a curation; a proposal for a field that is not shown is named above the fields.
+- A field that is `readOnly` in a curation can still have its proposal accepted: that is the
+  review screen, where nobody types and somebody decides. A form with `readOnly` set shows
+  the proposals with no buttons.
+- Set **`proposalView`** to a function to render a proposal yourself. It receives
+  `{ path, label, current, proposal, accept, reject, elements }` and returns an element.
+- Proposals are presentation, like the rest of this page: nothing stops code from writing
+  `form.value`. Who may accept is for your application to enforce.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { div, pre } = elements
+
+const reviewForm = tosiSchemaForm({
+  schema: {
+    type: 'object',
+    properties: {
+      thresholds: {
+        type: 'object',
+        properties: {
+          default: { type: 'number', minimum: 0, maximum: 1 },
+          escalate: { type: 'number', minimum: 0, maximum: 1 },
+        },
+      },
+      routing: {
+        type: 'object',
+        properties: {
+          mode: { type: 'string', enum: ['manual', 'assisted', 'automatic'] },
+        },
+      },
+    },
+  },
+  value: {
+    thresholds: { default: 0.8, escalate: 0.95 },
+    routing: { mode: 'assisted' },
+  },
+  fields: {
+    'thresholds.default': { caption: 'Default threshold', readOnly: true },
+    'thresholds.escalate': { caption: 'Escalation threshold', readOnly: true },
+    'routing.mode': { caption: 'How invoices are routed', readOnly: true },
+  },
+  proposals: {
+    'thresholds.default': {
+      value: 0.9,
+      reason: 'Three false escalations last week.',
+      source: 'triage agent',
+    },
+    'routing.mode': {
+      value: 'automatic',
+      reason: 'Assisted routing has matched a person for 30 days.',
+      source: 'M. Okafor',
+    },
+  },
+})
+
+const reviewLog = pre({ class: 'review-log' }, 'Nothing decided yet.')
+const decided = (verb) => (event) => {
+  const { path, proposal } = event.detail
+  reviewLog.textContent = `${verb} ${path} = ${JSON.stringify(proposal.value)}`
+}
+reviewForm.addEventListener('proposalaccept', decided('Accepted'))
+reviewForm.addEventListener('proposalreject', decided('Rejected'))
+
+preview.append(reviewForm, reviewLog)
+```
+```test
+const reviewForm = await waitFor('tosi-schema-form')
+await waitMs(100)
+
+test('a proposal is shown under its field, and accepting it writes the value', async () => {
+  const field = reviewForm.querySelector('[data-field="thresholds.default"]')
+  for (let i = 0; i < 50 && !field.querySelector('.schema-proposal'); i += 1) await waitMs(100)
+  expect(field.querySelector('.schema-proposal-value').textContent).toBe('Proposed: 0.9')
+  expect(field.querySelector('.schema-proposal-source').textContent).toBe('triage agent')
+  expect(reviewForm.value.thresholds.default).toBe(0.8)
+
+  const events = []
+  const record = (event) => events.push(event.type)
+  for (const type of ['proposalaccept', 'proposalreject', 'change']) {
+    reviewForm.addEventListener(type, record)
+  }
+  const proposals = reviewForm.proposals
+  expect(reviewForm.acceptProposal('thresholds.default')).toBe(true)
+  expect(reviewForm.value.thresholds.default).toBe(0.9)
+  expect(events).toEqual(['proposalaccept', 'change'])
+  expect(Object.keys(reviewForm.proposals)).toEqual(['routing.mode'])
+  expect(reviewForm.acceptProposal('thresholds.default')).toBe(false)
+
+  // put it back, so the example still has something to decide
+  reviewForm.value = { ...reviewForm.value, thresholds: { default: 0.8, escalate: 0.95 } }
+  reviewForm.proposals = proposals
+  for (const type of ['proposalaccept', 'proposalreject', 'change']) {
+    reviewForm.removeEventListener(type, record)
+  }
+})
+```
+
 ## Read-only
 
 `readOnly` disables the inputs and **hides** the add, remove and reorder controls rather than
@@ -957,13 +1251,14 @@ there is nothing to explain if they are not there.
 
 ## Styling
 
-Three custom properties, each with a fallback so the component works unstyled:
+Four custom properties, each with a fallback so the component works unstyled:
 
 | variable | default | what it colours |
 | --- | --- | --- |
 | `--tosi-error` | `#c00` | the invalid-field outline and the error text |
 | `--tosi-border` | `#0002` | the border around a `<details>` section |
 | `--tosi-border-radius` | `4px` | that section's corners |
+| `--tosi-proposal-bg` | `#fc03` | the background of a proposal |
 
 Spacing comes from the theme's `--tosi-spacing` / `--tosi-spacing-sm`, so a form matches
 whatever scale the rest of your page is on.
@@ -974,7 +1269,14 @@ The form's own chrome — the *Add …* button and the reorder tooltips — goes
 [`localize`](/localize/), and the form **rebuilds when the locale changes**, so switching
 language does not leave one form behind in the old one.
 
-A curated form adds one more string, `Problems in fields not shown here`.
+A curated form adds one more string, `Problems in fields not shown here`, and proposals add
+`Proposed`, `Accept`, `Reject` and `Proposed changes to fields not shown here`.
+
+**Labels from your schema are shown as written.** A property's `title`, a curation's
+`caption` and `help`, and a section's title are never humanised or passed through
+`localize`: they are your data, and a schema generated from data (one property per company,
+titled with the company's name) shows those names untouched. Only a property with no `title`
+gets a label derived from its key (`firstName` becomes `first name`).
 
 The add button's key is the whole sentence, `Add {item}`, with the item name interpolated
 afterwards. Building it as `'Add ' + label` would leave a translator with a dangling fragment

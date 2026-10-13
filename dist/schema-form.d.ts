@@ -1,9 +1,27 @@
-import { ElementCreator } from 'tosijs';
+import { ElementCreator, elements } from 'tosijs';
 import type { JSONSchema } from './schema-form/json-schema.js';
 import { type FieldError } from './schema-form/fields.js';
 export { setSchemaValidator, schemaValidationAvailable, type SchemaValidator, } from './schema-form/validator.js';
 import { type FieldCuration } from './schema-form/curate.js';
-export type { FieldCuration, CuratedField, FieldEditor, } from './schema-form/curate.js';
+export type { FieldCuration, CuratedField, CuratedSection, FieldEditor, } from './schema-form/curate.js';
+/** A value someone proposes for one field, shown beside the current one for review. */
+export interface FieldProposal {
+    value: unknown;
+    /** Why. Shown under the proposed value. */
+    reason?: string;
+    /** Who or what proposed it. */
+    source?: string;
+}
+/** What a custom `proposalView` is given. `accept` and `reject` do what the buttons do. */
+export interface ProposalContext {
+    path: string;
+    label: string;
+    current: unknown;
+    proposal: FieldProposal;
+    accept: () => void;
+    reject: () => void;
+    elements: typeof elements;
+}
 export { registerFieldPlugin, type FieldPlugin, type FieldPluginContext, } from './schema-form/plugins.js';
 declare const TosiSchemaForm_base: import("tosijs").WithAttributes<{
     readOnly: boolean;
@@ -58,9 +76,14 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
             borderTop: string;
             paddingTop: string;
         };
-        ':host .schema-item-controls': {
+        ':host .schema-item > *': {
+            gridColumn: string;
+        };
+        ':host .schema-item > .schema-item-controls': {
             display: string;
             gap: string;
+            gridColumn: string;
+            gridRow: string;
         };
         ':host .schema-item-controls[hidden], :host .schema-add[hidden]': {
             display: string;
@@ -68,6 +91,9 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
         ':host .schema-union': {
             display: string;
             gap: string;
+        };
+        ':host .schema-variant[hidden]': {
+            display: string;
         };
         ':host .schema-variant-fields': {
             display: string;
@@ -94,6 +120,40 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
             margin: string;
             paddingLeft: string;
         };
+        ':host .schema-section.-invalid > summary': {
+            color: string;
+            opacity: string;
+        };
+        ':host .schema-proposal': {
+            display: string;
+            flexWrap: "wrap";
+            alignItems: string;
+            gap: string;
+            fontSize: string;
+            padding: string;
+            borderRadius: string;
+            background: string;
+        };
+        ':host .schema-proposal-reason': {
+            flex: string;
+            opacity: string;
+        };
+        ':host .schema-proposal-source': {
+            opacity: string;
+            fontStyle: string;
+        };
+        ':host .schema-proposal-actions': {
+            display: string;
+            gap: string;
+            marginLeft: string;
+        };
+        ':host .schema-proposal-actions[hidden], :host .schema-hidden-proposals[hidden]': {
+            display: string;
+        };
+        ':host .schema-hidden-proposals': {
+            fontSize: string;
+            opacity: string;
+        };
         ':host .schema-add': {
             justifySelf: string;
         };
@@ -117,21 +177,45 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private _errors;
     private _index;
     private _curation;
-    /** Custom editors by path, as plugins. Consulted before the `format` plugins. */
-    private _editors;
+    private _entries;
+    private _curationWarnings;
     private _hiddenErrorSlot;
     private _hiddenErrorSignature;
     /**
      * Show only these properties. Keys are paths into the schema (`thresholds.default`), in
-     * display order; each value is `{ caption?, help?, readOnly?, editor? }`, a caption
-     * string, or `true`. `null` shows everything the schema describes.
+     * display order; each value is `{ caption?, help?, readOnly?, editor?, fields? }`, a
+     * caption string, `true`, or a `{ section, fields }` panel. `null` shows everything the
+     * schema describes.
      *
      * The form still holds and validates the WHOLE value: a property that is not shown keeps
      * its value, and an error in one is listed above the fields.
      */
     get fields(): FieldCuration | null;
     set fields(fields: FieldCuration | null);
+    /** A curated `editor` first, then the `format` plugins. A section is neither. */
     private pluginFor;
+    private adopt;
+    /** One array element's nodes, curated when the array's entry has `fields`. */
+    private itemNodes;
+    private branchNodes;
+    /**
+     * Values proposed for review, by path: `{ value, reason?, source? }`. Each is shown under
+     * its field with Accept and Reject. `value` stays the CURRENT value until one is
+     * accepted. `null` (the default) shows none.
+     */
+    get proposals(): Record<string, FieldProposal> | null;
+    set proposals(proposals: Record<string, FieldProposal> | null);
+    private _proposals;
+    /** Render a proposal your own way. Return the element to show under the field. */
+    proposalView: ((context: ProposalContext) => HTMLElement) | null;
+    private settleProposal;
+    /**
+     * Write the proposed value at `path` and drop the proposal. Fires `proposalaccept`
+     * (`detail: { path, proposal }`), then `change`. Returns false when there is none.
+     */
+    acceptProposal(path: string): boolean;
+    /** Drop the proposal at `path`, leaving the value alone. Fires `proposalreject`. */
+    rejectProposal(path: string): boolean;
     get schema(): JSONSchema;
     set schema(schema: JSONSchema);
     get value(): any;
@@ -146,6 +230,7 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private refreshErrors;
     private handleFieldInput;
     private buildNode;
+    private buildBare;
     private buildArray;
     private fillArray;
     private buildUnion;
@@ -170,9 +255,11 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private syncValues;
     private syncPlugins;
     private syncErrors;
+    private _hasSections;
+    private _hiddenProposalSlot;
+    private syncProposals;
+    private buildProposal;
     private syncHiddenErrors;
-    /** Build one curated node, with the help line and lock its curation entry asks for. */
-    private buildCurated;
     content: null;
     private _localeListener;
     connectedCallback(): void;

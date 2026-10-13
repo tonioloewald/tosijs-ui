@@ -709,7 +709,8 @@ form.fields = {
 - Everything else still comes from the schema: the control, `enum` choices, `required`,
   number and format constraints, and the caption when you give none.
 - A path runs through object properties (`a.b.c`). Naming an object, an array or a union
-  shows that whole property.
+  shows that whole property, unless its entry has its own `fields`
+  ([below](#inside-arrays-and-unions)).
 - **`editor`** is a function that returns an element with a `value` property and a `change`
   event, which is what every element creator in this library is. Its `value` must be of the
   schema's type: a native `<input>` yields strings, so use one for string properties only. Pass a [field plugin](#format-plugins) object (`{ render, sync }`) for full control.
@@ -950,6 +951,299 @@ test('an error in a field that is not shown is listed, not hidden', () => {
 })
 ```
 
+### Inside arrays and unions
+
+What is inside an array or a union depends on the value, so a path cannot run through one.
+Give the property's entry its own **`fields`** instead. Its paths are relative: for an array,
+to **each item**; for a union, to **the branch the value currently matches**.
+
+```typescript
+form.fields = {
+  thresholds: {
+    caption: 'Thresholds',
+    fields: {
+      value: 'Threshold', // thresholds[i].value, for every item
+      'when.company': { caption: 'Company', readOnly: true },
+    },
+  },
+  rule: {
+    picker: false, // hide the variant picker
+    fields: { amount: 'Amount', rate: 'Rate' }, // each branch shows the ones it has
+  },
+}
+```
+
+- Items keep the properties you do not show, and Add, remove and reorder work as before.
+- An error in an item property that is not shown is listed above the fields by its real
+  path (`thresholds.0.note`).
+- A union's `fields` covers every branch. A path the active branch lacks is left out; a path
+  **no** branch has renders the placeholder and warns.
+- `fields` on an object entry works the same way, and keeps the object's panel.
+- `collapsed: true` on an object or array entry starts its panel closed.
+
+### Sections
+
+An entry with a **`section`** title is a panel that groups some of the fields. Its key is an
+id (the panel's `data-section`, for styling), not a path, and the paths in its `fields` are
+the same paths you would use outside it.
+
+```typescript
+form.fields = {
+  owner: 'Owned by',
+  advanced: {
+    section: 'Advanced',
+    collapsed: true,
+    fields: { 'routing.retries': 'Retries', 'audit.retainDays': 'Keep for (days)' },
+  },
+}
+```
+
+A section starts open unless you say `collapsed: true`. A closed section gets the class
+`-invalid`, and a red title, while a field inside it is in error, so collapsing one cannot
+hide a problem. Sections can sit inside an array's or a union's `fields` too.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { div, pre } = elements
+
+const rulesForm = tosiSchemaForm({
+  schema: {
+    type: 'object',
+    properties: {
+      owner: { type: 'string' },
+      thresholds: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            when: {
+              type: 'object',
+              properties: {
+                company: { type: 'string' },
+                account: { type: 'string' },
+              },
+            },
+            value: { type: 'number', minimum: 0, maximum: 1 },
+            note: { type: 'string' },
+          },
+        },
+      },
+      routing: {
+        type: 'object',
+        properties: { retries: { type: 'integer', minimum: 0 } },
+      },
+      audit: { type: 'object', properties: { retainDays: { type: 'integer' } } },
+    },
+  },
+  value: {
+    owner: 'finance-ops',
+    thresholds: [
+      { when: { company: 'Acme', account: '4000' }, value: 0.8, note: 'agreed in March' },
+      { when: { company: 'Globex', account: '5000' }, value: 0.65, note: '' },
+    ],
+    routing: { retries: 2 },
+    audit: { retainDays: 90 },
+  },
+  fields: {
+    thresholds: {
+      caption: 'Thresholds',
+      fields: {
+        'when.company': { caption: 'Company', readOnly: true },
+        value: { caption: 'Threshold', help: 'Between 0 and 1.' },
+      },
+    },
+    advanced: {
+      section: 'Advanced',
+      collapsed: true,
+      fields: {
+        'routing.retries': 'Retries',
+        'audit.retainDays': 'Keep audit records for (days)',
+      },
+    },
+  },
+})
+
+const rulesValue = pre({ class: 'rules-value' })
+const showRules = () => {
+  rulesValue.textContent = JSON.stringify(rulesForm.value, null, 2)
+}
+rulesForm.addEventListener('change', showRules)
+showRules()
+
+preview.append(div({ class: 'rules-demo' }, rulesForm, rulesValue))
+```
+```css
+.preview .rules-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+.preview .rules-demo tosi-schema-form {
+  flex: 1 1 280px;
+}
+.preview .rules-value {
+  flex: 0 1 260px;
+  margin: 0;
+  font-size: 12px;
+}
+```
+```test
+const rulesForm = await waitFor('tosi-schema-form')
+await waitMs(100)
+
+test('each array item shows the curated fields, and a section groups the rest', () => {
+  const shown = [...rulesForm.querySelectorAll('[data-field]')].map((el) => el.dataset.field)
+  expect(shown).toEqual([
+    'thresholds.0.when.company',
+    'thresholds.0.value',
+    'thresholds.1.when.company',
+    'thresholds.1.value',
+    'routing.retries',
+    'audit.retainDays',
+  ])
+  expect(rulesForm.querySelector('[data-path="thresholds.0.when.company"]').disabled).toBe(true)
+  const section = rulesForm.querySelector('details[data-section="advanced"]')
+  expect(section.open).toBe(false)
+  expect(section.querySelector('summary').textContent).toBe('Advanced')
+  expect(section.querySelector('[data-field="routing.retries"]')).not.toBe(null)
+
+  const threshold = rulesForm.querySelector('[data-path="thresholds.1.value"]')
+  threshold.value = '0.7'
+  threshold.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(rulesForm.value.thresholds[1]).toEqual({
+    when: { company: 'Globex', account: '5000' },
+    value: 0.7,
+    note: '',
+  })
+  threshold.value = '0.65'
+  threshold.dispatchEvent(new Event('input', { bubbles: true }))
+})
+```
+
+## Proposals
+
+A review screen shows what someone, or something, wants to change and lets a person decide.
+Set **`proposals`** to a map from path to `{ value, reason?, source? }`, and each one appears
+under its field with **Accept** and **Reject**:
+
+```typescript
+form.proposals = {
+  'thresholds.default': {
+    value: 0.9,
+    reason: 'Three false escalations last week.',
+    source: 'triage agent',
+  },
+}
+```
+
+- `form.value` stays the **current** value. Accepting writes the proposed value and fires
+  `proposalaccept`, then `change`; rejecting fires `proposalreject` and leaves the value
+  alone. Both carry `detail: { path, proposal }`, and both remove the entry from
+  `form.proposals`.
+- `acceptProposal(path)` and `rejectProposal(path)` do the same from code.
+- Paths are value paths, so an array item is `thresholds.0.value`. They work with or without
+  a curation; a proposal for a field that is not shown is named above the fields.
+- A field that is `readOnly` in a curation can still have its proposal accepted: that is the
+  review screen, where nobody types and somebody decides. A form with `readOnly` set shows
+  the proposals with no buttons.
+- Set **`proposalView`** to a function to render a proposal yourself. It receives
+  `{ path, label, current, proposal, accept, reject, elements }` and returns an element.
+- Proposals are presentation, like the rest of this page: nothing stops code from writing
+  `form.value`. Who may accept is for your application to enforce.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { div, pre } = elements
+
+const reviewForm = tosiSchemaForm({
+  schema: {
+    type: 'object',
+    properties: {
+      thresholds: {
+        type: 'object',
+        properties: {
+          default: { type: 'number', minimum: 0, maximum: 1 },
+          escalate: { type: 'number', minimum: 0, maximum: 1 },
+        },
+      },
+      routing: {
+        type: 'object',
+        properties: {
+          mode: { type: 'string', enum: ['manual', 'assisted', 'automatic'] },
+        },
+      },
+    },
+  },
+  value: {
+    thresholds: { default: 0.8, escalate: 0.95 },
+    routing: { mode: 'assisted' },
+  },
+  fields: {
+    'thresholds.default': { caption: 'Default threshold', readOnly: true },
+    'thresholds.escalate': { caption: 'Escalation threshold', readOnly: true },
+    'routing.mode': { caption: 'How invoices are routed', readOnly: true },
+  },
+  proposals: {
+    'thresholds.default': {
+      value: 0.9,
+      reason: 'Three false escalations last week.',
+      source: 'triage agent',
+    },
+    'routing.mode': {
+      value: 'automatic',
+      reason: 'Assisted routing has matched a person for 30 days.',
+      source: 'M. Okafor',
+    },
+  },
+})
+
+const reviewLog = pre({ class: 'review-log' }, 'Nothing decided yet.')
+const decided = (verb) => (event) => {
+  const { path, proposal } = event.detail
+  reviewLog.textContent = `${verb} ${path} = ${JSON.stringify(proposal.value)}`
+}
+reviewForm.addEventListener('proposalaccept', decided('Accepted'))
+reviewForm.addEventListener('proposalreject', decided('Rejected'))
+
+preview.append(reviewForm, reviewLog)
+```
+```test
+const reviewForm = await waitFor('tosi-schema-form')
+await waitMs(100)
+
+test('a proposal is shown under its field, and accepting it writes the value', async () => {
+  const field = reviewForm.querySelector('[data-field="thresholds.default"]')
+  for (let i = 0; i < 50 && !field.querySelector('.schema-proposal'); i += 1) await waitMs(100)
+  expect(field.querySelector('.schema-proposal-value').textContent).toBe('Proposed: 0.9')
+  expect(field.querySelector('.schema-proposal-source').textContent).toBe('triage agent')
+  expect(reviewForm.value.thresholds.default).toBe(0.8)
+
+  const events = []
+  const record = (event) => events.push(event.type)
+  for (const type of ['proposalaccept', 'proposalreject', 'change']) {
+    reviewForm.addEventListener(type, record)
+  }
+  const proposals = reviewForm.proposals
+  expect(reviewForm.acceptProposal('thresholds.default')).toBe(true)
+  expect(reviewForm.value.thresholds.default).toBe(0.9)
+  expect(events).toEqual(['proposalaccept', 'change'])
+  expect(Object.keys(reviewForm.proposals)).toEqual(['routing.mode'])
+  expect(reviewForm.acceptProposal('thresholds.default')).toBe(false)
+
+  // put it back, so the example still has something to decide
+  reviewForm.value = { ...reviewForm.value, thresholds: { default: 0.8, escalate: 0.95 } }
+  reviewForm.proposals = proposals
+  for (const type of ['proposalaccept', 'proposalreject', 'change']) {
+    reviewForm.removeEventListener(type, record)
+  }
+})
+```
+
 ## Read-only
 
 `readOnly` disables the inputs and **hides** the add, remove and reorder controls rather than
@@ -958,13 +1252,14 @@ there is nothing to explain if they are not there.
 
 ## Styling
 
-Three custom properties, each with a fallback so the component works unstyled:
+Four custom properties, each with a fallback so the component works unstyled:
 
 | variable | default | what it colours |
 | --- | --- | --- |
 | `--tosi-error` | `#c00` | the invalid-field outline and the error text |
 | `--tosi-border` | `#0002` | the border around a `<details>` section |
 | `--tosi-border-radius` | `4px` | that section's corners |
+| `--tosi-proposal-bg` | `#fc03` | the background of a proposal |
 
 Spacing comes from the theme's `--tosi-spacing` / `--tosi-spacing-sm`, so a form matches
 whatever scale the rest of your page is on.
@@ -975,7 +1270,14 @@ The form's own chrome — the *Add …* button and the reorder tooltips — goes
 [`localize`](/localize/), and the form **rebuilds when the locale changes**, so switching
 language does not leave one form behind in the old one.
 
-A curated form adds one more string, `Problems in fields not shown here`.
+A curated form adds one more string, `Problems in fields not shown here`, and proposals add
+`Proposed`, `Accept`, `Reject` and `Proposed changes to fields not shown here`.
+
+**Labels from your schema are shown as written.** A property's `title`, a curation's
+`caption` and `help`, and a section's title are never humanised or passed through
+`localize`: they are your data, and a schema generated from data (one property per company,
+titled with the company's name) shows those names untouched. Only a property with no `title`
+gets a label derived from its key (`firstName` becomes `first name`).
 
 The add button's key is the whole sentence, `Add {item}`, with the item name interpolated
 afterwards. Building it as `'Add ' + label` would leave a translator with a dangling fragment
@@ -1111,17 +1413,39 @@ import {
 } from './schema-form/plugins.js'
 import {
   curateNodes,
-  curatedField,
   editorPlugin,
+  findNode,
   hiddenErrors,
-  CURATED_KEYS,
+  type Curated,
+  type CuratedField,
   type FieldCuration,
 } from './schema-form/curate.js'
 export type {
   FieldCuration,
   CuratedField,
+  CuratedSection,
   FieldEditor,
 } from './schema-form/curate.js'
+
+/** A value someone proposes for one field, shown beside the current one for review. */
+export interface FieldProposal {
+  value: unknown
+  /** Why. Shown under the proposed value. */
+  reason?: string
+  /** Who or what proposed it. */
+  source?: string
+}
+
+/** What a custom `proposalView` is given. `accept` and `reject` do what the buttons do. */
+export interface ProposalContext {
+  path: string
+  label: string
+  current: unknown
+  proposal: FieldProposal
+  accept: () => void
+  reject: () => void
+  elements: typeof elements
+}
 export {
   registerFieldPlugin,
   type FieldPlugin,
@@ -1140,6 +1464,7 @@ const {
   button,
   ul,
   li,
+  b,
   form: formElement,
 } = elements
 
@@ -1178,11 +1503,19 @@ export class TosiSchemaForm extends withAttributes({
       borderTop: '1px solid var(--tosi-border, #0001)',
       paddingTop: 'var(--tosi-spacing-sm, 8px)',
     },
-    ':host .schema-item-controls': { display: 'flex', gap: '2px' },
+    // Every field of an item stacks in the first column; the controls sit beside the first.
+    ':host .schema-item > *': { gridColumn: '1' },
+    ':host .schema-item > .schema-item-controls': {
+      display: 'flex',
+      gap: '2px',
+      gridColumn: '2',
+      gridRow: '1',
+    },
     ':host .schema-item-controls[hidden], :host .schema-add[hidden]': {
       display: 'none',
     },
     ':host .schema-union': { display: 'grid', gap: '2px' },
+    ':host .schema-variant[hidden]': { display: 'none' },
     ':host .schema-variant-fields': {
       display: 'grid',
       gap: 'var(--tosi-spacing, 10px)',
@@ -1203,6 +1536,30 @@ export class TosiSchemaForm extends withAttributes({
       margin: '2px 0 0',
       paddingLeft: '1.2em',
     },
+    ':host .schema-section.-invalid > summary': {
+      color: 'var(--tosi-error, #c00)',
+      opacity: '1',
+    },
+    ':host .schema-proposal': {
+      display: 'flex',
+      flexWrap: 'wrap' as const,
+      alignItems: 'baseline',
+      gap: '2px var(--tosi-spacing-sm, 8px)',
+      fontSize: '0.9em',
+      padding: 'var(--tosi-spacing-sm, 8px)',
+      borderRadius: 'var(--tosi-border-radius, 4px)',
+      background: 'var(--tosi-proposal-bg, #fc03)',
+    },
+    ':host .schema-proposal-reason': { flex: '1 1 100%', opacity: '0.8' },
+    ':host .schema-proposal-source': { opacity: '0.7', fontStyle: 'italic' },
+    ':host .schema-proposal-actions': {
+      display: 'flex',
+      gap: '4px',
+      marginLeft: 'auto',
+    },
+    ':host .schema-proposal-actions[hidden], :host .schema-hidden-proposals[hidden]':
+      { display: 'none' },
+    ':host .schema-hidden-proposals': { fontSize: '0.9em', opacity: '0.8' },
     ':host .schema-add': { justifySelf: 'start' },
     ':host .schema-empty': {
       fontSize: '0.9em',
@@ -1246,15 +1603,21 @@ export class TosiSchemaForm extends withAttributes({
   errors) works on the curated nodes exactly as it does on the full ones.
   */
   private _curation: FieldCuration | null = null
-  /** Custom editors by path, as plugins. Consulted before the `format` plugins. */
-  private _editors = new Map<string, FieldPlugin>()
+  /*
+  The curation entry for each path that is shown, by ABSOLUTE path. The root's are known when
+  the form is built; an array item's and a union branch's are added as those are expanded,
+  since which paths exist there depends on the value.
+  */
+  private _entries = new Map<string, CuratedField>()
+  private _curationWarnings = new Set<string>()
   private _hiddenErrorSlot: HTMLElement | null = null
   private _hiddenErrorSignature = ''
 
   /**
    * Show only these properties. Keys are paths into the schema (`thresholds.default`), in
-   * display order; each value is `{ caption?, help?, readOnly?, editor? }`, a caption
-   * string, or `true`. `null` shows everything the schema describes.
+   * display order; each value is `{ caption?, help?, readOnly?, editor?, fields? }`, a
+   * caption string, `true`, or a `{ section, fields }` panel. `null` shows everything the
+   * schema describes.
    *
    * The form still holds and validates the WHOLE value: a property that is not shown keeps
    * its value, and an error in one is listed above the fields.
@@ -1268,8 +1631,119 @@ export class TosiSchemaForm extends withAttributes({
     this.rebuild()
   }
 
+  /** A curated `editor` first, then the `format` plugins. A section is neither. */
   private pluginFor(node: Node): FieldPlugin | undefined {
-    return this._editors.get(node.path) ?? fieldPlugin(node.schema?.format)
+    if ((node as { section?: string }).section !== undefined) return undefined
+    const editor = this._entries.get(node.path)?.editor
+    return editor ? editorPlugin(editor) : fieldPlugin(node.schema?.format)
+  }
+
+  /*
+  Take a curation's entries into the form and say what was wrong with it, once per build.
+  Array indices are written `[]` in a warning, or every item would repeat it.
+  */
+  private adopt(result: Curated): Node[] {
+    for (const [path, entry] of result.entries) this._entries.set(path, entry)
+    const generic = (path: string) => path.replace(/\.\d+(?=\.|$)/g, '[]')
+    const warn = (problem: string) => {
+      if (this._curationWarnings.has(problem)) return
+      this._curationWarnings.add(problem)
+      console.warn(`<tosi-schema-form>: \`fields\` ${problem}`)
+    }
+    if (result.unknown.length > 0) {
+      warn(
+        `names path(s) the schema does not describe: ${[
+          ...new Set(result.unknown.map(generic)),
+        ].join(', ')}`
+      )
+    }
+    if (result.overlapping.length > 0) {
+      warn(
+        `names a property and something inside it; the first is shown, skipped: ${[
+          ...new Set(result.overlapping.map(generic)),
+        ].join(', ')}`
+      )
+    }
+    for (const { path, keys } of result.badKeys) {
+      warn(`['${generic(path)}'] has unknown key(s) ${keys.join(', ')}`)
+    }
+    return result.nodes
+  }
+
+  /** One array element's nodes, curated when the array's entry has `fields`. */
+  private itemNodes(node: FieldArray, index: number): Node[] {
+    const nodes = itemFields(node.itemSchema, node.path, index)
+    const inner = this._entries.get(node.path)?.fields
+    if (!inner) return nodes
+    return this.adopt(curateNodes(nodes, inner, `${node.path}.${index}`))
+  }
+
+  /*
+  The active branch's nodes, curated when the union's entry has `fields`. A path that some
+  OTHER branch describes is left out quietly: one curation covers every branch, and each
+  shows the fields it has.
+  */
+  private branchNodes(node: FieldUnion): Node[] {
+    const nodes = branchFields(node, this._value)
+    const inner = this._entries.get(node.path)?.fields
+    if (!inner) return nodes
+    const elsewhere = (path: string) =>
+      node.branches.some(
+        (branch) => findNode(fieldsFor(branch.schema, node.path), path) != null
+      )
+    return this.adopt(curateNodes(nodes, inner, node.path, elsewhere))
+  }
+
+  /**
+   * Values proposed for review, by path: `{ value, reason?, source? }`. Each is shown under
+   * its field with Accept and Reject. `value` stays the CURRENT value until one is
+   * accepted. `null` (the default) shows none.
+   */
+  get proposals(): Record<string, FieldProposal> | null {
+    return this._proposals
+  }
+
+  set proposals(proposals: Record<string, FieldProposal> | null) {
+    this._proposals = proposals ?? null
+    this.queueRender()
+  }
+
+  private _proposals: Record<string, FieldProposal> | null = null
+
+  /** Render a proposal your own way. Return the element to show under the field. */
+  proposalView: ((context: ProposalContext) => HTMLElement) | null = null
+
+  private settleProposal(path: string, type: string): FieldProposal | null {
+    const proposal = this._proposals?.[path]
+    if (!proposal) return null
+    const rest = { ...this._proposals }
+    delete rest[path]
+    this._proposals = rest
+    this.dispatchEvent(
+      new CustomEvent(type, { bubbles: true, detail: { path, proposal } })
+    )
+    return proposal
+  }
+
+  /**
+   * Write the proposed value at `path` and drop the proposal. Fires `proposalaccept`
+   * (`detail: { path, proposal }`), then `change`. Returns false when there is none.
+   */
+  acceptProposal(path: string): boolean {
+    const proposal = this._proposals?.[path]
+    if (!proposal) return false
+    this._value = setByPath(this._value, path, proposal.value)
+    this.settleProposal(path, 'proposalaccept')
+    this.syncVariants()
+    this.afterStructuralEdit()
+    return true
+  }
+
+  /** Drop the proposal at `path`, leaving the value alone. Fires `proposalreject`. */
+  rejectProposal(path: string): boolean {
+    if (!this.settleProposal(path, 'proposalreject')) return false
+    this.syncProposals()
+    return true
   }
 
   get schema(): JSONSchema {
@@ -1382,6 +1856,32 @@ export class TosiSchemaForm extends withAttributes({
   decides once a part is done — it is not a sensible initial state for an editor.
   */
   private buildNode(node: Node): HTMLElement {
+    const el = this.buildBare(node)
+    const section = (node as { section?: string }).section
+    if (section !== undefined) {
+      this._hasSections = true
+      el.classList.add('schema-section')
+      el.dataset.section = section
+      if ((node as { collapsed?: boolean }).collapsed) {
+        ;(el as HTMLDetailsElement).open = false
+      }
+      return el
+    }
+    // What the curation asked for on this node: help, a lock, a closed panel.
+    const entry = this._entries.get(node.path)
+    if (!entry) return el
+    if (entry.help) {
+      const help = span({ class: 'schema-help' }, entry.help)
+      const errorSlot = this._index.get(node.path)?.errorSlot
+      if (errorSlot?.parentElement === el) el.insertBefore(help, errorSlot)
+      else el.append(help)
+    }
+    if (entry.readOnly) el.dataset.locked = ''
+    if (entry.collapsed && el instanceof HTMLDetailsElement) el.open = false
+    return el
+  }
+
+  private buildBare(node: Node): HTMLElement {
     /*
     A plugin is tried FIRST, and for every kind of node — a registered `format` claims the
     property whatever shape it is, so a plugin can render something the form has no control
@@ -1432,7 +1932,7 @@ export class TosiSchemaForm extends withAttributes({
     while (container.children.length > 1) container.lastElementChild!.remove()
     list.forEach((_item, index) => {
       const row = div({ class: 'schema-item' })
-      const fields = itemFields(node.itemSchema, node.path, index)
+      const fields = this.itemNodes(node, index)
       row.append(...fields.map((f) => this.buildNode(f)))
       row.append(
         div(
@@ -1513,6 +2013,8 @@ export class TosiSchemaForm extends withAttributes({
         option({ value: String(i) }, branch.label)
       )
     )
+    // The curation may hide the picker: a screen about one variant has no use for it.
+    if (this._entries.get(node.path)?.picker === false) picker.hidden = true
     const container = div(
       { class: 'schema-field schema-union' },
       label(node.label),
@@ -1542,8 +2044,12 @@ export class TosiSchemaForm extends withAttributes({
     const body = container.querySelector(
       '.schema-variant-fields'
     ) as HTMLElement
+    // Everything under this union is about to be recreated: its index entries are stale.
+    for (const path of [...this._index.keys()]) {
+      if (path.startsWith(`${node.path}.`)) this._index.delete(path)
+    }
     body.replaceChildren(
-      ...branchFields(node, this._value).map((child) => this.buildNode(child))
+      ...this.branchNodes(node).map((child) => this.buildNode(child))
     )
     container.dataset.branch = String(index)
   }
@@ -1590,6 +2096,7 @@ export class TosiSchemaForm extends withAttributes({
     this.syncPlugins()
     this.refreshErrors()
     this.syncErrors()
+    this.syncProposals()
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
@@ -1691,12 +2198,10 @@ export class TosiSchemaForm extends withAttributes({
         // so the form must not also expand its children into fields nobody rendered.
         if (this.pluginFor(node)) return [node]
         if (node.kind === 'union')
-          return [node, ...expand(branchFields(node, this._value))]
+          return [node, ...expand(this.branchNodes(node))]
         if (node.kind === 'array') {
           const list = (getByPath(this._value, node.path) as unknown[]) ?? []
-          return list.flatMap((_x, i) =>
-            expand(itemFields(node.itemSchema, node.path, i))
-          )
+          return list.flatMap((_x, i) => expand(this.itemNodes(node, i)))
         }
         if ('children' in node) return expand(node.children)
         return [node]
@@ -1932,7 +2437,108 @@ export class TosiSchemaForm extends withAttributes({
       entry.errorSlot.textContent = message ?? ''
       entry.errorSlot.hidden = !message
     }
+    if (this._hasSections) {
+      // A closed section must not hide that something inside it is wrong.
+      for (const section of this.querySelectorAll('.schema-section')) {
+        section.classList.toggle(
+          '-invalid',
+          section.querySelector('.schema-field.-invalid') != null
+        )
+      }
+    }
     this.syncHiddenErrors()
+  }
+
+  private _hasSections = false
+  private _hiddenProposalSlot: HTMLElement | null = null
+
+  /*
+  Put each proposal under its field. Idempotent, and keyed on what the proposal says, so a
+  render that changes nothing leaves the element (and focus inside it) alone.
+  */
+  private syncProposals(): void {
+    for (const [path, entry] of this._index) {
+      const proposal = this._proposals?.[path]
+      const existing = [...entry.wrapper.children].find((el) =>
+        el.classList.contains('schema-proposal')
+      ) as HTMLElement | undefined
+      const signature = proposal
+        ? JSON.stringify([proposal.value, proposal.reason, proposal.source])
+        : ''
+      if ((existing?.dataset.signature ?? '') !== signature) {
+        existing?.remove()
+        if (proposal) {
+          const view = this.buildProposal(path, proposal)
+          view.classList.add('schema-proposal')
+          view.dataset.proposal = path
+          view.dataset.signature = signature
+          entry.wrapper.insertBefore(view, entry.errorSlot)
+        }
+      }
+    }
+    // A read-only form shows what is proposed and offers no way to act on it.
+    for (const el of this.querySelectorAll('.schema-proposal-actions')) {
+      ;(el as HTMLElement).hidden = this.readOnly
+    }
+    const slot = this._hiddenProposalSlot
+    if (!slot) return
+    const orphans = Object.keys(this._proposals ?? {}).filter(
+      (path) => !this._index.has(path)
+    )
+    const text =
+      orphans.length === 0
+        ? ''
+        : `${localize(
+            'Proposed changes to fields not shown here'
+          )}: ${orphans.join(', ')}`
+    if (slot.textContent !== text) slot.textContent = text
+    slot.hidden = orphans.length === 0
+  }
+
+  private buildProposal(path: string, proposal: FieldProposal): HTMLElement {
+    const accept = () => void this.acceptProposal(path)
+    const reject = () => void this.rejectProposal(path)
+    if (this.proposalView) {
+      return this.proposalView({
+        path,
+        label:
+          this._index.get(path)?.wrapper.querySelector('label')?.textContent ??
+          path,
+        current: getByPath(this._value, path),
+        proposal,
+        accept,
+        reject,
+        elements,
+      })
+    }
+    const shown =
+      proposal.value !== null && typeof proposal.value === 'object'
+        ? JSON.stringify(proposal.value)
+        : String(proposal.value)
+    return div(
+      span(
+        { class: 'schema-proposal-value' },
+        `${localize('Proposed')}: `,
+        b(shown)
+      ),
+      ...(proposal.source
+        ? [span({ class: 'schema-proposal-source' }, proposal.source)]
+        : []),
+      span(
+        { class: 'schema-proposal-actions' },
+        button(
+          { type: 'button', class: 'schema-accept', onClick: accept },
+          localize('Accept')
+        ),
+        button(
+          { type: 'button', class: 'schema-reject', onClick: reject },
+          localize('Reject')
+        )
+      ),
+      ...(proposal.reason
+        ? [span({ class: 'schema-proposal-reason' }, proposal.reason)]
+        : [])
+    )
   }
 
   /*
@@ -1963,20 +2569,6 @@ export class TosiSchemaForm extends withAttributes({
             ),
           ])
     )
-  }
-
-  /** Build one curated node, with the help line and lock its curation entry asks for. */
-  private buildCurated(node: Node): HTMLElement {
-    const el = this.buildNode(node)
-    const entry = curatedField(this._curation?.[node.path] ?? true)
-    if (entry.help) {
-      const help = span({ class: 'schema-help' }, entry.help)
-      const errorSlot = this._index.get(node.path)?.errorSlot
-      if (errorSlot?.parentElement === el) el.insertBefore(help, errorSlot)
-      else el.append(help)
-    }
-    if (entry.readOnly) el.dataset.locked = ''
-    return el
   }
 
   content = null
@@ -2035,58 +2627,23 @@ export class TosiSchemaForm extends withAttributes({
     }
     if (this._builtFor !== this._schema) {
       this._nodes = fieldsFor(this._schema)
-      this._editors.clear()
+      this._entries.clear()
+      this._curationWarnings.clear()
       this._hiddenErrorSlot = null
       this._hiddenErrorSignature = ''
       if (this._curation) {
-        const { nodes, unknown, overlapping } = curateNodes(
-          this._nodes,
-          this._curation
-        )
-        this._nodes = nodes
-        const warn = (problem: string) =>
-          console.warn(`<tosi-schema-form>: \`fields\` ${problem}`)
-        if (unknown.length > 0) {
-          warn(
-            `names path(s) the schema does not describe: ${unknown.join(', ')}`
-          )
-        }
-        if (overlapping.length > 0) {
-          warn(
-            `names a property and something inside it; the first is shown, skipped: ${overlapping.join(
-              ', '
-            )}`
-          )
-        }
-        for (const [path, entry] of Object.entries(this._curation)) {
-          const extra =
-            typeof entry === 'object'
-              ? Object.keys(entry).filter((k) => !CURATED_KEYS.includes(k))
-              : []
-          if (extra.length > 0) {
-            warn(
-              `['${path}'] has unknown key(s) ${extra.join(
-                ', '
-              )}; the keys are ${CURATED_KEYS.join(', ')}`
-            )
-          }
-          const { editor } = curatedField(entry)
-          /*
-          Only for a path the schema describes and the form shows. An unknown path keeps
-          its placeholder: an editor there would write a property the schema does not have.
-          A property the form merely has no built-in control for (an untyped one, a tuple)
-          is exactly what an editor is for, so that one does get it.
-          */
-          const shown =
-            !unknown.includes(path) && nodes.some((n) => n.path === path)
-          if (editor && shown) this._editors.set(path, editorPlugin(editor))
-        }
+        this._nodes = this.adopt(curateNodes(this._nodes, this._curation))
         this._hiddenErrorSlot = div({
           class: 'schema-hidden-errors',
           role: 'alert',
           hidden: true,
         })
       }
+      this._hasSections = false
+      this._hiddenProposalSlot = div({
+        class: 'schema-hidden-proposals',
+        hidden: true,
+      })
       this._index.clear()
       this.textContent = ''
       /*
@@ -2116,9 +2673,8 @@ export class TosiSchemaForm extends withAttributes({
               ]
             : [
                 ...(this._hiddenErrorSlot ? [this._hiddenErrorSlot] : []),
-                ...this._nodes.map((n) =>
-                  this._curation ? this.buildCurated(n) : this.buildNode(n)
-                ),
+                this._hiddenProposalSlot,
+                ...this._nodes.map((n) => this.buildNode(n)),
               ])
         )
       )
@@ -2131,6 +2687,7 @@ export class TosiSchemaForm extends withAttributes({
     this.syncPlugins()
     this.refreshErrors()
     this.syncErrors()
+    this.syncProposals()
   }
 }
 

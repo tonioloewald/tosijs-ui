@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=b5d2297967f3" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=bb0cb0d7e796" data-tosi-doc-system />
   <title>schema-form — tosijs-ui</title>
   <meta name="description" content="A form generated from a JSON Schema, with validation." />
   <link rel="canonical" href="https://ui.tosijs.net/schema-form/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=9a4f9738e38a" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=634fe130e72c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="schema-form">schema-form</h1>
 <!--{ "parent": "Components" }-->
@@ -685,7 +685,8 @@ each one should appear, and its order is the display order:</p>
 <li>Everything else still comes from the schema: the control, <code>enum</code> choices, <code>required</code>,
 number and format constraints, and the caption when you give none.</li>
 <li>A path runs through object properties (<code>a.b.c</code>). Naming an object, an array or a union
-shows that whole property.</li>
+shows that whole property, unless its entry has its own <code>fields</code>
+(<a href="#inside-arrays-and-unions">below</a>).</li>
 <li><strong><code>editor</code></strong> is a function that returns an element with a <code>value</code> property and a <code>change</code>
 event, which is what every element creator in this library is. Its <code>value</code> must be of the
 schema&#39;s type: a native <code>&lt;input&gt;</code> yields strings, so use one for string properties only. Pass a <a href="#format-plugins">field plugin</a> object (<code>{ render, sync }</code>) for full control.</li>
@@ -914,12 +915,287 @@ test(&#39;an error in a field that is not shown is listed, not hidden&#39;, () =
   expect(summary.textContent).toContain(&#39;audit.retainDays&#39;)
 })
 </code></pre>
+<h3 id="inside-arrays-and-unions">Inside arrays and unions</h3>
+<p>What is inside an array or a union depends on the value, so a path cannot run through one.
+Give the property&#39;s entry its own <strong><code>fields</code></strong> instead. Its paths are relative: for an array,
+to <strong>each item</strong>; for a union, to <strong>the branch the value currently matches</strong>.</p>
+<pre><code class="language-typescript" data-highlighted>form<span class="token punctuation">.</span>fields <span class="token operator">=</span> <span class="token punctuation">{</span>
+  thresholds<span class="token operator">:</span> <span class="token punctuation">{</span>
+    caption<span class="token operator">:</span> <span class="token string">'Thresholds'</span><span class="token punctuation">,</span>
+    fields<span class="token operator">:</span> <span class="token punctuation">{</span>
+      value<span class="token operator">:</span> <span class="token string">'Threshold'</span><span class="token punctuation">,</span> <span class="token comment">// thresholds[i].value, for every item</span>
+      <span class="token string-property property">'when.company'</span><span class="token operator">:</span> <span class="token punctuation">{</span> caption<span class="token operator">:</span> <span class="token string">'Company'</span><span class="token punctuation">,</span> readOnly<span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  rule<span class="token operator">:</span> <span class="token punctuation">{</span>
+    picker<span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token comment">// hide the variant picker</span>
+    fields<span class="token operator">:</span> <span class="token punctuation">{</span> amount<span class="token operator">:</span> <span class="token string">'Amount'</span><span class="token punctuation">,</span> rate<span class="token operator">:</span> <span class="token string">'Rate'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token comment">// each branch shows the ones it has</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<ul>
+<li>Items keep the properties you do not show, and Add, remove and reorder work as before.</li>
+<li>An error in an item property that is not shown is listed above the fields by its real
+path (<code>thresholds.0.note</code>).</li>
+<li>A union&#39;s <code>fields</code> covers every branch. A path the active branch lacks is left out; a path
+<strong>no</strong> branch has renders the placeholder and warns.</li>
+<li><code>fields</code> on an object entry works the same way, and keeps the object&#39;s panel.</li>
+<li><code>collapsed: true</code> on an object or array entry starts its panel closed.</li>
+</ul>
+<h3 id="sections">Sections</h3>
+<p>An entry with a <strong><code>section</code></strong> title is a panel that groups some of the fields. Its key is an
+id (the panel&#39;s <code>data-section</code>, for styling), not a path, and the paths in its <code>fields</code> are
+the same paths you would use outside it.</p>
+<pre><code class="language-typescript" data-highlighted>form<span class="token punctuation">.</span>fields <span class="token operator">=</span> <span class="token punctuation">{</span>
+  owner<span class="token operator">:</span> <span class="token string">'Owned by'</span><span class="token punctuation">,</span>
+  advanced<span class="token operator">:</span> <span class="token punctuation">{</span>
+    section<span class="token operator">:</span> <span class="token string">'Advanced'</span><span class="token punctuation">,</span>
+    collapsed<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    fields<span class="token operator">:</span> <span class="token punctuation">{</span> <span class="token string-property property">'routing.retries'</span><span class="token operator">:</span> <span class="token string">'Retries'</span><span class="token punctuation">,</span> <span class="token string-property property">'audit.retainDays'</span><span class="token operator">:</span> <span class="token string">'Keep for (days)'</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>A section starts open unless you say <code>collapsed: true</code>. A closed section gets the class
+<code>-invalid</code>, and a red title, while a field inside it is in error, so collapsing one cannot
+hide a problem. Sections can sit inside an array&#39;s or a union&#39;s <code>fields</code> too.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+const { div, pre } = elements
+
+const rulesForm = tosiSchemaForm({
+  schema: {
+    type: &#39;object&#39;,
+    properties: {
+      owner: { type: &#39;string&#39; },
+      thresholds: {
+        type: &#39;array&#39;,
+        items: {
+          type: &#39;object&#39;,
+          properties: {
+            when: {
+              type: &#39;object&#39;,
+              properties: {
+                company: { type: &#39;string&#39; },
+                account: { type: &#39;string&#39; },
+              },
+            },
+            value: { type: &#39;number&#39;, minimum: 0, maximum: 1 },
+            note: { type: &#39;string&#39; },
+          },
+        },
+      },
+      routing: {
+        type: &#39;object&#39;,
+        properties: { retries: { type: &#39;integer&#39;, minimum: 0 } },
+      },
+      audit: { type: &#39;object&#39;, properties: { retainDays: { type: &#39;integer&#39; } } },
+    },
+  },
+  value: {
+    owner: &#39;finance-ops&#39;,
+    thresholds: [
+      { when: { company: &#39;Acme&#39;, account: &#39;4000&#39; }, value: 0.8, note: &#39;agreed in March&#39; },
+      { when: { company: &#39;Globex&#39;, account: &#39;5000&#39; }, value: 0.65, note: &#39;&#39; },
+    ],
+    routing: { retries: 2 },
+    audit: { retainDays: 90 },
+  },
+  fields: {
+    thresholds: {
+      caption: &#39;Thresholds&#39;,
+      fields: {
+        &#39;when.company&#39;: { caption: &#39;Company&#39;, readOnly: true },
+        value: { caption: &#39;Threshold&#39;, help: &#39;Between 0 and 1.&#39; },
+      },
+    },
+    advanced: {
+      section: &#39;Advanced&#39;,
+      collapsed: true,
+      fields: {
+        &#39;routing.retries&#39;: &#39;Retries&#39;,
+        &#39;audit.retainDays&#39;: &#39;Keep audit records for (days)&#39;,
+      },
+    },
+  },
+})
+
+const rulesValue = pre({ class: &#39;rules-value&#39; })
+const showRules = () =&gt; {
+  rulesValue.textContent = JSON.stringify(rulesForm.value, null, 2)
+}
+rulesForm.addEventListener(&#39;change&#39;, showRules)
+showRules()
+
+preview.append(div({ class: &#39;rules-demo&#39; }, rulesForm, rulesValue))
+</code></pre>
+<pre><code class="language-css">.preview .rules-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+.preview .rules-demo tosi-schema-form {
+  flex: 1 1 280px;
+}
+.preview .rules-value {
+  flex: 0 1 260px;
+  margin: 0;
+  font-size: 12px;
+}
+</code></pre>
+<pre><code class="language-test">const rulesForm = await waitFor(&#39;tosi-schema-form&#39;)
+await waitMs(100)
+
+test(&#39;each array item shows the curated fields, and a section groups the rest&#39;, () =&gt; {
+  const shown = [...rulesForm.querySelectorAll(&#39;[data-field]&#39;)].map((el) =&gt; el.dataset.field)
+  expect(shown).toEqual([
+    &#39;thresholds.0.when.company&#39;,
+    &#39;thresholds.0.value&#39;,
+    &#39;thresholds.1.when.company&#39;,
+    &#39;thresholds.1.value&#39;,
+    &#39;routing.retries&#39;,
+    &#39;audit.retainDays&#39;,
+  ])
+  expect(rulesForm.querySelector(&#39;[data-path=&quot;thresholds.0.when.company&quot;]&#39;).disabled).toBe(true)
+  const section = rulesForm.querySelector(&#39;details[data-section=&quot;advanced&quot;]&#39;)
+  expect(section.open).toBe(false)
+  expect(section.querySelector(&#39;summary&#39;).textContent).toBe(&#39;Advanced&#39;)
+  expect(section.querySelector(&#39;[data-field=&quot;routing.retries&quot;]&#39;)).not.toBe(null)
+
+  const threshold = rulesForm.querySelector(&#39;[data-path=&quot;thresholds.1.value&quot;]&#39;)
+  threshold.value = &#39;0.7&#39;
+  threshold.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+  expect(rulesForm.value.thresholds[1]).toEqual({
+    when: { company: &#39;Globex&#39;, account: &#39;5000&#39; },
+    value: 0.7,
+    note: &#39;&#39;,
+  })
+  threshold.value = &#39;0.65&#39;
+  threshold.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+})
+</code></pre>
+<h2 id="proposals">Proposals</h2>
+<p>A review screen shows what someone, or something, wants to change and lets a person decide.
+Set <strong><code>proposals</code></strong> to a map from path to <code>{ value, reason?, source? }</code>, and each one appears
+under its field with <strong>Accept</strong> and <strong>Reject</strong>:</p>
+<pre><code class="language-typescript" data-highlighted>form<span class="token punctuation">.</span>proposals <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token string-property property">'thresholds.default'</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    value<span class="token operator">:</span> <span class="token number">0.9</span><span class="token punctuation">,</span>
+    reason<span class="token operator">:</span> <span class="token string">'Three false escalations last week.'</span><span class="token punctuation">,</span>
+    source<span class="token operator">:</span> <span class="token string">'triage agent'</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<ul>
+<li><code>form.value</code> stays the <strong>current</strong> value. Accepting writes the proposed value and fires
+<code>proposalaccept</code>, then <code>change</code>; rejecting fires <code>proposalreject</code> and leaves the value
+alone. Both carry <code>detail: { path, proposal }</code>, and both remove the entry from
+<code>form.proposals</code>.</li>
+<li><code>acceptProposal(path)</code> and <code>rejectProposal(path)</code> do the same from code.</li>
+<li>Paths are value paths, so an array item is <code>thresholds.0.value</code>. They work with or without
+a curation; a proposal for a field that is not shown is named above the fields.</li>
+<li>A field that is <code>readOnly</code> in a curation can still have its proposal accepted: that is the
+review screen, where nobody types and somebody decides. A form with <code>readOnly</code> set shows
+the proposals with no buttons.</li>
+<li>Set <strong><code>proposalView</code></strong> to a function to render a proposal yourself. It receives
+<code>{ path, label, current, proposal, accept, reject, elements }</code> and returns an element.</li>
+<li>Proposals are presentation, like the rest of this page: nothing stops code from writing
+<code>form.value</code>. Who may accept is for your application to enforce.</li>
+</ul>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+const { div, pre } = elements
+
+const reviewForm = tosiSchemaForm({
+  schema: {
+    type: &#39;object&#39;,
+    properties: {
+      thresholds: {
+        type: &#39;object&#39;,
+        properties: {
+          default: { type: &#39;number&#39;, minimum: 0, maximum: 1 },
+          escalate: { type: &#39;number&#39;, minimum: 0, maximum: 1 },
+        },
+      },
+      routing: {
+        type: &#39;object&#39;,
+        properties: {
+          mode: { type: &#39;string&#39;, enum: [&#39;manual&#39;, &#39;assisted&#39;, &#39;automatic&#39;] },
+        },
+      },
+    },
+  },
+  value: {
+    thresholds: { default: 0.8, escalate: 0.95 },
+    routing: { mode: &#39;assisted&#39; },
+  },
+  fields: {
+    &#39;thresholds.default&#39;: { caption: &#39;Default threshold&#39;, readOnly: true },
+    &#39;thresholds.escalate&#39;: { caption: &#39;Escalation threshold&#39;, readOnly: true },
+    &#39;routing.mode&#39;: { caption: &#39;How invoices are routed&#39;, readOnly: true },
+  },
+  proposals: {
+    &#39;thresholds.default&#39;: {
+      value: 0.9,
+      reason: &#39;Three false escalations last week.&#39;,
+      source: &#39;triage agent&#39;,
+    },
+    &#39;routing.mode&#39;: {
+      value: &#39;automatic&#39;,
+      reason: &#39;Assisted routing has matched a person for 30 days.&#39;,
+      source: &#39;M. Okafor&#39;,
+    },
+  },
+})
+
+const reviewLog = pre({ class: &#39;review-log&#39; }, &#39;Nothing decided yet.&#39;)
+const decided = (verb) =&gt; (event) =&gt; {
+  const { path, proposal } = event.detail
+  reviewLog.textContent = `${verb} ${path} = ${JSON.stringify(proposal.value)}`
+}
+reviewForm.addEventListener(&#39;proposalaccept&#39;, decided(&#39;Accepted&#39;))
+reviewForm.addEventListener(&#39;proposalreject&#39;, decided(&#39;Rejected&#39;))
+
+preview.append(reviewForm, reviewLog)
+</code></pre>
+<pre><code class="language-test">const reviewForm = await waitFor(&#39;tosi-schema-form&#39;)
+await waitMs(100)
+
+test(&#39;a proposal is shown under its field, and accepting it writes the value&#39;, async () =&gt; {
+  const field = reviewForm.querySelector(&#39;[data-field=&quot;thresholds.default&quot;]&#39;)
+  for (let i = 0; i &lt; 50 &amp;&amp; !field.querySelector(&#39;.schema-proposal&#39;); i += 1) await waitMs(100)
+  expect(field.querySelector(&#39;.schema-proposal-value&#39;).textContent).toBe(&#39;Proposed: 0.9&#39;)
+  expect(field.querySelector(&#39;.schema-proposal-source&#39;).textContent).toBe(&#39;triage agent&#39;)
+  expect(reviewForm.value.thresholds.default).toBe(0.8)
+
+  const events = []
+  const record = (event) =&gt; events.push(event.type)
+  for (const type of [&#39;proposalaccept&#39;, &#39;proposalreject&#39;, &#39;change&#39;]) {
+    reviewForm.addEventListener(type, record)
+  }
+  const proposals = reviewForm.proposals
+  expect(reviewForm.acceptProposal(&#39;thresholds.default&#39;)).toBe(true)
+  expect(reviewForm.value.thresholds.default).toBe(0.9)
+  expect(events).toEqual([&#39;proposalaccept&#39;, &#39;change&#39;])
+  expect(Object.keys(reviewForm.proposals)).toEqual([&#39;routing.mode&#39;])
+  expect(reviewForm.acceptProposal(&#39;thresholds.default&#39;)).toBe(false)
+
+  // put it back, so the example still has something to decide
+  reviewForm.value = { ...reviewForm.value, thresholds: { default: 0.8, escalate: 0.95 } }
+  reviewForm.proposals = proposals
+  for (const type of [&#39;proposalaccept&#39;, &#39;proposalreject&#39;, &#39;change&#39;]) {
+    reviewForm.removeEventListener(type, record)
+  }
+})
+</code></pre>
 <h2 id="read-only">Read-only</h2>
 <p><code>readOnly</code> disables the inputs and <strong>hides</strong> the add, remove and reorder controls rather than
 grey them out. A dead row of buttons is a form advertising affordances it will not honour;
 there is nothing to explain if they are not there.</p>
 <h2 id="styling">Styling</h2>
-<p>Three custom properties, each with a fallback so the component works unstyled:</p>
+<p>Four custom properties, each with a fallback so the component works unstyled:</p>
 <table>
 <thead>
 <tr>
@@ -943,6 +1219,11 @@ there is nothing to explain if they are not there.</p>
 <td><code>4px</code></td>
 <td>that section&#39;s corners</td>
 </tr>
+<tr>
+<td><code>--tosi-proposal-bg</code></td>
+<td><code>#fc03</code></td>
+<td>the background of a proposal</td>
+</tr>
 </tbody></table>
 <p>Spacing comes from the theme&#39;s <code>--tosi-spacing</code> / <code>--tosi-spacing-sm</code>, so a form matches
 whatever scale the rest of your page is on.</p>
@@ -950,7 +1231,13 @@ whatever scale the rest of your page is on.</p>
 <p>The form&#39;s own chrome — the <em>Add …</em> button and the reorder tooltips — goes through
 <a href="/localize/"><code>localize</code></a>, and the form <strong>rebuilds when the locale changes</strong>, so switching
 language does not leave one form behind in the old one.</p>
-<p>A curated form adds one more string, <code>Problems in fields not shown here</code>.</p>
+<p>A curated form adds one more string, <code>Problems in fields not shown here</code>, and proposals add
+<code>Proposed</code>, <code>Accept</code>, <code>Reject</code> and <code>Proposed changes to fields not shown here</code>.</p>
+<p><strong>Labels from your schema are shown as written.</strong> A property&#39;s <code>title</code>, a curation&#39;s
+<code>caption</code> and <code>help</code>, and a section&#39;s title are never humanised or passed through
+<code>localize</code>: they are your data, and a schema generated from data (one property per company,
+titled with the company&#39;s name) shows those names untouched. Only a property with no <code>title</code>
+gets a label derived from its key (<code>firstName</code> becomes <code>first name</code>).</p>
 <p>The add button&#39;s key is the whole sentence, <code>Add {item}</code>, with the item name interpolated
 afterwards. Building it as <code>&#39;Add &#39; + label</code> would leave a translator with a dangling fragment
 and no way to move the placeholder to where their language puts it.</p>
@@ -1124,6 +1411,6 @@ test(&#39;editing keeps unknown keys, fires change, and does not rebuild under t
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-j9vk7j54.js"></script>
+  <script type="module" src="../hydrate-024q93ns.js"></script>
 </body>
 </html>

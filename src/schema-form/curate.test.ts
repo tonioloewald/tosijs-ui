@@ -183,3 +183,107 @@ test('an object and one of its properties cannot both be curated', () => {
     curateNodes(fieldsFor(schema), { name: true, tags: true }).overlapping
   ).toEqual([])
 })
+
+test('an entry with `fields` curates what is inside an object, by relative path', () => {
+  const { nodes, entries, unknown } = curateNodes(fieldsFor(schema), {
+    thresholds: {
+      caption: 'Limits',
+      fields: { 'byDimension.account': 'Account', default: true, nope: true },
+    },
+  })
+  const group = nodes[0] as any
+  expect(group.label).toBe('Limits')
+  expect(group.children.map((n: any) => n.path)).toEqual([
+    'thresholds.byDimension.account',
+    'thresholds.default',
+    'thresholds.nope',
+  ])
+  expect(group.children[0].label).toBe('Account')
+  expect(unknown).toEqual(['thresholds.nope'])
+  // entries are keyed by absolute path, which is how the form finds them
+  expect(entries.get('thresholds.byDimension.account')).toEqual({
+    caption: 'Account',
+  })
+  expect(entries.has('thresholds')).toBe(true)
+})
+
+test('`base` makes paths relative, as for one array item', () => {
+  const itemNodes = fieldsFor(
+    {
+      type: 'object',
+      properties: {
+        value: { type: 'number' },
+        when: { type: 'object', properties: { company: { type: 'string' } } },
+      },
+    } as unknown as JSONSchema,
+    'list.3'
+  )
+  const { nodes, entries } = curateNodes(
+    itemNodes,
+    { 'when.company': 'Company', value: true },
+    'list.3'
+  )
+  expect(nodes.map((n) => n.path)).toEqual([
+    'list.3.when.company',
+    'list.3.value',
+  ])
+  expect(entries.get('list.3.when.company')?.caption).toBe('Company')
+})
+
+test('a section is a titled panel of curated fields, and shares the one-control rule', () => {
+  const { nodes, overlapping, entries } = curateNodes(fieldsFor(schema), {
+    name: true,
+    more: {
+      section: 'More',
+      collapsed: true,
+      fields: { 'thresholds.default': 'Default', name: true },
+    },
+    later: { section: 'Later', fields: { thresholds: true } },
+  })
+  expect(nodes.map((n) => n.path)).toEqual(['name', '', ''])
+  const more = nodes[1] as any
+  expect(more.kind).toBe('group')
+  expect(more.section).toBe('more')
+  expect(more.label).toBe('More')
+  expect(more.collapsed).toBe(true)
+  expect(more.children.map((n: any) => n.path)).toEqual(['thresholds.default'])
+  expect((nodes[2] as any).children).toEqual([])
+  // shown above, and inside something shown in an earlier section
+  expect(overlapping).toEqual(['name', 'thresholds'])
+  // a section's id is not a path and gets no entry
+  expect(entries.has('more')).toBe(false)
+})
+
+test('`elsewhere` leaves out a path without a placeholder', () => {
+  const { nodes, unknown } = curateNodes(
+    fieldsFor(schema),
+    { name: true, rate: true, bogus: true },
+    '',
+    (path) => path === 'rate'
+  )
+  expect(nodes.map((n) => n.path)).toEqual(['name', 'bogus'])
+  expect(unknown).toEqual(['bogus'])
+})
+
+test('keys a curation does not have are reported', () => {
+  const { badKeys } = curateNodes(fieldsFor(schema), {
+    name: { caption: 'Name', label: 'nope' } as any,
+    s: { section: 'S', fields: {}, open: true } as any,
+  })
+  expect(badKeys).toEqual([
+    { path: 'name', keys: ['label'] },
+    { path: 's', keys: ['open'] },
+  ])
+})
+
+test('an unknown path keeps its help and loses its editor', () => {
+  const { entries } = curateNodes(fieldsFor(schema), {
+    ghost: { help: 'h', editor: () => document.createElement('input') },
+  })
+  expect(entries.get('ghost')).toEqual({ help: 'h' })
+})
+
+test('one editor function is one plugin', () => {
+  const editor = () => document.createElement('input')
+  expect(editorPlugin(editor)).toBe(editorPlugin(editor))
+})

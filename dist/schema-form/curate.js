@@ -7,7 +7,17 @@ testable without a form. A curation only chooses what is SHOWN. The form still h
 validates the whole value, so a property that is not shown keeps its value and can still be
 in error; `hiddenErrors` is what lets the form say so.
 */
-export const CURATED_KEYS = ['caption', 'help', 'readOnly', 'editor'];
+export const CURATED_KEYS = [
+    'caption',
+    'help',
+    'readOnly',
+    'editor',
+    'fields',
+    'collapsed',
+    'picker',
+];
+export const SECTION_KEYS = ['section', 'fields', 'collapsed'];
+export const isSection = (entry) => typeof entry === 'object' && entry !== null && 'section' in entry;
 export function curatedField(entry) {
     return entry === true
         ? {}
@@ -16,8 +26,8 @@ export function curatedField(entry) {
             : entry;
 }
 /**
- * The node at a path. A path runs through object properties only: an array, a union or a
- * plugin-claimed property is chosen whole, since what is inside one depends on the value.
+ * The node at a path. A path runs through object properties only: what is inside an array
+ * or a union depends on the value, so those are reached through their entry's own `fields`.
  */
 export function findNode(nodes, path) {
     for (const node of nodes) {
@@ -33,39 +43,94 @@ export function findNode(nodes, path) {
  * The curated nodes, in the curation's order. A path the schema does not describe becomes
  * an `unsupported` placeholder that says so and is listed in `unknown`: a field that
  * silently fails to appear looks the same as one that was never asked for.
+ *
+ * `base` is the path the curation's own paths are relative to (an array item, a union).
+ * `elsewhere` answers "is this path described, only not here?", which is how a union's
+ * curation can name fields of a branch the value does not currently match: those are left
+ * out without a placeholder.
  */
-export function curateNodes(nodes, fields) {
-    const curated = [];
-    const unknown = [];
-    const overlapping = [];
+export function curateNodes(nodes, fields, base = '', elsewhere) {
+    const result = {
+        nodes: [],
+        unknown: [],
+        overlapping: [],
+        badKeys: [],
+        entries: new Map(),
+    };
+    /*
+    One control per path. A property and something inside it cannot both be shown, in the
+    main area or across sections; the first one named wins.
+    */
+    const taken = [];
     const within = (a, b) => a === b || a.startsWith(b + '.');
-    for (const [path, entry] of Object.entries(fields)) {
-        const { caption } = curatedField(entry);
-        /*
-        An object and one of its own properties cannot both be shown: the property would have
-        two controls, and the form keeps one control per path. The first one named wins.
-        */
-        if (curated.some((n) => within(path, n.path) || within(n.path, path))) {
-            overlapping.push(path);
-            continue;
+    const extraKeys = (entry, known, path) => {
+        const keys = Object.keys(entry).filter((k) => !known.includes(k));
+        if (keys.length > 0)
+            result.badKeys.push({ path, keys });
+    };
+    const walk = (curation, out) => {
+        for (const [key, raw] of Object.entries(curation)) {
+            if (isSection(raw)) {
+                extraKeys(raw, SECTION_KEYS, key);
+                const children = [];
+                walk(raw.fields ?? {}, children);
+                out.push({
+                    kind: 'group',
+                    path: '',
+                    label: raw.section,
+                    required: false,
+                    schema: {},
+                    children,
+                    section: key,
+                    ...(raw.collapsed ? { collapsed: true } : {}),
+                });
+                continue;
+            }
+            const entry = curatedField(raw);
+            const path = base ? `${base}.${key}` : key;
+            if (typeof raw === 'object')
+                extraKeys(raw, CURATED_KEYS, path);
+            if (taken.some((t) => within(path, t) || within(t, path))) {
+                result.overlapping.push(path);
+                continue;
+            }
+            let node = findNode(nodes, path);
+            if (!node) {
+                if (elsewhere?.(path))
+                    continue;
+                taken.push(path);
+                result.unknown.push(path);
+                const placeholder = {
+                    path,
+                    label: entry.caption ?? key,
+                    kind: 'unsupported',
+                    schema: {},
+                    required: false,
+                    reason: `The schema describes no property at "${path}".`,
+                };
+                out.push(placeholder);
+                // No editor: it would write a property the schema does not have.
+                result.entries.set(path, { help: entry.help });
+                continue;
+            }
+            taken.push(path);
+            if (entry.caption !== undefined)
+                node = { ...node, label: entry.caption };
+            if (entry.fields && 'children' in node) {
+                const inner = curateNodes(node.children, entry.fields, node.path, elsewhere);
+                node = { ...node, children: inner.nodes };
+                result.unknown.push(...inner.unknown);
+                result.overlapping.push(...inner.overlapping);
+                result.badKeys.push(...inner.badKeys);
+                for (const [p, e] of inner.entries)
+                    result.entries.set(p, e);
+            }
+            result.entries.set(path, entry);
+            out.push(node);
         }
-        const node = findNode(nodes, path);
-        if (!node) {
-            unknown.push(path);
-            const placeholder = {
-                path,
-                label: caption ?? path,
-                kind: 'unsupported',
-                schema: {},
-                required: false,
-                reason: `The schema describes no property at "${path}".`,
-            };
-            curated.push(placeholder);
-            continue;
-        }
-        curated.push(caption === undefined ? node : { ...node, label: caption });
-    }
-    return { nodes: curated, unknown, overlapping };
+    };
+    walk(fields, result.nodes);
+    return result;
 }
 /**
  * Errors the form has no field to show under: the value is invalid somewhere the curation
@@ -78,10 +143,19 @@ export function hiddenErrors(errors, shown) {
 const isNativeControl = (el) => el instanceof HTMLInputElement ||
     el instanceof HTMLSelectElement ||
     el instanceof HTMLTextAreaElement;
-/** A `FieldEditor` as the plugin the form already knows how to host. */
+const editorPlugins = new WeakMap();
+/** A `FieldEditor` as the plugin the form already knows how to host, one per editor. */
 export function editorPlugin(editor) {
     if (typeof editor !== 'function')
         return editor;
+    let plugin = editorPlugins.get(editor);
+    if (!plugin) {
+        plugin = functionPlugin(editor);
+        editorPlugins.set(editor, plugin);
+    }
+    return plugin;
+}
+function functionPlugin(editor) {
     /*
     What the model last held for each editor, so an `input` followed by the `change` a blur
     sends writes once. BOTH directions update it: a value pushed in from outside is a new
