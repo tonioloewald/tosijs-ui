@@ -72,6 +72,22 @@ export async function computeAssetStamp(
 }
 
 /**
+ * The assets the stamp covers, in hashing order. ONE list, for `buildSite` and for
+ * `restampSite`: two would let a re-stamp hash a different set and never match a build.
+ */
+export function assetStampInputs(
+  publicDir: string,
+  scriptName: string,
+  hydrateName?: string
+): string[] {
+  return [
+    hydrateName && `${publicDir}/${hydrateName}`,
+    `${publicDir}/${scriptName}`,
+    `${publicDir}/doc-system.css`,
+  ].filter(Boolean) as string[]
+}
+
+/**
  * The message for a named-but-missing input. Separate so the test asserts the real string
  * rather than a paraphrase of it.
  */

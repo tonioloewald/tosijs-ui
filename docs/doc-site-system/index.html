@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1e7b6118718a" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=2137c2b0ab6a" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=5e9c3f0ab5ce" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=94e776b65809" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -187,6 +187,29 @@ them; new builds will not put them back.</p>
 <li><p><strong><code>scriptUrl</code> fallback — use a prebuilt bundle.</strong> Omit <code>bundleEntry</code> and
 pages load <code>scriptUrl</code> (default <code>/iife.js</code>, i.e. tosijs-ui&#39;s published
 bundle). Good for a pure docs site with no custom elements of its own.</p>
+</li>
+<li><p><strong>Replacing the bundle after <code>buildSite</code> — call <code>restampSite</code>.</strong> Some projects have to
+build the hydration bundle themselves (one that aliases a package to its own working
+source, say, which a <code>bundleEntry</code> path cannot express) and overwrite <code>/iife.js</code> once
+<code>buildSite</code> has finished. Two things are then out of date, and neither says so:</p>
+<ul>
+<li>every page&#39;s <code>iife.js?v=&lt;hash&gt;</code> was computed from the file <code>buildSite</code> wrote, so the
+stamp only moves when tosijs-ui does, and a returning visitor runs the cached bundle
+against new pages;</li>
+<li>nothing has checked that <em>your</em> file registers <code>&lt;tosi-doc-system&gt;</code>. A green build, every
+page served, and no header, no nav, no live examples and no doc tests.</li>
+</ul>
+<pre data-example-mode="static"><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> buildSite<span class="token punctuation">,</span> restampSite <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
+
+<span class="token keyword">await</span> <span class="token function">buildSite</span><span class="token punctuation">(</span>config<span class="token punctuation">)</span>
+<span class="token keyword">await</span> <span class="token function">buildMyDocsBundle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// writes &lt;outputDir>/iife.js</span>
+<span class="token keyword">await</span> <span class="token function">restampSite</span><span class="token punctuation">(</span>config<span class="token punctuation">)</span> <span class="token comment">// re-stamps every page from what is on disk, and checks it</span>
+</code></pre>
+<p><code>restampSite</code> hashes the same assets <code>buildSite</code> does, rewrites the stamp in every page,
+and applies the registration checks listed under <a href="#strict-builds-strict"><code>strict</code></a> to the
+file that is actually served. It returns <code>{ stamp, previous, pages, changed }</code>, and it
+<strong>throws</strong> when no page carries a stamp, because a restamp that quietly did nothing is the
+failure it exists to prevent. Run it after every build, watch rebuilds included.</p>
 </li>
 </ul>
 <p><strong>Heads-up — IIFE bundle limits.</strong> The bundle is a classic <code>&lt;script&gt;</code> (IIFE), so:</p>
@@ -1551,6 +1574,16 @@ No same-origin copy is written to <code>/tjs/</code>, so those examples load tjs
 the version tosijs-ui pins, not the one your project has installed. Without <code>strict</code> this
 now prints a warning; before 1.16.7 it was silent.</p>
 </li>
+<li><p><strong>The install has two copies of <code>@codemirror/state</code> or <code>@codemirror/view</code>.</strong> CodeMirror
+recognises extensions by identity, so with two copies every <code>&lt;tosi-code&gt;</code> renders blank
+(&quot;Unrecognized extension value in extension set&quot; in the console) while the build and the
+tests pass. It usually arrives through an upgrade: the lockfile kept an older hoisted
+copy and the package manager nested the newer one under <code>node_modules/tosijs-ui/</code>. The
+warning lists both locations; <code>bun update @codemirror/state @codemirror/view</code> fixes it.</p>
+</li>
+<li><p><strong>A bundle you wrote over <code>/iife.js</code> does not register the doc system</strong>, when you call
+<a href="#bundles--live-examples-read-this"><code>restampSite</code></a> after replacing it.</p>
+</li>
 <li><p><strong>An in-page link points at nothing.</strong> <code>[text](#some-heading)</code> where the page has no such
 id is a link that looks live and does nothing. The warning names the page and the anchor.
 Not checked: <code>#/route</code> and <code>#!…</code> (hash routers), <code>#top</code>, and <code>#example-2</code>, the number a
@@ -2081,6 +2114,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-0bvtc0ha.js"></script>
+  <script type="module" src="../hydrate-vmdb4gz9.js"></script>
 </body>
 </html>

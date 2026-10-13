@@ -57,6 +57,13 @@ export interface LlmsTxtMeta {
  */
 export declare function entriesFromCorpus(corpus: CorpusDoc[], meta: LlmsTxtMeta): LlmsEntry[];
 /**
+ * A real page of THIS site to show the `index.md` rule with. It was hard-coded to
+ * `/carousel/index.md`, a tosijs-ui page, so every other project's llms.txt pointed agents
+ * at a URL it does not have (board #3248). The first page that has a markdown copy and is
+ * not the site root.
+ */
+export declare function markdownExample(corpus: CorpusDoc[], meta: LlmsTxtMeta): string | undefined;
+/**
  * Write an `llms.txt` index. Pass the extracted `corpus` (the build does) to
  * index every doc by its rendered URL; omit it to fall back to the legacy
  * `src/*.ts`-with-`dist/*.js` scan.

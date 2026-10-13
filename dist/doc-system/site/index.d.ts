@@ -1,6 +1,8 @@
 export { defineSiteConfig } from './site-config.js';
 export type { SiteConfig, SiteHost, LibraryBuildContext, } from './site-config.js';
 export { buildSite } from './orchestrator.js';
+export { restampSite } from './restamp.js';
+export type { RestampResult } from './restamp.js';
 export { SiteMisconfiguredError } from './build-warnings.js';
 export { testReportVerdict } from './test-report.js';
 export type { TestReportLike, TestReportVerdict } from './test-report.js';

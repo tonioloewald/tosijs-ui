@@ -1,5 +1,9 @@
 import { test, expect, describe } from 'bun:test'
-import { entriesFromCorpus, generateLlmsTxt } from './make-llms-txt.js'
+import {
+  entriesFromCorpus,
+  generateLlmsTxt,
+  markdownExample,
+} from './make-llms-txt.js'
 import { buildSlugMap, pathForSlug, withBase } from '../routing.js'
 import { mkdtempSync, readFileSync } from 'fs'
 import { tmpdir } from 'os'
@@ -146,4 +150,22 @@ test('the index says pages are also available as markdown', () => {
 test('…and does not when the site ships HTML only', () => {
   // Pointing a reader at a file that is not there costs more than not mentioning it.
   expect(written({ name: 'x', markdownPages: false })).not.toContain('index.md')
+})
+
+test('the index.md example is a page of THIS site, never a hard-coded one', () => {
+  const corpus = [
+    { filename: 'README.md', title: 'Home', text: '# Home', path: 'README.md' },
+    { filename: 'secret.md', title: 'Secret', text: '# Secret', hidden: true },
+    { filename: 'quiet.md', title: 'Quiet', text: '# Quiet', noindex: true },
+    { filename: 'start-here.md', title: 'Start here', text: '# Start here' },
+  ]
+  const example = markdownExample(corpus, {})
+  expect(example).toMatch(/^\/[a-z-]+\/index\.md$/)
+  expect(example).not.toContain('carousel')
+  expect(example).not.toContain('secret')
+  expect(example).not.toContain('quiet')
+  expect(markdownExample(corpus, { basePath: '/docs' })).toMatch(
+    /^\/docs\/[a-z-]+\/index\.md$/
+  )
+  expect(markdownExample([], {})).toBeUndefined()
 })

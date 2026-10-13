@@ -184,6 +184,31 @@ modes:
   pages load `scriptUrl` (default `/iife.js`, i.e. tosijs-ui's published
   bundle). Good for a pure docs site with no custom elements of its own.
 
+- **Replacing the bundle after `buildSite` — call `restampSite`.** Some projects have to
+  build the hydration bundle themselves (one that aliases a package to its own working
+  source, say, which a `bundleEntry` path cannot express) and overwrite `/iife.js` once
+  `buildSite` has finished. Two things are then out of date, and neither says so:
+
+  - every page's `iife.js?v=<hash>` was computed from the file `buildSite` wrote, so the
+    stamp only moves when tosijs-ui does, and a returning visitor runs the cached bundle
+    against new pages;
+  - nothing has checked that _your_ file registers `<tosi-doc-system>`. A green build, every
+    page served, and no header, no nav, no live examples and no doc tests.
+
+  ```typescript:static
+  import { buildSite, restampSite } from 'tosijs-ui/site'
+
+  await buildSite(config)
+  await buildMyDocsBundle() // writes <outputDir>/iife.js
+  await restampSite(config) // re-stamps every page from what is on disk, and checks it
+  ```
+
+  `restampSite` hashes the same assets `buildSite` does, rewrites the stamp in every page,
+  and applies the registration checks listed under [`strict`](#strict-builds-strict) to the
+  file that is actually served. It returns `{ stamp, previous, pages, changed }`, and it
+  **throws** when no page carries a stamp, because a restamp that quietly did nothing is the
+  failure it exists to prevent. Run it after every build, watch rebuilds included.
+
 **Heads-up — IIFE bundle limits.** The bundle is a classic `<script>` (IIFE), so:
 
 - **`import.meta` is illegal** in it — if an isomorphic dep references
@@ -1401,6 +1426,15 @@ exported from `tosijs-ui/site`, and the previous build output is restored):
   No same-origin copy is written to `/tjs/`, so those examples load tjs-lang from a CDN at
   the version tosijs-ui pins, not the one your project has installed. Without `strict` this
   now prints a warning; before 1.16.7 it was silent.
+
+- **The install has two copies of `@codemirror/state` or `@codemirror/view`.** CodeMirror
+  recognises extensions by identity, so with two copies every `<tosi-code>` renders blank
+  ("Unrecognized extension value in extension set" in the console) while the build and the
+  tests pass. It usually arrives through an upgrade: the lockfile kept an older hoisted
+  copy and the package manager nested the newer one under `node_modules/tosijs-ui/`. The
+  warning lists both locations; `bun update @codemirror/state @codemirror/view` fixes it.
+- **A bundle you wrote over `/iife.js` does not register the doc system**, when you call
+  [`restampSite`](#bundles--live-examples-read-this) after replacing it.
 
 - **An in-page link points at nothing.** `[text](#some-heading)` where the page has no such
   id is a link that looks live and does nothing. The warning names the page and the anchor.

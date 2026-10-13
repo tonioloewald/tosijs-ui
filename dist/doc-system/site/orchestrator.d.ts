@@ -1,3 +1,11 @@
+/**
+ * Declared dialects are live fences at build time too (#2463). Idempotent, so every place
+ * that asks "is this fence live?" calls it first rather than depending on build order: the
+ * misconfiguration checks run long before the page generator, which used to be the only caller.
+ */
+export declare function registerSiteDialects(config: {
+    dialects?: readonly string[];
+}): void;
 import type { SiteConfig } from './site-config.js';
 declare global {
     var Bun: any;

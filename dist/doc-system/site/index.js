@@ -5,6 +5,9 @@ browser code. See ./README is at ../doc-site-system.md and the repo docs.
 */
 export { defineSiteConfig } from './site-config.js';
 export { buildSite } from './orchestrator.js';
+// For a project that replaces the hydration bundle after `buildSite`: re-stamp the pages
+// from what is served, and check it registers the doc system (board #3248).
+export { restampSite } from './restamp.js';
 // Thrown by `buildSite` under `strict: true` — exported so a caller can tell a refused
 // misconfiguration from a crash (`catch (e) { if (e instanceof SiteMisconfiguredError) … }`).
 export { SiteMisconfiguredError } from './build-warnings.js';

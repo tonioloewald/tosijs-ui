@@ -337,25 +337,45 @@ export function createCmEditor(
   const langExt =
     opts.languageExtension ?? standardLanguageBundle(opts.mode ?? 'javascript')
 
-  const view = new EditorView({
-    parent,
-    root: opts.root,
-    state: EditorState.create({
-      doc: opts.value ?? '',
-      extensions: [
-        baseExtensions(),
-        highlight.of(highlightFor(isDarkMode())),
-        language.of(langExt),
-        readonly.of(EditorState.readOnly.of(!!opts.readOnly)),
-        EditorView.updateListener.of((u) => {
-          if (!u.docChanged || !opts.onChange) return
-          // A programmatic `value` set is not a change the USER made. See `programmatic`.
-          if (u.transactions.some((t) => t.annotation(programmatic))) return
-          opts.onChange(u.state.doc.toString())
-        }),
-      ],
-    }),
-  })
+  let view: EditorView
+  try {
+    view = new EditorView({
+      parent,
+      root: opts.root,
+      state: EditorState.create({
+        doc: opts.value ?? '',
+        extensions: [
+          baseExtensions(),
+          highlight.of(highlightFor(isDarkMode())),
+          language.of(langExt),
+          readonly.of(EditorState.readOnly.of(!!opts.readOnly)),
+          EditorView.updateListener.of((u) => {
+            if (!u.docChanged || !opts.onChange) return
+            // A programmatic `value` set is not a change the USER made. See `programmatic`.
+            if (u.transactions.some((t) => t.annotation(programmatic))) return
+            opts.onChange(u.state.doc.toString())
+          }),
+        ],
+      }),
+    })
+  } catch (error) {
+    /*
+    CodeMirror recognises extensions by identity, so a second copy of `@codemirror/state`
+    in the install makes it reject its own language packages. The editor is then blank and
+    the message names an internal; say what happened and what fixes it (board #3248).
+    */
+    if (
+      /Unrecognized extension value/.test(String((error as Error)?.message))
+    ) {
+      console.error(
+        '<tosi-code>: CodeMirror rejected an extension, which means two copies of ' +
+          '@codemirror/state (or @codemirror/view) are loaded. Every CodeMirror package ' +
+          'must share one. Run `bun update @codemirror/state @codemirror/view` (or ' +
+          '`npm dedupe`), then rebuild.'
+      )
+    }
+    throw error
+  }
 
   // Re-apply the right highlight palette when the doc-system toggles dark mode
   // (it flips the `darkmode` class on <body>).

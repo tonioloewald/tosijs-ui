@@ -94,6 +94,25 @@ function entriesFromSrcScan() {
     return entries.sort((a, b) => a.title.localeCompare(b.title));
 }
 /**
+ * A real page of THIS site to show the `index.md` rule with. It was hard-coded to
+ * `/carousel/index.md`, a tosijs-ui page, so every other project's llms.txt pointed agents
+ * at a URL it does not have (board #3248). The first page that has a markdown copy and is
+ * not the site root.
+ */
+export function markdownExample(corpus, meta) {
+    const slugMap = buildSlugMap(corpus);
+    for (const doc of corpus) {
+        if (!doc.title || doc.hidden || doc.noindex) {
+            continue;
+        }
+        const pagePath = pathForSlug(slugMap[doc.filename]);
+        if (pagePath === '/' || !pagePath.endsWith('/'))
+            continue;
+        return `${withBase(meta.basePath, pagePath)}index.md`;
+    }
+    return undefined;
+}
+/**
  * Write an `llms.txt` index. Pass the extracted `corpus` (the build does) to
  * index every doc by its rendered URL; omit it to fall back to the legacy
  * `src/*.ts`-with-`dist/*.js` scan.
@@ -145,11 +164,13 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
         ]
         : [];
     // Only for a corpus-driven index: the legacy scan links to dist/ files, not pages.
+    const example = corpus ? markdownExample(corpus, meta) : undefined;
     const markdownNote = corpus && meta.markdownPages !== false
         ? [
-            'Pages below are also available as plain markdown: append `index.md` to the URL',
-            '(for example `/carousel/index.md`). Prefer that if you only need the text. A page',
-            'marked noindex has no markdown copy.',
+            'Pages below are also available as plain markdown: append `index.md` to the URL' +
+                (example ? '' : '.'),
+            ...(example ? [`(for example \`${example}\`).`] : []),
+            'Prefer that if you only need the text. A page marked noindex has no markdown copy.',
             '',
         ]
         : [];

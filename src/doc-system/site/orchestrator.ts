@@ -27,7 +27,9 @@ import * as path from 'path'
  * that asks "is this fence live?" calls it first rather than depending on build order: the
  * misconfiguration checks run long before the page generator, which used to be the only caller.
  */
-function registerSiteDialects(config: { dialects?: readonly string[] }): void {
+export function registerSiteDialects(config: {
+  dialects?: readonly string[]
+}): void {
   for (const name of normalizeDialectNames(config.dialects)) {
     if (!BUILT_IN_DIALECTS.has(name)) registerLiveLanguage(name)
   }
@@ -41,7 +43,11 @@ import {
   renderEpubDownloads,
 } from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
-import { computeAssetStamp, missingStampInputWarning } from './asset-stamp.js'
+import {
+  assetStampInputs,
+  computeAssetStamp,
+  missingStampInputWarning,
+} from './asset-stamp.js'
 import {
   existsSync,
   mkdirSync,
@@ -71,6 +77,11 @@ import { generateLlmsTxt } from './make-llms-txt.js'
 import { DEFAULT_DOC_IGNORES } from './docs.js'
 import { writesOutsideOutputDir } from './host-preset.js'
 import { generateSite } from './generate-site.js'
+import {
+  codemirrorCopies,
+  duplicateCodemirrorWarning,
+  tosijsUiDir,
+} from './codemirror-copies.js'
 import { findOutputDirOverlap, resolveBundleDir } from './output-guard.js'
 import { acquireBuildLock, describeHolder } from './build-lock.js'
 import { sourcemapWarning } from './sourcemap-check.js'
@@ -583,6 +594,17 @@ export async function buildSite(
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs')
     const DIST = path.resolve(PROJECT_ROOT, 'dist')
     /*
+    Two copies of CodeMirror blank every <tosi-code>, and nothing else says so (#3248). Asked
+    first, of the module resolver: it costs a couple of dozen resolutions, and a site built
+    on that install is broken however the rest of the build goes.
+    */
+    {
+      const doubled = duplicateCodemirrorWarning(
+        codemirrorCopies(process.cwd(), tosijsUiDir(import.meta.dir))
+      )
+      if (doubled) misconfigured(config.strict, doubled)
+    }
+    /*
   Where the hydration bundle is BUILT. Defaults to the site output, not to `dist` (#69).
 
   It used to be built into `dist` unconditionally — the same directory `emitLibrary` /
@@ -1036,11 +1058,17 @@ export async function buildSite(
         const bad = extensionlessImports(DIST)
         if (bad.length) {
           console.warn(
-            `⚠️  dist/ has ${bad.length} relative import(s) without a file extension — Node rejects them ` +
-              `(ERR_MODULE_NOT_FOUND), even though Bun and bundlers resolve them. Use \`libraryBundle\` ` +
-              `instead of ${
+            `⚠️  The .js files tsc just emitted into dist/ have ${bad.length} relative import(s) without a ` +
+              `file extension — Node rejects them (ERR_MODULE_NOT_FOUND), even though Bun and bundlers ` +
+              `resolve them. Use \`libraryBundle\` instead of ${
                 config.libraryTsconfig ? 'libraryTsconfig' : 'emitLibrary'
-              } (tosijs-ui#169). First: ${bad[0]}`
+              } (tosijs-ui#169). First: ${bad[0]}\n` +
+              // A project that publishes bundles it builds afterwards sees this about files
+              // it then replaces, and went looking for them in its final dist/ (board #3248).
+              `   If a later step replaces these files with bundles, they are not what you publish: ` +
+              (config.libraryTsconfig
+                ? `set "emitDeclarationOnly": true in ${config.libraryTsconfig} so tsc emits only the .d.ts files.`
+                : `use \`libraryTsconfig\` with "emitDeclarationOnly": true so tsc emits only the .d.ts files.`)
           )
         }
       }
@@ -1695,11 +1723,7 @@ export async function buildSite(
       written, so hashing the directory would hash the previous build. The bundle and the
       stylesheet exist by now, and they are exactly what a stale cache serves.
       */
-      const stampInputs = [
-        hydrateName && `${PUBLIC}/${hydrateName}`,
-        `${PUBLIC}/${scriptName}`,
-        `${PUBLIC}/doc-system.css`,
-      ].filter(Boolean) as string[]
+      const stampInputs = assetStampInputs(PUBLIC, scriptName, hydrateName)
       /*
       Always a CONTENT HASH — the `opts.lock ? version : hash` branch is gone (major M3).
 

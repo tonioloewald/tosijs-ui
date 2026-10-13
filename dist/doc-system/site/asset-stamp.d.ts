@@ -23,6 +23,11 @@ export interface AssetStampResult {
  */
 export declare function computeAssetStamp(paths: string[], fallback: string): Promise<AssetStampResult>;
 /**
+ * The assets the stamp covers, in hashing order. ONE list, for `buildSite` and for
+ * `restampSite`: two would let a re-stamp hash a different set and never match a build.
+ */
+export declare function assetStampInputs(publicDir: string, scriptName: string, hydrateName?: string): string[];
+/**
  * The message for a named-but-missing input. Separate so the test asserts the real string
  * rather than a paraphrase of it.
  */
