@@ -503,3 +503,31 @@ gap, recorded rather than hidden.
   83 over 18 pages. CI and the dry run green on the tagged commit.
 - **Approval lapsed the 60-minute wait** (staged 2026-10-12, approved the next day), so the
   run's verify job was skipped and `verify_only=true` did the verification.
+
+## 1.16.14 (2026-10-13)
+
+- **Shipped:** snowfox's second round on GitHub #221: curation inside arrays and unions
+  (nested `fields`), sections, and `proposals` for review screens. Published; the run's own
+  verify job passed.
+- **Review:** two rounds, both GO_WITH_FOLLOWUPS, no blocker. Round one found three majors,
+  all in proposals: a non-string `reason`/`source` was handed to the element creator as
+  properties (`innerHTML`), accepting a whole-array proposal left the old rows, and a
+  proposal on a visible panel was listed as not shown. Round two found that the title
+  hardening covered property titles and missed `anyOf`/`oneOf` branch titles.
+- **The same hazard was fixed call site by call site and one site was missed.** tosijs reads
+  an object child as element properties (tosijs#43). `titleOf` in `fields.ts` is now the one
+  place a schema title becomes a label; `span(item.caption)` in `src/menu.ts` has the same
+  shape and is on board #3240.
+- **An edit script deleted five class members** (`schema`, `value`, `validate`,
+  `refreshErrors`, `handleFieldInput`) by slicing between two anchors that were not adjacent.
+  `tsc` caught it at once and the block was restored from HEAD.
+- **A pre-existing defect surfaced:** `form.value = …` with a different number of array items
+  left the old rows. Fixed with `syncArrays`.
+- **The consumer lane's tarball ceiling tripped on ordinary growth** (2.99MB at 1.16.12,
+  3.01MB now) and was raised from 3MB to 3.5MB with the reason recorded beside it.
+- **Chromium reports a box for a button inside a closed `<details>`** and silently refuses
+  to focus it, so the focus fallback now tries candidates until one takes focus.
+- **Lanes:** unit 1805; Playwright 558 passed, 15 skipped; consumer 54 checks; test-browser
+  85 over 18 pages. CI and the dry run green on the tagged commit.
+- **Open:** board #3240 (deferrals, and the maintainer's ruling on shipping the
+  `FieldCuration` type widening in a patch); #221 left open for snowfox to confirm.
