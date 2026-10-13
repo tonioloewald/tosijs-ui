@@ -531,3 +531,30 @@ gap, recorded rather than hidden.
   85 over 18 pages. CI and the dry run green on the tagged commit.
 - **Open:** board #3240 (deferrals, and the maintainer's ruling on shipping the
   `FieldCuration` type widening in a patch); #221 left open for snowfox to confirm.
+
+## 1.16.15 (2026-10-13)
+
+- **Shipped:** board #3248, from tosijs's upgrade to 1.16.13: `restampSite` (re-stamp and
+  check a hydration bundle replaced after `buildSite`), a duplicate-CodeMirror check, an
+  `llms.txt` example drawn from the site being built, and a reworded tsc-import warning.
+  Published; the run's own verify job passed.
+- **Review:** two rounds, both GO_WITH_FOLLOWUPS, no blocker or major. Round one: ten
+  minors, among them `restampSite` taking its stamp from prose and writing pages before a
+  strict check could refuse. Round two: six minors, all fixed.
+- **Two new tests held nothing.** Their `expect().rejects` were not awaited, and a third
+  such line had been in `build-stamp.test.ts` for some time. No lint rule catches it; on
+  board #3253.
+- **An edit that looked like the fix was not.** Limiting the tsc-import warning to files
+  reachable from `package.json` entries would not have helped tosijs (tsc emits its
+  `dist/index.js` too), and was backed out for a reworded warning after reading tosijs's
+  `tsconfig.build.json`. Reading the reporter's config first would have saved the detour.
+- **A scripted edit left a stray brace** by matching `    }\n` inside `      }\n`; `tsc`
+  caught it. Second anchor mistake in two releases.
+- **Verified at the boundary on a copy:** the new code was run against a scratch copy of
+  tosijs's built `docs/` and its real install. tosijs has still to confirm at its own end.
+- **Flakes:** `[webkit]` proposal keyboard test read the value before the key's click
+  landed (hardened, 100 repeats green); `[firefox] entry-once.pw.ts` failed once in a full
+  run with the error not captured, cause unknown.
+- **Lanes:** unit 1823; Playwright 558 passed, 15 skipped; consumer 55 checks; test-browser
+  85 over 18 pages. CI and the dry run green on the tagged commit.
+- **Open:** board #3253 (deferrals); #3248 awaiting tosijs's confirmation.
