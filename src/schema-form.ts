@@ -998,9 +998,10 @@ form.fields = {
 }
 ```
 
-A section starts open unless you say `collapsed: true`. A closed section gets the class
-`-invalid`, and a red title, while a field inside it is in error, so collapsing one cannot
-hide a problem. Sections can sit inside an array's or a union's `fields` too.
+A section starts open unless you say `collapsed: true`. A section, and any entry with
+`collapsed: true`, gets the class `-invalid` and a red title while a field inside it is in
+error, so collapsing one cannot hide a problem. In TypeScript, `isSection(entry)` tells a
+section from a field entry when you walk a curation yourself. Sections can sit inside an array's or a union's `fields` too.
 
 ```js
 import { tosiSchemaForm } from 'tosijs-ui'
@@ -1144,13 +1145,22 @@ form.proposals = {
   alone. Both carry `detail: { path, proposal }`, and both remove the entry from
   `form.proposals`.
 - `acceptProposal(path)` and `rejectProposal(path)` do the same from code.
-- Paths are value paths, so an array item is `thresholds.0.value`. They work with or without
-  a curation; a proposal for a field that is not shown is named above the fields.
+- Paths are value paths, so an array item is `thresholds.0.value`. A proposal can be for a
+  whole array, object or union: it sits at the top of that panel, and accepting it replaces
+  the lot. They work with or without a curation; a proposal for something that is not shown
+  is named above the fields.
+- A proposal for an array item follows its item when items are moved, and is dropped when
+  its item is removed. One for a field inside a union stays at its path if the branch
+  changes.
+- `reason` and `source` are shown as text, and only when they are strings.
 - A field that is `readOnly` in a curation can still have its proposal accepted: that is the
   review screen, where nobody types and somebody decides. A form with `readOnly` set shows
   the proposals with no buttons.
 - Set **`proposalView`** to a function to render a proposal yourself. It receives
-  `{ path, label, current, proposal, accept, reject, elements }` and returns an element.
+  `{ path, label, current, proposal, readOnly, accept, reject, elements }` and returns an
+  element. While the form is read-only `accept` and `reject` do nothing, and `readOnly` is
+  true so your view can leave its buttons out. `acceptProposal()` called from code is not
+  affected by `readOnly`.
 - Proposals are presentation, like the rest of this page: nothing stops code from writing
   `form.value`. Who may accept is for your application to enforce.
 
@@ -1416,6 +1426,8 @@ import {
   editorPlugin,
   findNode,
   hiddenErrors,
+  CURATED_KEYS,
+  SECTION_KEYS,
   type Curated,
   type CuratedField,
   type FieldCuration,
@@ -1426,6 +1438,7 @@ export type {
   CuratedSection,
   FieldEditor,
 } from './schema-form/curate.js'
+export { isSection } from './schema-form/curate.js'
 
 /** A value someone proposes for one field, shown beside the current one for review. */
 export interface FieldProposal {
@@ -1442,6 +1455,9 @@ export interface ProposalContext {
   label: string
   current: unknown
   proposal: FieldProposal
+  /** The form is read-only: show the proposal, offer no way to act on it. */
+  readOnly: boolean
+  /** Do nothing while the form is read-only. */
   accept: () => void
   reject: () => void
   elements: typeof elements
@@ -1536,7 +1552,7 @@ export class TosiSchemaForm extends withAttributes({
       margin: '2px 0 0',
       paddingLeft: '1.2em',
     },
-    ':host .schema-section.-invalid > summary': {
+    ':host .schema-group.-invalid > summary': {
       color: 'var(--tosi-error, #c00)',
       opacity: '1',
     },
@@ -1609,6 +1625,22 @@ export class TosiSchemaForm extends withAttributes({
   since which paths exist there depends on the value.
   */
   private _entries = new Map<string, CuratedField>()
+  /*
+  Where a proposal goes for a path that is a PANEL (an object, an array, a union) and so has
+  no entry in `_index`: the panel, and the element the proposal is placed after.
+  */
+  private _hosts = new Map<string, { wrapper: HTMLElement; after: Element }>()
+  private _arrays = new Map<string, FieldArray>()
+
+  /** Everything under `path` is about to be recreated: what is held for it is stale. */
+  private forgetUnder(path: string): void {
+    const prefix = `${path}.`
+    for (const map of [this._index, this._hosts, this._arrays]) {
+      for (const key of [...map.keys()]) {
+        if (key.startsWith(prefix)) map.delete(key)
+      }
+    }
+  }
   private _curationWarnings = new Set<string>()
   private _hiddenErrorSlot: HTMLElement | null = null
   private _hiddenErrorSignature = ''
@@ -1665,7 +1697,13 @@ export class TosiSchemaForm extends withAttributes({
       )
     }
     for (const { path, keys } of result.badKeys) {
-      warn(`['${generic(path)}'] has unknown key(s) ${keys.join(', ')}`)
+      warn(
+        `['${generic(path)}'] has unknown key(s) ${keys.join(
+          ', '
+        )}; a field's keys are ${CURATED_KEYS.join(
+          ', '
+        )}, a section's ${SECTION_KEYS.join(', ')}`
+      )
     }
     return result.nodes
   }
@@ -1725,6 +1763,33 @@ export class TosiSchemaForm extends withAttributes({
     return proposal
   }
 
+  /*
+  Deciding a proposal removes the buttons the reviewer was on. Focus goes to the field if
+  it can be edited, else to the next proposal still to decide, so a keyboard user is not
+  dropped at the top of the page.
+  */
+  private focusAfterProposal(path: string, hadFocus: boolean): void {
+    if (!hadFocus) return
+    const usable = (el: Element | null | undefined): HTMLElement | null =>
+      el && !(el as HTMLInputElement).disabled && !(el as HTMLElement).hidden
+        ? (el as HTMLElement)
+        : null
+    const control = this._index.get(path)?.control
+    const target =
+      usable(control?.matches('input, select, textarea') ? control : null) ??
+      usable(this.querySelector('.schema-accept')) ??
+      usable(this.querySelector('.schema-proposal button'))
+    target?.focus()
+  }
+
+  private proposalHasFocus(path: string): boolean {
+    return [...this.querySelectorAll('.schema-proposal')].some(
+      (el) =>
+        (el as HTMLElement).dataset.proposal === path &&
+        el.contains(document.activeElement)
+    )
+  }
+
   /**
    * Write the proposed value at `path` and drop the proposal. Fires `proposalaccept`
    * (`detail: { path, proposal }`), then `change`. Returns false when there is none.
@@ -1732,18 +1797,52 @@ export class TosiSchemaForm extends withAttributes({
   acceptProposal(path: string): boolean {
     const proposal = this._proposals?.[path]
     if (!proposal) return false
+    const hadFocus = this.proposalHasFocus(path)
     this._value = setByPath(this._value, path, proposal.value)
     this.settleProposal(path, 'proposalaccept')
+    // The value may be a whole array, object or union: bring the structure up to date.
+    this.syncArrays()
     this.syncVariants()
     this.afterStructuralEdit()
+    this.focusAfterProposal(path, hadFocus)
     return true
   }
 
   /** Drop the proposal at `path`, leaving the value alone. Fires `proposalreject`. */
   rejectProposal(path: string): boolean {
+    const hadFocus = this.proposalHasFocus(path)
     if (!this.settleProposal(path, 'proposalreject')) return false
     this.syncProposals()
+    this.focusAfterProposal(path, hadFocus)
     return true
+  }
+
+  /*
+  Proposals are keyed by value path, and an array item's path holds its index. When items
+  move, the proposals move with them; one for a removed item is dropped, since the thing it
+  proposed to change is gone.
+  */
+  private rekeyProposals(
+    arrayPath: string,
+    newIndex: (index: number) => number | null
+  ): void {
+    if (!this._proposals) return
+    const prefix = `${arrayPath}.`
+    let changed = false
+    const next: Record<string, FieldProposal> = {}
+    for (const [path, proposal] of Object.entries(this._proposals)) {
+      const match = path.startsWith(prefix)
+        ? /^(\d+)(.*)$/.exec(path.slice(prefix.length))
+        : null
+      if (!match) {
+        next[path] = proposal
+        continue
+      }
+      const index = newIndex(Number(match[1]))
+      if (index !== Number(match[1])) changed = true
+      if (index !== null) next[`${prefix}${index}${match[2]}`] = proposal
+    }
+    if (changed) this._proposals = next
   }
 
   get schema(): JSONSchema {
@@ -1859,7 +1958,8 @@ export class TosiSchemaForm extends withAttributes({
     const el = this.buildBare(node)
     const section = (node as { section?: string }).section
     if (section !== undefined) {
-      this._hasSections = true
+      this._watchPanels = true
+      el.dataset.watch = ''
       el.classList.add('schema-section')
       el.dataset.section = section
       if ((node as { collapsed?: boolean }).collapsed) {
@@ -1871,13 +1971,17 @@ export class TosiSchemaForm extends withAttributes({
     const entry = this._entries.get(node.path)
     if (!entry) return el
     if (entry.help) {
-      const help = span({ class: 'schema-help' }, entry.help)
+      const help = span({ class: 'schema-help' }, String(entry.help))
       const errorSlot = this._index.get(node.path)?.errorSlot
       if (errorSlot?.parentElement === el) el.insertBefore(help, errorSlot)
       else el.append(help)
     }
     if (entry.readOnly) el.dataset.locked = ''
-    if (entry.collapsed && el instanceof HTMLDetailsElement) el.open = false
+    if (entry.collapsed && el instanceof HTMLDetailsElement) {
+      el.open = false
+      this._watchPanels = true
+      el.dataset.watch = ''
+    }
     return el
   }
 
@@ -1892,14 +1996,16 @@ export class TosiSchemaForm extends withAttributes({
     if (node.kind === 'array') return this.buildArray(node)
     if (node.kind === 'union') return this.buildUnion(node)
     if ('children' in node) {
-      return details(
+      const heading = summary(String(node.label), ...this.unvalidatedNote(node))
+      const panel = details(
         { class: 'schema-group', open: true },
-        // The note belongs in the SUMMARY for a container: `uniqueItems` on an array and
-        // `allOf` on an object are exactly the keywords a validator is most likely to skip,
-        // and a note only scalars could carry made the promise false for both.
-        summary(node.label, ...this.unvalidatedNote(node)),
+        heading,
         ...node.children.map((child) => this.buildNode(child))
       )
+      if (node.section === undefined) {
+        this._hosts.set(node.path, { wrapper: panel, after: heading })
+      }
+      return panel
     }
     return this.buildField(node)
   }
@@ -1913,11 +2019,14 @@ export class TosiSchemaForm extends withAttributes({
   items genuinely did change, so rebuilding those is honest.
   */
   private buildArray(node: FieldArray): HTMLElement {
+    const heading = summary(String(node.label), ...this.unvalidatedNote(node))
     const container = details(
       { class: 'schema-group schema-array', open: true },
-      summary(node.label, ...this.unvalidatedNote(node))
+      heading
     )
     container.dataset.array = node.path
+    this._hosts.set(node.path, { wrapper: container, after: heading })
+    this._arrays.set(node.path, node)
     this.fillArray(container, node)
     return container
   }
@@ -1926,10 +2035,10 @@ export class TosiSchemaForm extends withAttributes({
     const list = (getByPath(this._value, node.path) as unknown[]) ?? []
     // Keep the summary; replace the items. Everything under this path is about to be
     // recreated, so its index entries are stale by definition.
-    for (const path of [...this._index.keys()]) {
-      if (path.startsWith(`${node.path}.`)) this._index.delete(path)
+    this.forgetUnder(node.path)
+    for (const child of [...container.children]) {
+      if (child.matches('.schema-item, .schema-add')) child.remove()
     }
-    while (container.children.length > 1) container.lastElementChild!.remove()
     list.forEach((_item, index) => {
       const row = div({ class: 'schema-item' })
       const fields = this.itemNodes(node, index)
@@ -2017,12 +2126,13 @@ export class TosiSchemaForm extends withAttributes({
     if (this._entries.get(node.path)?.picker === false) picker.hidden = true
     const container = div(
       { class: 'schema-field schema-union' },
-      label(node.label),
+      label(String(node.label)),
       picker,
       ...this.unvalidatedNote(node),
       div({ class: 'schema-variant-fields' })
     )
     container.dataset.union = node.path
+    this._hosts.set(node.path, { wrapper: container, after: picker })
     this.fillUnion(container, node)
     return container
   }
@@ -2045,9 +2155,7 @@ export class TosiSchemaForm extends withAttributes({
       '.schema-variant-fields'
     ) as HTMLElement
     // Everything under this union is about to be recreated: its index entries are stale.
-    for (const path of [...this._index.keys()]) {
-      if (path.startsWith(`${node.path}.`)) this._index.delete(path)
-    }
+    this.forgetUnder(node.path)
     body.replaceChildren(
       ...this.branchNodes(node).map((child) => this.buildNode(child))
     )
@@ -2063,6 +2171,29 @@ export class TosiSchemaForm extends withAttributes({
     ) as HTMLElement | null
     if (container) this.fillUnion(container, node)
     this.afterStructuralEdit()
+  }
+
+  /*
+  Re-fill any array whose rows no longer match its value's length.
+
+  `form.value = {...}` does not rebuild the form (the schema did not change), and a leaf's
+  value is synced in place, but how many rows an array has is a fact about the VALUE. Without
+  this a value with more items showed the old rows, and one with fewer left controls for
+  items that no longer exist. Outer arrays first: re-filling one recreates what is inside it.
+  */
+  private syncArrays(): void {
+    for (const container of this.querySelectorAll('[data-array]')) {
+      if (!container.isConnected) continue
+      const path = (container as HTMLElement).dataset.array!
+      const node = this._arrays.get(path)
+      if (!node) continue
+      const list = getByPath(this._value, path)
+      const length = Array.isArray(list) ? list.length : 0
+      const rows = [...container.children].filter((el) =>
+        el.classList.contains('schema-item')
+      ).length
+      if (rows !== length) this.fillArray(container as HTMLElement, node)
+    }
   }
 
   /*
@@ -2168,6 +2299,9 @@ export class TosiSchemaForm extends withAttributes({
 
   private removeArrayItem(node: FieldArray, index: number): void {
     this._value = removeAt(this._value, node.path, index)
+    this.rekeyProposals(node.path, (i) =>
+      i === index ? null : i > index ? i - 1 : i
+    )
     // Removing row N leaves the cursor on what is now row N — the next item down, which is
     // where a repeated delete should land.
     this.afterArrayEdit(node, { role: 'schema-remove', index })
@@ -2180,6 +2314,15 @@ export class TosiSchemaForm extends withAttributes({
     role = 'schema-move-down'
   ): void {
     this._value = moveItem(this._value, node.path, from, to)
+    this.rekeyProposals(node.path, (i) =>
+      i === from
+        ? to
+        : from < to && i > from && i <= to
+        ? i - 1
+        : to < from && i >= to && i < from
+        ? i + 1
+        : i
+    )
     // Follow the item: you moved row 3 down, so the button you want next is on row 4.
     this.afterArrayEdit(node, { role, index: to })
   }
@@ -2313,7 +2456,7 @@ export class TosiSchemaForm extends withAttributes({
     const errorSlot = span({ class: 'schema-error', hidden: true })
     const wrapper = div(
       { class: 'schema-field' },
-      label(node.label),
+      label(String(node.label)),
       control,
       ...this.unvalidatedNote(node as { unvalidated?: string[] }),
       errorSlot
@@ -2327,7 +2470,7 @@ export class TosiSchemaForm extends withAttributes({
     if (field.kind === 'unsupported') {
       return div(
         { class: 'schema-field' },
-        label(field.label),
+        label(String(field.label)),
         span({ class: 'schema-unsupported' }, `${field.reason}`)
       )
     }
@@ -2373,7 +2516,7 @@ export class TosiSchemaForm extends withAttributes({
     const errorSlot = span({ class: 'schema-error', hidden: true })
     const wrapper = div(
       { class: 'schema-field' },
-      label(field.label),
+      label(String(field.label)),
       control,
       ...this.unvalidatedNote(field),
       errorSlot
@@ -2437,53 +2580,69 @@ export class TosiSchemaForm extends withAttributes({
       entry.errorSlot.textContent = message ?? ''
       entry.errorSlot.hidden = !message
     }
-    if (this._hasSections) {
-      // A closed section must not hide that something inside it is wrong.
-      for (const section of this.querySelectorAll('.schema-section')) {
-        section.classList.toggle(
+    if (this._watchPanels) {
+      /*
+      A panel that starts closed must not hide that something inside it is wrong. This is a
+      DOM query on the keystroke path, unlike the loop above, and runs only for a form that
+      has such panels: one query per panel, and there are few of them.
+      */
+      for (const panel of this.querySelectorAll('[data-watch]')) {
+        panel.classList.toggle(
           '-invalid',
-          section.querySelector('.schema-field.-invalid') != null
+          panel.querySelector('.schema-field.-invalid') != null
         )
       }
     }
     this.syncHiddenErrors()
   }
 
-  private _hasSections = false
+  private _watchPanels = false
   private _hiddenProposalSlot: HTMLElement | null = null
 
   /*
-  Put each proposal under its field. Idempotent, and keyed on what the proposal says, so a
-  render that changes nothing leaves the element (and focus inside it) alone.
+  Put each proposal under its field, or at the top of its panel. Idempotent, and keyed on
+  what the proposal says, so a render that changes nothing leaves the element (and focus
+  inside it) alone.
   */
   private syncProposals(): void {
-    for (const [path, entry] of this._index) {
-      const proposal = this._proposals?.[path]
-      const existing = [...entry.wrapper.children].find((el) =>
+    const proposals = this._proposals
+    if (!proposals && !this._proposalsShown) return
+    const place = (
+      path: string,
+      wrapper: HTMLElement,
+      insert: (view: HTMLElement) => void
+    ): void => {
+      const proposal = proposals?.[path]
+      const existing = [...wrapper.children].find((el) =>
         el.classList.contains('schema-proposal')
       ) as HTMLElement | undefined
-      const signature = proposal
-        ? JSON.stringify([proposal.value, proposal.reason, proposal.source])
-        : ''
-      if ((existing?.dataset.signature ?? '') !== signature) {
-        existing?.remove()
-        if (proposal) {
-          const view = this.buildProposal(path, proposal)
-          view.classList.add('schema-proposal')
-          view.dataset.proposal = path
-          view.dataset.signature = signature
-          entry.wrapper.insertBefore(view, entry.errorSlot)
-        }
-      }
+      const signature = proposal ? this.proposalSignature(path, proposal) : ''
+      if ((existing?.dataset.signature ?? '') === signature) return
+      existing?.remove()
+      if (!proposal) return
+      const view = this.buildProposal(path, proposal, wrapper)
+      view.classList.add('schema-proposal')
+      view.dataset.proposal = path
+      view.dataset.signature = signature
+      insert(view)
     }
+    for (const [path, entry] of this._index) {
+      place(path, entry.wrapper, (view) =>
+        entry.wrapper.insertBefore(view, entry.errorSlot)
+      )
+    }
+    for (const [path, host] of this._hosts) {
+      place(path, host.wrapper, (view) => host.after.after(view))
+    }
+    this._proposalsShown = proposals != null
     // A read-only form shows what is proposed and offers no way to act on it.
     for (const el of this.querySelectorAll('.schema-proposal-actions')) {
       ;(el as HTMLElement).hidden = this.readOnly
     }
     const slot = this._hiddenProposalSlot
     if (!slot) return
-    const orphans = Object.keys(this._proposals ?? {}).filter(
-      (path) => !this._index.has(path)
+    const orphans = Object.keys(proposals ?? {}).filter(
+      (path) => !this._index.has(path) && !this._hosts.has(path)
     )
     const text =
       orphans.length === 0
@@ -2495,35 +2654,74 @@ export class TosiSchemaForm extends withAttributes({
     slot.hidden = orphans.length === 0
   }
 
-  private buildProposal(path: string, proposal: FieldProposal): HTMLElement {
-    const accept = () => void this.acceptProposal(path)
-    const reject = () => void this.rejectProposal(path)
+  private _proposalsShown = false
+
+  /*
+  What a rendered proposal depends on. A custom view is also given the current value and
+  the read-only state, so it is rebuilt when either changes.
+  */
+  private proposalSignature(path: string, proposal: FieldProposal): string {
+    const parts: unknown[] = [proposal.value, proposal.reason, proposal.source]
+    if (this.proposalView) {
+      parts.push(this.readOnly, getByPath(this._value, path))
+    }
+    try {
+      return JSON.stringify(parts) ?? String(parts)
+    } catch {
+      // A value JSON cannot express (a BigInt, a cycle) still has to render.
+      return parts.map(String).join('|')
+    }
+  }
+
+  private buildProposal(
+    path: string,
+    proposal: FieldProposal,
+    wrapper: HTMLElement
+  ): HTMLElement {
+    // A read-only form does not change its value, whoever drew the buttons.
+    const accept = () => {
+      if (!this.readOnly) this.acceptProposal(path)
+    }
+    const reject = () => {
+      if (!this.readOnly) this.rejectProposal(path)
+    }
     if (this.proposalView) {
       return this.proposalView({
         path,
-        label:
-          this._index.get(path)?.wrapper.querySelector('label')?.textContent ??
-          path,
+        label: wrapper.querySelector('label, summary')?.textContent ?? path,
         current: getByPath(this._value, path),
         proposal,
+        readOnly: this.readOnly,
         accept,
         reject,
         elements,
       })
     }
-    const shown =
-      proposal.value !== null && typeof proposal.value === 'object'
-        ? JSON.stringify(proposal.value)
-        : String(proposal.value)
+    let shown: string
+    try {
+      shown =
+        proposal.value !== null && typeof proposal.value === 'object'
+          ? JSON.stringify(proposal.value)
+          : String(proposal.value)
+    } catch {
+      shown = String(proposal.value)
+    }
+    /*
+    Proposals arrive as data, often from another system. Only a string is shown as the
+    reason or source: tosijs reads a plain object as element properties, `innerHTML`
+    included, so anything else is left out.
+    */
+    const text = (value: unknown): string | null =>
+      typeof value === 'string' && value !== '' ? value : null
+    const source = text(proposal.source)
+    const reason = text(proposal.reason)
     return div(
       span(
         { class: 'schema-proposal-value' },
         `${localize('Proposed')}: `,
         b(shown)
       ),
-      ...(proposal.source
-        ? [span({ class: 'schema-proposal-source' }, proposal.source)]
-        : []),
+      ...(source ? [span({ class: 'schema-proposal-source' }, source)] : []),
       span(
         { class: 'schema-proposal-actions' },
         button(
@@ -2535,9 +2733,7 @@ export class TosiSchemaForm extends withAttributes({
           localize('Reject')
         )
       ),
-      ...(proposal.reason
-        ? [span({ class: 'schema-proposal-reason' }, proposal.reason)]
-        : [])
+      ...(reason ? [span({ class: 'schema-proposal-reason' }, reason)] : [])
     )
   }
 
@@ -2639,7 +2835,9 @@ export class TosiSchemaForm extends withAttributes({
           hidden: true,
         })
       }
-      this._hasSections = false
+      this._watchPanels = false
+      this._hosts.clear()
+      this._arrays.clear()
       this._hiddenProposalSlot = div({
         class: 'schema-hidden-proposals',
         hidden: true,
@@ -2680,6 +2878,7 @@ export class TosiSchemaForm extends withAttributes({
       )
       this._builtFor = this._schema
     }
+    this.syncArrays()
     this.syncVariants()
     this._fields = this.allFields()
     this.applyReadOnly()

@@ -997,9 +997,10 @@ form.fields = {
 }
 ```
 
-A section starts open unless you say `collapsed: true`. A closed section gets the class
-`-invalid`, and a red title, while a field inside it is in error, so collapsing one cannot
-hide a problem. Sections can sit inside an array's or a union's `fields` too.
+A section starts open unless you say `collapsed: true`. A section, and any entry with
+`collapsed: true`, gets the class `-invalid` and a red title while a field inside it is in
+error, so collapsing one cannot hide a problem. In TypeScript, `isSection(entry)` tells a
+section from a field entry when you walk a curation yourself. Sections can sit inside an array's or a union's `fields` too.
 
 ```js
 import { tosiSchemaForm } from 'tosijs-ui'
@@ -1143,13 +1144,22 @@ form.proposals = {
   alone. Both carry `detail: { path, proposal }`, and both remove the entry from
   `form.proposals`.
 - `acceptProposal(path)` and `rejectProposal(path)` do the same from code.
-- Paths are value paths, so an array item is `thresholds.0.value`. They work with or without
-  a curation; a proposal for a field that is not shown is named above the fields.
+- Paths are value paths, so an array item is `thresholds.0.value`. A proposal can be for a
+  whole array, object or union: it sits at the top of that panel, and accepting it replaces
+  the lot. They work with or without a curation; a proposal for something that is not shown
+  is named above the fields.
+- A proposal for an array item follows its item when items are moved, and is dropped when
+  its item is removed. One for a field inside a union stays at its path if the branch
+  changes.
+- `reason` and `source` are shown as text, and only when they are strings.
 - A field that is `readOnly` in a curation can still have its proposal accepted: that is the
   review screen, where nobody types and somebody decides. A form with `readOnly` set shows
   the proposals with no buttons.
 - Set **`proposalView`** to a function to render a proposal yourself. It receives
-  `{ path, label, current, proposal, accept, reject, elements }` and returns an element.
+  `{ path, label, current, proposal, readOnly, accept, reject, elements }` and returns an
+  element. While the form is read-only `accept` and `reject` do nothing, and `readOnly` is
+  true so your view can leave its buttons out. `acceptProposal()` called from code is not
+  affected by `readOnly`.
 - Proposals are presentation, like the rest of this page: nothing stops code from writing
   `form.value`. Who may accept is for your application to enforce.
 

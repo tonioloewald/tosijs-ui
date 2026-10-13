@@ -489,3 +489,250 @@ test('a schema title is shown as written', async ({ page }) => {
     page.locator('#nested [data-field="plainKey_here"] label')
   ).toHaveText('plain key here')
 })
+
+test('a proposal on an array, an object or a union sits on its panel and can be accepted', async ({
+  page,
+}) => {
+  await makeForm(page, null, {
+    proposals: {
+      thresholds: {
+        value: [
+          { when: { company: 'A' }, value: 0.1 },
+          { when: { company: 'B' }, value: 0.2 },
+          { when: { company: 'C' }, value: 0.3 },
+        ],
+        reason: 'Replace the list',
+      },
+      rule: { value: { kind: 'percent', rate: 7 } },
+      'thresholds.0.when': { value: { company: 'Zed', account: '1' } },
+    },
+  })
+  const onArray = page.locator(
+    '#nested [data-array="thresholds"] > .schema-proposal'
+  )
+  await expect(onArray).toContainText('Replace the list')
+  await expect(
+    page.locator('#nested [data-union="rule"] > .schema-proposal')
+  ).toContainText('percent')
+  // nothing is reported as "not shown": all three are on screen
+  await expect(page.locator('#nested .schema-hidden-proposals')).toBeHidden()
+
+  // an object inside an item
+  await page
+    .locator(
+      '#nested .schema-proposal[data-proposal="thresholds.0.when"] .schema-accept'
+    )
+    .click()
+  await expect(
+    page.locator('#nested [data-path="thresholds.0.when.company"]')
+  ).toHaveValue('Zed')
+
+  // a whole array: the rows follow the value
+  await onArray.locator('.schema-accept').click()
+  await expect(
+    page.locator('#nested [data-array="thresholds"] > .schema-item')
+  ).toHaveCount(3)
+  await expect(
+    page.locator('#nested [data-path="thresholds.2.when.company"]')
+  ).toHaveValue('C')
+  await expect(onArray).toHaveCount(0)
+
+  // a union: the branch follows the value
+  await page
+    .locator('#nested [data-union="rule"] > .schema-proposal .schema-accept')
+    .click()
+  await expect(page.locator('#nested [data-path="rule.rate"]')).toHaveValue('7')
+})
+
+test('setting a value with a different number of items re-fills the array', async ({
+  page,
+}) => {
+  await makeForm(page, null)
+  const rows = page.locator('#nested [data-array="thresholds"] > .schema-item')
+  await expect(rows).toHaveCount(2)
+  await page.evaluate(() => {
+    const form = document.querySelector('#nested') as any
+    form.value = {
+      ...form.value,
+      thresholds: [...form.value.thresholds, { value: 0.1 }, { value: 0.2 }],
+    }
+  })
+  await expect(rows).toHaveCount(4)
+  await expect(
+    page.locator('#nested [data-path="thresholds.3.value"]')
+  ).toHaveValue('0.2')
+  await page.evaluate(() => {
+    const form = document.querySelector('#nested') as any
+    form.value = { ...form.value, thresholds: [{ value: 0.9 }] }
+  })
+  await expect(rows).toHaveCount(1)
+  await expect(
+    page.locator('#nested [data-path="thresholds.0.value"]')
+  ).toHaveValue('0.9')
+})
+
+test('a proposal follows its array item when items move, and goes when its item is removed', async ({
+  page,
+}) => {
+  await makeForm(page, null, {
+    proposals: {
+      'thresholds.0.value': { value: 0.11 },
+      'thresholds.1.note': { value: 'changed' },
+    },
+  })
+  const keys = () =>
+    page.evaluate(() =>
+      Object.keys((document.querySelector('#nested') as any).proposals)
+    )
+  // move the first item down: each proposal stays with its item
+  await page
+    .locator('#nested [data-array="thresholds"] > .schema-item')
+    .first()
+    .locator('.schema-move-down')
+    .click()
+  expect(await keys()).toEqual(['thresholds.1.value', 'thresholds.0.note'])
+  await expect(
+    page.locator('#nested [data-field="thresholds.1.value"] .schema-proposal')
+  ).toContainText('0.11')
+  expect((await formValue(page)).thresholds[1].value).toBe(0.8)
+
+  // remove what is now the first item: its proposal goes, the other moves up
+  await page
+    .locator('#nested [data-array="thresholds"] > .schema-item')
+    .first()
+    .locator('.schema-remove')
+    .click()
+  expect(await keys()).toEqual(['thresholds.0.value'])
+  await page
+    .locator('#nested [data-field="thresholds.0.value"] .schema-accept')
+    .click()
+  expect((await formValue(page)).thresholds).toEqual([
+    { when: { company: 'Acme', account: '4000' }, value: 0.11, note: 'first' },
+  ])
+})
+
+test('a reason or source that is not a string is not rendered', async ({
+  page,
+}) => {
+  await makeForm(page, null, {
+    proposals: {
+      name: {
+        value: 'x',
+        reason: { innerHTML: '<img class="injected" src="x">' },
+        source: { innerHTML: '<b class="injected">hi</b>' },
+      },
+      retries: { value: 1, reason: '<img class="injected" src="x">' },
+    },
+  })
+  await expect(
+    page.locator('#nested [data-field="name"] .schema-proposal')
+  ).toHaveCount(1)
+  await expect(page.locator('#nested .injected')).toHaveCount(0)
+  // a markup STRING is shown as text
+  await expect(
+    page.locator('#nested [data-field="retries"] .schema-proposal-reason')
+  ).toHaveText('<img class="injected" src="x">')
+  // and a title that is not a string falls back to the key
+  await page.evaluate(() => {
+    const form = document.querySelector('#nested') as any
+    form.schema = {
+      type: 'object',
+      properties: {
+        evil: {
+          type: 'string',
+          title: { innerHTML: '<b class="injected">x</b>' },
+        },
+      },
+    }
+  })
+  await expect(page.locator('#nested [data-field="evil"] label')).toHaveText(
+    'evil'
+  )
+  await expect(page.locator('#nested .injected')).toHaveCount(0)
+})
+
+test('deciding a proposal keeps keyboard focus in the form', async ({
+  page,
+}) => {
+  await makeForm(
+    page,
+    { name: { readOnly: true }, retries: true },
+    { proposals: { name: { value: 'Grace' }, retries: { value: 9 } } }
+  )
+  // the field is locked by the curation, and its proposal can still be accepted
+  await expect(page.locator('#nested [data-path="name"]')).toBeDisabled()
+  await page.locator('#nested [data-field="name"] .schema-accept').focus()
+  await page.keyboard.press('Enter')
+  expect((await formValue(page)).name).toBe('Grace')
+  // the field cannot take focus, so the next proposal does
+  await expect(
+    page.locator('#nested [data-field="retries"] .schema-accept')
+  ).toBeFocused()
+  await page.locator('#nested [data-field="retries"] .schema-reject').focus()
+  await page.keyboard.press('Enter')
+  // nothing left to decide: the field itself
+  await expect(page.locator('#nested [data-path="retries"]')).toBeFocused()
+})
+
+test('a read-only form does not accept through a custom view either', async ({
+  page,
+}) => {
+  await makeForm(page, null, { proposals: { name: { value: 'Grace' } } })
+  await page.evaluate(() => {
+    const form = document.querySelector('#nested') as any
+    form.proposalView = ({ readOnly, current, accept, elements }: any) =>
+      elements.button(
+        { class: 'mine', onClick: accept },
+        `${readOnly}:${current}`
+      )
+    form.readOnly = true
+  })
+  const mine = page.locator('#nested .schema-proposal.mine')
+  await expect(mine).toHaveText('true:Ada')
+  await mine.click()
+  expect((await formValue(page)).name).toBe('Ada')
+  // the view is rebuilt when the form becomes editable, and when the value changes
+  await page.evaluate(() => {
+    const form = document.querySelector('#nested') as any
+    form.readOnly = false
+    form.value = { ...form.value, name: 'Bea' }
+  })
+  await expect(mine).toHaveText('false:Bea')
+  await mine.click()
+  expect((await formValue(page)).name).toBe('Grace')
+})
+
+test('an entry that starts collapsed says when something inside it is wrong', async ({
+  page,
+}) => {
+  await makeForm(page, { thresholds: { collapsed: true } })
+  const panel = page.locator('#nested [data-array="thresholds"]')
+  await expect(panel).not.toHaveClass(/-invalid/)
+  await page.evaluate(() => {
+    const form = document.querySelector('#nested') as any
+    const next = structuredClone(form.value)
+    next.thresholds[0].value = 5
+    form.value = next
+  })
+  await expect(panel).toHaveClass(/-invalid/)
+})
+
+test('an array item stacks its fields and keeps its buttons beside the first', async ({
+  page,
+}) => {
+  await makeForm(page, null)
+  const item = page
+    .locator('#nested [data-array="thresholds"] > .schema-item')
+    .first()
+  const value = await item
+    .locator('[data-field="thresholds.0.value"]')
+    .boundingBox()
+  const note = await item
+    .locator('[data-field="thresholds.0.note"]')
+    .boundingBox()
+  const controls = await item.locator('> .schema-item-controls').boundingBox()
+  expect(note!.x).toBe(value!.x)
+  expect(note!.y).toBeGreaterThan(value!.y)
+  expect(controls!.x).toBeGreaterThanOrEqual(value!.x + value!.width)
+  expect(controls!.y).toBeLessThan(value!.y)
+})

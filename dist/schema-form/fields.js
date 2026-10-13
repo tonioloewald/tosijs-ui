@@ -220,7 +220,10 @@ export function fieldsFor(schema, prefix = '') {
     const required = new Set(schema.required ?? []);
     return Object.entries(schema.properties).map(([key, rawSchema]) => {
         const path = prefix ? `${prefix}.${key}` : key;
-        const label = rawSchema.title || humanise(key);
+        // Only a string is a title: a schema can come from anywhere, and tosijs reads an object
+        // handed to an element creator as properties, `innerHTML` included.
+        const title = rawSchema.title;
+        const label = typeof title === 'string' && title ? title : humanise(key);
         let propSchema = rawSchema;
         let isRequired = required.has(key);
         /*

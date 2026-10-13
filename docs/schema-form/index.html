@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=bb0cb0d7e796" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=ea0b4ae817d5" data-tosi-doc-system />
   <title>schema-form — tosijs-ui</title>
   <meta name="description" content="A form generated from a JSON Schema, with validation." />
   <link rel="canonical" href="https://ui.tosijs.net/schema-form/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=634fe130e72c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=e4b7883c56a1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="schema-form">schema-form</h1>
 <!--{ "parent": "Components" }-->
@@ -955,9 +955,10 @@ the same paths you would use outside it.</p>
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<p>A section starts open unless you say <code>collapsed: true</code>. A closed section gets the class
-<code>-invalid</code>, and a red title, while a field inside it is in error, so collapsing one cannot
-hide a problem. Sections can sit inside an array&#39;s or a union&#39;s <code>fields</code> too.</p>
+<p>A section starts open unless you say <code>collapsed: true</code>. A section, and any entry with
+<code>collapsed: true</code>, gets the class <code>-invalid</code> and a red title while a field inside it is in
+error, so collapsing one cannot hide a problem. In TypeScript, <code>isSection(entry)</code> tells a
+section from a field entry when you walk a curation yourself. Sections can sit inside an array&#39;s or a union&#39;s <code>fields</code> too.</p>
 <pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
 import { elements } from &#39;tosijs&#39;
 
@@ -1093,13 +1094,22 @@ under its field with <strong>Accept</strong> and <strong>Reject</strong>:</p>
 alone. Both carry <code>detail: { path, proposal }</code>, and both remove the entry from
 <code>form.proposals</code>.</li>
 <li><code>acceptProposal(path)</code> and <code>rejectProposal(path)</code> do the same from code.</li>
-<li>Paths are value paths, so an array item is <code>thresholds.0.value</code>. They work with or without
-a curation; a proposal for a field that is not shown is named above the fields.</li>
+<li>Paths are value paths, so an array item is <code>thresholds.0.value</code>. A proposal can be for a
+whole array, object or union: it sits at the top of that panel, and accepting it replaces
+the lot. They work with or without a curation; a proposal for something that is not shown
+is named above the fields.</li>
+<li>A proposal for an array item follows its item when items are moved, and is dropped when
+its item is removed. One for a field inside a union stays at its path if the branch
+changes.</li>
+<li><code>reason</code> and <code>source</code> are shown as text, and only when they are strings.</li>
 <li>A field that is <code>readOnly</code> in a curation can still have its proposal accepted: that is the
 review screen, where nobody types and somebody decides. A form with <code>readOnly</code> set shows
 the proposals with no buttons.</li>
 <li>Set <strong><code>proposalView</code></strong> to a function to render a proposal yourself. It receives
-<code>{ path, label, current, proposal, accept, reject, elements }</code> and returns an element.</li>
+<code>{ path, label, current, proposal, readOnly, accept, reject, elements }</code> and returns an
+element. While the form is read-only <code>accept</code> and <code>reject</code> do nothing, and <code>readOnly</code> is
+true so your view can leave its buttons out. <code>acceptProposal()</code> called from code is not
+affected by <code>readOnly</code>.</li>
 <li>Proposals are presentation, like the rest of this page: nothing stops code from writing
 <code>form.value</code>. Who may accept is for your application to enforce.</li>
 </ul>
@@ -1411,6 +1421,6 @@ test(&#39;editing keeps unknown keys, fires change, and does not rebuild under t
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-024q93ns.js"></script>
+  <script type="module" src="../hydrate-p9q0rbnh.js"></script>
 </body>
 </html>

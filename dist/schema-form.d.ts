@@ -4,6 +4,7 @@ import { type FieldError } from './schema-form/fields.js';
 export { setSchemaValidator, schemaValidationAvailable, type SchemaValidator, } from './schema-form/validator.js';
 import { type FieldCuration } from './schema-form/curate.js';
 export type { FieldCuration, CuratedField, CuratedSection, FieldEditor, } from './schema-form/curate.js';
+export { isSection } from './schema-form/curate.js';
 /** A value someone proposes for one field, shown beside the current one for review. */
 export interface FieldProposal {
     value: unknown;
@@ -18,6 +19,9 @@ export interface ProposalContext {
     label: string;
     current: unknown;
     proposal: FieldProposal;
+    /** The form is read-only: show the proposal, offer no way to act on it. */
+    readOnly: boolean;
+    /** Do nothing while the form is read-only. */
     accept: () => void;
     reject: () => void;
     elements: typeof elements;
@@ -120,7 +124,7 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
             margin: string;
             paddingLeft: string;
         };
-        ':host .schema-section.-invalid > summary': {
+        ':host .schema-group.-invalid > summary': {
             color: string;
             opacity: string;
         };
@@ -178,6 +182,10 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private _index;
     private _curation;
     private _entries;
+    private _hosts;
+    private _arrays;
+    /** Everything under `path` is about to be recreated: what is held for it is stale. */
+    private forgetUnder;
     private _curationWarnings;
     private _hiddenErrorSlot;
     private _hiddenErrorSignature;
@@ -209,6 +217,8 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     /** Render a proposal your own way. Return the element to show under the field. */
     proposalView: ((context: ProposalContext) => HTMLElement) | null;
     private settleProposal;
+    private focusAfterProposal;
+    private proposalHasFocus;
     /**
      * Write the proposed value at `path` and drop the proposal. Fires `proposalaccept`
      * (`detail: { path, proposal }`), then `change`. Returns false when there is none.
@@ -216,6 +226,7 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     acceptProposal(path: string): boolean;
     /** Drop the proposal at `path`, leaving the value alone. Fires `proposalreject`. */
     rejectProposal(path: string): boolean;
+    private rekeyProposals;
     get schema(): JSONSchema;
     set schema(schema: JSONSchema);
     get value(): any;
@@ -236,6 +247,7 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private buildUnion;
     private fillUnion;
     private handleVariantChange;
+    private syncArrays;
     private syncVariants;
     /** The shared tail of every edit that changes WHICH fields exist. */
     private afterStructuralEdit;
@@ -255,9 +267,11 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private syncValues;
     private syncPlugins;
     private syncErrors;
-    private _hasSections;
+    private _watchPanels;
     private _hiddenProposalSlot;
     private syncProposals;
+    private _proposalsShown;
+    private proposalSignature;
     private buildProposal;
     private syncHiddenErrors;
     content: null;

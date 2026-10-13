@@ -755,3 +755,23 @@ test('a const field is not editable on EITHER surface', () => {
   } as any)[0] as any
   expect(fieldEditable(stringField)).toBe(true)
 })
+
+test('setByPath cannot reach a prototype through a hostile path', () => {
+  const before = Object.keys(Object.prototype).length
+  const a = setByPath({}, '__proto__.polluted', 1) as any
+  const b = setByPath({}, 'constructor.prototype.polluted', 1) as any
+  expect(({} as any).polluted).toBeUndefined()
+  expect(Object.keys(Object.prototype).length).toBe(before)
+  expect(Object.getPrototypeOf(a)).toBe(Object.prototype)
+  expect(Object.getPrototypeOf(b)).toBe(Object.prototype)
+})
+
+test('only a string is a title', () => {
+  const [field] = fieldsFor({
+    type: 'object',
+    properties: {
+      some_key: { type: 'string', title: { innerHTML: '<b>x</b>' } },
+    },
+  } as any)
+  expect(field.label).toBe('some key')
+})
