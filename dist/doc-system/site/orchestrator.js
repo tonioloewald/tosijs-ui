@@ -1224,7 +1224,6 @@ export async function buildSite(config, opts = {}) {
                         baseUrl: config.baseUrl,
                         basePath: config.basePath,
                         projectLinks: config.projectLinks,
-                        haltijaDev: config.haltijaDev,
                         markdownPages: config.markdownPages,
                         liveExamples: config.liveExamples,
                     }, corpus);

@@ -147,22 +147,6 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
             '',
         ]
         : [];
-    /*
-    Only advertise browser control when the project has actually opted in. Telling an agent to
-    drive a page that has no dev channel sends it after a capability that will not answer, and
-    a wrong affordance costs more than a missing one.
-    */
-    const haltijaNote = meta.haltijaDev
-        ? [
-            'Running this project locally (`bun start`), the dev server injects a',
-            'localhost-gated dev channel, so an agent can DRIVE the live page with the `hj`',
-            'CLI — `hj navigate`, `hj eval`, `hj tree` — instead of inferring behaviour from',
-            'source. Injected at serve time only, never in the built output. Note that no',
-            'requestAnimationFrame runs under `hj eval`, and tosijs renders are rAF-driven, so',
-            'use it to inspect STATE; a painted-output check needs a real test lane.',
-            '',
-        ]
-        : [];
     // Only for a corpus-driven index: the legacy scan links to dist/ files, not pages.
     const example = corpus ? markdownExample(corpus, meta) : undefined;
     const markdownNote = corpus && meta.markdownPages !== false
@@ -199,7 +183,6 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
         '',
         ...markdownNote,
         ...liveExampleNote,
-        ...haltijaNote,
         '## Pages',
         '',
     ];

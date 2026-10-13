@@ -701,6 +701,10 @@ Electron app needed), click the 🖥 button in the widget once to grant the shar
 agent's context (add `--format webp --scale 0.5` for a compact capture, `--chyron
 false` to drop the burned-in caption). Local dev only; off by default.
 
+Tell your agent about it in the project's own agent instructions (`CLAUDE.md`,
+`AGENTS.md`). `llms.txt` does not mention it: that file is for whoever consumes your
+library, and how to run and drive your dev server is not their concern.
+
 > The channel tracks haltija's **`@beta`** dist-tag, where the in-browser WebRTC
 > screen capture landed ahead of `latest`.
 

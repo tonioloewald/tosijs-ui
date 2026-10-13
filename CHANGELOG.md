@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- **`llms.txt` no longer carries a paragraph about the dev server.** A site with
+  `haltijaDev` set used to tell readers of its `llms.txt` to run `bun start` and drive the
+  page with the `hj` CLI. That file is for whoever consumes the library, and those readers
+  have no repo to run. If you relied on it to brief an agent working in your project, put
+  the same note in your `CLAUDE.md` or `AGENTS.md`.
+
 ## 1.16.15
 
 For projects that build their own docs bundle, from tosijs's upgrade to 1.16.13 (board

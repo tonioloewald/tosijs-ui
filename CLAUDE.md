@@ -957,6 +957,15 @@ is a patch, even though it alters behaviour. The example console moved from a pa
 preview to a tab (and gained a REPL): live examples are a tool for doc authors and readers of
 docs, nothing an adopter's own product UI depends on, and no API was removed.
 
+**Ruled for 1.16.15 (the maintainer's call):** a new `strict` failure may ship in a patch when
+the build it fails was already producing a broken site. Two copies of CodeMirror blank every
+`<tosi-code>`, so failing a `bundleEntry` + `strict` build on them breaks nothing that worked.
+
+**Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
+about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
+removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a
+project's own agent instructions.
+
 So a big in-progress feature still ships as `1.x.0-beta.N`, not as a patch pretending to be
 small. Cut betas freely — but a
 prerelease published under a dist-tag is something consumers _install_, so the gate is

@@ -74,17 +74,6 @@ export interface LlmsTxtMeta {
   /** optional framing line(s) under the description */
   tagline?: string
   /**
-   * Mirrors `SiteConfig.haltijaDev`. When set, `llms.txt` tells an agent it can DRIVE the
-   * running page rather than reason about it from source — which is the single most useful
-   * thing an agent can know about a project it is working on, and was previously discoverable
-   * only by reading the doc-site-system page in full.
-   *
-   * `'tunnel'` also carries that meaning — it is `true` plus a remote path — so the note is
-   * written on truthiness, not on `=== true`. Getting that wrong would silently drop the note
-   * for exactly the projects that enabled the MORE capable mode.
-   */
-  haltijaDev?: boolean | 'tunnel'
-  /**
    * Mirrors `SiteConfig.markdownPages` (default true): the build writes `index.md` beside
    * every page, so the index says so. Pass false when the site ships HTML only — pointing a
    * reader at a file that is not there costs more than not mentioning it.
@@ -220,23 +209,6 @@ export function generateLlmsTxt(
       ]
     : []
 
-  /*
-  Only advertise browser control when the project has actually opted in. Telling an agent to
-  drive a page that has no dev channel sends it after a capability that will not answer, and
-  a wrong affordance costs more than a missing one.
-  */
-  const haltijaNote = meta.haltijaDev
-    ? [
-        'Running this project locally (`bun start`), the dev server injects a',
-        'localhost-gated dev channel, so an agent can DRIVE the live page with the `hj`',
-        'CLI — `hj navigate`, `hj eval`, `hj tree` — instead of inferring behaviour from',
-        'source. Injected at serve time only, never in the built output. Note that no',
-        'requestAnimationFrame runs under `hj eval`, and tosijs renders are rAF-driven, so',
-        'use it to inspect STATE; a painted-output check needs a real test lane.',
-        '',
-      ]
-    : []
-
   // Only for a corpus-driven index: the legacy scan links to dist/ files, not pages.
   const example = corpus ? markdownExample(corpus, meta) : undefined
   const markdownNote =
@@ -275,7 +247,6 @@ export function generateLlmsTxt(
     '',
     ...markdownNote,
     ...liveExampleNote,
-    ...haltijaNote,
     '## Pages',
     '',
   ]

@@ -64,28 +64,12 @@ function written(meta: Record<string, unknown>): string {
   return readFileSync(out, 'utf8')
 }
 
-test('haltijaDev tells an agent it can drive the running page', () => {
-  // The point of llms.txt is what an agent learns without reading everything. Browser
-  // control was documented only inside the doc-site-system page, i.e. exactly where an
-  // agent triaging some other component would never look.
+test('the index says nothing about developing the site, whatever the config', () => {
+  // llms.txt is read by whoever CONSUMES the library. How to run and drive the project's
+  // own dev server belongs in the project's agent instructions, not here.
   const text = written({ name: 'x', haltijaDev: true })
-  expect(text).toContain('hj navigate')
-  expect(text).toContain('DRIVE the live page')
-})
-
-test('REGRESSION: the note is absent when the project has NOT opted in', () => {
-  // A wrong affordance costs more than a missing one — an agent told to drive a page with
-  // no dev channel spends its time on a capability that will never answer.
-  const text = written({ name: 'x' })
-  expect(text).not.toContain('hj navigate')
-  expect(text).not.toContain('DRIVE the live page')
-})
-
-test('the rAF caveat travels with the affordance, not separately', () => {
-  // Without it an agent concludes "the component does not render" from an hj eval that was
-  // never going to paint — the exact wrong conclusion this project has drawn before.
-  const text = written({ name: 'x', haltijaDev: true })
-  expect(text).toContain('requestAnimationFrame')
+  expect(text).not.toContain('bun start')
+  expect(text).not.toContain('hj ')
 })
 
 /*
