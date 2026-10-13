@@ -107,12 +107,19 @@ try {
     strays.join(', ')
   )
 
+  /*
+  The ceiling is a tripwire for an ACCIDENT (5.2MB of hydrate bundle), not a budget for the
+  library. It was 3MB until 1.16.14, when ordinary growth crossed it: 2.99MB at 1.16.12,
+  3.01MB with the schema-form's sections and proposals. Raised to 3.5MB, which still fails
+  on anything shaped like the accident. When it trips again, look at what grew first: half
+  the tarball is `dist/iife.js.map`, and `CHANGELOG.md` is 0.39MB unpacked.
+  */
   const bytes = Bun.file(tarball).size
   check(
-    `tarball is under 3MB (is ${(bytes / 1e6).toFixed(2)}MB, ${
+    `tarball is under 3.5MB (is ${(bytes / 1e6).toFixed(2)}MB, ${
       listing.length
     } files)`,
-    bytes < 3_000_000
+    bytes < 3_500_000
   )
   for (const bin of Object.values(pkg.bin ?? {}) as string[]) {
     check(

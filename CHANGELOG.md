@@ -16,15 +16,19 @@ and usable as a review screen. All of it is off until you ask for it.
   fields in a titled panel. `collapsed: true` also works on an object or array entry. A
   section or collapsed entry is marked `-invalid`, with a red title, while a field inside it
   is in error. **TypeScript:** `FieldCuration`'s values now include `CuratedSection`, so code
-  that walks a curation and reads `entry.caption` needs the new `isSection(entry)` guard.
+  that walks a curation and reads `entry.caption` needs the new guard: `isSection` is exported.
 - **Proposals, for review screens.** `form.proposals = { path: { value, reason?, source? } }`
   shows each proposed value under its field with Accept and Reject. `value` stays the
   current value until one is accepted; accepting fires `proposalaccept` then `change`,
   rejecting fires `proposalreject`. `acceptProposal(path)` / `rejectProposal(path)` do it
   from code, and `proposalView` renders a proposal your own way. A proposal can be for a
-  whole array, object or union, and one for an array item follows its item when items move.
-  Works with or without a curation. New localized strings: `Proposed`, `Accept`, `Reject`,
+  whole array, object or union, and an object item of an array can be proposed whole
+  (`list.0`). One for an array item follows its item when items move. `proposalView` is
+  given `ProposalContext.readOnly`, and its `accept` / `reject` do nothing while the form is
+  read-only. Works with or without a curation. New localized strings: `Proposed`, `Accept`, `Reject`,
   `Proposed changes to fields not shown here`.
+- For TypeScript: `isSection` is exported; `ProposalContext.readOnly` tells a custom
+  `proposalView` that the form is read-only.
 - **Fixed: an array item with several fields laid them out in two columns**, so the second
   field sat in the column meant for the move and remove buttons and the buttons wrapped
   underneath. Fields now stack and the buttons sit beside the first. The form now places an
