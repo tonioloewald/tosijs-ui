@@ -1,6 +1,6 @@
 {
   "name": "tosijs-ui",
-  "version": "1.16.16",
+  "version": "1.16.17",
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
@@ -56,7 +56,7 @@
     "playwright": "^1.62.0",
     "prettier": "^2.8.8",
     "prismjs": "^1.30.0",
-    "tjs-lang": "0.13.13",
+    "tjs-lang": "0.14.0-rc.5",
     "tosijs": "1.10.7",
     "tosijs-schema": "1.10.2",
     "typescript": "^5.9.3",

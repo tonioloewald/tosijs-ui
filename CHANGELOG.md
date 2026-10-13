@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.16.17
+
+- **The pinned tjs-lang is 0.14.0-rc.5** (it was 0.13.13). This is the version a doc site
+  loads from a CDN when it does not serve its own copy, and the one this package builds and
+  tests with. What that turns on for `tjs` and `ts` examples, all of it already
+  feature-detected in 1.16.16: examples written as modules run (`export` is removed), a
+  console line shows its own value and offers the JavaScript it became, and a built-in
+  `tjs` example gains a **Docs** tab beside its code, generated from its signatures. A site
+  that installs its own tjs-lang is unaffected: it runs the version it installed.
+- The peer range is unchanged (`^0.13.1 || ^0.14.0-rc.5`).
+
 ## 1.16.16
 
 For tjs-lang's book (GitHub #216 item 3 and #210 item 5), plus one change to `llms.txt`.

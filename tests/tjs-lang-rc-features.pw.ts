@@ -1,27 +1,30 @@
 import { test, expect } from '@playwright/test'
 
 /*
-The two tjs-lang features 1.16.16 feature-detects, against the tjs-lang the site actually
+The two tjs-lang features tosijs-ui feature-detects, against the tjs-lang the site actually
 serves (GitHub #210 item 5, #216 item 3):
 
 - `stripExports` (0.14.0-rc.4 on): a `tjs` or `ts` example written as a module runs;
 - `prelude` / `body` (0.14.0-rc.5 on): a console line has its own value and its JavaScript.
 
-SKIPPED while the pinned tjs-lang predates them, which it does at the time of writing
-(0.13.13): every other test of these uses a stand-in. This one starts running, unchanged,
-the day the devDependency moves, and is what was run by hand with rc.5 swapped in.
+Every other test of these uses a stand-in, so this is the one that holds the real contract.
+The pinned tjs-lang has both since 1.16.17, so a served bundle WITHOUT them is a failure
+here, not a skip: a build that stopped shipping `/tjs/` would otherwise pass by not running.
 */
-const served = async (page: import('@playwright/test').Page) =>
-  page.evaluate(async () => {
+const requireServed = async (page: import('@playwright/test').Page) => {
+  const found = await page.evaluate(async () => {
     const base = (globalThis as any).__TJS_LOCAL_BASE
-    if (typeof base !== 'string') return { strip: false, prelude: false }
+    if (typeof base !== 'string') return { base: false }
     const m = await import(/* @vite-ignore */ `${base}tjs-browser.js`)
     return {
+      base: true,
       strip: typeof m.stripExports === 'function',
       prelude:
         'prelude' in m.tjs('1 == 1', { dialect: 'tjs', runTests: false }),
     }
   })
+  expect(found).toEqual({ base: true, strip: true, prelude: true })
+}
 
 const mount = (
   page: import('@playwright/test').Page,
@@ -47,7 +50,7 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('a tjs example written as a module runs', async ({ page }) => {
-  test.skip(!(await served(page)).strip, 'served tjs-lang has no stripExports')
+  await requireServed(page)
   await mount(
     page,
     'tjs',
@@ -57,7 +60,7 @@ test('a tjs example written as a module runs', async ({ page }) => {
 })
 
 test('a ts example written as a module runs', async ({ page }) => {
-  test.skip(!(await served(page)).strip, 'served tjs-lang has no stripExports')
+  await requireServed(page)
   await mount(
     page,
     'ts',
@@ -72,7 +75,7 @@ test('a ts example written as a module runs', async ({ page }) => {
 test('a tjs console line has its own value and its JavaScript', async ({
   page,
 }) => {
-  test.skip(!(await served(page)).prelude, 'served tjs-lang has no prelude')
+  await requireServed(page)
   await mount(page, 'tjs', `const x = 5\npreview.textContent = 'ready'`, {
     view: 'console',
   })

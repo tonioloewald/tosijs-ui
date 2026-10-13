@@ -70,7 +70,7 @@ export declare function rewriteImports(code: string, contextKeys: string[], impo
  * Execute code as an async function with injected context
  */
 export declare function executeCode(code: string, context: ExampleContext, transform: TransformFn): Promise<void>;
-export declare const TJS_VERSION = "0.13.13";
+export declare const TJS_VERSION = "0.14.0-rc.5";
 export declare const TYPESCRIPT_VERSION = "5.9.3";
 export declare const TYPESCRIPT_URL = "https://esm.sh/typescript@5.9.3";
 type StripExports = (code: string) => string;
@@ -90,10 +90,10 @@ export declare function withoutExports(code: string): Promise<string>;
  * Generated documentation for a `tjs` source (#184 part 3): tjs-lang's
  * `generateDocsMarkdown(source, tjs(source).types)`, where the signature IS the docs.
  *
- * FEATURE-DETECTED: tjs-lang's browser bundle doesn't export the generator yet (0.13.13,
- * 0.14.0-rc.1; asked upstream), so this resolves to null until it does, and the built-in `tjs`
- * shows no Docs tab. A site with the full tjs-lang can supply docs itself through
- * `registerDialect('tjs', { transform, docs })` today.
+ * FEATURE-DETECTED: tjs-lang's browser bundle exports the generator from the 0.14 release
+ * candidates on (the pinned 0.14.0-rc.5 has it; 0.13.13 did not). With an older tjs-lang
+ * this resolves to null and the built-in `tjs` shows no Docs tab; such a site can supply
+ * docs itself through `registerDialect('tjs', { transform, docs })`.
  */
 export type DocsFn = (source: string) => string;
 export declare function loadTjsDocs(): Promise<DocsFn | null>;

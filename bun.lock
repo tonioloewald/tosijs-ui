@@ -36,7 +36,7 @@
         "playwright": "^1.62.0",
         "prettier": "^2.8.8",
         "prismjs": "^1.30.0",
-        "tjs-lang": "0.13.13",
+        "tjs-lang": "0.14.0-rc.5",
         "tosijs": "1.10.7",
         "tosijs-schema": "1.10.2",
         "typescript": "^5.9.3",
@@ -353,7 +353,7 @@
 
     "tinyglobby": ["tinyglobby@0.2.17", "", { "dependencies": { "fdir": "^6.5.0", "picomatch": "^4.0.4" } }, "sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g=="],
 
-    "tjs-lang": ["tjs-lang@0.13.13", "", { "dependencies": { "acorn": "^8.15.0", "acorn-loose": "^8.5.2", "acorn-walk": "^8.3.4", "tosijs-schema": "^1.5.1" }, "peerDependencies": { "@codemirror/autocomplete": "^6.0.0", "@codemirror/lang-javascript": "^6.0.0", "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" }, "optionalPeers": ["@codemirror/autocomplete", "@codemirror/lang-javascript", "@codemirror/language", "@codemirror/state", "@codemirror/view"], "bin": { "tjs": "src/cli/tjs.ts", "tjsx": "src/cli/tjsx.ts", "create-tjs-app": "src/cli/create-app.ts", "tjs-playground": "src/cli/playground.ts", "ajs-install-cursor": "bin/install-cursor.sh", "ajs-install-vscode": "bin/install-vscode.sh" } }, "sha512-U1a19eFyd8hCIrsKGyp16VQFMlH9S6Tq5iYKgzMEdV8ucF9lsdaSAB3TuDmS0dPybnw619WLj4w/ZTtMSTmxGw=="],
+    "tjs-lang": ["tjs-lang@0.14.0-rc.5", "", { "dependencies": { "acorn": "^8.15.0", "acorn-loose": "^8.5.2", "acorn-walk": "^8.3.4", "tosijs-schema": "^1.12.0" }, "peerDependencies": { "@codemirror/autocomplete": "^6.0.0", "@codemirror/lang-javascript": "^6.0.0", "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0", "typescript": "^5.0.0" }, "optionalPeers": ["@codemirror/autocomplete", "@codemirror/lang-javascript", "@codemirror/language", "@codemirror/state", "@codemirror/view", "typescript"], "bin": { "tjs": "src/cli/tjs.ts", "tjsx": "src/cli/tjsx.ts", "create-tjs-app": "src/cli/create-app.ts", "tjs-playground": "src/cli/playground.ts", "ajs-install-cursor": "bin/install-cursor.sh", "ajs-install-vscode": "bin/install-vscode.sh" } }, "sha512-WqJFyRB+GqTngRhF35BOAVv3dZFXah+WBDawBCF4KcbfdbKdg+8+Whvv/5aYW7TLqcyIyvd+EFc9ZO5pfhe1WA=="],
 
     "tosijs": ["tosijs@1.10.7", "", { "bin": { "tosijs": "dist/cli.mjs" } }, "sha512-/TJwJ0G1TrPBdfPyI9rFYqfhotUnxOW5n1qem1NZkfK0fY7EHS+0daX6qTE2JXILJzm09C5SenHd2xGl7zsvXQ=="],
 
@@ -393,6 +393,6 @@
 
     "qified/hookified": ["hookified@2.2.0", "", {}, "sha512-p/LgFzRN5FeoD3DLS6bkUapeye6E4SI6yJs6KetENd18S+FBthqYq2amJUWpt5z0EQwwHemidjY5OqJGEKm5uA=="],
 
-    "tjs-lang/tosijs-schema": ["tosijs-schema@1.8.0", "", {}, "sha512-pHZdUsgQWKrtMmqSFZKbgD6n0a4yD12PPvSuBR9xofdpDcT40Tzk06vhYAVxW77vyax3fTeVinGaD7a83REeHw=="],
+    "tjs-lang/tosijs-schema": ["tosijs-schema@1.13.0", "", {}, "sha512-OMdt5CnyvfOKEYIQiWMZp5yzHBmybuARz9j0qG8i9gT97jyENJn0Yk2kn2wmYVhm84rdxVzmxn7DSz7illEoDA=="],
   }
 }
