@@ -5,22 +5,26 @@
 For projects that build their own docs bundle, from tosijs's upgrade to 1.16.13 (board
 #3248). Two failures that left a green build over a broken site now say so.
 
-- **`restampSite(config)`, from `tosijs-ui/site`.** If you overwrite `/iife.js` after
-  `buildSite`, call it afterwards. It re-stamps every page's `?v=` from the files actually
-  on disk (the stamp `buildSite` wrote described the bundle it replaced, so a returning
-  visitor could run a cached library against new pages), and it checks that the file you
+- **`restampSite(config)`, from `tosijs-ui/site`.** If your site has no `bundleEntry` and you
+  overwrite `/iife.js` after `buildSite`, call it afterwards. It checks that the file you
   wrote registers `<tosi-doc-system>`, and `<tosi-example>` when the corpus has live
-  examples. A bundle whose entry does `import * from 'tosijs-ui'` registers neither since
-  1.14.0, and until now nothing noticed: pages served, no header, no nav, no examples, no
-  doc tests. A warning by default; fails under `strict: true`. It throws when there is
-  nothing to re-stamp.
+  examples, and then re-stamps the script and stylesheet `?v=` in every page from the files
+  actually on disk (the stamp `buildSite` wrote described the bundle it replaced, so a
+  returning visitor could run a cached library against new pages). A bundle whose entry
+  imports only the root `tosijs-ui` registers neither element since 1.14.0, and until now
+  nothing noticed: pages served, no header, no nav, no examples, no doc tests. A warning by
+  default. Under `strict: true` it throws before writing anything. It also throws when
+  there is nothing to re-stamp, on a `bundleEntry` site, and when it cannot read the corpus.
 - **The build reports two copies of CodeMirror.** After an upgrade a lockfile can keep an
   older hoisted `@codemirror/state` while the newer one nests under
   `node_modules/tosijs-ui/`; every `<tosi-code>` is then blank and nothing fails.
-  `buildSite` now asks the module resolver and names both copies and the command that fixes
-  it (`bun update @codemirror/state @codemirror/view`). A warning by default; fails under
-  `strict: true`. At runtime `<tosi-code>` logs the same explanation beside CodeMirror's own
-  "Unrecognized extension value" error.
+  `buildSite` now asks the module resolver whether the packages the editor is built from
+  agree, and names both copies and the command that fixes it
+  (`bun update @codemirror/state @codemirror/view`). A warning by default. **It fails a
+  `strict: true` build that has a `bundleEntry`**, which is new in a patch: such a build
+  was already producing blank editors. Without a `bundleEntry` it is said once and never
+  fails. At runtime `<tosi-code>` logs the same explanation beside CodeMirror's own
+  "Unrecognized extension value" error. Cost: `iife.js` +176 bytes gzip.
 - **Fixed: `llms.txt` told agents to try `/carousel/index.md` on every site.** That is a
   tosijs-ui page. The example is now a page of the site being built.
 - **The "relative imports without a file extension" warning says what it read.** It is

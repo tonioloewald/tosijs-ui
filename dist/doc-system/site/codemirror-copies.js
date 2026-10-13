@@ -34,8 +34,8 @@ function resolveFrom(specifier, from) {
     }
 }
 /**
- * For each package that must be shared, the distinct copies reachable from the project and
- * from every `@codemirror/*` package tosijs-ui depends on. More than one path for a name is
+ * For each package that must be shared, the distinct copies reachable from tosijs-ui, from
+ * every `@codemirror/*` package it depends on, and from tjs-lang's editor extension. More than one path for a name is
  * the defect. `uiDir` is where tosijs-ui itself is installed.
  */
 export function codemirrorCopies(root, uiDir) {
@@ -49,12 +49,22 @@ export function codemirrorCopies(root, uiDir) {
     }
     // Where each CodeMirror package tosijs-ui uses actually lives: each resolves its OWN
     // dependencies from there, which is where a second copy shows up.
-    const origins = new Set([root, uiDir]);
+    /*
+    NOT the project root. A project may hold its own, unrelated `@codemirror/state` for an
+    editor of its own, beside a consistent set under tosijs-ui: that is two copies in the
+    install and no defect. The defect is the packages the editor is BUILT FROM disagreeing,
+    and the upgrade case shows up there, since the hoisted `lang-*` resolve the hoisted copy.
+    */
+    const origins = new Set([uiDir]);
     for (const dep of deps) {
         const resolved = resolveFrom(dep, uiDir);
         if (resolved)
             origins.add(packageDirOf(resolved));
     }
+    // tjs-lang's CodeMirror extension is bundled into the same editor (see bundle-guard.ts).
+    const tjs = resolveFrom('tjs-lang/editors/codemirror', root);
+    if (tjs)
+        origins.add(packageDirOf(tjs));
     const copies = {};
     for (const name of SHARED) {
         const found = new Set();
@@ -76,10 +86,13 @@ export function duplicateCodemirrorWarning(copies) {
         doubled
             .map(([name, dirs]) => `    ${name}\n` + dirs.map((dir) => `      ${dir}\n`).join(''))
             .join('') +
-        `    CodeMirror recognises extensions by identity, so with two copies every <tosi-code>\n` +
-        `    renders blank ("Unrecognized extension value in extension set") and nothing fails.\n` +
-        `    It usually follows an upgrade: the lockfile kept an older hoisted copy. Run:\n` +
-        `        bun update ${doubled.map(([name]) => name).join(' ')}\n`);
+        `    CodeMirror recognises extensions by identity, so in a bundle built from this install\n` +
+        `    every <tosi-code> renders blank ("Unrecognized extension value in extension set")\n` +
+        `    and nothing fails. It usually follows an upgrade: the lockfile kept an older hoisted\n` +
+        `    copy. Bring them back to one:\n` +
+        `        bun update ${doubled
+            .map(([name]) => name)
+            .join(' ')}    (npm: npm dedupe)\n`);
 }
 /** tosijs-ui's own package directory, found from this module's location. */
 export function tosijsUiDir(moduleDir) {

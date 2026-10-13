@@ -49,6 +49,31 @@ function install(nested: boolean) {
   return { root: dir, ui }
 }
 
+test('a project copy of its own, beside a consistent set under tosijs-ui, is not the defect', () => {
+  const { root, ui } = install(true)
+  // tosijs-ui's language package sits beside tosijs-ui's own state, so they agree
+  pkg(
+    path.join(ui, 'node_modules/@codemirror/lang-javascript'),
+    '@codemirror/lang-javascript'
+  )
+  pkg(path.join(ui, 'node_modules/@codemirror/view'), '@codemirror/view')
+  const copies = codemirrorCopies(root, ui)
+  expect(copies['@codemirror/state']).toEqual([
+    path.join(ui, 'node_modules/@codemirror/state'),
+  ])
+  expect(duplicateCodemirrorWarning(copies)).toBeNull()
+})
+
+test("tjs-lang's editor extension resolving another copy is the defect too", () => {
+  const { root, ui } = install(false)
+  const tjs = path.join(root, 'node_modules/tjs-lang')
+  pkg(tjs, 'tjs-lang', {
+    exports: { './editors/codemirror': './index.js', '.': './index.js' },
+  })
+  pkg(path.join(tjs, 'node_modules/@codemirror/state'), '@codemirror/state')
+  expect(codemirrorCopies(root, ui)['@codemirror/state'].length).toBe(2)
+})
+
 test('a nested copy under tosijs-ui beside a hoisted one is two copies', () => {
   const { root, ui } = install(true)
   const copies = codemirrorCopies(root, ui)

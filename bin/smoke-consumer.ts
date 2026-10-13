@@ -597,6 +597,23 @@ try {
   )
 
   /*
+  `restampSite` through the INSTALLED package. This project has a `bundleEntry`, so the
+  right answer is the refusal that says so: that proves the export exists, that the module
+  loads from `node_modules`, and that it read the site the build just wrote.
+  */
+  const restamp =
+    await $`bun -e ${"import('tosijs-ui/site').then(async (m)=>{const c=(await import('./site.config.ts')).default;try{await m.restampSite(c);console.log('NO-REFUSAL')}catch(e){console.log(e.message)}})"}`
+      .cwd(proj)
+      .nothrow()
+      .quiet()
+  check(
+    'restampSite is exported and recognises a bundleEntry site',
+    restamp.exitCode === 0 &&
+      restamp.stdout.toString().includes('hydrates from the bundle'),
+    (restamp.stderr.toString() || restamp.stdout.toString()).slice(0, 300)
+  )
+
+  /*
   `contextKeys` must actually REACH the example checker.
 
   The scratch project documents itself — its example imports `consumer-smoke`, its own

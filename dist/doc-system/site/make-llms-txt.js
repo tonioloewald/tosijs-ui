@@ -106,7 +106,7 @@ export function markdownExample(corpus, meta) {
             continue;
         }
         const pagePath = pathForSlug(slugMap[doc.filename]);
-        if (pagePath === '/' || !pagePath.endsWith('/'))
+        if (pagePath === '/')
             continue;
         return `${withBase(meta.basePath, pagePath)}index.md`;
     }

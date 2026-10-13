@@ -21,6 +21,8 @@ import * as path from 'path';
  * that asks "is this fence live?" calls it first rather than depending on build order: the
  * misconfiguration checks run long before the page generator, which used to be the only caller.
  */
+// Said once per process: a watch rebuild has nothing new to add (the strict path throws).
+let codemirrorWarned = false;
 export function registerSiteDialects(config) {
     for (const name of normalizeDialectNames(config.dialects)) {
         if (!BUILT_IN_DIALECTS.has(name))
@@ -43,11 +45,12 @@ import { generateLlmsTxt } from './make-llms-txt.js';
 import { DEFAULT_DOC_IGNORES } from './docs.js';
 import { writesOutsideOutputDir } from './host-preset.js';
 import { generateSite } from './generate-site.js';
+import { servedBundleProblem } from './restamp.js';
 import { codemirrorCopies, duplicateCodemirrorWarning, tosijsUiDir, } from './codemirror-copies.js';
 import { findOutputDirOverlap, resolveBundleDir } from './output-guard.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sourcemapWarning } from './sourcemap-check.js';
-import { basePathDoubling, bundleRegistrations, firebasePublicMismatch, } from './host-preset.js';
+import { basePathDoubling, firebasePublicMismatch } from './host-preset.js';
 import { preflight } from './preflight.js';
 import { auditDependencies, reportAudit } from './audit-guard.js';
 import { gatherBuildStamp, hashOutput, stampToWrite, } from './build-stamp.js';
@@ -459,8 +462,19 @@ export async function buildSite(config, opts = {}) {
         */
         {
             const doubled = duplicateCodemirrorWarning(codemirrorCopies(process.cwd(), tosijsUiDir(import.meta.dir)));
-            if (doubled)
-                misconfigured(config.strict, doubled);
+            /*
+            Fatal under `strict` only where buildSite itself bundles the editor (`bundleEntry`).
+            Without one the site ships tosijs-ui's prebuilt bundle, which the install cannot
+            break, so the copies matter only to a bundle the project builds for itself: worth
+            saying once, never worth failing the build over.
+            */
+            if (doubled) {
+                if (config.bundleEntry)
+                    misconfigured(config.strict, doubled);
+                else if (!codemirrorWarned)
+                    console.warn(doubled);
+                codemirrorWarned = true;
+            }
         }
         /*
       Where the hydration bundle is BUILT. Defaults to the site output, not to `dist` (#69).
@@ -1162,23 +1176,10 @@ export async function buildSite(config, opts = {}) {
                     for (const f of await Array.fromAsync(new Bun.Glob('**/*.js').scan({ cwd: PUBLIC, absolute: true }))) {
                         bundled += await Bun.file(f).text();
                     }
-                    const reg = bundleRegistrations(bundled);
-                    if (!reg.docSystem) {
-                        misconfigured(config.strict, `\n⚠️  ${config.bundleEntry} does not register <tosi-doc-system>, so every page\n` +
-                            `    will render its prerendered markup and nothing else — no header, no nav,\n` +
-                            `    no menu, no live examples, and no error in the console.\n\n` +
-                            `    bundleEntry REPLACES tosijs-ui's bundle; it does not extend it. Add:\n` +
-                            `        import 'tosijs-ui/doc-browser'\n` +
-                            (docsHaveExamples && !reg.liveExample
-                                ? `        import 'tosijs-ui/live-example'   // this corpus has live examples\n`
-                                : '') +
-                            `    to ${config.bundleEntry}.\n`);
-                    }
-                    else if (docsHaveExamples && !reg.liveExample) {
-                        misconfigured(config.strict, `\n⚠️  This corpus has executable fences but ${config.bundleEntry} does not\n` +
-                            `    register <tosi-example>. Add \`import 'tosijs-ui/live-example'\` — the\n` +
-                            `    code blocks will render as plain text otherwise.\n`);
-                    }
+                    // ONE wording and one rule, shared with restampSite (restamp.ts).
+                    const problem = servedBundleProblem(bundled, String(config.bundleEntry), docsHaveExamples, String(config.bundleEntry));
+                    if (problem)
+                        misconfigured(config.strict, problem);
                 }
                 // Report the always-loaded weight (entry, not the lazy editor chunks) so a
                 // regression that pulls CodeMirror back into the entry is visible.

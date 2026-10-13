@@ -184,30 +184,42 @@ modes:
   pages load `scriptUrl` (default `/iife.js`, i.e. tosijs-ui's published
   bundle). Good for a pure docs site with no custom elements of its own.
 
-- **Replacing the bundle after `buildSite` — call `restampSite`.** Some projects have to
-  build the hydration bundle themselves (one that aliases a package to its own working
-  source, say, which a `bundleEntry` path cannot express) and overwrite `/iife.js` once
-  `buildSite` has finished. Two things are then out of date, and neither says so:
+**Replacing the bundle after `buildSite`: call `restampSite`.** This is for a site with
+**no** `bundleEntry`. Some projects have to build the hydration bundle themselves (one that
+aliases a package to its own working source, say, which a `bundleEntry` path cannot express)
+and overwrite `/iife.js` once `buildSite` has finished. Two things are then out of date, and
+neither says so:
 
-  - every page's `iife.js?v=<hash>` was computed from the file `buildSite` wrote, so the
-    stamp only moves when tosijs-ui does, and a returning visitor runs the cached bundle
-    against new pages;
-  - nothing has checked that _your_ file registers `<tosi-doc-system>`. A green build, every
-    page served, and no header, no nav, no live examples and no doc tests.
+- every page's `iife.js?v=<hash>` was computed from the file `buildSite` wrote, so the stamp
+  only moves when tosijs-ui does, and a returning visitor runs the cached bundle against new
+  pages;
+- nothing has checked that _your_ file registers `<tosi-doc-system>`. A green build, every
+  page served, and no header, no nav, no live examples and no doc tests.
 
-  ```typescript:static
-  import { buildSite, restampSite } from 'tosijs-ui/site'
+```typescript:static
+import { buildSite, restampSite } from 'tosijs-ui/site'
 
-  await buildSite(config)
-  await buildMyDocsBundle() // writes <outputDir>/iife.js
-  await restampSite(config) // re-stamps every page from what is on disk, and checks it
-  ```
+await buildSite(config)
+await buildMyDocsBundle() // writes <outputDir>/iife.js
+await restampSite(config) // checks the file that is served, then re-stamps every page
+```
 
-  `restampSite` hashes the same assets `buildSite` does, rewrites the stamp in every page,
-  and applies the registration checks listed under [`strict`](#strict-builds-strict) to the
-  file that is actually served. It returns `{ stamp, previous, pages, changed }`, and it
-  **throws** when no page carries a stamp, because a restamp that quietly did nothing is the
-  failure it exists to prevent. Run it after every build, watch rebuilds included.
+`restampSite` hashes the same assets `buildSite` does, applies the registration checks
+listed under [`strict`](#strict-builds-strict) to the file that is actually served, and
+rewrites the stamp on the script and the stylesheet in every page. It returns
+`{ stamp, previous, pages, changed }`. Run it after every build, watch rebuilds included.
+
+It **throws**, and writes nothing, when:
+
+- no page loads `scriptUrl` with a stamp (a restamp that quietly did nothing is the failure
+  it exists to prevent);
+- the site has a `bundleEntry`: its pages hydrate from a hash-named bundle and never load
+  `scriptUrl`, so there is nothing to replace;
+- it cannot read the corpus (`docsJson`), since it could not then tell whether the bundle
+  needs `<tosi-example>`. Pass the config `buildSite` was given;
+- `strict` is set and the bundle fails a registration check. **The pages are left as the
+  build wrote them; nothing is restored**, because nothing was changed. Without `strict` it
+  warns and re-stamps.
 
 **Heads-up — IIFE bundle limits.** The bundle is a classic `<script>` (IIFE), so:
 
@@ -357,7 +369,7 @@ the example, plus ten pages importing a symbol their barrel did not export.
 | `prebuild`           | —        | `() => void \| Promise<void>` run first, for source-tree codegen (version stamp, icon data, …). The output dir is reset after it runs — don't write there. `dist/` is reset only when `libraryBundle`/`emitLibrary`/`libraryTsconfig` own it (#130)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `libraryBundle`      | —        | **the recommended library build (#169).** `{ entries, externals?, tsconfig?, target? }`: `bun build` bundles the entries with splitting into `dist/` (every declared dependency and peer stays an import), then `tsc --emitDeclarationOnly`. Fails the build if `dist/` has a relative import without a file extension, which Node cannot load. Needs `typescript` installed. Supersedes `libraryTsconfig`/`emitLibrary`; `libraryBuild` supersedes it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `emitLibrary`        | `false`  | also build the library: `tsc --declaration --outDir dist`. **Prefer `libraryBundle`** — a bare tsc copies bundler-style specifiers into a `dist/` Node cannot load, and the build warns when it does (#169)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `libraryTsconfig`    | —        | run `tsc -p <path>` for the library build instead (handles root `noEmit`, `removeComments`, custom `outDir`); supersedes `emitLibrary`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `libraryTsconfig`    | —        | run `tsc -p <path>` for the library build instead (handles root `noEmit`, `removeComments`, custom `outDir`); supersedes `emitLibrary` If a later step of yours replaces tsc's `.js` files with bundles, set `"emitDeclarationOnly": true` in that tsconfig: the build otherwise warns about extensionless imports in files you do not publish. |
 | `libraryBuild`       | —        | `(ctx: { dist, root, tsconfig? }) => void \| Promise<void>` — fully override the tsc library build; you emit `dist/*.js` + `*.d.ts` for ALL sources. For non-`.ts` sources tsc can't compile (native tjs-lang `.tjs`): run tsc for `.ts` + `tjs convert`/`generateDTS` for `.tjs`. Supersedes `libraryTsconfig`/`emitLibrary`. See `BUILD-TJS-HOOK.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `generateCssPreload` | —        | module to `bun --preload` into the CSS-extraction subprocess (`generate-css` imports your library to burn the theme); needed when that graph reaches non-`.ts` sources (`.tjs`) requiring a Bun loader plugin — point it at a module that registers it. Pairs with `libraryBuild`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `llmsTxt`            | `true`   | emit the `llms.txt` index — `true`, `false`, or `(docs) => string` for a custom one (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -1426,15 +1438,19 @@ exported from `tosijs-ui/site`, and the previous build output is restored):
   No same-origin copy is written to `/tjs/`, so those examples load tjs-lang from a CDN at
   the version tosijs-ui pins, not the one your project has installed. Without `strict` this
   now prints a warning; before 1.16.7 it was silent.
-
-- **The install has two copies of `@codemirror/state` or `@codemirror/view`.** CodeMirror
-  recognises extensions by identity, so with two copies every `<tosi-code>` renders blank
-  ("Unrecognized extension value in extension set" in the console) while the build and the
-  tests pass. It usually arrives through an upgrade: the lockfile kept an older hoisted
-  copy and the package manager nested the newer one under `node_modules/tosijs-ui/`. The
-  warning lists both locations; `bun update @codemirror/state @codemirror/view` fixes it.
+- **The packages the editor is built from resolve two copies of `@codemirror/state` or
+  `@codemirror/view`**, on a site with a `bundleEntry`. CodeMirror recognises extensions by
+  identity, so every `<tosi-code>` in that bundle renders blank ("Unrecognized extension
+  value in extension set" in the console) while the build and the tests pass. It usually
+  arrives through an upgrade: the lockfile kept an older hoisted copy and the package manager
+  nested the newer one under `node_modules/tosijs-ui/`. The warning lists both locations;
+  `bun update @codemirror/state @codemirror/view` (npm: `npm dedupe`) brings them back to
+  one. Without a `bundleEntry` the site ships tosijs-ui's prebuilt bundle, which the install
+  cannot break, so the build says it once and never fails on it. A copy of your own at the
+  project root, for an editor of your own, is not reported.
 - **A bundle you wrote over `/iife.js` does not register the doc system**, when you call
-  [`restampSite`](#bundles--live-examples-read-this) after replacing it.
+  [`restampSite`](#bundles--live-examples-read-this) after replacing it. That one throws from
+  `restampSite`, before it writes anything, so there is no build output to restore.
 
 - **An in-page link points at nothing.** `[text](#some-heading)` where the page has no such
   id is a link that looks live and does nothing. The warning names the page and the anchor.

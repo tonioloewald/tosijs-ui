@@ -12,10 +12,11 @@ export interface RestampResult {
 /** The hydration entry `buildSite` emitted for a `bundleEntry`, if there is one. */
 export declare function hydrateEntryIn(publicDir: string): string | undefined;
 /**
- * What is wrong with the bundle the pages will load, or null. `source` is the text of every
- * script the pages hydrate from.
+ * What is wrong with the scripts the pages hydrate from, or null. ONE wording and one rule,
+ * for `buildSite` (asked of a `bundleEntry`'s output) and `restampSite` (asked of a file the
+ * project wrote itself). `subject` names what was read; `fix` says where the import goes.
  */
-export declare function servedBundleProblem(source: string, scriptName: string, docsHaveExamples: boolean): string | null;
+export declare function servedBundleProblem(source: string, subject: string, docsHaveExamples: boolean, fix?: string): string | null;
 /**
  * Re-stamp a built site from the assets actually on disk, and check the hydration bundle.
  * Call it after replacing `/iife.js` (or whatever `scriptUrl` names) in `outputDir`.

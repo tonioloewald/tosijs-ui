@@ -170,7 +170,7 @@ export function markdownExample(
       continue
     }
     const pagePath = pathForSlug(slugMap[doc.filename])
-    if (pagePath === '/' || !pagePath.endsWith('/')) continue
+    if (pagePath === '/') continue
     return `${withBase(meta.basePath, pagePath)}index.md`
   }
   return undefined

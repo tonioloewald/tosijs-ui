@@ -2,8 +2,8 @@ declare global {
     var Bun: any;
 }
 /**
- * For each package that must be shared, the distinct copies reachable from the project and
- * from every `@codemirror/*` package tosijs-ui depends on. More than one path for a name is
+ * For each package that must be shared, the distinct copies reachable from tosijs-ui, from
+ * every `@codemirror/*` package it depends on, and from tjs-lang's editor extension. More than one path for a name is
  * the defect. `uiDir` is where tosijs-ui itself is installed.
  */
 export declare function codemirrorCopies(root: string, uiDir: string): Record<string, string[]>;

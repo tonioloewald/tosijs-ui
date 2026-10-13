@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=94e776b65809" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=13a08c12212b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -188,14 +188,16 @@ them; new builds will not put them back.</p>
 pages load <code>scriptUrl</code> (default <code>/iife.js</code>, i.e. tosijs-ui&#39;s published
 bundle). Good for a pure docs site with no custom elements of its own.</p>
 </li>
-<li><p><strong>Replacing the bundle after <code>buildSite</code> — call <code>restampSite</code>.</strong> Some projects have to
-build the hydration bundle themselves (one that aliases a package to its own working
-source, say, which a <code>bundleEntry</code> path cannot express) and overwrite <code>/iife.js</code> once
-<code>buildSite</code> has finished. Two things are then out of date, and neither says so:</p>
+</ul>
+<p><strong>Replacing the bundle after <code>buildSite</code>: call <code>restampSite</code>.</strong> This is for a site with
+<strong>no</strong> <code>bundleEntry</code>. Some projects have to build the hydration bundle themselves (one that
+aliases a package to its own working source, say, which a <code>bundleEntry</code> path cannot express)
+and overwrite <code>/iife.js</code> once <code>buildSite</code> has finished. Two things are then out of date, and
+neither says so:</p>
 <ul>
-<li>every page&#39;s <code>iife.js?v=&lt;hash&gt;</code> was computed from the file <code>buildSite</code> wrote, so the
-stamp only moves when tosijs-ui does, and a returning visitor runs the cached bundle
-against new pages;</li>
+<li>every page&#39;s <code>iife.js?v=&lt;hash&gt;</code> was computed from the file <code>buildSite</code> wrote, so the stamp
+only moves when tosijs-ui does, and a returning visitor runs the cached bundle against new
+pages;</li>
 <li>nothing has checked that <em>your</em> file registers <code>&lt;tosi-doc-system&gt;</code>. A green build, every
 page served, and no header, no nav, no live examples and no doc tests.</li>
 </ul>
@@ -203,14 +205,23 @@ page served, and no header, no nav, no live examples and no doc tests.</li>
 
 <span class="token keyword">await</span> <span class="token function">buildSite</span><span class="token punctuation">(</span>config<span class="token punctuation">)</span>
 <span class="token keyword">await</span> <span class="token function">buildMyDocsBundle</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// writes &lt;outputDir>/iife.js</span>
-<span class="token keyword">await</span> <span class="token function">restampSite</span><span class="token punctuation">(</span>config<span class="token punctuation">)</span> <span class="token comment">// re-stamps every page from what is on disk, and checks it</span>
+<span class="token keyword">await</span> <span class="token function">restampSite</span><span class="token punctuation">(</span>config<span class="token punctuation">)</span> <span class="token comment">// checks the file that is served, then re-stamps every page</span>
 </code></pre>
-<p><code>restampSite</code> hashes the same assets <code>buildSite</code> does, rewrites the stamp in every page,
-and applies the registration checks listed under <a href="#strict-builds-strict"><code>strict</code></a> to the
-file that is actually served. It returns <code>{ stamp, previous, pages, changed }</code>, and it
-<strong>throws</strong> when no page carries a stamp, because a restamp that quietly did nothing is the
-failure it exists to prevent. Run it after every build, watch rebuilds included.</p>
-</li>
+<p><code>restampSite</code> hashes the same assets <code>buildSite</code> does, applies the registration checks
+listed under <a href="#strict-builds-strict"><code>strict</code></a> to the file that is actually served, and
+rewrites the stamp on the script and the stylesheet in every page. It returns
+<code>{ stamp, previous, pages, changed }</code>. Run it after every build, watch rebuilds included.</p>
+<p>It <strong>throws</strong>, and writes nothing, when:</p>
+<ul>
+<li>no page loads <code>scriptUrl</code> with a stamp (a restamp that quietly did nothing is the failure
+it exists to prevent);</li>
+<li>the site has a <code>bundleEntry</code>: its pages hydrate from a hash-named bundle and never load
+<code>scriptUrl</code>, so there is nothing to replace;</li>
+<li>it cannot read the corpus (<code>docsJson</code>), since it could not then tell whether the bundle
+needs <code>&lt;tosi-example&gt;</code>. Pass the config <code>buildSite</code> was given;</li>
+<li><code>strict</code> is set and the bundle fails a registration check. <strong>The pages are left as the
+build wrote them; nothing is restored</strong>, because nothing was changed. Without <code>strict</code> it
+warns and re-stamps.</li>
 </ul>
 <p><strong>Heads-up — IIFE bundle limits.</strong> The bundle is a classic <code>&lt;script&gt;</code> (IIFE), so:</p>
 <ul>
@@ -503,7 +514,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>libraryTsconfig</code></td>
 <td>—</td>
-<td>run <code>tsc -p &lt;path&gt;</code> for the library build instead (handles root <code>noEmit</code>, <code>removeComments</code>, custom <code>outDir</code>); supersedes <code>emitLibrary</code></td>
+<td>run <code>tsc -p &lt;path&gt;</code> for the library build instead (handles root <code>noEmit</code>, <code>removeComments</code>, custom <code>outDir</code>); supersedes <code>emitLibrary</code> If a later step of yours replaces tsc&#39;s <code>.js</code> files with bundles, set <code>&quot;emitDeclarationOnly&quot;: true</code> in that tsconfig: the build otherwise warns about extensionless imports in files you do not publish.</td>
 </tr>
 <tr>
 <td><code>libraryBuild</code></td>
@@ -1574,15 +1585,20 @@ No same-origin copy is written to <code>/tjs/</code>, so those examples load tjs
 the version tosijs-ui pins, not the one your project has installed. Without <code>strict</code> this
 now prints a warning; before 1.16.7 it was silent.</p>
 </li>
-<li><p><strong>The install has two copies of <code>@codemirror/state</code> or <code>@codemirror/view</code>.</strong> CodeMirror
-recognises extensions by identity, so with two copies every <code>&lt;tosi-code&gt;</code> renders blank
-(&quot;Unrecognized extension value in extension set&quot; in the console) while the build and the
-tests pass. It usually arrives through an upgrade: the lockfile kept an older hoisted
-copy and the package manager nested the newer one under <code>node_modules/tosijs-ui/</code>. The
-warning lists both locations; <code>bun update @codemirror/state @codemirror/view</code> fixes it.</p>
+<li><p><strong>The packages the editor is built from resolve two copies of <code>@codemirror/state</code> or
+<code>@codemirror/view</code></strong>, on a site with a <code>bundleEntry</code>. CodeMirror recognises extensions by
+identity, so every <code>&lt;tosi-code&gt;</code> in that bundle renders blank (&quot;Unrecognized extension
+value in extension set&quot; in the console) while the build and the tests pass. It usually
+arrives through an upgrade: the lockfile kept an older hoisted copy and the package manager
+nested the newer one under <code>node_modules/tosijs-ui/</code>. The warning lists both locations;
+<code>bun update @codemirror/state @codemirror/view</code> (npm: <code>npm dedupe</code>) brings them back to
+one. Without a <code>bundleEntry</code> the site ships tosijs-ui&#39;s prebuilt bundle, which the install
+cannot break, so the build says it once and never fails on it. A copy of your own at the
+project root, for an editor of your own, is not reported.</p>
 </li>
 <li><p><strong>A bundle you wrote over <code>/iife.js</code> does not register the doc system</strong>, when you call
-<a href="#bundles--live-examples-read-this"><code>restampSite</code></a> after replacing it.</p>
+<a href="#bundles--live-examples-read-this"><code>restampSite</code></a> after replacing it. That one throws from
+<code>restampSite</code>, before it writes anything, so there is no build output to restore.</p>
 </li>
 <li><p><strong>An in-page link points at nothing.</strong> <code>[text](#some-heading)</code> where the page has no such
 id is a link that looks live and does nothing. The warning names the page and the anchor.
