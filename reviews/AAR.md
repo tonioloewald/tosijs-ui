@@ -589,3 +589,22 @@ gap, recorded rather than hidden.
 - **Lanes (final tree):** unit 1835; Playwright 561 passed, 24 skipped; consumer 55 checks;
   test-browser 83 over 18 pages. CI and the dry run green on the tagged commit.
 - **Open:** board #3268 (deferrals), #3272 (#210 item 7); #216 and #210 await tjs-lang.
+
+## 1.16.17 (2026-10-13)
+
+- **Shipped:** tjs-lang pinned to 0.14.0-rc.5 (devDependency and `TJS_VERSION`), the
+  maintainer's call. Published and verified; tag `1604bece8`.
+- **The review BLOCKed** on three things: `release-check` red on wording (the second
+  release running it was red at review time; run it BEFORE requesting the review), a Docs
+  tab reading "No documentation available" on every `tjs` example that declares no
+  function, and notes that did not say what tjs-lang 0.14 refuses or how to stay on 0.13.13.
+- **The patch-versus-minor ruling was recorded too grudgingly, then corrected.** The first
+  wording treated the refusals as a cost against the 1.16.2 test. The maintainer's point:
+  every refusal is towards correctness and arrives with 0.14 final regardless. `CLAUDE.md`
+  now records that reasoning as the test.
+- **Approval landed after the 60-minute wait**, so the run ended with verify skipped;
+  `verify_only` run 38460390965 is the green verification.
+- **Lanes (final tree):** unit 1835; Playwright 573 passed, 15 skipped; consumer 55 checks;
+  test-browser 83 over 18 pages. CI and the dry run green on the tagged commit.
+- **Open:** board #3268 (deferrals, including the revisit at rc.6 / 0.14 final); #216 and
+  #210 await tjs-lang.
