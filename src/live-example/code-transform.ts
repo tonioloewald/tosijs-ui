@@ -446,6 +446,28 @@ function noteStripExports(candidate: unknown): void {
 }
 
 /**
+ * @internal For TESTS only: stand in for (or with `undefined`, remove) tjs-lang's
+ * `stripExports`, which the tjs-lang this repo pins does not export yet.
+ */
+export function setStripExportsForTests(
+  stand: ((code: string) => string) | undefined
+): void {
+  stripExportsFn = stand
+}
+
+/**
+ * `code` without its `export`s, when the tjs-lang this process can load is able to remove
+ * them; otherwise `code` unchanged. For a caller that transpiles by some other route (the
+ * build check lowers `ts` with Bun, not with tjs-lang) and must still answer "will this
+ * run?" the way the page does.
+ */
+export async function withoutExports(code: string): Promise<string> {
+  if (!/\bexport\b/.test(code)) return code
+  await (tjsOnce ??= loadTjs())
+  return stripExportsFn ? stripExportsFn(code) : code
+}
+
+/**
  * Generated documentation for a `tjs` source (#184 part 3): tjs-lang's
  * `generateDocsMarkdown(source, tjs(source).types)`, where the signature IS the docs.
  *
@@ -590,7 +612,8 @@ export function shapeTjsOutput(
     prelude?: unknown
     body?: unknown
   },
-  stripExports: ((code: string) => string) | undefined = stripExportsFn
+  // `null` is "this tjs-lang cannot"; leaving it out asks the loaded one.
+  stripExports: ((code: string) => string) | null | undefined = stripExportsFn
 ): TransformResult {
   // Parse only what could hold one: most examples have no `export` at all.
   const strip = (code: string): string =>

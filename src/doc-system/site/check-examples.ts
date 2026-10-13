@@ -29,6 +29,7 @@ import {
   loadTransform,
   transformAvailable,
   UnsupportedImportError,
+  withoutExports,
 } from '../../live-example/code-transform.js'
 import type { Doc } from './docs.js'
 import { isLiveFence, type ExamplePolicy } from '../example-policy.js'
@@ -205,7 +206,9 @@ export async function checkExamples(
           // We only need to validate that the source builds, not reproduce tjs
           // lowering exactly.
           tsTranspiler ??= new Bun.Transpiler({ loader: 'ts' })
-          js = tsTranspiler.transformSync(rewritten)
+          // The page removes `export` from a `ts` example when its tjs-lang can; so does
+          // this, or a module-style example the page runs would fail the build.
+          js = await withoutExports(tsTranspiler.transformSync(rewritten))
         } else if (dialect === 'tjs') {
           const transform = await loadTransform('tjs')
           js = (await transform(rewritten, { transforms: ['typescript'] })).code

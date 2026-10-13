@@ -22,7 +22,7 @@ executed, so they're skipped.
 Build-time only (bun). Never import from browser code.
 */
 import { collectCodeTokens } from '../code-fences.js';
-import { rewriteImports, AsyncFunction, loadTransform, transformAvailable, UnsupportedImportError, } from '../../live-example/code-transform.js';
+import { rewriteImports, AsyncFunction, loadTransform, transformAvailable, UnsupportedImportError, withoutExports, } from '../../live-example/code-transform.js';
 import { isLiveFence } from '../example-policy.js';
 // The default live-example context (matches the IIFE globals the pages provide).
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
@@ -130,7 +130,9 @@ export async function checkExamples(docs, opts = {}) {
                     // We only need to validate that the source builds, not reproduce tjs
                     // lowering exactly.
                     tsTranspiler ??= new Bun.Transpiler({ loader: 'ts' });
-                    js = tsTranspiler.transformSync(rewritten);
+                    // The page removes `export` from a `ts` example when its tjs-lang can; so does
+                    // this, or a module-style example the page runs would fail the build.
+                    js = await withoutExports(tsTranspiler.transformSync(rewritten));
                 }
                 else if (dialect === 'tjs') {
                     const transform = await loadTransform('tjs');

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { checkExamples } from './check-examples.js'
 import type { Doc } from './docs.js'
+import { setStripExportsForTests } from '../../live-example/code-transform.js'
 
 const doc = (filename: string, text: string): Doc => ({
   filename,
@@ -211,5 +212,46 @@ describe('overridden built-in dialects (#2463)', () => {
       overriddenDialects: ['js'],
     })
     expect(r.problems.length).toBe(1)
+  })
+})
+
+/*
+#210 item 5: an example written as a module. The page removes `export` when its tjs-lang
+can, and the check must agree with the page in both directions, for `tjs` AND `ts` (which
+is lowered by a different route here, and was missed the first time).
+
+The stand-in is a regex only because the tjs-lang this repo pins does not export the real,
+parser-based one; what is under test is that both branches consult it.
+*/
+describe('module-style examples', () => {
+  // A different source per test: transform output is cached by source text.
+  const corpus = (tag: string) => [
+    doc(
+      'm-tjs.md',
+      `\`\`\`tjs\nexport const ${tag} = 1\nexport function f() { return ${tag} }\n\`\`\`\n`
+    ),
+    doc(
+      'm-ts.md',
+      `\`\`\`ts\nexport const ${tag}: number = 1\nexport function f(): number { return ${tag} }\n\`\`\`\n`
+    ),
+  ]
+
+  test('pass the check when tjs-lang can remove export', async () => {
+    setStripExportsForTests((code) => code.replace(/\bexport (default )?/g, ''))
+    try {
+      const { problems } = await checkExamples(corpus('kept'))
+      expect(problems).toEqual([])
+    } finally {
+      setStripExportsForTests(undefined)
+    }
+  })
+
+  test('fail it, in both languages, when tjs-lang cannot', async () => {
+    setStripExportsForTests(undefined)
+    const { problems } = await checkExamples(corpus('refused'))
+    expect(problems.map((p) => p.filename).sort()).toEqual([
+      'm-tjs.md',
+      'm-ts.md',
+    ])
   })
 })

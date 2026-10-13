@@ -13,10 +13,15 @@ Both tjs-lang items are feature-detected, so nothing changes until your tjs-lang
   and `await` shows what it resolved to. The input also gains a small **JS** button that
   shows the JavaScript for that line. A transform that returns only `code` behaves as
   before, with no button.
-- **`tjs` and `ts` examples may be written as modules.** `export` is removed before the
-  example runs, by tjs-lang's own parser (`stripExports`, from 0.14.0-rc.4). An example
-  runs as a function body, where `export` is a syntax error, so with an older tjs-lang it
-  fails as it always has.
+- **`tjs` and `ts` examples may be written as modules.** `export` is removed from `tjs` and
+  `ts` examples before they run, by tjs-lang's own parser (`stripExports`, from
+  0.14.0-rc.4), and the build's example check does the same. An example runs as a function
+  body, where `export` is a syntax error, so with an older tjs-lang it fails as it always
+  has. `js` examples are unchanged.
+- **The tjs-lang peer range admits the 0.14 release candidates** (`^0.13.1 || ^0.14.0-rc.5`).
+  It read `^0.14.0`, which excludes every prerelease, so `npm install` refused the one
+  tjs-lang that has these features. Run here with 0.14.0-rc.5 installed: the browser lane
+  on Chromium, and the new tests of both features on all three browsers.
 - **`registerDialect` documents what a transform should return.** `testRunner` has been
   honoured since 1.16.8 but was not in the type or the docs: a dialect that returns only
   `code` has its inline tests run from their raw text, with JavaScript's semantics. The
@@ -30,6 +35,9 @@ Both tjs-lang items are feature-detected, so nothing changes until your tjs-lang
 The tjs-lang this package pins for sites that load it from a CDN is still 0.13.13, which has
 neither feature. A site that serves its own tjs-lang (the installed peer, copied
 same-origin by the build) gets both as soon as that is 0.14.0-rc.5.
+
+`LlmsTxtMeta.haltijaDev` is still accepted and now ignored (deprecated). `dist/iife.js`
+grows by about 0.4 kB gzip.
 
 ## 1.16.15
 

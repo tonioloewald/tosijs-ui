@@ -191,8 +191,9 @@ example's output stays in its Console tab.
   A transform may put setup statements in front of your line (tjs does). When it returns
   that setup apart from the line (tjs-lang 0.14.0-rc.5 and later do), a line shows its own
   value, as in a browser console: a declaration shows `undefined` and an `await` line shows
-  what it resolved to. The input then has a small **JS** button that shows the JavaScript
-  the line became, which for a language like TJS is the point being taught. With an older
+  what it resolved to. An input the dialect changed then has a small **JS** button that
+  shows the JavaScript the line became, which for a language like TJS is the point being
+  taught. With an older
   transform a line that is only a declaration shows a value left over from the setup, a
   line that needs both the setup and `await` shows `undefined`, and there is no JS button.
 
@@ -1864,7 +1865,7 @@ export class LiveExample extends withAttributes({
     value left behind would be the setup's: `void 0` after it makes that `undefined`.
     */
     const setup = prelude ? `${prelude}\n` : ''
-    const attempts = /\bawait\b/.test(body)
+    const attempts = /\bawait\b/.test(setup + body)
       ? [
           `${prefix}(async () => {${setup}return (${body}\n)})()`,
           `${prefix}(async () => {${setup}${body}\n})()`,

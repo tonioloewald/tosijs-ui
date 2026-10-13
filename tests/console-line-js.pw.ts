@@ -46,6 +46,7 @@ test('a console line offers the JavaScript it became', async ({ page }) => {
   const shown = input.locator('.console-js')
   await expect(shown).toBeHidden()
   const toggle = input.getByRole('button', { name: 'JS' })
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
   await toggle.focus()
   await page.keyboard.press('Enter')
   await expect(shown).toBeVisible()

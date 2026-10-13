@@ -74,6 +74,18 @@ export declare const TJS_VERSION = "0.13.13";
 export declare const TYPESCRIPT_VERSION = "5.9.3";
 export declare const TYPESCRIPT_URL = "https://esm.sh/typescript@5.9.3";
 /**
+ * @internal For TESTS only: stand in for (or with `undefined`, remove) tjs-lang's
+ * `stripExports`, which the tjs-lang this repo pins does not export yet.
+ */
+export declare function setStripExportsForTests(stand: ((code: string) => string) | undefined): void;
+/**
+ * `code` without its `export`s, when the tjs-lang this process can load is able to remove
+ * them; otherwise `code` unchanged. For a caller that transpiles by some other route (the
+ * build check lowers `ts` with Bun, not with tjs-lang) and must still answer "will this
+ * run?" the way the page does.
+ */
+export declare function withoutExports(code: string): Promise<string>;
+/**
  * Generated documentation for a `tjs` source (#184 part 3): tjs-lang's
  * `generateDocsMarkdown(source, tjs(source).types)`, where the signature IS the docs.
  *
@@ -126,7 +138,7 @@ export declare function shapeTjsOutput(out: {
     testRunner?: unknown;
     prelude?: unknown;
     body?: unknown;
-}, stripExports?: ((code: string) => string) | undefined): TransformResult;
+}, stripExports?: ((code: string) => string) | null | undefined): TransformResult;
 /**
  * Load a live-example transform for a given source dialect.
  *

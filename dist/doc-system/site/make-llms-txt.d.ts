@@ -30,6 +30,12 @@ export interface LlmsTxtMeta {
     /** optional framing line(s) under the description */
     tagline?: string;
     /**
+     * @deprecated Ignored since 1.16.16. It used to add a paragraph about driving the dev
+     * server with the `hj` CLI; `llms.txt` is for whoever consumes the library, so that note
+     * belongs in the project's own agent instructions. Kept so existing callers still compile.
+     */
+    haltijaDev?: boolean | 'tunnel';
+    /**
      * Mirrors `SiteConfig.markdownPages` (default true): the build writes `index.md` beside
      * every page, so the index says so. Pass false when the site ships HTML only — pointing a
      * reader at a file that is not there costs more than not mentioning it.

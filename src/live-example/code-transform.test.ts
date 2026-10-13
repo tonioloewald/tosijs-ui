@@ -399,7 +399,7 @@ describe('shapeTjsOutput', () => {
   })
 
   test('with an older tjs-lang the code is left as it is', () => {
-    expect(shapeTjsOutput({ code: 'export const a = 1' }, undefined)).toEqual({
+    expect(shapeTjsOutput({ code: 'export const a = 1' }, null)).toEqual({
       code: 'export const a = 1',
     })
   })
