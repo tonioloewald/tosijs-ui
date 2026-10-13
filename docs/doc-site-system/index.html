@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=13a08c12212b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ac71cb511efe" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1593,7 +1593,8 @@ arrives through an upgrade: the lockfile kept an older hoisted copy and the pack
 nested the newer one under <code>node_modules/tosijs-ui/</code>. The warning lists both locations;
 <code>bun update @codemirror/state @codemirror/view</code> (npm: <code>npm dedupe</code>) brings them back to
 one. Without a <code>bundleEntry</code> the site ships tosijs-ui&#39;s prebuilt bundle, which the install
-cannot break, so the build says it once and never fails on it. A copy of your own at the
+cannot break, so <code>buildSite</code> says it once and never fails on it; <code>restampSite</code> does fail
+on it under <code>strict</code>, since a project that calls it built a bundle of its own. A copy of your own at the
 project root, for an editor of your own, is not reported.</p>
 </li>
 <li><p><strong>A bundle you wrote over <code>/iife.js</code> does not register the doc system</strong>, when you call

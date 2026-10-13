@@ -55,7 +55,7 @@ test('a git reader that throws does not fail the build', async () => {
     gatherBuildStamp({ generator: '1.8.0', git: async () => '' })
   ).resolves.toBeTruthy()
   // And an injected thrower is the caller's problem, not a silent wrong answer:
-  expect(exploding([])).rejects.toThrow()
+  await expect(exploding([])).rejects.toThrow()
 })
 
 test('site is omitted when not configured', async () => {

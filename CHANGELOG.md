@@ -20,10 +20,10 @@ For projects that build their own docs bundle, from tosijs's upgrade to 1.16.13 
   `node_modules/tosijs-ui/`; every `<tosi-code>` is then blank and nothing fails.
   `buildSite` now asks the module resolver whether the packages the editor is built from
   agree, and names both copies and the command that fixes it
-  (`bun update @codemirror/state @codemirror/view`). A warning by default. **It fails a
-  `strict: true` build that has a `bundleEntry`**, which is new in a patch: such a build
-  was already producing blank editors. Without a `bundleEntry` it is said once and never
-  fails. At runtime `<tosi-code>` logs the same explanation beside CodeMirror's own
+  (`bun update @codemirror/state @codemirror/view`). A warning by default. **Under `strict: true` it fails
+  `buildSite` on a site with a `bundleEntry`, and fails `restampSite`**, which is new in a
+  patch: those are the two places a bundle is built from the install, and such a build was
+  already producing blank editors. Otherwise `buildSite` says it once and carries on. At runtime `<tosi-code>` logs the same explanation beside CodeMirror's own
   "Unrecognized extension value" error. Cost: `iife.js` +176 bytes gzip.
 - **Fixed: `llms.txt` told agents to try `/carousel/index.md` on every site.** That is a
   tosijs-ui page. The example is now a page of the site being built.

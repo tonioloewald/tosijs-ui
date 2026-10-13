@@ -27,7 +27,6 @@ import * as path from 'path'
  * that asks "is this fence live?" calls it first rather than depending on build order: the
  * misconfiguration checks run long before the page generator, which used to be the only caller.
  */
-// Said once per process: a watch rebuild has nothing new to add (the strict path throws).
 let codemirrorWarned = false
 
 export function registerSiteDialects(config: {
@@ -605,11 +604,12 @@ export async function buildSite(
       /*
       Fatal under `strict` only where buildSite itself bundles the editor (`bundleEntry`).
       Without one the site ships tosijs-ui's prebuilt bundle, which the install cannot
-      break, so the copies matter only to a bundle the project builds for itself: worth
-      saying once, never worth failing the build over.
+      break, so the copies matter only to a bundle the project builds for itself, and
+      `restampSite` is where that project gets a failing build. Otherwise said once per
+      process: a watch rebuild has nothing new to add.
       */
       if (doubled) {
-        if (config.bundleEntry) misconfigured(config.strict, doubled)
+        if (config.bundleEntry && config.strict) misconfigured(true, doubled)
         else if (!codemirrorWarned) console.warn(doubled)
         codemirrorWarned = true
       }

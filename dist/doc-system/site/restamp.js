@@ -20,6 +20,7 @@ import { assetStampInputs, computeAssetStamp } from './asset-stamp.js';
 import { bundleRegistrations } from './host-preset.js';
 import { liveFenceLanguages, misconfigured } from './build-warnings.js';
 import { registerSiteDialects } from './orchestrator.js';
+import { codemirrorCopies, duplicateCodemirrorWarning, tosijsUiDir, } from './codemirror-copies.js';
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function htmlFiles(dir) {
     return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -31,6 +32,8 @@ function htmlFiles(dir) {
 }
 /** The hydration entry `buildSite` emitted for a `bundleEntry`, if there is one. */
 export function hydrateEntryIn(publicDir) {
+    if (!existsSync(publicDir))
+        return undefined;
     return readdirSync(publicDir).find((f) => /^hydrate-[a-z0-9]+\.js$/.test(f));
 }
 /**
@@ -93,7 +96,9 @@ export async function restampSite(config) {
     A page whose PROSE mentions `iife.js?v=1.2.3` must not be read as carrying that stamp, or
     have its text rewritten while the real tag is left stale.
     */
-    const stampedUrl = (name) => new RegExp(`((?:src|href)=["'][^"'<>]*${escapeRegExp(name)})\\?v=([^"'&\\s<>]+)`, 'g');
+    // The name must be a whole path segment of a LOCAL url: not `vendor/my-iife.js`, and not
+    // a link to somebody else's `https://cdn.example/iife.js?v=3`.
+    const stampedUrl = (name) => new RegExp(`((?:src|href)=["'](?!\\/\\/)(?:[^"'<>:]*\\/)?${escapeRegExp(name)})\\?v=([^"'&\\s<>]+)`, 'g');
     const assets = [scriptName, 'doc-system.css'];
     const pages = htmlFiles(publicDir);
     let previous;
@@ -129,6 +134,14 @@ export async function restampSite(config) {
     const problem = servedBundleProblem(readFileSync(scriptPath, 'utf8'), `/${scriptName}`, docsHaveExamples);
     if (problem)
         misconfigured(config.strict, problem);
+    /*
+    And the install the bundle was just built from. `buildSite` can only warn about two
+    copies of CodeMirror on a site with no `bundleEntry`, because the bundle it ships there is
+    prebuilt; a project that reaches this line built its own, so here it can decide a build.
+    */
+    const doubled = duplicateCodemirrorWarning(codemirrorCopies(process.cwd(), tosijsUiDir(import.meta.dir)));
+    if (doubled)
+        misconfigured(config.strict, doubled);
     let carrying = 0;
     let changed = 0;
     for (const file of pages) {

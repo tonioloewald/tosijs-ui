@@ -82,19 +82,10 @@ test('nothing to re-stamp is an error, not a quiet success', async () => {
   ).rejects.toThrow(/does not serve/)
 })
 
-test('a replacement that does not register the doc system is reported, and fails a strict build', async () => {
+test('under strict, a bundle that does not register the doc system throws before a page is touched', async () => {
   await builtSite(REGISTERS)
+  // the FIRST restamp after the build: the stamp would change, so a write is pending
   writeFileSync(path.join(out, 'iife.js'), 'var inert=1')
-  const warn = spyOn(console, 'warn').mockImplementation(() => {})
-  try {
-    await restampSite(config())
-    expect(warn.mock.calls.join('\n')).toContain(
-      'does not register <tosi-doc-system>'
-    )
-  } finally {
-    warn.mockRestore()
-  }
-  // Under strict the refused bundle leaves every page exactly as the build wrote it.
   const before = readFileSync(path.join(out, 'guide', 'index.html'), 'utf8')
   await expect(restampSite(config({ strict: true }))).rejects.toThrow(
     SiteMisconfiguredError
@@ -102,6 +93,22 @@ test('a replacement that does not register the doc system is reported, and fails
   expect(readFileSync(path.join(out, 'guide', 'index.html'), 'utf8')).toBe(
     before
   )
+})
+
+test('without strict the same bundle is reported, and the pages are re-stamped', async () => {
+  const built = await builtSite(REGISTERS)
+  writeFileSync(path.join(out, 'iife.js'), 'var inert=1')
+  const warn = spyOn(console, 'warn').mockImplementation(() => {})
+  try {
+    const result = await restampSite(config())
+    expect(warn.mock.calls.join('\n')).toContain(
+      'does not register <tosi-doc-system>'
+    )
+    expect(result.changed).toBe(2)
+    expect(result.stamp).not.toBe(built)
+  } finally {
+    warn.mockRestore()
+  }
 })
 
 test('live examples in the corpus need <tosi-example> in the served bundle', async () => {
@@ -144,13 +151,27 @@ test('only the URLs the generator wrote are read and rewritten, never prose', as
   const prose =
     '<p>Old pages loaded iife.js?v=1.2.3 and doc-system.css?v=9.</p>' +
     '<meta name="description" content="see iife.js?v=1.2.3">'
-  writeFileSync(path.join(out, 'index.html'), prose + page(built))
+  // other people's files, and a file of the project's own with a similar name
+  const foreign =
+    '<a href="https://cdn.example/iife.js?v=3">cdn</a>' +
+    '<a href="//cdn.example/iife.js?v=4">cdn</a>' +
+    '<script src="vendor/my-iife.js?v=7"></script>'
+  // in EVERY page, so whichever is read first carries the decoys ahead of the real tag
+  for (const file of ['index.html', path.join('guide', 'index.html')]) {
+    writeFileSync(path.join(out, file), prose + foreign + page(built))
+  }
   writeFileSync(path.join(out, 'iife.js'), `${REGISTERS};var replaced=1`)
   const result = await restampSite(config())
   expect(result.previous).toBe(built)
-  expect(readFileSync(path.join(out, 'index.html'), 'utf8')).toBe(
-    prose + page(result.stamp)
+  expect(readFileSync(path.join(out, 'guide', 'index.html'), 'utf8')).toBe(
+    prose + foreign + page(result.stamp)
   )
+})
+
+test('a missing output directory is named, not a raw scandir error', async () => {
+  await expect(
+    restampSite(config({ outputDir: path.join(dir, 'nowhere') }))
+  ).rejects.toThrow(/restampSite: .*nowhere.* does not exist/)
 })
 
 test('the stylesheet is re-stamped even when its stamp had drifted from the script', async () => {

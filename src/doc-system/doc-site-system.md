@@ -1446,7 +1446,8 @@ exported from `tosijs-ui/site`, and the previous build output is restored):
   nested the newer one under `node_modules/tosijs-ui/`. The warning lists both locations;
   `bun update @codemirror/state @codemirror/view` (npm: `npm dedupe`) brings them back to
   one. Without a `bundleEntry` the site ships tosijs-ui's prebuilt bundle, which the install
-  cannot break, so the build says it once and never fails on it. A copy of your own at the
+  cannot break, so `buildSite` says it once and never fails on it; `restampSite` does fail
+  on it under `strict`, since a project that calls it built a bundle of its own. A copy of your own at the
   project root, for an editor of your own, is not reported.
 - **A bundle you wrote over `/iife.js` does not register the doc system**, when you call
   [`restampSite`](#bundles--live-examples-read-this) after replacing it. That one throws from
