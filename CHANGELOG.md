@@ -31,7 +31,9 @@ Both tjs-lang items are feature-detected, so nothing changes until your tjs-lang
   was still awaiting a fetch) went on to run its test block against a preview no longer in
   the page. A test that waits for something to render then waited for ever and the example
   stayed marked as running, so the page was reported as not finished after 45 seconds. A
-  replaced run now stops before its tests. Seen on the data-table page off localhost.
+  replaced run now stops before its tests, and one replaced while its tests are running
+  no longer writes its results over the newer run's. Seen on the data-table page off
+  localhost.
 - **`llms.txt` no longer carries a paragraph about the dev server.** A site with
   `haltijaDev` set used to tell readers of its `llms.txt` to run `bun start` and drive the
   page with the `hj` CLI. That file is for whoever consumes the library, and those readers

@@ -3473,6 +3473,7 @@ export class LiveExample extends withAttributes({
     ) {
       // Let queued renders (rAF) settle before running tests
       await new Promise((resolve) => requestAnimationFrame(resolve))
+      if (runAbort.signal.aborted) return
 
       this.classList.add('-has-tests', '-test-running')
       this.classList.remove('-test-passed', '-test-failed')
@@ -3481,10 +3482,17 @@ export class LiveExample extends withAttributes({
       const testTransform = await loadTransform('js')
       // Only run `test` blocks if the example actually produced a preview to
       // assert against; a failed build has nothing to test but still fails below.
-      this.testResults =
+      const results: TestResults =
         this.test && preview
           ? await runTests(this.test, preview, this.context, testTransform)
           : { passed: 0, failed: 0, tests: [] }
+      /*
+      Replaced while its tests ran: the newer run owns the example's results and its state.
+      This run's tests finished against a preview no longer in the page, so writing them
+      here put a failure over the newer run's pass (or cleared "running" while it still was).
+      */
+      if (runAbort.signal.aborted) return
+      this.testResults = results
       if (executionError) {
         this.testResults.failed += 1
         this.testResults.tests.unshift({
