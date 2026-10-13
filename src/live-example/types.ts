@@ -68,4 +68,13 @@ export interface TransformResult {
    * to return it. Run as `code + testUtils + 'return ' + testRunner`.
    */
   testRunner?: string
+  /**
+   * `code` in two parts, from a transform that can separate them (tjs-lang 0.14.0-rc.5 on):
+   * `prelude` is the runtime setup the dialect puts in front (`''` when it needs none), and
+   * `body` is what the source itself became. The console needs the split to evaluate one
+   * line for its own value, and `body` is what it shows as the JavaScript for that line.
+   * Give both or neither.
+   */
+  prelude?: string
+  body?: string
 }

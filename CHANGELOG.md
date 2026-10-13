@@ -1,12 +1,35 @@
 # Changelog
 
-## Unreleased
+## 1.16.16
 
+For tjs-lang's book (GitHub #216 item 3 and #210 item 5), plus one change to `llms.txt`.
+Both tjs-lang items are feature-detected, so nothing changes until your tjs-lang has them.
+
+- **A console line shows its own value, and the JavaScript it became.** A dialect's
+  transform may now return `prelude` and `body` beside `code`: its runtime setup, and what
+  the source itself became. When it does (tjs-lang 0.14.0-rc.5 and later), a line typed at
+  an example's console is evaluated for its own value, so a declaration shows `undefined`
+  where it used to show the setup's last assignment, and a line that needs both the setup
+  and `await` shows what it resolved to. The input also gains a small **JS** button that
+  shows the JavaScript for that line. A transform that returns only `code` behaves as
+  before, with no button.
+- **`tjs` and `ts` examples may be written as modules.** `export` is removed before the
+  example runs, by tjs-lang's own parser (`stripExports`, from 0.14.0-rc.4). An example
+  runs as a function body, where `export` is a syntax error, so with an older tjs-lang it
+  fails as it always has.
+- **`registerDialect` documents what a transform should return.** `testRunner` has been
+  honoured since 1.16.8 but was not in the type or the docs: a dialect that returns only
+  `code` has its inline tests run from their raw text, with JavaScript's semantics. The
+  `transform` type now names `testRunner`, `prelude` and `body`.
 - **`llms.txt` no longer carries a paragraph about the dev server.** A site with
   `haltijaDev` set used to tell readers of its `llms.txt` to run `bun start` and drive the
   page with the `hj` CLI. That file is for whoever consumes the library, and those readers
   have no repo to run. If you relied on it to brief an agent working in your project, put
   the same note in your `CLAUDE.md` or `AGENTS.md`.
+
+The tjs-lang this package pins for sites that load it from a CDN is still 0.13.13, which has
+neither feature. A site that serves its own tjs-lang (the installed peer, copied
+same-origin by the build) gets both as soon as that is 0.14.0-rc.5.
 
 ## 1.16.15
 

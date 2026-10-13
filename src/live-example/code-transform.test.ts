@@ -5,6 +5,7 @@ import {
   rewriteContextImports,
   AsyncFunction,
   loadTransform,
+  shapeTjsOutput,
   TJS_VERSION,
   transformAvailable,
   TYPESCRIPT_VERSION,
@@ -369,5 +370,56 @@ describe('assertContextProvided', () => {
         'tosijs-ui': {},
       })
     ).not.toThrow()
+  })
+})
+
+/*
+#210 item 5 and #216: what an example keeps of a tjs-lang transpile. The installed tjs-lang
+may predate both `stripExports` and `prelude`/`body`, so the rule is tested on its own.
+*/
+describe('shapeTjsOutput', () => {
+  const strip = (code: string) => code.replace(/export (default )?/g, '')
+
+  test('export is removed from the code, and from the body, when tjs-lang can', () => {
+    const out = shapeTjsOutput(
+      {
+        code: 'const rt = 1\nexport const a = 1',
+        prelude: 'const rt = 1\n',
+        body: 'export const a = 1',
+        testRunner: 'run()',
+      },
+      strip
+    )
+    expect(out).toEqual({
+      code: 'const rt = 1\nconst a = 1',
+      prelude: 'const rt = 1\n',
+      body: 'const a = 1',
+      testRunner: 'run()',
+    })
+  })
+
+  test('with an older tjs-lang the code is left as it is', () => {
+    expect(shapeTjsOutput({ code: 'export const a = 1' }, undefined)).toEqual({
+      code: 'export const a = 1',
+    })
+  })
+
+  test('code with no export is never handed to the parser', () => {
+    let calls = 0
+    shapeTjsOutput({ code: 'const exported = 1' }, (code) => {
+      calls += 1
+      return code
+    })
+    expect(calls).toBe(0)
+  })
+
+  test('prelude and body are kept only as a pair', () => {
+    expect(shapeTjsOutput({ code: 'x', body: 'x' }, undefined)).toEqual({
+      code: 'x',
+    })
+    // '' is a real prelude: the line needed no runtime.
+    expect(
+      shapeTjsOutput({ code: 'x', prelude: '', body: 'x' }, undefined)
+    ).toEqual({ code: 'x', prelude: '', body: 'x' })
   })
 })

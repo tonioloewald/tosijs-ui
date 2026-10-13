@@ -1,4 +1,4 @@
-import type { ExampleContext, TransformFn } from './types.js';
+import type { ExampleContext, TransformFn, TransformResult } from './types.js';
 /** Per-example options, from the JSON after the fence language: ```tjs {"debug": true} */
 export type DialectOptions = Record<string, unknown>;
 export interface DialectRunContext {
@@ -32,12 +32,16 @@ export interface DialectSpec {
      * Also called with a single line typed at the example's console, so the REPL speaks the
      * example's language (#216). Those calls carry `options.repl === true`, and the result is
      * evaluated for the value of its last expression statement.
+     *
+     * Beside `code`, return what your transpiler gives you of:
+     * - `testRunner`: the runner for the source's inline tests. Without it the tests run from
+     *   their RAW text, so they get JavaScript's semantics, not your language's.
+     * - `prelude` and `body` (both, or neither): `code` split into the runtime setup and what
+     *   the source itself became. The console then evaluates a line for its own value (a
+     *   declaration shows `undefined`, not the setup's last assignment) and can show `body`
+     *   as the JavaScript that line became.
      */
-    transform?: (source: string, options: DialectOptions) => {
-        code: string;
-    } | Promise<{
-        code: string;
-    }>;
+    transform?: (source: string, options: DialectOptions) => TransformResult | Promise<TransformResult>;
     /**
      * Run the source yourself. A non-`undefined` return value is reported as the example's
      * result. Throwing fails the example, exactly as a throwing `js` block does.

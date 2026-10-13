@@ -187,11 +187,13 @@ example's output stays in its Console tab.
   transform as the example's code, with the same fence options, so in a `tjs` example `==`
   is TJS's `==`. A line the dialect rejects shows the dialect's error; it is not retried as
   JavaScript. A `run` dialect has no transform, so its lines are JavaScript.
-  A transform may put setup statements in front of your line (tjs does), and then two things
-  show the wrong value: a line that is only a declaration (`const z = x == 5`) shows a value
-  left over from that setup where a browser console shows `undefined`, and a line that needs
-  both the setup and `await` shows `undefined`. An expression, which is what a console is
-  mostly for, shows its value.
+  A transform may put setup statements in front of your line (tjs does). When it returns
+  that setup apart from the line (tjs-lang 0.14.0-rc.5 and later do), a line shows its own
+  value, as in a browser console: a declaration shows `undefined` and an `await` line shows
+  what it resolved to. The input then has a small **JS** button that shows the JavaScript
+  the line became, which for a language like TJS is the point being taught. With an older
+  transform a line that is only a declaration shows a value left over from the setup, a
+  line that needs both the setup and `await` shows `undefined`, and there is no JS button.
 
 ## Opening with the code showing
 
@@ -268,6 +270,11 @@ A dialect gives exactly one of:
 
 - **`transform(source, options)`** — returns `{ code }`, JavaScript the example then runs
   exactly as it runs a `js` block. Imports from the page's modules are already rewritten.
+  Return `testRunner` beside `code` if your transpiler builds one for the source's inline
+  tests: without it the tests run from their raw text, with JavaScript's semantics and not
+  your language's. Return `prelude` and `body` (both) if it can split `code` into its
+  runtime setup and what the source became: the console needs that to show a line's own
+  value, and shows `body` as the JavaScript for the line.
 - **`run(source, context)`** — executes the source itself (a VM, a fuel budget, whatever
   capabilities your registration closes over). `context` carries the example's `preview`
   element, its `options`, the page's `context` modules, an `AbortSignal` that fires when the
@@ -276,6 +283,11 @@ A dialect gives exactly one of:
   quarter-second, so a fast run never flashes it); a re-run replaces it. If your language treats
   errors as values (AJS does), a run that ENDS in one is a successful run: `report()` it, and
   throw only for a broken example.
+
+A `tjs` or `ts` example may be written as a module: `export` is removed before it runs
+(an example runs as a function body, where `export` is a syntax error). This needs
+tjs-lang 0.14.0-rc.4 or later, whose parser does the removing; with an older one an
+`export` fails as before. A dialect of your own strips its own.
 
 Optional `label` names the source tab and `editorMode` picks the code editor's language.
 Optional `docs(source, options)` returns markdown for a **Docs** tab beside the code: the

@@ -591,6 +591,135 @@ describe("the REPL evaluates in the example's dialect", () => {
     })
   })
 
+  /*
+  A dialect that puts runtime setup in front of the line, and says where it ends (#216, with
+  tjs-lang 0.14.0-rc.5's `prelude` / `body`). The setup's LAST statement is an assignment of
+  a function, which is what a declaration used to print as its value.
+  */
+  describe('a transform that returns its setup apart from the line', () => {
+    const PRELUDE =
+      'const __rt = { eq: (a, b) => a === b };\n__rt.last = __rt.eq;\n'
+    const preludeMount = async () => {
+      registerDialect('prelang', {
+        transform: (source) => {
+          const body = source.replace(/(\w+) is ('?\w+'?)/g, '__rt.eq($1, $2)')
+          return { code: PRELUDE + body, prelude: PRELUDE, body }
+        },
+      })
+      const example: any = liveExample()
+      document.body.append(example)
+      await example.whenHydrated
+      example.dialect = 'prelang'
+      example.js = `const five = 5\npreview.textContent = 'x'`
+      await example.refresh()
+      return example
+    }
+    // Both evaluators: inside the example's scope, and the one used when there is no hook.
+    const paths: Array<[string, (example: any) => Promise<void>]> = [
+      ["in the example's scope", async () => {}],
+      [
+        'without the scope hook',
+        async (example) => {
+          await example.consoleEval('1')
+          example.replEvaluate = undefined
+        },
+      ],
+    ]
+    for (const [name, prepare] of paths) {
+      test(`${name}: each line has its own value`, async () => {
+        await quietly(async () => {
+          const example = await preludeMount()
+          await prepare(example)
+          expect(await example.consoleEval('1 is 1')).toBe(true)
+          expect(await example.consoleEval("1 is '1'")).toBe(false)
+          // A declaration has no value. It used to show the setup's last assignment.
+          expect(await example.consoleEval('const z = 1 is 1')).toBeUndefined()
+          expect(lines(example).at(-1)).toEqual(['result', 'undefined'])
+          // An awaiting line needs an expression wrapper AND the setup.
+          expect(
+            await example.consoleEval('await Promise.resolve(1 is 1)')
+          ).toBe(true)
+          expect(
+            lines(example).filter(([level]: string[]) => level === 'error')
+          ).toEqual([])
+          example.remove()
+        })
+      })
+    }
+
+    test('the input line offers the JavaScript it became, and nothing of the setup', async () => {
+      await quietly(async () => {
+        const example = await preludeMount()
+        await example.consoleEval('1 is 1')
+        const input = example.consoleOutput.find(
+          (line: { level: string }) => line.level === 'input'
+        )
+        expect(input.js).toBe('__rt.eq(1, 1)')
+        const view = example.buildConsoleView()
+        document.body.append(view) // handlers are delegated from the document
+        const toggle = view.querySelector('.console-js-toggle') as HTMLElement
+        const shown = view.querySelector('.console-js') as HTMLElement
+        expect(shown.textContent).toBe('__rt.eq(1, 1)')
+        expect(shown.hidden).toBe(true)
+        toggle.click()
+        expect(shown.hidden).toBe(false)
+        expect(toggle.getAttribute('aria-expanded')).toBe('true')
+        toggle.click()
+        expect(shown.hidden).toBe(true)
+        expect(toggle.getAttribute('aria-expanded')).toBe('false')
+        view.remove()
+        example.remove()
+      })
+    })
+
+    test('a line the dialect left alone offers nothing', async () => {
+      await quietly(async () => {
+        const example = await preludeMount()
+        await example.consoleEval('five + 1')
+        const input = example.consoleOutput.find(
+          (line: { level: string }) => line.level === 'input'
+        )
+        expect(input.js).toBeUndefined()
+        example.remove()
+      })
+    })
+
+    test('a rejected line still shows what was typed, then the error', async () => {
+      await quietly(async () => {
+        registerDialect('refuser', {
+          transform: (source) => {
+            if (source.includes('nope')) throw new Error('refused')
+            return { code: source }
+          },
+        })
+        const example: any = liveExample()
+        document.body.append(example)
+        await example.whenHydrated
+        example.dialect = 'refuser'
+        example.js = `preview.textContent = 'x'`
+        await example.refresh()
+        await example.consoleEval('nope')
+        expect(lines(example).slice(-2)).toEqual([
+          ['input', 'nope'],
+          ['error', 'Error: refused'],
+        ])
+        example.remove()
+      })
+    })
+  })
+
+  test('a transform that returns only code offers no JavaScript for a line', async () => {
+    await quietly(async () => {
+      const example = await dialectMount(`const five = 5`)
+      await example.consoleEval('five is 5')
+      const input = example.consoleOutput.find(
+        (line: { level: string }) => line.level === 'input'
+      )
+      expect(input.js).toBeUndefined()
+      example.remove()
+    })
+  })
+
   test('a plain js example is evaluated exactly as before', async () => {
     await quietly(async () => {
       const example = await mount(`const n = 2`)

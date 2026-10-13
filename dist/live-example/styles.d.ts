@@ -195,6 +195,31 @@ export declare const liveExampleStyleSpec: {
     ':host .example-console .console-input::before': {
         content: string;
     };
+    ':host .example-console .console-js-toggle': {
+        font: string;
+        fontSize: string;
+        lineHeight: string;
+        marginLeft: string;
+        padding: string;
+        border: string;
+        borderRadius: string;
+        boxShadow: string;
+        background: string;
+        color: string;
+        cursor: string;
+    };
+    ':host .example-console .console-js': {
+        margin: string;
+        padding: string;
+        background: string;
+        color: string;
+        font: string;
+        whiteSpace: string;
+        overflowWrap: string;
+    };
+    ':host .example-console .console-js[hidden]': {
+        display: string;
+    };
     ':host .example-console .console-result::before': {
         content: string;
         opacity: string;

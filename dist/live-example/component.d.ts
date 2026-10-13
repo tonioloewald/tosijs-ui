@@ -228,6 +228,31 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         ':host .example-console .console-input::before': {
             content: string;
         };
+        ':host .example-console .console-js-toggle': {
+            font: string;
+            fontSize: string;
+            lineHeight: string;
+            marginLeft: string;
+            padding: string;
+            border: string;
+            borderRadius: string;
+            boxShadow: string;
+            background: string;
+            color: string;
+            cursor: string;
+        };
+        ':host .example-console .console-js': {
+            margin: string;
+            padding: string;
+            background: string;
+            color: string;
+            font: string;
+            whiteSpace: string;
+            overflowWrap: string;
+        };
+        ':host .example-console .console-js[hidden]': {
+            display: string;
+        };
         ':host .example-console .console-result::before': {
             content: string;
             opacity: string;
@@ -488,6 +513,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private refreshOutput;
     private addConsoleLine;
     private consoleLineElement;
+    private toggleConsoleJs;
     private consoleDroppedEl?;
     private renderConsoleDropped;
     private scrollConsole;
@@ -534,7 +560,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private setActiveCompletion;
     private applyCompletion;
     private closeCompletions;
-    private replCode;
+    private replLine;
     private evalInExample;
     private currentPreview;
     compiledJs?: string;

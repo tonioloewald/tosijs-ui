@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=2137c2b0ab6a" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=28910b550e04" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e428af2ac095" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=45f8f13455db" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="example">example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -196,11 +196,13 @@ to it.</li>
 transform as the example&#39;s code, with the same fence options, so in a <code>tjs</code> example <code>==</code>
 is TJS&#39;s <code>==</code>. A line the dialect rejects shows the dialect&#39;s error; it is not retried as
 JavaScript. A <code>run</code> dialect has no transform, so its lines are JavaScript.
-A transform may put setup statements in front of your line (tjs does), and then two things
-show the wrong value: a line that is only a declaration (<code>const z = x == 5</code>) shows a value
-left over from that setup where a browser console shows <code>undefined</code>, and a line that needs
-both the setup and <code>await</code> shows <code>undefined</code>. An expression, which is what a console is
-mostly for, shows its value.</li>
+A transform may put setup statements in front of your line (tjs does). When it returns
+that setup apart from the line (tjs-lang 0.14.0-rc.5 and later do), a line shows its own
+value, as in a browser console: a declaration shows <code>undefined</code> and an <code>await</code> line shows
+what it resolved to. The input then has a small <strong>JS</strong> button that shows the JavaScript
+the line became, which for a language like TJS is the point being taught. With an older
+transform a line that is only a declaration shows a value left over from the setup, a
+line that needs both the setup and <code>await</code> shows <code>undefined</code>, and there is no JS button.</li>
 </ul>
 <h2 id="opening-with-the-code-showing">Opening with the code showing</h2>
 <p>An example normally opens as its preview, and the <code>&lt;&gt;</code> button opens the code full-screen.
@@ -266,7 +268,12 @@ language then becomes a live example like any other: it groups with <code>html</
 <p>A dialect gives exactly one of:</p>
 <ul>
 <li><strong><code>transform(source, options)</code></strong> — returns <code>{ code }</code>, JavaScript the example then runs
-exactly as it runs a <code>js</code> block. Imports from the page&#39;s modules are already rewritten.</li>
+exactly as it runs a <code>js</code> block. Imports from the page&#39;s modules are already rewritten.
+Return <code>testRunner</code> beside <code>code</code> if your transpiler builds one for the source&#39;s inline
+tests: without it the tests run from their raw text, with JavaScript&#39;s semantics and not
+your language&#39;s. Return <code>prelude</code> and <code>body</code> (both) if it can split <code>code</code> into its
+runtime setup and what the source became: the console needs that to show a line&#39;s own
+value, and shows <code>body</code> as the JavaScript for the line.</li>
 <li><strong><code>run(source, context)</code></strong> — executes the source itself (a VM, a fuel budget, whatever
 capabilities your registration closes over). <code>context</code> carries the example&#39;s <code>preview</code>
 element, its <code>options</code>, the page&#39;s <code>context</code> modules, an <code>AbortSignal</code> that fires when the
@@ -276,6 +283,10 @@ quarter-second, so a fast run never flashes it); a re-run replaces it. If your l
 errors as values (AJS does), a run that ENDS in one is a successful run: <code>report()</code> it, and
 throw only for a broken example.</li>
 </ul>
+<p>A <code>tjs</code> or <code>ts</code> example may be written as a module: <code>export</code> is removed before it runs
+(an example runs as a function body, where <code>export</code> is a syntax error). This needs
+tjs-lang 0.14.0-rc.4 or later, whose parser does the removing; with an older one an
+<code>export</code> fails as before. A dialect of your own strips its own.</p>
 <p>Optional <code>label</code> names the source tab and <code>editorMode</code> picks the code editor&#39;s language.
 Optional <code>docs(source, options)</code> returns markdown for a <strong>Docs</strong> tab beside the code: the
 place for documentation generated from the source (in TJS the signature <em>is</em> the docs). It
@@ -762,6 +773,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-vmdb4gz9.js"></script>
+  <script type="module" src="../hydrate-dkscxwfj.js"></script>
 </body>
 </html>

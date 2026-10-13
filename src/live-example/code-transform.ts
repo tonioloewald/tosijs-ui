@@ -319,7 +319,7 @@ export async function executeCode(
 type TjsFn = (
   source: string,
   options?: { dialect?: 'js' | 'tjs'; runTests?: boolean | 'only' | 'report' }
-) => { code: string; testRunner?: unknown }
+) => { code: string; testRunner?: unknown; prelude?: unknown; body?: unknown }
 
 /**
  * The fromTS() entry from tjs-lang/browser/from-ts — lowers TypeScript to tjs.
@@ -411,14 +411,38 @@ async function loadTjs(): Promise<TjsFn | null> {
   // Installed peer (ESM consumers / dev build) — static specifier so bundlers
   // resolve it to the local package.
   try {
-    const { tjs } = (await import('tjs-lang/browser')) as { tjs: TjsFn }
-    if (typeof tjs === 'function') return tjs
+    const m = (await import('tjs-lang/browser')) as {
+      tjs: TjsFn
+      stripExports?: unknown
+    }
+    if (typeof m.tjs === 'function') {
+      noteStripExports(m.stripExports)
+      return m.tjs
+    }
   } catch {
     // not installed — try same-origin / CDN
   }
   const m = await importFirstAvailable(bundleUrls('tjs-browser.js'))
-  if (m && typeof m.tjs === 'function') return m.tjs as TjsFn
+  if (m && typeof m.tjs === 'function') {
+    noteStripExports(m.stripExports)
+    return m.tjs as TjsFn
+  }
   return null
+}
+
+/*
+tjs-lang's parser-based `stripExports` (#210 item 5), from the same module `tjs` came from.
+
+An example runs as a function body, where `export` is a syntax error, so one written as a
+module could not run. Removing `export` has to be done by parsing (a line regex rewrites a
+template literal that happens to start a line with `export `), tosijs-ui ships no JavaScript
+parser, and tjs-lang's browser bundle already carries one. FEATURE-DETECTED: it is exported
+from 0.14.0-rc.4 on, so with an older tjs-lang an `export` fails as it always has.
+*/
+let stripExportsFn: ((code: string) => string) | undefined
+function noteStripExports(candidate: unknown): void {
+  if (typeof candidate === 'function')
+    stripExportsFn = candidate as (code: string) => string
 }
 
 /**
@@ -551,17 +575,34 @@ let fromTsOnce: Promise<FromTsFn | null> | undefined
  */
 const RESULT_CACHE_MAX = 256
 /**
- * Keep tjs-lang's `testRunner` beside the code when it returns one (#210 item 1). It is one
+ * What an example keeps of a tjs-lang transpile, with `export` removed when tjs-lang can
+ * do that (see `stripExportsFn`).
+ *
+ * Keeps tjs-lang's `testRunner` beside the code when it returns one (#210 item 1). It is one
  * property read on a transpile that already happened, and it is the only runner built from
  * the test bodies as tjs-lang REWROTE them; `extractTests` builds its own from raw text.
+ * Keeps `prelude` and `body` when it returns both (#216), for the console.
  */
-const withTestRunner = (out: {
-  code: string
-  testRunner?: unknown
-}): TransformResult =>
-  typeof out.testRunner === 'string'
-    ? { code: out.code, testRunner: out.testRunner }
-    : { code: out.code }
+export function shapeTjsOutput(
+  out: {
+    code: string
+    testRunner?: unknown
+    prelude?: unknown
+    body?: unknown
+  },
+  stripExports: ((code: string) => string) | undefined = stripExportsFn
+): TransformResult {
+  // Parse only what could hold one: most examples have no `export` at all.
+  const strip = (code: string): string =>
+    stripExports && /\bexport\b/.test(code) ? stripExports(code) : code
+  const result: TransformResult = { code: strip(out.code) }
+  if (typeof out.testRunner === 'string') result.testRunner = out.testRunner
+  if (typeof out.prelude === 'string' && typeof out.body === 'string') {
+    result.prelude = out.prelude
+    result.body = strip(out.body)
+  }
+  return result
+}
 
 const resultCache = new Map<string, TransformResult>()
 const cacheResult = (key: string, result: TransformResult) => {
@@ -667,12 +708,12 @@ export async function loadTransform(
         `new Calculator(…)` was refused as native TJS. tjs-lang's own playground and tests
         call it this way.
         */
-        const result = withTestRunner(tjs(tjsSource, { runTests: false }))
+        const result = shapeTjsOutput(tjs(tjsSource, { runTests: false }))
         cacheResult(cacheKey, result)
         return result
       })()
     }
-    const result = withTestRunner(tjs(code, { dialect, runTests: false }))
+    const result = shapeTjsOutput(tjs(code, { dialect, runTests: false }))
     cacheResult(cacheKey, result)
     return result
   }

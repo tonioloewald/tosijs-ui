@@ -1,4 +1,4 @@
-import { Dialect, ExampleContext, TransformFn } from './types.js';
+import { Dialect, ExampleContext, TransformFn, TransformResult } from './types.js';
 export declare const AsyncFunction: Function;
 /**
  * Thrown by `rewriteImports` when an example has a static import the environment
@@ -112,6 +112,21 @@ export interface TjsTestResult {
 }
 /** Load the tjs inline-test API (memoized). null if tjs-lang is unavailable. */
 export declare function loadTjsTestApi(): Promise<TjsTestApi | null>;
+/**
+ * What an example keeps of a tjs-lang transpile, with `export` removed when tjs-lang can
+ * do that (see `stripExportsFn`).
+ *
+ * Keeps tjs-lang's `testRunner` beside the code when it returns one (#210 item 1). It is one
+ * property read on a transpile that already happened, and it is the only runner built from
+ * the test bodies as tjs-lang REWROTE them; `extractTests` builds its own from raw text.
+ * Keeps `prelude` and `body` when it returns both (#216), for the console.
+ */
+export declare function shapeTjsOutput(out: {
+    code: string;
+    testRunner?: unknown;
+    prelude?: unknown;
+    body?: unknown;
+}, stripExports?: ((code: string) => string) | undefined): TransformResult;
 /**
  * Load a live-example transform for a given source dialect.
  *

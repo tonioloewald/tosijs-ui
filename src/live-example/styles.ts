@@ -273,6 +273,32 @@ export const liveExampleStyleSpec = {
   ':host .example-console .console-input::before': {
     content: '"› "',
   },
+  // the JavaScript a line became in its dialect, behind a toggle
+  ':host .example-console .console-js-toggle': {
+    font: 'inherit',
+    fontSize: '0.8em',
+    lineHeight: '1',
+    marginLeft: vars.spacing50,
+    padding: `0 ${vars.spacing25}`,
+    border: 'none',
+    borderRadius: vars.spacing25,
+    boxShadow: 'inset 0 0 0 1px currentColor',
+    background: 'transparent',
+    color: 'inherit',
+    cursor: 'pointer',
+  },
+  ':host .example-console .console-js': {
+    margin: `${vars.spacing25} 0 ${vars.spacing25} ${vars.spacing}`,
+    padding: '0',
+    background: 'transparent',
+    color: 'inherit',
+    font: 'inherit',
+    whiteSpace: 'pre-wrap',
+    overflowWrap: 'anywhere',
+  },
+  ':host .example-console .console-js[hidden]': {
+    display: 'none',
+  },
   ':host .example-console .console-result::before': {
     content: '"← "',
     opacity: '0.6',

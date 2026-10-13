@@ -188,11 +188,13 @@ example's output stays in its Console tab.
   transform as the example's code, with the same fence options, so in a `tjs` example `==`
   is TJS's `==`. A line the dialect rejects shows the dialect's error; it is not retried as
   JavaScript. A `run` dialect has no transform, so its lines are JavaScript.
-  A transform may put setup statements in front of your line (tjs does), and then two things
-  show the wrong value: a line that is only a declaration (`const z = x == 5`) shows a value
-  left over from that setup where a browser console shows `undefined`, and a line that needs
-  both the setup and `await` shows `undefined`. An expression, which is what a console is
-  mostly for, shows its value.
+  A transform may put setup statements in front of your line (tjs does). When it returns
+  that setup apart from the line (tjs-lang 0.14.0-rc.5 and later do), a line shows its own
+  value, as in a browser console: a declaration shows `undefined` and an `await` line shows
+  what it resolved to. The input then has a small **JS** button that shows the JavaScript
+  the line became, which for a language like TJS is the point being taught. With an older
+  transform a line that is only a declaration shows a value left over from the setup, a
+  line that needs both the setup and `await` shows `undefined`, and there is no JS button.
 
 ## Opening with the code showing
 
@@ -269,6 +271,11 @@ A dialect gives exactly one of:
 
 - **`transform(source, options)`** — returns `{ code }`, JavaScript the example then runs
   exactly as it runs a `js` block. Imports from the page's modules are already rewritten.
+  Return `testRunner` beside `code` if your transpiler builds one for the source's inline
+  tests: without it the tests run from their raw text, with JavaScript's semantics and not
+  your language's. Return `prelude` and `body` (both) if it can split `code` into its
+  runtime setup and what the source became: the console needs that to show a line's own
+  value, and shows `body` as the JavaScript for the line.
 - **`run(source, context)`** — executes the source itself (a VM, a fuel budget, whatever
   capabilities your registration closes over). `context` carries the example's `preview`
   element, its `options`, the page's `context` modules, an `AbortSignal` that fires when the
@@ -277,6 +284,11 @@ A dialect gives exactly one of:
   quarter-second, so a fast run never flashes it); a re-run replaces it. If your language treats
   errors as values (AJS does), a run that ENDS in one is a successful run: `report()` it, and
   throw only for a broken example.
+
+A `tjs` or `ts` example may be written as a module: `export` is removed before it runs
+(an example runs as a function body, where `export` is a syntax error). This needs
+tjs-lang 0.14.0-rc.4 or later, whose parser does the removing; with an older one an
+`export` fails as before. A dialect of your own strips its own.
 
 Optional `label` names the source tab and `editorMode` picks the code editor's language.
 Optional `docs(source, options)` returns markdown for a **Docs** tab beside the code: the
@@ -795,6 +807,13 @@ type ReplEvaluate = (
   helpers?: Record<string, unknown>
 ) => unknown
 
+/** One line of the example's console; `js` is what a REPL input became in its dialect. */
+interface ConsoleLine {
+  level: string
+  text: string
+  js?: string
+}
+
 /** Every string property name reachable from a value, prototype chain included. */
 function propertyNamesOf(value: unknown): string[] {
   if (value === null || value === undefined) return []
@@ -1137,7 +1156,7 @@ export class LiveExample extends withAttributes({
   // that logs in a loop must not grow the page without bound. Past the cap one line counts
   // what was dropped; devtools still has them all.
   private static readonly CONSOLE_LINES = 500
-  private consoleBuffer: { level: string; text: string }[] = []
+  private consoleBuffer: ConsoleLine[] = []
   private consoleDroppedCount = 0
   private consoleView?: HTMLElement
   private consoleLinesEl?: HTMLElement
@@ -1308,13 +1327,21 @@ export class LiveExample extends withAttributes({
     }
   }
 
-  private addConsoleLine(level: string, text: string | (() => string)): void {
+  private addConsoleLine(
+    level: string,
+    text: string | (() => string),
+    js?: string
+  ): void {
     if (this.consoleBuffer.length >= LiveExample.CONSOLE_LINES) {
       this.consoleDroppedCount += 1
       this.renderConsoleDropped()
       return
     }
-    const line = { level, text: typeof text === 'function' ? text() : text }
+    const line: ConsoleLine = {
+      level,
+      text: typeof text === 'function' ? text() : text,
+      ...(js === undefined ? {} : { js }),
+    }
     this.consoleBuffer.push(line)
     this.queueOutputRefresh()
     if (this.consoleLinesEl) {
@@ -1324,8 +1351,33 @@ export class LiveExample extends withAttributes({
   }
 
   // A text node, never markup: logged `<img onerror=…>` is shown, not run.
-  private consoleLineElement(line: { level: string; text: string }) {
-    return div({ class: `console-line console-${line.level}` }, line.text)
+  private consoleLineElement(line: ConsoleLine) {
+    if (line.js === undefined)
+      return div({ class: `console-line console-${line.level}` }, line.text)
+    // A line the dialect changed: a toggle shows the JavaScript it became (#216).
+    return div(
+      { class: `console-line console-${line.level}` },
+      line.text,
+      button(
+        {
+          class: 'console-js-toggle',
+          type: 'button',
+          ariaExpanded: 'false',
+          title: 'Show the JavaScript this line became',
+          onClick: this.toggleConsoleJs,
+        },
+        'JS'
+      ),
+      pre({ class: 'console-js', hidden: true }, line.js)
+    )
+  }
+
+  private toggleConsoleJs = (event: Event): void => {
+    const toggle = (event.target as HTMLElement).closest('.console-js-toggle')
+    const shown = toggle?.parentElement?.querySelector('.console-js')
+    if (!toggle || !shown) return
+    const open = shown.toggleAttribute('hidden') === false
+    toggle.setAttribute('aria-expanded', String(open))
   }
 
   private consoleDroppedEl?: HTMLElement
@@ -1479,8 +1531,15 @@ export class LiveExample extends withAttributes({
       this.replWanted = true
       await this.refresh()
     }
-    this.addConsoleLine('input', source)
-    if (this.replEvaluate) return this.evalInExample(this.replEvaluate, source)
+    const line = await this.replLine(source)
+    this.addConsoleLine('input', source, line.shown)
+    if (line.error !== undefined) {
+      this.addConsoleLine('error', formatConsoleValue(line.error))
+      return undefined
+    }
+    const { prelude, body } = line
+    if (this.replEvaluate)
+      return this.evalInExample(this.replEvaluate, prelude, body)
     // one scope, keyed by the identifier each value is bound to; the example's own
     // variables win over a module of the same name, as they would inside the example
     const scope = new Map<string, unknown>()
@@ -1493,17 +1552,15 @@ export class LiveExample extends withAttributes({
     if (replConsole) scope.set('console', replConsole)
     for (const [key, value] of Object.entries(this.capturedScope ?? {}))
       scope.set(key, value)
-    const code = await this.replCode(source)
-    if (code === undefined) return undefined
     const names = [...scope.keys()]
     let fn: (...args: unknown[]) => Promise<unknown>
     try {
       // @ts-expect-error AsyncFunction constructor typing
-      fn = new AsyncFunction(...names, `return (${code}\n)`)
+      fn = new AsyncFunction(...names, `${prelude}\nreturn (${body}\n)`)
     } catch {
       try {
         // @ts-expect-error AsyncFunction constructor typing
-        fn = new AsyncFunction(...names, code)
+        fn = new AsyncFunction(...names, `${prelude}\n${body}`)
       } catch (error) {
         this.addConsoleLine('error', formatConsoleValue(error))
         return undefined
@@ -1734,12 +1791,30 @@ export class LiveExample extends withAttributes({
   A line the dialect rejects is reported in the console and NOT retried as JavaScript:
   falling back would answer with the other language's semantics and say nothing.
 
-  Returns `undefined` after printing the error. Then plain `rewriteImports`, not the checking
-  one: a REPL line is not a module, and an error thrown there would land outside the `try`
-  that prints errors to the console.
+  A dialect's output is its runtime setup followed by what the line became. Evaluated as one
+  piece, a declaration's "value" was the setup's last assignment (it printed a function) and
+  an `await` line, which needs an expression wrapper, had no value at all. So when the
+  transform returns the two apart (`prelude`, `body`; tjs-lang 0.14.0-rc.5 on) they are kept
+  apart here: the setup runs first, and the line is evaluated for its own value. A transform
+  that returns only `code` behaves as before.
+
+  `shown` is the JavaScript to offer beside the input: the line's own translation, when the
+  dialect changed it. Not offered for the whole `code` of a transform that cannot separate
+  its setup: that would bury the line under the runtime.
+
+  Returns `error` in place of throwing, so the caller prints it under the input. Plain
+  `rewriteImports`, not the checking one: a REPL line is not a module, and an error thrown
+  there would land outside the `try` that prints errors to the console.
   */
-  private async replCode(source: string): Promise<string | undefined> {
-    let code = source
+  private async replLine(source: string): Promise<{
+    prelude: string
+    body: string
+    shown?: string
+    error?: unknown
+  }> {
+    let prelude = ''
+    let body = source
+    let shown: string | undefined
     if (!(this.dialect === 'js' && isBuiltInDialect('js'))) {
       try {
         // `repl: true` tells a registered dialect this is one console line, not the example.
@@ -1747,21 +1822,32 @@ export class LiveExample extends withAttributes({
           ...this.options,
           repl: true,
         })
-        if (transform) code = (await transform(source)).code
+        if (transform) {
+          const out = await transform(source)
+          if (typeof out.prelude === 'string' && typeof out.body === 'string') {
+            prelude = out.prelude
+            body = out.body
+            if (body.trim() !== source.trim()) shown = body.trim()
+          } else {
+            body = out.code
+          }
+        }
       } catch (error) {
-        this.addConsoleLine('error', formatConsoleValue(error))
-        return undefined
+        return { prelude: '', body: '', error }
       }
     }
-    return rewriteImports(code, Object.keys(this.context))
+    return {
+      prelude,
+      body: rewriteImports(body, Object.keys(this.context)),
+      ...(shown === undefined ? {} : { shown }),
+    }
   }
 
   private async evalInExample(
     evaluate: ReplEvaluate,
-    source: string
+    prelude: string,
+    body: string
   ): Promise<unknown> {
-    const code = await this.replCode(source)
-    if (code === undefined) return undefined
     /*
     `$` and `$$`, as in a browser console, unless something named `$` is already in scope (the
     example's own, or a page's jQuery): then that wins. They query THIS example's preview: in
@@ -1772,12 +1858,18 @@ export class LiveExample extends withAttributes({
       evaluate('typeof $') === 'undefined'
         ? 'var $ = __tosiHelpers.$, $$ = __tosiHelpers.$$;'
         : ''
-    const attempts = /\bawait\b/.test(code)
+    /*
+    The setup goes in the same eval as the line (its `const`s are local to one eval). Without
+    an `await` the result is eval's completion value, and a declaration has none, so the
+    value left behind would be the setup's: `void 0` after it makes that `undefined`.
+    */
+    const setup = prelude ? `${prelude}\n` : ''
+    const attempts = /\bawait\b/.test(body)
       ? [
-          `${prefix}(async () => (${code}\n))()`,
-          `${prefix}(async () => {${code}\n})()`,
+          `${prefix}(async () => {${setup}return (${body}\n)})()`,
+          `${prefix}(async () => {${setup}${body}\n})()`,
         ]
-      : [prefix + code]
+      : [prefix + (setup ? `${setup}void 0;\n` : '') + body]
     for (let i = 0; i < attempts.length; i++) {
       try {
         const result = await evaluate(attempts[i], helpers)
