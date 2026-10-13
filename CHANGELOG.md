@@ -26,6 +26,12 @@ Both tjs-lang items are feature-detected, so nothing changes until your tjs-lang
   honoured since 1.16.8 but was not in the type or the docs: a dialect that returns only
   `code` has its inline tests run from their raw text, with JavaScript's semantics. The
   `transform` type now names `testRunner`, `prelude` and `body`.
+- **An example re-run while it was still loading could leave its page never finishing its
+  tests.** A run replaced by a newer one (tests turned on, or an edit, while the first run
+  was still awaiting a fetch) went on to run its test block against a preview no longer in
+  the page. A test that waits for something to render then waited for ever and the example
+  stayed marked as running, so the page was reported as not finished after 45 seconds. A
+  replaced run now stops before its tests. Seen on the data-table page off localhost.
 - **`llms.txt` no longer carries a paragraph about the dev server.** A site with
   `haltijaDev` set used to tell readers of its `llms.txt` to run `bun start` and drive the
   page with the `hj` CLI. That file is for whoever consumes the library, and those readers

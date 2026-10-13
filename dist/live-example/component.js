@@ -3079,6 +3079,14 @@ export class LiveExample extends withAttributes({
         }
         // the Docs tab follows the source, for every dialect (a no-op until the panel is open)
         void this.updateDocs();
+        /*
+        A run that a newer one has replaced stops here. Its preview is no longer in the page, so
+        a test block that waits for something to render waited forever, and the example stayed
+        marked as running its tests: the page then never finished. It happened whenever a re-run
+        (turning tests on, an edit) arrived while the first run was still awaiting a fetch.
+        */
+        if (runAbort.signal.aborted)
+            return;
         // Run tests when there are any — but a build/exec failure is a test failure
         // in its own right, so surface it even when the example defines no `test`
         // blocks (and even if the failure was hard enough to produce no preview).
