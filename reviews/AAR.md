@@ -491,3 +491,15 @@ gap, recorded rather than hidden.
   development was never identified; `off-localhost-tests.pw.ts` now names failing tests.
 - **Open:** board #3229 (follow-ups, including `<tosi-form schema>` not built), tosijs
   #3230 (variable-height list gaps), #2454 (`fields` versus `x-tosi` annotations).
+
+## 1.16.13 (2026-10-13)
+
+- **Shipped:** a documentation-only patch carrying the improved row detail and curated form
+  examples into the package's doc comments and `llms.txt`. No library code changed since
+  1.16.12. Published and verified by a `verify_only` run.
+- **No multi-lens review:** the diff since v1.16.12 was two doc comments and their inline
+  tests.
+- **Lanes:** unit 1795; Playwright 498 passed, 15 skipped; consumer 54 checks; test-browser
+  83 over 18 pages. CI and the dry run green on the tagged commit.
+- **Approval lapsed the 60-minute wait** (staged 2026-10-12, approved the next day), so the
+  run's verify job was skipped and `verify_only=true` did the verification.
