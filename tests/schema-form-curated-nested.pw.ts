@@ -661,14 +661,22 @@ test('deciding a proposal keeps keyboard focus in the form', async ({
   )
   // the field is locked by the curation, and its proposal can still be accepted
   await expect(page.locator('#nested [data-path="name"]')).toBeDisabled()
-  await page.locator('#nested [data-field="name"] .schema-accept').focus()
+  const acceptName = page.locator('#nested [data-field="name"] .schema-accept')
+  await acceptName.focus()
+  // A key pressed before focus has landed goes nowhere, and the click a key causes is not
+  // synchronous in WebKit: wait for both.
+  await expect(acceptName).toBeFocused()
   await page.keyboard.press('Enter')
-  expect((await formValue(page)).name).toBe('Grace')
+  await expect.poll(async () => (await formValue(page)).name).toBe('Grace')
   // the field cannot take focus, so the next proposal does
   await expect(
     page.locator('#nested [data-field="retries"] .schema-accept')
   ).toBeFocused()
-  await page.locator('#nested [data-field="retries"] .schema-reject').focus()
+  const rejectRetries = page.locator(
+    '#nested [data-field="retries"] .schema-reject'
+  )
+  await rejectRetries.focus()
+  await expect(rejectRetries).toBeFocused()
   await page.keyboard.press('Enter')
   // nothing left to decide: the field itself
   await expect(page.locator('#nested [data-path="retries"]')).toBeFocused()
@@ -843,7 +851,9 @@ test('focus skips a proposal that cannot take it', async ({ page }) => {
       },
     }
   )
-  await page.locator('#nested [data-field="name"] .schema-accept').focus()
+  const accept = page.locator('#nested [data-field="name"] .schema-accept')
+  await accept.focus()
+  await expect(accept).toBeFocused()
   await page.keyboard.press('Enter')
   // the proposal in the closed section cannot take focus; the next visible one does
   await expect(
