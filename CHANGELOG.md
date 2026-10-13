@@ -19,7 +19,7 @@
   prefers that copy to the CDN. A site that already installs its own tjs-lang is
   unaffected.
 - The transpiler bundle a page with `tjs` or `ts` examples downloads is larger: 169 kB to
-  194 kB gzip. `dist/iife.js` is unchanged, and pages without such examples load neither.
+  195 kB gzip. `dist/iife.js` is unchanged, and pages without such examples load neither.
 - The peer range is unchanged (`^0.13.1 || ^0.14.0-rc.5`).
 
 ## 1.16.16
