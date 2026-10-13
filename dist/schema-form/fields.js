@@ -40,6 +40,15 @@ export function humanise(key) {
         .toLocaleLowerCase()
         .trim();
 }
+/**
+ * A schema's `title`, when it is one. Only a non-empty string counts: a schema can come from
+ * anywhere, and tosijs reads an object handed to an element creator as properties,
+ * `innerHTML` included (tosijs#43). Every label the model produces goes through here.
+ */
+export function titleOf(schema) {
+    const title = schema?.title;
+    return typeof title === 'string' && title ? title : undefined;
+}
 function kindOf(schema) {
     if (schema.const !== undefined)
         return 'const';
@@ -116,7 +125,7 @@ function resolveUnion(schema) {
             kind: 'consts',
             options: branches.map((b) => ({
                 value: b.const,
-                label: b.title || String(b.const),
+                label: titleOf(b) ?? String(b.const),
             })),
         };
     }
@@ -153,7 +162,7 @@ function resolveUnion(schema) {
                 }
                 const mark = discriminator ? marks[discriminator] : undefined;
                 return {
-                    label: b.title ||
+                    label: titleOf(b) ??
                         (mark !== undefined ? String(mark) : `option ${i + 1}`),
                     schema: b,
                     marks,
@@ -220,10 +229,7 @@ export function fieldsFor(schema, prefix = '') {
     const required = new Set(schema.required ?? []);
     return Object.entries(schema.properties).map(([key, rawSchema]) => {
         const path = prefix ? `${prefix}.${key}` : key;
-        // Only a string is a title: a schema can come from anywhere, and tosijs reads an object
-        // handed to an element creator as properties, `innerHTML` included.
-        const title = rawSchema.title;
-        const label = typeof title === 'string' && title ? title : humanise(key);
+        const label = titleOf(rawSchema) ?? humanise(key);
         let propSchema = rawSchema;
         let isRequired = required.has(key);
         /*

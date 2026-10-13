@@ -70,6 +70,12 @@ export interface Field {
 }
 /** `firstName` / `first_name` / `first-name` → `first name`. */
 export declare function humanise(key: string): string;
+/**
+ * A schema's `title`, when it is one. Only a non-empty string counts: a schema can come from
+ * anywhere, and tosijs reads an object handed to an element creator as properties,
+ * `innerHTML` included (tosijs#43). Every label the model produces goes through here.
+ */
+export declare function titleOf(schema: unknown): string | undefined;
 /** Build the leaf field for a scalar / enum / const schema. Shared by objects and array items. */
 export declare function scalarField(schema: JSONSchema, path: string, label: string, required: boolean): Field;
 /**

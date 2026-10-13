@@ -775,3 +775,32 @@ test('only a string is a title', () => {
   } as any)
   expect(field.label).toBe('some key')
 })
+
+test('a union branch title that is not a string is not a label either', () => {
+  const evil = { innerHTML: '<img class="injected">', value: 'HIJACK' }
+  const nodes = fieldsFor({
+    type: 'object',
+    properties: {
+      pick: {
+        oneOf: [
+          { const: 'a', title: evil },
+          { const: 'b', title: 'Bee' },
+        ],
+      },
+      shape: {
+        anyOf: [
+          { type: 'object', title: evil, properties: { kind: { const: 'x' } } },
+          {
+            type: 'object',
+            title: evil,
+            properties: { other: { type: 'string' } },
+          },
+        ],
+      },
+    },
+  } as any) as any[]
+  expect(nodes[0].options.map((o: any) => o.label)).toEqual(['a', 'Bee'])
+  for (const branch of nodes[1].branches) {
+    expect(typeof branch.label).toBe('string')
+  }
+})

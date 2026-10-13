@@ -1149,8 +1149,11 @@ form.proposals = {
   whole array, object or union: it sits at the top of that panel, and accepting it replaces
   the lot. They work with or without a curation; a proposal for something that is not shown
   is named above the fields.
-- A proposal for an array item follows its item when items are moved, and is dropped when
-  its item is removed. One for a field inside a union stays at its path if the branch
+- An object item of an array can be proposed whole (`thresholds.0`).
+- Accepting a proposal drops any others for things inside it, since they no longer refer to
+  what is there. A proposal for an array item follows its item when items are moved, and is
+  dropped when its item is removed. Neither fires an event: read `form.proposals` after a
+  `change` if you keep your own list. One for a field inside a union stays at its path if the branch
   changes.
 - `reason` and `source` are shown as text, and only when they are strings.
 - A field that is `readOnly` in a curation can still have its proposal accepted: that is the
@@ -1525,6 +1528,11 @@ export class TosiSchemaForm extends withAttributes({
     */
     _hosts = new Map();
     _arrays = new Map();
+    /** The array at `path`, or none: a value that is not an array there has no items. */
+    listAt(path) {
+        const list = getByPath(this._value, path);
+        return Array.isArray(list) ? list : [];
+    }
     /** Everything under `path` is about to be recreated: what is held for it is stale. */
     forgetUnder(path) {
         const prefix = `${path}.`;
@@ -1644,14 +1652,25 @@ export class TosiSchemaForm extends withAttributes({
     focusAfterProposal(path, hadFocus) {
         if (!hadFocus)
             return;
-        const usable = (el) => el && !el.disabled && !el.hidden
-            ? el
-            : null;
+        /*
+        Try each candidate until one takes focus. Whether an element CAN is not readable up
+        front: a button inside a closed `<details>` still reports a box in Chromium, and
+        `focus()` on it silently does nothing.
+        */
         const control = this._index.get(path)?.control;
-        const target = usable(control?.matches('input, select, textarea') ? control : null) ??
-            usable(this.querySelector('.schema-accept')) ??
-            usable(this.querySelector('.schema-proposal button'));
-        target?.focus();
+        const candidates = [
+            control?.matches('input, select, textarea') ? control : null,
+            ...this.querySelectorAll('.schema-accept'),
+            ...this.querySelectorAll('.schema-proposal button'),
+        ];
+        for (const el of candidates) {
+            if (!(el instanceof HTMLElement) || el.disabled) {
+                continue;
+            }
+            el.focus();
+            if (document.activeElement === el)
+                return;
+        }
     }
     proposalHasFocus(path) {
         return [...this.querySelectorAll('.schema-proposal')].some((el) => el.dataset.proposal === path &&
@@ -1668,6 +1687,17 @@ export class TosiSchemaForm extends withAttributes({
         const hadFocus = this.proposalHasFocus(path);
         this._value = setByPath(this._value, path, proposal.value);
         this.settleProposal(path, 'proposalaccept');
+        /*
+        Whatever was proposed for something INSIDE what was just replaced no longer refers to
+        what is there: a proposal for `list.0.value` would attach to the new first item.
+        */
+        const inside = Object.keys(this._proposals ?? {}).filter((key) => key.startsWith(`${path}.`));
+        if (inside.length > 0) {
+            const rest = { ...this._proposals };
+            for (const key of inside)
+                delete rest[key];
+            this._proposals = rest;
+        }
         // The value may be a whole array, object or union: bring the structure up to date.
         this.syncArrays();
         this.syncVariants();
@@ -1829,6 +1859,9 @@ export class TosiSchemaForm extends withAttributes({
             const errorSlot = this._index.get(node.path)?.errorSlot;
             if (errorSlot?.parentElement === el)
                 el.insertBefore(help, errorSlot);
+            else if (el.firstElementChild?.tagName === 'SUMMARY') {
+                el.firstElementChild.after(help);
+            }
             else
                 el.append(help);
         }
@@ -1882,7 +1915,7 @@ export class TosiSchemaForm extends withAttributes({
         return container;
     }
     fillArray(container, node) {
-        const list = getByPath(this._value, node.path) ?? [];
+        const list = this.listAt(node.path);
         // Keep the summary; replace the items. Everything under this path is about to be
         // recreated, so its index entries are stale by definition.
         this.forgetUnder(node.path);
@@ -1892,6 +1925,10 @@ export class TosiSchemaForm extends withAttributes({
         }
         list.forEach((_item, index) => {
             const row = div({ class: 'schema-item' });
+            // An object item can be proposed whole; a scalar item is a field and has its own slot.
+            if (node.itemSchema?.properties) {
+                this._hosts.set(`${node.path}.${index}`, { wrapper: row, after: null });
+            }
             const fields = this.itemNodes(node, index);
             row.append(...fields.map((f) => this.buildNode(f)));
             row.append(div({ class: 'schema-item-controls' }, button({
@@ -1943,7 +1980,7 @@ export class TosiSchemaForm extends withAttributes({
         is reused: adding and removing an option would change the control under the user, and
         "no variant" is not something they can choose — only something the data can be.
         */
-        option({ value: '', hidden: true }, '—'), ...node.branches.map((branch, i) => option({ value: String(i) }, branch.label)));
+        option({ value: '', hidden: true }, '—'), ...node.branches.map((branch, i) => option({ value: String(i) }, String(branch.label))));
         // The curation may hide the picker: a screen about one variant has no use for it.
         if (this._entries.get(node.path)?.picker === false)
             picker.hidden = true;
@@ -2079,7 +2116,7 @@ export class TosiSchemaForm extends withAttributes({
         target?.focus();
     }
     addArrayItem(node) {
-        const list = getByPath(this._value, node.path) ?? [];
+        const list = this.listAt(node.path);
         this._value = insertAt(this._value, node.path, list.length, blankFor(node.itemSchema));
         // Land in the new row's first control — no role, because "Add" has no button to return
         // to; what you want is to start typing in what you just made.
@@ -2120,7 +2157,7 @@ export class TosiSchemaForm extends withAttributes({
             if (node.kind === 'union')
                 return [node, ...expand(this.branchNodes(node))];
             if (node.kind === 'array') {
-                const list = getByPath(this._value, node.path) ?? [];
+                const list = this.listAt(node.path);
                 return list.flatMap((_x, i) => expand(this.itemNodes(node, i)));
             }
             if ('children' in node)
@@ -2239,7 +2276,7 @@ export class TosiSchemaForm extends withAttributes({
         // no clue which prop caused it.
         const shared = { onInput: this.handleFieldInput };
         const control = field.kind === 'enum'
-            ? select(shared, ...(field.required ? [] : [option({ value: '' }, '—')]), ...(field.options ?? []).map((o) => option({ value: String(o.value) }, o.label)))
+            ? select(shared, ...(field.required ? [] : [option({ value: '' }, '—')]), ...(field.options ?? []).map((o) => option({ value: String(o.value) }, String(o.label))))
             : field.kind === 'boolean'
                 ? // `onInput` from `shared` already covers a checkbox — a click fires both, so wiring
                     // `onChange` too dispatched the model write twice.
@@ -2362,7 +2399,7 @@ export class TosiSchemaForm extends withAttributes({
             place(path, entry.wrapper, (view) => entry.wrapper.insertBefore(view, entry.errorSlot));
         }
         for (const [path, host] of this._hosts) {
-            place(path, host.wrapper, (view) => host.after.after(view));
+            place(path, host.wrapper, (view) => host.after ? host.after.after(view) : host.wrapper.prepend(view));
         }
         this._proposalsShown = proposals != null;
         // A read-only form shows what is proposed and offers no way to act on it.

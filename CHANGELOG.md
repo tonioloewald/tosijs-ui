@@ -33,8 +33,9 @@ and usable as a review screen. All of it is off until you ask for it.
 - **Fixed: setting `value` with a different number of array items left the old rows.** A
   longer array showed only the rows it had before, and a shorter one kept controls for items
   that no longer existed. Arrays are now re-filled when their length changes.
-- **Fixed: a schema `title` that is not a string** was handed to the label as element
-  properties. Only a string is a title now; anything else falls back to the key.
+- **Fixed: a schema `title` that is not a string** was handed to the label, or to a union's
+  picker option, as element properties. Only a string is a title now, for properties and for
+  `anyOf` / `oneOf` branches; anything else falls back to the key or the branch's value.
 - Schema `title`s were already shown as written, never humanised or localized; the docs now
   say so and a test holds it.
 

@@ -1148,8 +1148,11 @@ form.proposals = {
   whole array, object or union: it sits at the top of that panel, and accepting it replaces
   the lot. They work with or without a curation; a proposal for something that is not shown
   is named above the fields.
-- A proposal for an array item follows its item when items are moved, and is dropped when
-  its item is removed. One for a field inside a union stays at its path if the branch
+- An object item of an array can be proposed whole (`thresholds.0`).
+- Accepting a proposal drops any others for things inside it, since they no longer refer to
+  what is there. A proposal for an array item follows its item when items are moved, and is
+  dropped when its item is removed. Neither fires an event: read `form.proposals` after a
+  `change` if you keep your own list. One for a field inside a union stays at its path if the branch
   changes.
 - `reason` and `source` are shown as text, and only when they are strings.
 - A field that is `readOnly` in a curation can still have its proposal accepted: that is the

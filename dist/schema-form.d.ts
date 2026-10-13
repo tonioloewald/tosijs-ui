@@ -184,6 +184,8 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private _entries;
     private _hosts;
     private _arrays;
+    /** The array at `path`, or none: a value that is not an array there has no items. */
+    private listAt;
     /** Everything under `path` is about to be recreated: what is held for it is stale. */
     private forgetUnder;
     private _curationWarnings;

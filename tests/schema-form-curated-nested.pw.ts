@@ -736,3 +736,117 @@ test('an array item stacks its fields and keeps its buttons beside the first', a
   expect(controls!.x).toBeGreaterThanOrEqual(value!.x + value!.width)
   expect(controls!.y).toBeLessThan(value!.y)
 })
+
+test('a union branch title that is not a string cannot inject into the picker', async ({
+  page,
+}) => {
+  await makeForm(page, null)
+  await page.evaluate(() => {
+    const evil = {
+      innerHTML: '<img class="injected" src="x">',
+      value: 'HIJACK',
+    }
+    const form = document.querySelector('#nested') as any
+    form.schema = {
+      type: 'object',
+      properties: {
+        pick: { oneOf: [{ const: 'a', title: evil }, { const: 'b' }] },
+        shape: {
+          anyOf: [
+            {
+              type: 'object',
+              title: evil,
+              properties: { kind: { const: 'x' } },
+            },
+            {
+              type: 'object',
+              title: evil,
+              properties: { kind: { const: 'y' } },
+            },
+          ],
+        },
+      },
+    }
+    form.value = { pick: 'a', shape: { kind: 'x' } }
+  })
+  await expect(page.locator('#nested [data-path="pick"]')).toHaveCount(1)
+  await expect(page.locator('#nested .injected')).toHaveCount(0)
+  expect(
+    await page.evaluate(() =>
+      [...document.querySelectorAll('#nested option')].map((o: any) => o.value)
+    )
+  ).not.toContain('HIJACK')
+})
+
+test('proposals for an item, inside a replaced value, and of the wrong shape', async ({
+  page,
+}) => {
+  await makeForm(page, null, {
+    proposals: {
+      'thresholds.1': { value: { when: { company: 'New' }, value: 0.3 } },
+      'thresholds.1.value': { value: 0.99 },
+      'thresholds.0.note': { value: 'kept' },
+    },
+  })
+  // a whole object item is a target, on its row
+  const onRow = page.locator(
+    '#nested [data-array="thresholds"] > .schema-item > .schema-proposal[data-proposal="thresholds.1"]'
+  )
+  await expect(onRow).toHaveCount(1)
+  await expect(page.locator('#nested .schema-hidden-proposals')).toBeHidden()
+  await onRow.locator('.schema-accept').click()
+  expect((await formValue(page)).thresholds[1]).toEqual({
+    when: { company: 'New' },
+    value: 0.3,
+  })
+  // the proposal for something inside the replaced item went with it; the other stays
+  expect(
+    await page.evaluate(() =>
+      Object.keys((document.querySelector('#nested') as any).proposals)
+    )
+  ).toEqual(['thresholds.0.note'])
+
+  // a value that is not an array, proposed for an array, does not break the form
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.evaluate(() => {
+    const form = document.querySelector('#nested') as any
+    form.proposals = { thresholds: { value: 'not a list' } }
+  })
+  await page
+    .locator(
+      '#nested [data-array="thresholds"] > .schema-proposal .schema-accept'
+    )
+    .click()
+  await expect(
+    page.locator('#nested [data-array="thresholds"] > .schema-item')
+  ).toHaveCount(0)
+  expect(errors).toEqual([])
+  expect(await page.evaluate(() => (window as any).events.at(-1))).toBe(
+    'change'
+  )
+})
+
+test('focus skips a proposal that cannot take it', async ({ page }) => {
+  await makeForm(
+    page,
+    {
+      name: { readOnly: true },
+      closed: { section: 'Closed', collapsed: true, fields: { retries: true } },
+      rule: { fields: { amount: { readOnly: true } } },
+    },
+    {
+      proposals: {
+        name: { value: 'Grace' },
+        retries: { value: 9 },
+        'rule.amount': { value: 1 },
+      },
+    }
+  )
+  await page.locator('#nested [data-field="name"] .schema-accept').focus()
+  await page.keyboard.press('Enter')
+  // the proposal in the closed section cannot take focus; the next visible one does
+  await expect(
+    page.locator('#nested [data-field="rule.amount"] .schema-accept')
+  ).toBeFocused()
+})

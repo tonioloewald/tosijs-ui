@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=ea0b4ae817d5" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=1e7b6118718a" data-tosi-doc-system />
   <title>schema-form — tosijs-ui</title>
   <meta name="description" content="A form generated from a JSON Schema, with validation." />
   <link rel="canonical" href="https://ui.tosijs.net/schema-form/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e4b7883c56a1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=5e9c3f0ab5ce" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="schema-form">schema-form</h1>
 <!--{ "parent": "Components" }-->
@@ -1098,8 +1098,11 @@ alone. Both carry <code>detail: { path, proposal }</code>, and both remove the e
 whole array, object or union: it sits at the top of that panel, and accepting it replaces
 the lot. They work with or without a curation; a proposal for something that is not shown
 is named above the fields.</li>
-<li>A proposal for an array item follows its item when items are moved, and is dropped when
-its item is removed. One for a field inside a union stays at its path if the branch
+<li>An object item of an array can be proposed whole (<code>thresholds.0</code>).</li>
+<li>Accepting a proposal drops any others for things inside it, since they no longer refer to
+what is there. A proposal for an array item follows its item when items are moved, and is
+dropped when its item is removed. Neither fires an event: read <code>form.proposals</code> after a
+<code>change</code> if you keep your own list. One for a field inside a union stays at its path if the branch
 changes.</li>
 <li><code>reason</code> and <code>source</code> are shown as text, and only when they are strings.</li>
 <li>A field that is <code>readOnly</code> in a curation can still have its proposal accepted: that is the
@@ -1421,6 +1424,6 @@ test(&#39;editing keeps unknown keys, fires change, and does not rebuild under t
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-p9q0rbnh.js"></script>
+  <script type="module" src="../hydrate-0bvtc0ha.js"></script>
 </body>
 </html>
