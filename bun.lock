@@ -393,6 +393,6 @@
 
     "qified/hookified": ["hookified@2.2.0", "", {}, "sha512-p/LgFzRN5FeoD3DLS6bkUapeye6E4SI6yJs6KetENd18S+FBthqYq2amJUWpt5z0EQwwHemidjY5OqJGEKm5uA=="],
 
-    "tjs-lang/tosijs-schema": ["tosijs-schema@1.13.0", "", {}, "sha512-OMdt5CnyvfOKEYIQiWMZp5yzHBmybuARz9j0qG8i9gT97jyENJn0Yk2kn2wmYVhm84rdxVzmxn7DSz7illEoDA=="],
+    "tjs-lang/tosijs-schema": ["tosijs-schema@1.8.0", "", {}, "sha512-pHZdUsgQWKrtMmqSFZKbgD6n0a4yD12PPvSuBR9xofdpDcT40Tzk06vhYAVxW77vyax3fTeVinGaD7a83REeHw=="],
   }
 }

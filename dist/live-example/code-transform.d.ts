@@ -73,11 +73,12 @@ export declare function executeCode(code: string, context: ExampleContext, trans
 export declare const TJS_VERSION = "0.13.13";
 export declare const TYPESCRIPT_VERSION = "5.9.3";
 export declare const TYPESCRIPT_URL = "https://esm.sh/typescript@5.9.3";
+type StripExports = (code: string) => string;
 /**
- * @internal For TESTS only: stand in for (or with `undefined`, remove) tjs-lang's
- * `stripExports`, which the tjs-lang this repo pins does not export yet.
+ * @internal For TESTS only: a function stands in for tjs-lang's `stripExports`, `null` acts
+ * as a tjs-lang that has none, and `undefined` goes back to whatever was loaded.
  */
-export declare function setStripExportsForTests(stand: ((code: string) => string) | undefined): void;
+export declare function setStripExportsForTests(stand: StripExports | null | undefined): void;
 /**
  * `code` without its `export`s, when the tjs-lang this process can load is able to remove
  * them; otherwise `code` unchanged. For a caller that transpiles by some other route (the
@@ -126,7 +127,12 @@ export interface TjsTestResult {
 export declare function loadTjsTestApi(): Promise<TjsTestApi | null>;
 /**
  * What an example keeps of a tjs-lang transpile, with `export` removed when tjs-lang can
- * do that (see `stripExportsFn`).
+ * do that (see `noteStripExports`).
+ *
+ * The build's example check has a SECOND route for `ts` (it lowers with Bun, because it
+ * cannot fetch the TypeScript compiler; `check-examples.ts`), so a rule added here that
+ * decides whether an example runs must be added there too. `withoutExports` is that pairing
+ * for `export`, and it was missed the first time.
  *
  * Keeps tjs-lang's `testRunner` beside the code when it returns one (#210 item 1). It is one
  * property read on a transpile that already happened, and it is the only runner built from
@@ -138,7 +144,7 @@ export declare function shapeTjsOutput(out: {
     testRunner?: unknown;
     prelude?: unknown;
     body?: unknown;
-}, stripExports?: ((code: string) => string) | null | undefined): TransformResult;
+}, stripExports?: StripExports | null | undefined): TransformResult;
 /**
  * Load a live-example transform for a given source dialect.
  *
@@ -173,3 +179,4 @@ export declare function shapeTjsOutput(out: {
  */
 export declare function transformAvailable(dialect: Dialect): Promise<boolean>;
 export declare function loadTransform(dialect?: Dialect): Promise<TransformFn>;
+export {};

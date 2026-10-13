@@ -329,26 +329,23 @@ async function loadTjs() {
     }
     return null;
 }
-/*
-tjs-lang's parser-based `stripExports` (#210 item 5), from the same module `tjs` came from.
-
-An example runs as a function body, where `export` is a syntax error, so one written as a
-module could not run. Removing `export` has to be done by parsing (a line regex rewrites a
-template literal that happens to start a line with `export `), tosijs-ui ships no JavaScript
-parser, and tjs-lang's browser bundle already carries one. FEATURE-DETECTED: it is exported
-from 0.14.0-rc.4 on, so with an older tjs-lang an `export` fails as it always has.
-*/
-let stripExportsFn;
+let loadedStripExports;
 function noteStripExports(candidate) {
     if (typeof candidate === 'function')
-        stripExportsFn = candidate;
+        loadedStripExports = candidate;
 }
+// A test's stand-in sits BESIDE what was loaded, never over it: tjs-lang loads once per
+// process, so a stand-in that replaced it could not be undone.
+let stripExportsOverride;
+const currentStripExports = () => stripExportsOverride === undefined
+    ? loadedStripExports
+    : stripExportsOverride ?? undefined;
 /**
- * @internal For TESTS only: stand in for (or with `undefined`, remove) tjs-lang's
- * `stripExports`, which the tjs-lang this repo pins does not export yet.
+ * @internal For TESTS only: a function stands in for tjs-lang's `stripExports`, `null` acts
+ * as a tjs-lang that has none, and `undefined` goes back to whatever was loaded.
  */
 export function setStripExportsForTests(stand) {
-    stripExportsFn = stand;
+    stripExportsOverride = stand;
 }
 /**
  * `code` without its `export`s, when the tjs-lang this process can load is able to remove
@@ -360,7 +357,8 @@ export async function withoutExports(code) {
     if (!/\bexport\b/.test(code))
         return code;
     await (tjsOnce ??= loadTjs());
-    return stripExportsFn ? stripExportsFn(code) : code;
+    const strip = currentStripExports();
+    return strip ? strip(code) : code;
 }
 let tjsDocsOnce;
 export function loadTjsDocs() {
@@ -450,7 +448,12 @@ let fromTsOnce;
 const RESULT_CACHE_MAX = 256;
 /**
  * What an example keeps of a tjs-lang transpile, with `export` removed when tjs-lang can
- * do that (see `stripExportsFn`).
+ * do that (see `noteStripExports`).
+ *
+ * The build's example check has a SECOND route for `ts` (it lowers with Bun, because it
+ * cannot fetch the TypeScript compiler; `check-examples.ts`), so a rule added here that
+ * decides whether an example runs must be added there too. `withoutExports` is that pairing
+ * for `export`, and it was missed the first time.
  *
  * Keeps tjs-lang's `testRunner` beside the code when it returns one (#210 item 1). It is one
  * property read on a transpile that already happened, and it is the only runner built from
@@ -459,7 +462,7 @@ const RESULT_CACHE_MAX = 256;
  */
 export function shapeTjsOutput(out, 
 // `null` is "this tjs-lang cannot"; leaving it out asks the loaded one.
-stripExports = stripExportsFn) {
+stripExports = currentStripExports()) {
     // Parse only what could hold one: most examples have no `export` at all.
     const strip = (code) => stripExports && /\bexport\b/.test(code) ? stripExports(code) : code;
     const result = { code: strip(out.code) };

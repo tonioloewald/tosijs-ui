@@ -247,11 +247,15 @@ describe('module-style examples', () => {
   })
 
   test('fail it, in both languages, when tjs-lang cannot', async () => {
-    setStripExportsForTests(undefined)
-    const { problems } = await checkExamples(corpus('refused'))
-    expect(problems.map((p) => p.filename).sort()).toEqual([
-      'm-tjs.md',
-      'm-ts.md',
-    ])
+    setStripExportsForTests(null)
+    try {
+      const { problems } = await checkExamples(corpus('refused'))
+      expect(problems.map((p) => p.filename).sort()).toEqual([
+        'm-tjs.md',
+        'm-ts.md',
+      ])
+    } finally {
+      setStripExportsForTests(undefined)
+    }
   })
 })
