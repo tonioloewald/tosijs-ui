@@ -608,3 +608,21 @@ gap, recorded rather than hidden.
   test-browser 83 over 18 pages. CI and the dry run green on the tagged commit.
 - **Open:** board #3268 (deferrals, including the revisit at rc.6 / 0.14 final); #216 and
   #210 await tjs-lang.
+
+## 1.16.18 (2026-10-14)
+
+- **Shipped:** GitHub #224 (filed by tosijs-virta): a `defineIcons` name for a stacked
+  composition drew the placeholder square, including the icons page's own documented
+  `cloudSync` example, in every version since composites shipped. A redirect's target now
+  goes through the whole pipeline; a named composite keeps its name in `data-icon`; cycles
+  are detected by a revisited name rather than a ten-hop limit. Published and verified
+  (verify-only run 38608599799; approval landed after the 60-minute wait).
+- **The review BLOCKed on my own test.** The new live example asserted 3 composites and
+  found 4, because a spin layer nests a composite of its own. Unit tests counted SVGs under
+  one icon; only the doc-test lane saw the container. Playwright had already failed on it.
+- **A hollow test surfaced on the way:** the known-icons test listed `message`, which is not
+  an icon, and passed because the placeholder is an SVGElement too.
+- **Found by the reviewers, not by me:** a ten-hop chain that ends in a drawing reported as a
+  cycle, and the iconSvg gap (filed #3294, then built as 1.16.19 at the maintainer's ask).
+- **Lanes (final tree):** unit 1840; Playwright 573 passed, 15 skipped; consumer 55;
+  test-browser 84 over 18 pages.
