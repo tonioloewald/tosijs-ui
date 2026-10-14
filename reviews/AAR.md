@@ -626,3 +626,25 @@ gap, recorded rather than hidden.
   cycle, and the iconSvg gap (filed #3294, then built as 1.16.19 at the maintainer's ask).
 - **Lanes (final tree):** unit 1840; Playwright 573 passed, 15 skipped; consumer 55;
   test-browser 84 over 18 pages.
+
+## 1.16.19 (2026-10-14)
+
+- **Shipped:** `iconSvg()` resolves the 27 built-in rotated/flipped icons it silently
+  dropped, and throws (saying why) for a name the renderer would draw but that is not one
+  SVG; an unknown name still returns `undefined`. The maintainer asked for "an error message
+  at minimum" and ruled the throw a patch. Published and verified in run 38609116868.
+- **Three review rounds, and the pattern was the same each time: a second copy of a grammar
+  the renderer owns.** Round one: my own suffix parser read `edit2_90r` as -90°. Round two:
+  the fix guessed rules from capital letters, so `redLock` threw. Round three: resolution
+  order differed for `checkCircle90r`. The end state shares both grammars with the renderer
+  (`icon-suffixes.ts`, `icon-rules.ts`), and CLAUDE.md names the single owner.
+- **CI caught a test-order leak the lanes could not:** `icons.test.ts` left stand-in icons in
+  the shared map, and only CI's file order put `icon-svg.test.ts` after it. Reproduced with
+  a probe file sorted after it; the file now restores the map.
+- **Process slip:** `release-check` was run after pushing the release commit, and was red on
+  wording for the third release running. Run it before any push.
+- **Pixel parity is now a test**, not a claim: Playwright compares iconSvg markup with the
+  renderer in three browsers, with asymmetric controls for rotation, sign and flip axis.
+- **Lanes (final tree):** unit 1848; Playwright 576 passed, 15 skipped; consumer 55;
+  test-browser 84 over 18 pages. **Open:** #3294 (alias in the missing-target warning),
+  #3295 (rule vs suffix order, maintainer's call).
