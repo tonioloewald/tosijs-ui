@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=19f10bd7c756" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=134475b43203" data-tosi-doc-system />
   <title>iconSvg — icon markup without a DOM — tosijs-ui</title>
   <meta name="description" content="(The subpath tosijs-ui/icon-svg is the DOM-free entry point — import it that way in a build script or server template." />
   <link rel="canonical" href="https://ui.tosijs.net/icon-svg/" />
@@ -30,12 +30,12 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=4e13b93844d2" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=dccabbbda012" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="iconsvg--icon-markup-without-a-dom"><code>iconSvg</code> — icon markup without a DOM</h1>
 <pre><code class="language-js">import { iconSvg, iconNames } from &#39;tosijs-ui&#39;
 
-const markup = iconSvg(&#39;tosi&#39;) // &#39;&lt;svg …&gt;…&lt;/svg&gt;&#39; | undefined
+const markup = iconSvg(&#39;tosi&#39;) // &#39;&lt;svg …&gt;…&lt;/svg&gt;&#39;, or undefined for an unknown name
 preview.innerHTML =
   `&lt;p&gt;${iconNames().length} icons registered.&lt;/p&gt;` +
   `&lt;div style=&quot;width:48px&quot;&gt;${markup}&lt;/div&gt;`
@@ -46,6 +46,11 @@ what the live-example runner can rewrite.)</p>
 <p><code>iconSvg(name)</code> returns an icon&#39;s raw SVG <strong>markup</strong> as a string; <code>iconNames()</code> lists what
 is registered. Neither touches the DOM, so both work in a build script, a server-rendered
 template, or an ePub pass.</p>
+<p>Redirects are followed, including the built-in ones that rotate or flip another icon
+(<code>chevronDown</code> is <code>chevronRight90r</code>). A name that exists but cannot be one SVG string —
+a stack (<code>a$b</code>), a rule (<code>spin…</code>, <code>un…</code>), any other style suffix, or a redirect cycle —
+<strong>throws</strong>, naming what it resolved to: render those with <code>icons.&lt;name&gt;()</code> where there is
+a DOM. Only a name with no icon at all returns <code>undefined</code>.</p>
 <p>Deliberately a separate module from <code>icons.ts</code>: that one imports tosijs to build
 elements, so importing it drags in code that needs <code>HTMLElement</code> and throws in a build
 script — the exact context that wanted the markup in the first place. This module
@@ -152,6 +157,6 @@ the map ships in the bundle either way.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-mqwh2f23.js"></script>
+  <script type="module" src="../hydrate-z6vvvy2h.js"></script>
 </body>
 </html>

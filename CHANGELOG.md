@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.16.19
+
+- **`iconSvg()` resolves the built-in icons that rotate or flip another.** 28 built-in
+  names are redirects with a rotation or flip (`chevronDown` is `chevronRight90r`; also
+  `chevronLeft`/`Up`, `arrowDown`/`Left`/`Up`, `cornerDownLeft`, `rotateCcw`, `thumbsDown`
+  and others), and `iconSvg()` returned `undefined` for every one of them, silently. They
+  now return markup with the transform applied about the centre of the viewBox, which draws
+  the same pixels as `icons.chevronDown()` (compared in Chromium for all 28).
+- **`iconSvg()` throws for a name it cannot turn into one SVG.** A name defined as a stack
+  (`cloudSync: 'spin120Loader40s_30x$cloud'`), a rule (`unLock`), any style suffix other
+  than rotation or flip, or a redirect cycle used to return `undefined`, the same answer as
+  a name that does not exist, so a build script rendered nothing and said nothing. It now
+  throws, naming what the icon resolved to and that `icons.<name>()` renders it where there
+  is a DOM. **Code that relied on `undefined` for those names now gets an exception;** an
+  unknown name still returns `undefined`, as documented. This is the DOM-free half of #224.
+
 ## 1.16.18
 
 - **A `defineIcons` name for a stacked composition draws the stack.** `defineIcons({
