@@ -1,6 +1,7 @@
 import { test, expect, afterEach } from 'bun:test'
 import { iconSvg, iconNames } from './icon-svg.js'
 import iconData from './icon-data.js'
+import { iconRules } from './icon-rules.js'
 
 // The point of this module is that it works with NO DOM — a build script, an ePub
 // pass, a server-rendered template. `icons.ts` imports tosijs and throws on
@@ -97,6 +98,30 @@ test('what the renderer would draw but iconSvg cannot, throws, saying why', () =
   // Nothing would draw these.
   expect(iconSvg('nonsense')).toBeUndefined()
   expect(iconSvg('notAnIcon')).toBeUndefined()
+})
+
+test('a name that only looks like a rule is unknown, not an error', () => {
+  // A capital letter followed by an icon's name is not a rule: the renderer draws these
+  // as the placeholder, so iconSvg answers undefined, as it does for any unknown name.
+  for (const lookalike of [
+    'redLock',
+    'fooCheck',
+    'chevronDownX',
+    'myCloud',
+    'spinLoader',
+  ]) {
+    expect(iconSvg(lookalike)).toBeUndefined()
+  }
+})
+
+test('a rule an app adds is a rule to iconSvg too', () => {
+  iconRules.push({ prefix: 'testRule', apply: (base) => `${base}$check` })
+  try {
+    expect(() => iconSvg('testRuleLock')).toThrow('icons.testRuleLock()')
+  } finally {
+    iconRules.pop()
+  }
+  expect(iconSvg('testRuleLock')).toBeUndefined()
 })
 
 test('a redirect to a name with the trailing-underscore escape resolves', () => {

@@ -1,16 +1,12 @@
 import { ElementCreator, ElementPart } from 'tosijs';
 import { SVGIconMap } from './icon-types.js';
+export { iconRules, type IconRule } from './icon-rules.js';
 export declare const defineIcons: (newIcons: {
     [key: string]: string;
 }) => void;
 export { iconSvg, iconNames } from './icon-svg.js';
 export type { IconElement, IconName, SVGIconMap } from './icon-types.js';
 export declare const svg2DataUrl: (icon: Element, fill?: string, stroke?: string, strokeWidth?: number) => string;
-export interface IconRule {
-    prefix: string | RegExp;
-    apply: (baseName: string, match: RegExpMatchArray | string, parts: ElementPart[]) => Element | string | null;
-}
-export declare const iconRules: IconRule[];
 /** Wrap icon elements in a composite container (for custom function rules) */
 export declare function wrapIcon(prop: string, parts: ElementPart[], ...children: Element[]): HTMLSpanElement;
 /** Resolve an icon name through the full pipeline (redirects, suffixes, rules, stacking) */

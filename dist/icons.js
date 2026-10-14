@@ -565,6 +565,8 @@ copies or substantial portions of the Software.
 import { elements, svgElements, Color, vars, varDefault, withAttributes, } from 'tosijs';
 import iconData from './icon-data.js';
 import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
+import { iconRules, spinRule, matchRule, canResolve } from './icon-rules.js';
+export { iconRules } from './icon-rules.js';
 export const defineIcons = (newIcons) => {
     Object.assign(iconData, newIcons);
 };
@@ -630,47 +632,28 @@ export const svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
 };
 // Appends _ to names ending in digits to prevent suffix ambiguity
 const safeIconSuffix = (name) => /\d$/.test(name) ? name + '_' : name;
-export const iconRules = [
-    {
-        prefix: /^spin(_?\d+)/,
-        apply(baseName, match, parts) {
-            const dps = match[1].replace('_', '-');
-            const duration = 360 / Math.abs(parseFloat(dps));
-            const direction = dps.startsWith('-') ? 'reverse' : 'normal';
-            // Resolve baseName with suffixes intact — they apply to the icon
-            const icon = resolveIcon(baseName, []);
-            const el = icon;
-            if (el.animate) {
-                const base = el.style.transform || '';
-                el.animate([
-                    { transform: `${base} rotate(0deg)` },
-                    { transform: `${base} rotate(360deg)` },
-                ], {
-                    duration: duration * 1000,
-                    iterations: Infinity,
-                    direction,
-                });
-            }
-            return wrapIcon(baseName, parts, icon);
-        },
-    },
-    {
-        prefix: 'un',
-        apply: (baseName) => `slash25o$${baseName}75s75o`,
-    },
-    {
-        prefix: 'check',
-        apply: (baseName) => `check75o_00aa00S$${baseName}75s50o`,
-    },
-    {
-        prefix: 'cancel',
-        apply: (baseName) => `x75o_cc0000S$${baseName}75s50o`,
-    },
-    {
-        prefix: 'search',
-        apply: (baseName) => `search80s30x30y$${baseName}50o`,
-    },
-];
+// The rule list and how names match it live in icon-rules.ts, shared with iconSvg. Spin
+// animates, so its renderer is installed here.
+spinRule.apply = (baseName, match, parts) => {
+    const dps = match[1].replace('_', '-');
+    const duration = 360 / Math.abs(parseFloat(dps));
+    const direction = dps.startsWith('-') ? 'reverse' : 'normal';
+    // Resolve baseName with suffixes intact — they apply to the icon
+    const icon = resolveIcon(baseName, []);
+    const el = icon;
+    if (el.animate) {
+        const base = el.style.transform || '';
+        el.animate([
+            { transform: `${base} rotate(0deg)` },
+            { transform: `${base} rotate(360deg)` },
+        ], {
+            duration: duration * 1000,
+            iterations: Infinity,
+            direction,
+        });
+    }
+    return wrapIcon(baseName, parts, icon);
+};
 let iconIdCounter = 0;
 function makeIcon(spec, parts) {
     const div = elements.div();
@@ -749,38 +732,13 @@ export function wrapIcon(prop, parts, ...children) {
     }
     return wrapper;
 }
-function canResolve(name) {
-    const data = iconData;
-    if (data[name])
-        return true;
-    const parsed = parseStyleSuffixes(name);
-    return parsed != null && !!data[parsed.baseName];
-}
 function composeIcon(prop, parts) {
     for (const rule of iconRules) {
-        let baseName;
-        let match;
-        if (rule.prefix instanceof RegExp) {
-            const re = new RegExp(rule.prefix.source + '(.+)$');
-            const m = prop.match(re);
-            if (!m)
-                continue;
-            baseName = m[m.length - 1];
-            baseName = baseName[0].toLowerCase() + baseName.slice(1);
-            match = m;
-        }
-        else {
-            if (!prop.startsWith(rule.prefix) || prop.length <= rule.prefix.length)
-                continue;
-            baseName =
-                prop[rule.prefix.length].toLowerCase() +
-                    prop.slice(rule.prefix.length + 1);
-            match = rule.prefix;
-        }
+        const matched = matchRule(rule, prop);
         // Only apply if baseName can actually resolve to an icon
-        if (!canResolve(baseName))
+        if (!matched || !canResolve(matched.baseName))
             continue;
-        const result = rule.apply(safeIconSuffix(baseName), match, parts);
+        const result = rule.apply(safeIconSuffix(matched.baseName), matched.match, parts);
         if (typeof result === 'string')
             return resolveIcon(result, parts);
         if (result)

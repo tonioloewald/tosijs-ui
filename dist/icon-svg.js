@@ -41,33 +41,16 @@ the map ships in the bundle either way.
 */
 import iconData from './icon-data.js';
 import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
+import { canResolve, ruleDraws } from './icon-rules.js';
 const data = iconData;
 // Rotation and flip, the only suffixes the built-in redirects use (`chevronDown` is
 // `chevronRight90r`). Anything else needs the DOM renderer.
 const isGeometry = (token) => /^(_?\d+r|[01]f)$/.test(token);
 const stripEscape = (name) => name.endsWith('_') ? name.slice(0, -1) : name;
-// A registered icon, or one with style suffixes on a registered icon.
-const namesIcon = (name) => data[name] !== undefined ||
-    data[splitSuffixes(name)?.baseName ?? ''] !== undefined;
-/*
-Whether the icon renderer would draw something for a name that is not registered: a stack
-(`a$b`), suffixes on an icon (`chevronRight50o`), or a rule applied to one (`spin90Loader`,
-`unLock`). Rules live with the DOM renderer, so a rule is recognised by its shape: a prefix
-followed by an icon's name, capitalised.
-*/
-function isComposition(name) {
-    if (name.includes('$') || namesIcon(name))
-        return true;
-    for (let i = 1; i < name.length; i++) {
-        if (name[i] >= 'A' && name[i] <= 'Z') {
-            const base = name[i].toLowerCase() + name.slice(i + 1);
-            if (namesIcon(base) || namesIcon(splitSuffixes(base)?.baseName ?? '')) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
+// Whether the icon renderer would draw something for a name: a registered icon, suffixes on
+// one (`chevronRight50o`), a stack (`a$b`), or a rule applied to one (`spin90Loader`,
+// `unLock`). The rules and suffixes are the renderer's own (icon-rules, icon-suffixes).
+const isComposition = (name) => name.includes('$') || canResolve(name) || ruleDraws(name);
 /**
  * Raw SVG markup for an icon, or `undefined` when nothing by that name would draw.
  *

@@ -24,21 +24,35 @@ test('iconSvg markup draws the same pixels as the DOM renderer', async ({
     const transformed: string[] = iconNames().filter((name: string) =>
       iconSvg(name).includes('<g transform=')
     )
-    // Written inline, and the control pair that MUST differ (an unrotated chevron).
-    const pairs: Array<[string, string]> = [
-      ...transformed.map((name): [string, string] => [name, name]),
-      ['chevronRight90r', 'chevronRight90r'],
-      ['control', 'chevronRight'],
+    // Written inline; then controls that MUST differ, one per operation, on a glyph that
+    // is not symmetric under it: drawn with the operation, against its opposite in markup.
+    const controls: Record<string, [string, string]> = {
+      'control:rotation': ['chevronRight', 'chevronDown'],
+      'control:sign': ['cornerDownRight90r', 'cornerDownRight_90r'],
+      'control:axis': ['cornerDownRight0f', 'cornerDownRight1f'],
+    }
+    const pairs: Array<[string, string, string]> = [
+      ...transformed.map((name): [string, string, string] => [
+        name,
+        name,
+        name,
+      ]),
+      ['chevronRight90r', 'chevronRight90r', 'chevronRight90r'],
+      ...Object.entries(controls).map(
+        ([label, [dom, markup]]): [string, string, string] => [
+          label,
+          dom,
+          markup,
+        ]
+      ),
     ]
     const grid = document.createElement('div')
     grid.style.cssText =
       'position:fixed;inset:0;z-index:99999;background:white;color:black;' +
       '--tosi-icon-size:96px;display:flex;flex-wrap:wrap;align-content:start'
-    for (const [label, rendered] of pairs) {
-      const markupName = `parity_${label}`
-      defineIcons({
-        [markupName]: iconSvg(label === 'control' ? 'chevronDown' : label),
-      })
+    for (const [label, rendered, markup] of pairs) {
+      const markupName = `parity_${label.replace(':', '_')}`
+      defineIcons({ [markupName]: iconSvg(markup) })
       for (const [side, icon] of [
         ['dom', icons[rendered]()],
         ['markup', icons[markupName]()],
@@ -53,7 +67,7 @@ test('iconSvg markup draws the same pixels as the DOM renderer', async ({
     document.body.append(grid)
     return pairs.map(([label]) => label)
   })
-  expect(names.length).toBe(30) // 27 built-ins, parityEdit, the inline name, the control
+  expect(names.length).toBe(32) // 27 built-ins, parityEdit, the inline name, 3 controls
 
   const shot = async (label: string, side: string) =>
     (
@@ -97,8 +111,13 @@ test('iconSvg markup draws the same pixels as the DOM renderer', async ({
       await shot(label, 'markup')
     )
   }
-  // The control shows the instrument can see a rotation: measured 684 pixels and more.
-  expect(counts.control).toBeGreaterThan(100)
-  delete counts.control
-  expect(Object.entries(counts).filter(([, count]) => count > 0)).toEqual([])
+  // The controls show the instrument can see a wrong rotation, sign or flip axis.
+  const blind = Object.entries(counts).filter(
+    ([label, count]) => label.startsWith('control:') && count < 100
+  )
+  expect(blind).toEqual([])
+  const differ = Object.entries(counts).filter(
+    ([label, count]) => !label.startsWith('control:') && count > 0
+  )
+  expect(differ).toEqual([])
 })
