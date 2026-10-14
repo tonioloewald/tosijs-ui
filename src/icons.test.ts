@@ -1,4 +1,11 @@
-import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
+import {
+  test,
+  expect,
+  describe,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'bun:test'
 import {
   icons,
   SvgIcon,
@@ -7,6 +14,22 @@ import {
   resolveIcon,
   wrapIcon,
 } from './icons.js'
+import iconData from './icon-data.js'
+
+/*
+The icon map is one object shared by every test file in the process. Tests here define
+stand-in icons (some on purpose: composites, cycles), and later tests in this file use them,
+so the map is restored once, after the file. Leaving them behind broke icon-svg.test.ts's
+walk of every registered icon, but only in the file order CI happened to use.
+*/
+const data = iconData as Record<string, string>
+const original = { ...data }
+afterAll(() => {
+  for (const name of Object.keys(data)) {
+    if (!(name in original)) delete data[name]
+  }
+  Object.assign(data, original)
+})
 
 describe('icons', () => {
   describe('icons proxy', () => {

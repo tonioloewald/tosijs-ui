@@ -6,8 +6,9 @@
   names are redirects with a rotation or flip (`chevronDown` is `chevronRight90r`; also
   `chevronLeft`/`Up`, `arrowDown`/`Left`/`Up`, `cornerDownLeft`, `rotateCcw`, `thumbsDown`
   and others), and `iconSvg()` returned `undefined` for every one of them, silently. They
-  now return markup with the transform applied about the centre of the viewBox, and a
-  rotation or flip written inline works too (`iconSvg('chevronRight90r')`). A Playwright
+  now return markup with the transform applied about the centre of the viewBox. A rotation
+  or flip written inline (`iconSvg('chevronRight90r')`) and other inline names returned
+  undefined silently too: a rotation or flip now resolves, and anything else throws. A Playwright
   test draws each one both ways, through `iconSvg` and through `icons.<name>()`, and
   finds no pixel that differs by more than antialiasing, in all three browsers.
 - **`iconSvg()` throws for a name it cannot turn into one SVG.** A stack
