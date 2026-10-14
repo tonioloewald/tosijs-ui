@@ -564,6 +564,7 @@ copies or substantial portions of the Software.
 */
 import { elements, svgElements, Color, vars, varDefault, withAttributes, } from 'tosijs';
 import iconData from './icon-data.js';
+import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
 export const defineIcons = (newIcons) => {
     Object.assign(iconData, newIcons);
 };
@@ -789,25 +790,12 @@ function composeIcon(prop, parts) {
 }
 // Redirect names being resolved right now, so a redirect cycle ends instead of recursing.
 const expanding = new Set();
-// Style suffixes — value then letter code:
-//   50o (opacity), 75s (scale), 20x (translateX%), _10y (translateY%)
-//   90r (rotate 90°), _45r (rotate -45°), 0f (flipH), 1f (flipV)
-//   _FF0000F (fill hex), _f00S (stroke hex), 3W (stroke-width)
-//   _brandColorF (fill var), _accentS (stroke var)
-// Icon names ending in digits need _ separator: edit2_50o
-const SUFFIX_RE = /(?:(?<=[a-zA-Z_])(?:_?\d+[osxyr]|[01]f|\d+W)|_[a-zA-Z0-9]+[FS])+$/;
+// The suffix grammar lives in icon-suffixes.ts, shared with iconSvg.
 function parseStyleSuffixes(name) {
-    const match = name.match(SUFFIX_RE);
-    if (!match)
+    const split = splitSuffixes(name);
+    if (!split)
         return null;
-    let baseName = name.slice(0, match.index);
-    if (!baseName)
-        return null;
-    // Strip trailing _ separator (for digit-ending names: edit2_50o)
-    if (baseName.endsWith('_'))
-        baseName = baseName.slice(0, -1);
-    if (!baseName)
-        return null;
+    const { baseName } = split;
     const data = iconData;
     // Accept if baseName is in iconData, or matches a composition rule prefix
     if (!data[baseName]) {
@@ -821,9 +809,7 @@ function parseStyleSuffixes(name) {
             return null;
     }
     const style = {};
-    const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g);
-    if (!suffixes)
-        return null;
+    const suffixes = split.tokens;
     const transforms = [];
     for (const s of suffixes) {
         const code = s[s.length - 1];
@@ -842,7 +828,7 @@ function parseStyleSuffixes(name) {
             style.strokeWidth = s.slice(0, -1);
         }
         else {
-            const val = parseInt(s.replace('_', '-'));
+            const val = suffixNumber(s);
             switch (code) {
                 case 'o':
                     style.opacity = String(val / 100);

@@ -18,10 +18,12 @@ is registered. Neither touches the DOM, so both work in a build script, a server
 template, or an ePub pass.
 
 Redirects are followed, including the built-in ones that rotate or flip another icon
-(`chevronDown` is `chevronRight90r`). A name that exists but cannot be one SVG string —
-a stack (`a$b`), a rule (`spin…`, `un…`), any other style suffix, or a redirect cycle —
-**throws**, naming what it resolved to: render those with `icons.<name>()` where there is
-a DOM. Only a name with no icon at all returns `undefined`.
+(`chevronDown` is `chevronRight90r`), and a rotation or flip written inline works too
+(`iconSvg('chevronRight90r')`). A name the icon renderer would draw but that cannot be one
+SVG string **throws**, saying why: a stack (`a$b`), a rule (`spin90Loader`, `unLock`), any
+other style suffix (`check50o`), a redirect to a name that is not an icon, or a redirect
+cycle. Render those with `icons.<name>()` where there is a DOM; the suffixes and rules are
+described on the [[icons]] page. Only a name that nothing would draw returns `undefined`.
 
 Deliberately a separate module from `icons.ts`: that one imports tosijs to build
 elements, so importing it drags in code that needs `HTMLElement` and throws in a build

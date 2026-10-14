@@ -20,10 +20,12 @@ is registered. Neither touches the DOM, so both work in a build script, a server
 template, or an ePub pass.
 
 Redirects are followed, including the built-in ones that rotate or flip another icon
-(`chevronDown` is `chevronRight90r`). A name that exists but cannot be one SVG string —
-a stack (`a$b`), a rule (`spin…`, `un…`), any other style suffix, or a redirect cycle —
-**throws**, naming what it resolved to: render those with `icons.<name>()` where there is
-a DOM. Only a name with no icon at all returns `undefined`.
+(`chevronDown` is `chevronRight90r`), and a rotation or flip written inline works too
+(`iconSvg('chevronRight90r')`). A name the icon renderer would draw but that cannot be one
+SVG string **throws**, saying why: a stack (`a$b`), a rule (`spin90Loader`, `unLock`), any
+other style suffix (`check50o`), a redirect to a name that is not an icon, or a redirect
+cycle. Render those with `icons.<name>()` where there is a DOM; the suffixes and rules are
+described on the [[icons]] page. Only a name that nothing would draw returns `undefined`.
 
 Deliberately a separate module from `icons.ts`: that one imports tosijs to build
 elements, so importing it drags in code that needs `HTMLElement` and throws in a build
@@ -38,25 +40,49 @@ resorted to when putting its own logo on a generated page. There is nothing to p
 the map ships in the bundle either way.
 */
 import iconData from './icon-data.js';
+import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
+const data = iconData;
 // Rotation and flip, the only suffixes the built-in redirects use (`chevronDown` is
 // `chevronRight90r`). Anything else needs the DOM renderer.
-const GEOMETRY_SUFFIXES = /((?:_?\d+r|[01]f)+)$/;
+const isGeometry = (token) => /^(_?\d+r|[01]f)$/.test(token);
+const stripEscape = (name) => name.endsWith('_') ? name.slice(0, -1) : name;
+// A registered icon, or one with style suffixes on a registered icon.
+const namesIcon = (name) => data[name] !== undefined ||
+    data[splitSuffixes(name)?.baseName ?? ''] !== undefined;
+/*
+Whether the icon renderer would draw something for a name that is not registered: a stack
+(`a$b`), suffixes on an icon (`chevronRight50o`), or a rule applied to one (`spin90Loader`,
+`unLock`). Rules live with the DOM renderer, so a rule is recognised by its shape: a prefix
+followed by an icon's name, capitalised.
+*/
+function isComposition(name) {
+    if (name.includes('$') || namesIcon(name))
+        return true;
+    for (let i = 1; i < name.length; i++) {
+        if (name[i] >= 'A' && name[i] <= 'Z') {
+            const base = name[i].toLowerCase() + name.slice(i + 1);
+            if (namesIcon(base) || namesIcon(splitSuffixes(base)?.baseName ?? '')) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 /**
- * Raw SVG markup for an icon, or `undefined` when no icon has that name.
+ * Raw SVG markup for an icon, or `undefined` when nothing by that name would draw.
  *
- * Throws when the name exists but cannot be one SVG string: a stack (`a$b`), a rule
- * (`spin…`, `un…`), a suffix other than rotation or flip, or a redirect cycle. Those need
- * `icons.<name>()` where there is a DOM.
+ * Throws when the name would draw but cannot be one SVG string: a stack (`a$b`), a rule
+ * (`spin…`, `un…`), a style suffix other than rotation or flip, a redirect to a name that
+ * is not an icon, or a redirect cycle. Those need `icons.<name>()` where there is a DOM.
  */
 export function iconSvg(name) {
-    const key = name.endsWith('_') ? name.slice(0, -1) : name;
-    const data = iconData;
-    if (data[key] === undefined)
+    const key = stripEscape(name);
+    if (!isComposition(key))
         return undefined;
     return resolve(name, key, new Set());
 }
-function resolve(asked, key, seen) {
-    const data = iconData;
+function resolve(asked, name, seen) {
+    const key = stripEscape(name);
     const value = data[key];
     if (value !== undefined) {
         if (value.startsWith('<'))
@@ -67,19 +93,23 @@ function resolve(asked, key, seen) {
         seen.add(key);
         return resolve(asked, value, seen);
     }
-    const suffixes = key.match(GEOMETRY_SUFFIXES);
-    let base = suffixes ? key.slice(0, suffixes.index) : '';
-    if (base.endsWith('_'))
-        base = base.slice(0, -1);
-    if (!suffixes || data[base] === undefined) {
-        throw new Error(`iconSvg("${asked}"): it resolves to "${key}", which is not a single SVG (a stack, ` +
-            `a rule, or a style suffix). Render it with icons.${asked}() where there is a DOM.`);
+    const split = splitSuffixes(key);
+    if (split &&
+        data[split.baseName] !== undefined &&
+        split.tokens.every(isGeometry)) {
+        return transformed(asked, resolve(asked, split.baseName, seen), split.tokens);
     }
-    return transformed(asked, resolve(asked, base, seen), suffixes[1]);
+    const what = key === stripEscape(asked) ? `"${key}"` : `it resolves to "${key}", which`;
+    if (isComposition(key)) {
+        throw new Error(`iconSvg("${asked}"): ${what} is not a single SVG (a stack, a rule, or a style ` +
+            `suffix other than rotation or flip). Render it with icons.${stripEscape(asked)}() ` +
+            `where there is a DOM.`);
+    }
+    throw new Error(`iconSvg("${asked}"): it redirects to "${key}", which is not a registered icon`);
 }
 // Apply rotate/flip suffixes about the centre of the viewBox, as the DOM renderer does
 // with `transform-origin: 50% 50%`.
-function transformed(asked, svg, suffixes) {
+function transformed(asked, svg, tokens) {
     const parts = svg.match(/^(\s*<svg\b[^>]*>)([\s\S]*)(<\/svg>\s*)$/);
     const viewBox = parts?.[1]
         .match(/viewBox="([^"]+)"/)?.[1]
@@ -91,11 +121,9 @@ function transformed(asked, svg, suffixes) {
     const [x, y, width, height] = viewBox;
     const cx = x + width / 2;
     const cy = y + height / 2;
-    const ops = suffixes
-        .match(/_?\d+r|[01]f/g)
-        .map((op) => op.endsWith('r')
-        ? `rotate(${parseInt(op.replace('_', '-'))})`
-        : op === '0f'
+    const ops = tokens.map((token) => token.endsWith('r')
+        ? `rotate(${suffixNumber(token)})`
+        : token === '0f'
             ? 'scale(-1 1)'
             : 'scale(1 -1)');
     const transform = `translate(${cx} ${cy}) ${ops.join(' ')} translate(${-cx} ${-cy})`;

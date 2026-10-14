@@ -430,14 +430,19 @@ try {
     )
   }
   // The DOM-free entry must actually RUN under node — it exists precisely for build
-  // scripts and server-rendered templates.
-  const iconRun =
-    await $`node -e ${"import('tosijs-ui/icon-svg').then(m=>{if(typeof m.iconSvg!=='function')throw new Error('no iconSvg');console.log('OK')})"}`
-      .cwd(proj)
-      .nothrow()
-      .quiet()
+  // scripts and server-rendered templates. Call it, through a transformed redirect and a
+  // throw, since both go through a second module (icon-suffixes) that must also ship.
+  const iconScript = [
+    "import('tosijs-ui/icon-svg').then(m=>{",
+    "if(!m.iconSvg('chevronDown').includes('rotate(90)'))throw new Error('no rotation');",
+    "let threw=false;try{m.iconSvg('spin90Loader')}catch(e){threw=e.message.includes('icons.spin90Loader()')}",
+    "if(!threw)throw new Error('no throw');",
+    "if(m.iconSvg('nonsense')!==undefined)throw new Error('unknown name');",
+    "console.log('OK')})",
+  ].join('')
+  const iconRun = await $`node -e ${iconScript}`.cwd(proj).nothrow().quiet()
   check(
-    'tosijs-ui/icon-svg actually runs under node',
+    'tosijs-ui/icon-svg actually runs under node (markup, a transform, a throw)',
     iconRun.stdout.toString().includes('OK'),
     iconRun.stderr.toString().slice(0, 200)
   )

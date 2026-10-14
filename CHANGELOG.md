@@ -2,19 +2,25 @@
 
 ## 1.16.19
 
-- **`iconSvg()` resolves the built-in icons that rotate or flip another.** 28 built-in
+- **`iconSvg()` resolves the built-in icons that rotate or flip another.** 27 built-in
   names are redirects with a rotation or flip (`chevronDown` is `chevronRight90r`; also
   `chevronLeft`/`Up`, `arrowDown`/`Left`/`Up`, `cornerDownLeft`, `rotateCcw`, `thumbsDown`
   and others), and `iconSvg()` returned `undefined` for every one of them, silently. They
-  now return markup with the transform applied about the centre of the viewBox, which draws
-  the same pixels as `icons.chevronDown()` (compared in Chromium for all 28).
-- **`iconSvg()` throws for a name it cannot turn into one SVG.** A name defined as a stack
-  (`cloudSync: 'spin120Loader40s_30x$cloud'`), a rule (`unLock`), any style suffix other
-  than rotation or flip, or a redirect cycle used to return `undefined`, the same answer as
-  a name that does not exist, so a build script rendered nothing and said nothing. It now
-  throws, naming what the icon resolved to and that `icons.<name>()` renders it where there
-  is a DOM. **Code that relied on `undefined` for those names now gets an exception;** an
-  unknown name still returns `undefined`, as documented. This is the DOM-free half of #224.
+  now return markup with the transform applied about the centre of the viewBox, and a
+  rotation or flip written inline works too (`iconSvg('chevronRight90r')`). A Playwright
+  test draws each one both ways, through `iconSvg` and through `icons.<name>()`, and
+  finds no pixel that differs by more than antialiasing, in all three browsers.
+- **`iconSvg()` throws for a name it cannot turn into one SVG.** A stack
+  (`cloudSync: 'spin120Loader40s_30x$cloud'`, or `tosi$hat` written inline), a rule
+  (`unLock`, `spin90Loader`), a style suffix other than rotation or flip (`check50o`), a
+  redirect to a name that is not an icon, or a redirect cycle all returned `undefined`,
+  the same answer as a name that does not exist, so a build script rendered nothing and
+  said nothing. Each now throws, saying which it is and, where the icon renderer would draw
+  it, that `icons.<name>()` does so where there is a DOM. **Code that relied on `undefined`
+  for those names now gets an exception;** a name nothing would draw still returns
+  `undefined`, as documented. This is the follow-up to #224, for the DOM-free path.
+- `iconSvg()` reads suffixes with the same grammar as the icon renderer, now shared
+  between them: `edit2_90r` is `edit2` turned 90°, not -90°.
 
 ## 1.16.18
 
