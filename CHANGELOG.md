@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.16.18
+
+- **A `defineIcons` name for a stacked composition draws the stack.** `defineIcons({
+  cloudSync: 'spin120Loader40s_30x$cloud' })` made `icons.cloudSync()` draw the placeholder
+  square and log "icon cloudSync does not exist", although the same string used directly as
+  an icon name worked. The icons page documents exactly this pattern for building an app's
+  icon vocabulary, so every such name was silently a square, in every version since
+  composites shipped. A redirect's target now goes through the whole icon pipeline, stacking
+  included. closes #224, reported by tosijs-virta.
+- **A redirect cycle says so.** `a: 'b'` with `b: 'a'`, or a composite that names itself
+  (`a: 'a$check'`), now logs "icon a redirects in a cycle" and draws the placeholder,
+  instead of claiming the icon does not exist.
+- The named-composition example on the icons page is now a live example with a test, so
+  the documented pattern is checked on every build.
+
 ## 1.16.17
 
 - **The pinned tjs-lang is 0.14.0-rc.5; it was 0.13.13.** That is the devDependency this
