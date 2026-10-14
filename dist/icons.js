@@ -503,10 +503,15 @@ preview.append(icons.cloudSync(), icons.secureShield(), icons.newFile())
 ```
 ```test
 test('named compositions draw their composites, not the placeholder', () => {
-  const composites = preview.querySelectorAll('.tosi-icon-composite')
-  expect(composites.length).toBe(3)
+  // A spin layer is a composite of its own, so count only the outer ones.
+  const composites = preview.querySelectorAll(':scope > .tosi-icon-composite')
+  expect([...composites].map((icon) => icon.dataset.icon)).toEqual([
+    'cloudSync',
+    'secureShield',
+    'newFile',
+  ])
   for (const composite of composites) {
-    expect(composite.querySelectorAll('svg').length).toBe(2)
+    expect(composite.querySelectorAll('svg').length).toBeGreaterThan(1)
   }
 })
 ```
@@ -782,7 +787,6 @@ function composeIcon(prop, parts) {
     }
     return null;
 }
-const MAX_REDIRECTS = 10;
 // Redirect names being resolved right now, so a redirect cycle ends instead of recursing.
 const expanding = new Set();
 // Style suffixes — value then letter code:
@@ -874,18 +878,16 @@ export function resolveIcon(prop, parts) {
     const data = iconData;
     // Direct match or redirect chain
     let name = prop;
-    for (let i = 0; i < MAX_REDIRECTS; i++) {
-        const spec = data[name];
-        if (!spec)
-            break;
+    const seen = new Set();
+    for (let spec = data[name]; spec; spec = data[name]) {
         if (spec.startsWith('<'))
             return makeIcon(spec, parts);
+        seen.add(name);
         name = spec;
-    }
-    if (data[name]) {
-        // Still a redirect after MAX_REDIRECTS hops: the chain is a cycle.
-        console.warn(`icon ${prop} redirects in a cycle`);
-        return makeIcon(iconData.square, parts);
+        if (seen.has(name)) {
+            console.warn(`icon ${prop} redirects in a cycle`);
+            return makeIcon(iconData.square, parts);
+        }
     }
     if (name !== prop) {
         /*
@@ -897,7 +899,13 @@ export function resolveIcon(prop, parts) {
         if (!expanding.has(prop)) {
             expanding.add(prop);
             try {
-                return resolveIcon(name, parts);
+                const icon = resolveIcon(name, parts);
+                // A named composite answers to its name, not to the composition it stands for.
+                if (icon.classList.contains('tosi-icon-composite')) {
+                    ;
+                    icon.dataset.icon = prop;
+                }
+                return icon;
             }
             finally {
                 expanding.delete(prop);

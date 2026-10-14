@@ -467,16 +467,47 @@ describe('icons', () => {
       ).toBe('0 0 48 48')
     })
 
-    test('a redirect that names itself ends, drawing the placeholder', () => {
-      defineIcons({
-        testSelfLoop: 'testSelfLoop$check',
-        testPingA: 'testPingB',
-      })
-      defineIcons({ testPingB: 'testPingA' })
-      expect(
-        icons.testSelfLoop().classList.contains('tosi-icon-composite')
-      ).toBe(true)
-      expect(icons.testPingA()).toBeInstanceOf(SVGElement)
+    test('a named composite keeps its name in data-icon', () => {
+      expect(icons.testCloudSync().dataset.icon).toBe('testCloudSync')
+    })
+
+    test('suffixes and rules apply to a named composite', () => {
+      const faded = icons.testCloudSync50o()
+      expect(faded.classList.contains('tosi-icon-composite')).toBe(true)
+      expect(faded.style.opacity).toBe('0.5')
+      for (const name of ['spin90TestCloudSync', 'unTestCloudSync']) {
+        const ruled = icons[name]()
+        expect(ruled.classList.contains('tosi-icon-composite')).toBe(true)
+        expect(ruled.querySelectorAll('svg').length).toBeGreaterThan(1)
+      }
+    })
+
+    test('a long chain that ends in a drawing is not a cycle', () => {
+      const chain: Record<string, string> = { testHop0: 'check' }
+      for (let i = 1; i <= 12; i++) chain[`testHop${i}`] = `testHop${i - 1}`
+      defineIcons(chain)
+      const icon = icons.testHop12()
+      expect(icon.outerHTML).toBe(icons.check().outerHTML)
+    })
+
+    test('a redirect cycle ends, and says it is a cycle', () => {
+      const warn = console.warn
+      const warnings: string[] = []
+      console.warn = (message: string) => warnings.push(message)
+      try {
+        defineIcons({ testPingA: 'testPingB', testPingB: 'testPingA' })
+        expect(icons.testPingA()).toBeInstanceOf(SVGElement)
+        // The cycling layer is the placeholder; the rest of the stack still draws.
+        defineIcons({ testSelfLoop: 'testSelfLoop$check' })
+        const loop = icons.testSelfLoop()
+        expect(loop.classList.contains('tosi-icon-composite')).toBe(true)
+      } finally {
+        console.warn = warn
+      }
+      expect(warnings).toEqual([
+        'icon testPingA redirects in a cycle',
+        'icon testSelfLoop redirects in a cycle',
+      ])
     })
 
     test('redirect with suffix', () => {
@@ -729,19 +760,11 @@ describe('icons', () => {
         'x',
         'zap',
       ]
-      let validCount = 0
+      // The placeholder is an SVGElement too, so ask whether each NAME exists.
+      expect(knownIcons.filter((name) => !(name in icons))).toEqual([])
       for (const name of knownIcons) {
-        try {
-          const icon = icons[name]()
-          // The placeholder is an SVGElement too, so ask whether the NAME exists.
-          if (icon instanceof SVGElement && name in icons) {
-            validCount++
-          }
-        } catch {
-          // Skip if not found
-        }
+        expect(icons[name]()).toBeInstanceOf(SVGElement)
       }
-      expect(validCount).toBeGreaterThan(50)
     })
   })
 })

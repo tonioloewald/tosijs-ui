@@ -9,9 +9,14 @@
   icon vocabulary, so every such name was silently a square, in every version since
   composites shipped. A redirect's target now goes through the whole icon pipeline, stacking
   included. closes #224, reported by tosijs-virta.
-- **A redirect cycle says so.** `a: 'b'` with `b: 'a'`, or a composite that names itself
-  (`a: 'a$check'`), now logs "icon a redirects in a cycle" and draws the placeholder,
-  instead of claiming the icon does not exist.
+- **A named composite answers to its name.** Its `data-icon` is the name you defined
+  (`cloudSync`), not the composition it stands for, and suffixes and rules apply to it as
+  to any icon (`cloudSync50o`, `spin90CloudSync`).
+- **A redirect cycle says so.** `a: 'b'` with `b: 'a'` now logs "icon a redirects in a
+  cycle" and draws the placeholder, instead of claiming the icon does not exist; a
+  composite that names itself (`a: 'a$check'`) draws the placeholder in place of the
+  cycling layer. A long redirect chain that ends in a drawing is no longer cut off at ten
+  hops.
 - The named-composition example on the icons page is now a live example with a test, so
   the documented pattern is checked on every build.
 
