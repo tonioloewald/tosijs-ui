@@ -83,7 +83,10 @@ function resolve(asked: string, name: string, seen: Set<string>): string {
     seen.add(key)
     return resolve(asked, value, seen)
   }
-  const split = splitSuffixes(key)
+  // The renderer's order for a name that is not registered: a stack, then a rule, then
+  // suffixes. So `checkCircle90r` is the `check` rule over `circle90r`, not `checkCircle`
+  // turned, and only a name no rule claims gets the transform.
+  const split = key.includes('$') || ruleDraws(key) ? null : splitSuffixes(key)
   if (
     split &&
     data[split.baseName] !== undefined &&

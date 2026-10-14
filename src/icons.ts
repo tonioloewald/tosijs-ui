@@ -810,15 +810,7 @@ function parseStyleSuffixes(name: string): {
   const data = iconData as Record<string, string>
   // Accept if baseName is in iconData, or matches a composition rule prefix
   if (!data[baseName]) {
-    const matchesRule = iconRules.some((rule) => {
-      if (rule.prefix instanceof RegExp) {
-        return rule.prefix.test(baseName)
-      }
-      return (
-        baseName.startsWith(rule.prefix) && baseName.length > rule.prefix.length
-      )
-    })
-    if (!matchesRule) return null
+    if (!iconRules.some((rule) => matchRule(rule, baseName))) return null
   }
 
   const style: Partial<CSSStyleDeclaration> = {}

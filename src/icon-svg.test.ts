@@ -100,6 +100,13 @@ test('what the renderer would draw but iconSvg cannot, throws, saying why', () =
   expect(iconSvg('notAnIcon')).toBeUndefined()
 })
 
+test('a rule claims a name before its suffixes do, as in the renderer', () => {
+  // `checkCircle` is registered, but the renderer draws `checkCircle90r` as the check rule
+  // over `circle90r`: iconSvg says so rather than drawing something different.
+  expect(() => iconSvg('checkCircle90r')).toThrow('icons.checkCircle90r()')
+  expect(() => iconSvg('checkSquare0f')).toThrow('icons.checkSquare0f()')
+})
+
 test('a name that only looks like a rule is unknown, not an error', () => {
   // A capital letter followed by an icon's name is not a rule: the renderer draws these
   // as the placeholder, so iconSvg answers undefined, as it does for any unknown name.
