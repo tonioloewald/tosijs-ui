@@ -485,16 +485,31 @@ Now `removeUser`, `removeFile`, `removeProject` all just work — and
 they're consistent. If you redesign the trash icon or change
 `--action-color`, every "remove" icon updates automatically.
 
-You can also use `defineIcons` for one-off named compositions:
+You can also use `defineIcons` for one-off named compositions. Then just
+use `icons.cloudSync()` or `<tosi-icon icon="cloudSync">`: the composition
+is invisible to consumers of the icon.
 
-    defineIcons({
-      cloudSync: 'spin120Loader40s_30x$cloud',
-      secureShield: 'lock50s75o_10y$shield',
-      newFile: 'plus75o60s25x25y$file',
-    })
+```js
+import { defineIcons, icons } from 'tosijs-ui'
 
-Then just use `icons.cloudSync()` or `<tosi-icon icon="cloudSync">` —
-the composition is invisible to consumers of the icon.
+defineIcons({
+  cloudSync: 'spin120Loader40s_30x$cloud',
+  secureShield: 'lock50s75o_10y$shield',
+  newFile: 'plus75o60s25x25y$file',
+})
+
+preview.style.setProperty('--tosi-icon-size', '48px')
+preview.append(icons.cloudSync(), icons.secureShield(), icons.newFile())
+```
+```test
+test('named compositions draw their composites, not the placeholder', () => {
+  const composites = preview.querySelectorAll('.tosi-icon-composite')
+  expect(composites.length).toBe(3)
+  for (const composite of composites) {
+    expect(composite.querySelectorAll('svg').length).toBe(2)
+  }
+})
+```
 
 ### Composites and `svg2DataUrl`
 
@@ -768,6 +783,8 @@ function composeIcon(prop, parts) {
     return null;
 }
 const MAX_REDIRECTS = 10;
+// Redirect names being resolved right now, so a redirect cycle ends instead of recursing.
+const expanding = new Set();
 // Style suffixes — value then letter code:
 //   50o (opacity), 75s (scale), 20x (translateX%), _10y (translateY%)
 //   90r (rotate 90°), _45r (rotate -45°), 0f (flipH), 1f (flipV)
@@ -865,16 +882,29 @@ export function resolveIcon(prop, parts) {
             return makeIcon(spec, parts);
         name = spec;
     }
+    if (data[name]) {
+        // Still a redirect after MAX_REDIRECTS hops: the chain is a cycle.
+        console.warn(`icon ${prop} redirects in a cycle`);
+        return makeIcon(iconData.square, parts);
+    }
     if (name !== prop) {
-        const composed = composeIcon(name, parts);
-        if (composed)
-            return composed;
-        const parsed = parseStyleSuffixes(name);
-        if (parsed) {
-            const icon = resolveIcon(parsed.baseName, parts);
-            Object.assign(icon.style, parsed.style);
-            return icon;
+        /*
+        A redirect's target goes through the WHOLE pipeline, stacking included. Handling rules
+        and suffixes here and leaving `$` to the checks below tested `prop`, which has no `$`, so
+        every named composite drew the placeholder (#224). `expanding` stops a redirect that
+        names itself (`a: 'a$b'`) from recursing forever.
+        */
+        if (!expanding.has(prop)) {
+            expanding.add(prop);
+            try {
+                return resolveIcon(name, parts);
+            }
+            finally {
+                expanding.delete(prop);
+            }
         }
+        console.warn(`icon ${prop} redirects in a cycle`);
+        return makeIcon(iconData.square, parts);
     }
     // Stack: foo$bar$baz → baz on bottom, bar on top, foo on top
     if (prop.includes('$')) {

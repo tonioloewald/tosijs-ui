@@ -450,6 +450,35 @@ describe('icons', () => {
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
     })
 
+    test('redirect to a stack resolves the stack (#224)', () => {
+      // The docs' own "icon vocabulary" example, and virta's loading mark.
+      defineIcons({
+        testStackSvg: '<svg viewBox="0 0 48 48"><path d="M0 0h10v10z"/></svg>',
+        testStackLogo: 'spin180Loader40s30x_30y$testStackSvg',
+        testCloudSync: 'spin120Loader40s_30x$cloud',
+      })
+      for (const name of ['testStackLogo', 'testCloudSync']) {
+        const icon = icons[name]()
+        expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+        expect(icon.querySelectorAll('svg').length).toBe(2)
+      }
+      expect(
+        icons.testStackLogo().querySelector('svg')!.getAttribute('viewBox')
+      ).toBe('0 0 48 48')
+    })
+
+    test('a redirect that names itself ends, drawing the placeholder', () => {
+      defineIcons({
+        testSelfLoop: 'testSelfLoop$check',
+        testPingA: 'testPingB',
+      })
+      defineIcons({ testPingB: 'testPingA' })
+      expect(
+        icons.testSelfLoop().classList.contains('tosi-icon-composite')
+      ).toBe(true)
+      expect(icons.testPingA()).toBeInstanceOf(SVGElement)
+    })
+
     test('redirect with suffix', () => {
       defineIcons({ testRedirectSuffix: 'chevronRight90r' })
       const icon = icons.testRedirectSuffix()
@@ -665,7 +694,7 @@ describe('icons', () => {
         'mail',
         'map',
         'menu',
-        'message',
+        'messageCircle',
         'minus',
         'monitor',
         'moon',
@@ -704,7 +733,8 @@ describe('icons', () => {
       for (const name of knownIcons) {
         try {
           const icon = icons[name]()
-          if (icon instanceof SVGElement) {
+          // The placeholder is an SVGElement too, so ask whether the NAME exists.
+          if (icon instanceof SVGElement && name in icons) {
             validCount++
           }
         } catch {
