@@ -1,5 +1,6 @@
 import { test, expect } from 'bun:test'
 import { iconSvg, iconNames } from './icon-svg.js'
+import { defineIcons } from './icons.js'
 
 // The point of this module is that it works with NO DOM — a build script, an ePub
 // pass, a server-rendered template. `icons.ts` imports tosijs and throws on
@@ -16,15 +17,43 @@ test('returns undefined for an unknown icon rather than throwing', () => {
   expect(iconSvg('definitely-not-an-icon')).toBeUndefined()
 })
 
-test('follows redirect entries the way rendering does', () => {
-  // Some entries are aliases: the value is another icon's NAME, not markup.
+test('every registered built-in icon resolves to markup', () => {
+  // Some entries are aliases: the value is another icon's NAME, and 28 of those rotate or
+  // flip it (`chevronDown` is `chevronRight90r`). All of them used to return undefined.
   const names = iconNames()
   expect(names.length).toBeGreaterThan(100)
-  for (const n of names.slice(0, 200)) {
-    const v = iconSvg(n)
-    // Either resolvable to markup, or absent — never a bare alias string.
-    if (v !== undefined) expect(v.startsWith('<')).toBe(true)
-  }
+  const unresolved = names.filter((n) => !iconSvg(n)?.startsWith('<svg'))
+  expect(unresolved).toEqual([])
+})
+
+test('a rotated or flipped redirect is its target, transformed about the centre', () => {
+  const right = iconSvg('chevronRight')!
+  const down = iconSvg('chevronDown')!
+  expect(down).toContain(
+    '<g transform="translate(12 12) rotate(90) translate(-12 -12)">'
+  )
+  // The drawing inside the group is the target's, untouched.
+  expect(down.replace(/<g transform="[^"]*">|<\/g>(?=<\/svg>)/g, '')).toBe(
+    right
+  )
+  expect(iconSvg('cornerDownLeft')).toContain('scale(-1 1)')
+  expect(iconSvg('thumbsDown')).toContain('scale(1 -1)')
+})
+
+test('a name that exists but is not one SVG throws, saying what it resolved to', () => {
+  defineIcons({
+    testSvgStack: 'spin120Loader40s_30x$cloud',
+    testSvgRule: 'unLock',
+    testSvgFaded: 'check50o',
+    testSvgPingA: 'testSvgPingB',
+    testSvgPingB: 'testSvgPingA',
+  })
+  expect(() => iconSvg('testSvgStack')).toThrow(
+    'iconSvg("testSvgStack"): it resolves to "spin120Loader40s_30x$cloud"'
+  )
+  expect(() => iconSvg('testSvgRule')).toThrow('icons.testSvgRule()')
+  expect(() => iconSvg('testSvgFaded')).toThrow('"check50o"')
+  expect(() => iconSvg('testSvgPingA')).toThrow('redirects in a cycle')
 })
 
 test('tolerates the trailing-underscore escape used by the icon proxy', () => {
