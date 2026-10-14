@@ -38,6 +38,9 @@ test('iconSvg markup draws the same pixels as the DOM renderer', async ({
         name,
       ]),
       ['chevronRight90r', 'chevronRight90r', 'chevronRight90r'],
+      // Registered names a rule would also claim: the registered icon wins (#3295).
+      ['checkCircle90r', 'checkCircle90r', 'checkCircle90r'],
+      ['checkSquare0f', 'checkSquare0f', 'checkSquare0f'],
       ...Object.entries(controls).map(
         ([label, [dom, markup]]): [string, string, string] => [
           label,
@@ -67,7 +70,7 @@ test('iconSvg markup draws the same pixels as the DOM renderer', async ({
     document.body.append(grid)
     return pairs.map(([label]) => label)
   })
-  expect(names.length).toBe(32) // 27 built-ins, parityEdit, the inline name, 3 controls
+  expect(names.length).toBe(34) // 27 built-ins, parityEdit, 3 inline names, 3 controls
 
   const shot = async (label: string, side: string) =>
     (

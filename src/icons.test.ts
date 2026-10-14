@@ -535,6 +535,39 @@ describe('icons', () => {
       ])
     })
 
+    test('suffixes on a registered icon win over a rule (#3295)', () => {
+      // `checkCircle` is registered; the check rule over `circle90r` is not what is meant.
+      const turned = icons.checkCircle90r()
+      expect(turned.classList.contains('tosi-icon-composite')).toBe(false)
+      expect(turned.style.transform).toContain('rotate(90deg)')
+      // A rule over an icon that is not registered under the whole name still applies.
+      expect(
+        icons.checkLock90r().classList.contains('tosi-icon-composite')
+      ).toBe(true)
+    })
+
+    test('defining an icon a rule would also draw warns once; the definition wins', () => {
+      const warn = console.warn
+      const warnings: string[] = []
+      console.warn = (message: string) => warnings.push(message)
+      try {
+        defineIcons({
+          checkTestShadow: '<svg viewBox="0 0 24 24"><path d="M0 0h1"/></svg>',
+          testShadow: '<svg viewBox="0 0 24 24"><path d="M0 0h2"/></svg>',
+          testNoRule: 'check',
+        })
+        icons.checkTestShadow()
+        icons.checkTestShadow()
+        icons.checkCircle()
+      } finally {
+        console.warn = warn
+      }
+      expect(warnings).toEqual([
+        "icon checkTestShadow is also a composition rule's name; your definition wins",
+      ])
+      expect(icons.checkTestShadow().innerHTML).toContain('M0 0h1')
+    })
+
     test('a redirect cycle ends, and says it is a cycle', () => {
       const warn = console.warn
       const warnings: string[] = []

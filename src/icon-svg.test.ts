@@ -100,11 +100,19 @@ test('what the renderer would draw but iconSvg cannot, throws, saying why', () =
   expect(iconSvg('notAnIcon')).toBeUndefined()
 })
 
-test('a rule claims a name before its suffixes do, as in the renderer', () => {
-  // `checkCircle` is registered, but the renderer draws `checkCircle90r` as the check rule
-  // over `circle90r`: iconSvg says so rather than drawing something different.
-  expect(() => iconSvg('checkCircle90r')).toThrow('icons.checkCircle90r()')
-  expect(() => iconSvg('checkSquare0f')).toThrow('icons.checkSquare0f()')
+test('suffixes on a registered icon win over a rule, as in the renderer (#3295)', () => {
+  // `checkCircle` is registered, and `checkCircle90r` is it turned, not the check rule
+  // over `circle90r`.
+  expect(iconSvg('checkCircle90r')).toContain(' rotate(90) ')
+  expect(
+    iconSvg('checkCircle90r')!.replace(
+      /<g transform="[^"]*">|<\/g>(?=<\/svg>)/g,
+      ''
+    )
+  ).toBe(iconSvg('checkCircle')!)
+  expect(iconSvg('checkSquare0f')).toContain('scale(-1 1)')
+  // A rule over an unregistered name is still a rule.
+  expect(() => iconSvg('checkLock90r')).toThrow('icons.checkLock90r()')
 })
 
 test('a name that only looks like a rule is unknown, not an error', () => {

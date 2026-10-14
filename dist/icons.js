@@ -565,10 +565,21 @@ copies or substantial portions of the Software.
 import { elements, svgElements, Color, vars, varDefault, withAttributes, } from 'tosijs';
 import iconData from './icon-data.js';
 import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
-import { iconRules, spinRule, matchRule, canResolve } from './icon-rules.js';
+import { iconRules, spinRule, matchRule, canResolve, ruleDraws, } from './icon-rules.js';
 export { iconRules } from './icon-rules.js';
 export const defineIcons = (newIcons) => {
     Object.assign(iconData, newIcons);
+    /*
+    A defined icon always wins over a composition rule that would produce the same name, but
+    the author may not know the rule exists (`checkCircle` is the `check` rule over `circle`
+    too). Say so once, here, where the name was chosen. Built-in collisions are deliberate
+    and never warn.
+    */
+    for (const name of Object.keys(newIcons)) {
+        if (ruleDraws(name)) {
+            console.warn(`icon ${name} is also a composition rule's name; your definition wins`);
+        }
+    }
 };
 // Raw-markup accessors live in ./icon-svg (DOM-free) and are re-exported here.
 export { iconSvg, iconNames } from './icon-svg.js';
@@ -872,12 +883,18 @@ export function resolveIcon(prop, parts) {
         });
         return wrapIcon(prop, parts, base, ...overlays);
     }
-    // Try composition (spin, un, check, etc.)
-    const composed = composeIcon(prop, parts);
-    if (composed)
-        return composed;
-    // Style suffixes — strip them, resolve the base, apply after
+    /*
+    Style suffixes on a registered icon win over a composition rule (#3295): `checkCircle90r`
+    is `checkCircle` turned, not the `check` rule over `circle90r`. A rule still applies
+    when its suffixes are on an icon that only the rule makes (`spin90Loader50o`).
+    */
     const parsed = parseStyleSuffixes(prop);
+    const native = parsed != null && iconData[parsed.baseName];
+    if (!native) {
+        const composed = composeIcon(prop, parts);
+        if (composed)
+            return composed;
+    }
     if (parsed) {
         const icon = resolveIcon(parsed.baseName, parts);
         Object.assign(icon.style, parsed.style);
