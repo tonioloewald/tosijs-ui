@@ -934,7 +934,11 @@ export function resolveIcon(prop: string, parts: ElementPart[]): Element {
   }
 
   if (prop) {
-    console.warn(`icon ${prop} does not exist`)
+    // Inside a redirect, also name what the caller asked for: a typo in a defineIcons
+    // target is otherwise reported under a name that appears nowhere in their code.
+    const via =
+      expanding.size > 0 ? ` (requested as ${[...expanding].join(' → ')})` : ''
+    console.warn(`icon ${prop} does not exist${via}`)
   }
   return makeIcon(iconData.square, parts)
 }

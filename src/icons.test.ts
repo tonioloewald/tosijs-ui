@@ -513,6 +513,28 @@ describe('icons', () => {
       expect(icon.outerHTML).toBe(icons.check().outerHTML)
     })
 
+    test('a redirect to a missing icon names both the target and the name asked for', () => {
+      const warn = console.warn
+      const warnings: string[] = []
+      console.warn = (message: string) => warnings.push(message)
+      try {
+        defineIcons({
+          testTypo: 'chevronDwon',
+          testTypoStack: 'check$testTypo',
+        })
+        icons.testTypo()
+        icons.testTypoStack()
+        icons.notDefinedAnywhere()
+      } finally {
+        console.warn = warn
+      }
+      expect(warnings).toEqual([
+        'icon chevronDwon does not exist (requested as testTypo)',
+        'icon chevronDwon does not exist (requested as testTypoStack → testTypo)',
+        'icon notDefinedAnywhere does not exist',
+      ])
+    })
+
     test('a redirect cycle ends, and says it is a cycle', () => {
       const warn = console.warn
       const warnings: string[] = []
