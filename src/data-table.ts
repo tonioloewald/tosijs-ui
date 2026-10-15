@@ -1907,22 +1907,10 @@ export class TosiTable extends withAttributes({
       this._detailEls.delete(key)
     }
     const rowEl = this.stampedRow(raw)
-    const top = rowEl?.getBoundingClientRect().top
     if (rowEl) this.syncDetail(rowEl, raw)
+    // The list anchors itself across a height change (tosijs 1.10.9), so the toggled row
+    // keeps its place without a scrollTop correction here.
     this.remeasureRows()
-    /*
-    Keep the toggled row where it was. A variable-height list places its rows by
-    interpolation, so a row that changes height moves every row, itself included, by an
-    amount that depends on how far down the list is scrolled.
-    */
-    if (top !== undefined && this._scrollArea) {
-      for (let i = 0; i < 3; i += 1) {
-        const now = this.stampedRow(raw)?.getBoundingClientRect().top
-        if (now === undefined || Math.abs(now - top) < 1) break
-        this._scrollArea.scrollTop += now - top
-        this.remeasureRows()
-      }
-    }
     this.dispatchEvent(
       new CustomEvent(want ? 'rowexpand' : 'rowcollapse', {
         bubbles: true,

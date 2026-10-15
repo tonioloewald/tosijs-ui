@@ -518,7 +518,10 @@ inferSchema, unenforcedKeywords })`, and all three matter (omitting the third ma
   the iife and to anything built from it.
 
   The peer floor **encodes specific
-  upstream fixes, not a date** — `^1.10.3` (1.16.0) is required because every component now
+  upstream fixes, not a date** — `^1.10.9` (1.16.21) is required because `<tosi-table>`'s
+  row detail relies on the variable-height list anchoring itself across a height change
+  (tosijs #3302): `toggleRowDetail` no longer corrects `scrollTop` itself, so on an older
+  tosijs the toggled row jumps (board #3326). Before that, `^1.10.3` (1.16.0) was required because every component now
   declares its attributes with `withAttributes()`, which types a component INSTANCE from its
   attribute values once `Component`'s `[key: string]: any` index signature is gone (tosijs#36,
   1.10.0), and whose declarations only EMIT from 1.10.1 on (tosijs#38, TS2742 — it blocked this

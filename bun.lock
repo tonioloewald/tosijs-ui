@@ -37,7 +37,7 @@
         "prettier": "^2.8.8",
         "prismjs": "^1.30.0",
         "tjs-lang": "0.14.0-rc.5",
-        "tosijs": "1.10.7",
+        "tosijs": "1.10.9",
         "tosijs-schema": "1.10.2",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.65.0",
@@ -48,7 +48,7 @@
         "happy-dom": "^20.7.0",
         "marked": "^16.4.2 || ^17.0.0 || ^18.0.0",
         "tjs-lang": "^0.13.1 || ^0.14.0-rc.5",
-        "tosijs": "^1.10.3",
+        "tosijs": "^1.10.9",
         "tosijs-schema": "^1.8.0",
       },
       "optionalPeers": [
@@ -355,7 +355,7 @@
 
     "tjs-lang": ["tjs-lang@0.14.0-rc.5", "", { "dependencies": { "acorn": "^8.15.0", "acorn-loose": "^8.5.2", "acorn-walk": "^8.3.4", "tosijs-schema": "^1.12.0" }, "peerDependencies": { "@codemirror/autocomplete": "^6.0.0", "@codemirror/lang-javascript": "^6.0.0", "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0", "typescript": "^5.0.0" }, "optionalPeers": ["@codemirror/autocomplete", "@codemirror/lang-javascript", "@codemirror/language", "@codemirror/state", "@codemirror/view", "typescript"], "bin": { "tjs": "src/cli/tjs.ts", "tjsx": "src/cli/tjsx.ts", "create-tjs-app": "src/cli/create-app.ts", "tjs-playground": "src/cli/playground.ts", "ajs-install-cursor": "bin/install-cursor.sh", "ajs-install-vscode": "bin/install-vscode.sh" } }, "sha512-WqJFyRB+GqTngRhF35BOAVv3dZFXah+WBDawBCF4KcbfdbKdg+8+Whvv/5aYW7TLqcyIyvd+EFc9ZO5pfhe1WA=="],
 
-    "tosijs": ["tosijs@1.10.7", "", { "bin": { "tosijs": "dist/cli.mjs" } }, "sha512-/TJwJ0G1TrPBdfPyI9rFYqfhotUnxOW5n1qem1NZkfK0fY7EHS+0daX6qTE2JXILJzm09C5SenHd2xGl7zsvXQ=="],
+    "tosijs": ["tosijs@1.10.9", "", { "bin": { "tosijs": "dist/cli.mjs" } }, "sha512-BXk07z4WIVEI3aEnjjdhwFx/rOyMX5q0Q5Z9AgPjxeI2odC0r+DglMw17DT0S5gDBXjUaeIcDm6CejbOvgQ6qw=="],
 
     "tosijs-kilpi": ["tosijs-kilpi@1.0.1", "", {}, "sha512-WaYFCXNt63OJWo+ZXNuVM1S5YEytwHplLYq7Ez+dD0TmzJhHJnvpGigAN+CrupjJYRQSgcixrVK0o5IwuFX+FQ=="],
 

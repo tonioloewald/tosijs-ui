@@ -170,8 +170,14 @@ test('expansion survives scrolling away, a sort, and new row objects', async ({
   await field.fill('typed by the reader')
 
   // Scroll far away and back: the row is destroyed and re-created, its detail is not.
+  // Let a frame pass first. fill() leaves Firefox a pending scroll-the-caret-into-view,
+  // which overrides a scrollTop written in the same task and snaps the area back (tosijs
+  // #3333). A reader always has frames between typing and scrolling.
   await page.evaluate(async () => {
     const area = document.querySelector('#detailed .scroll-area') as HTMLElement
+    await new Promise((r) =>
+      requestAnimationFrame(() => requestAnimationFrame(r))
+    )
     area.scrollTop = 20_000
     await new Promise((r) => setTimeout(r, 300))
   })
