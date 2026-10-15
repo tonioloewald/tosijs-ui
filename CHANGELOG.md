@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.16.20
+
+- **A registered icon with style suffixes wins over a composition rule.** `checkCircle90r`
+  drew the `check` rule over a rotated `circle`; it is now `checkCircle` turned 90°, in the
+  renderer and in `iconSvg`. A rule still applies where the whole name is not a registered
+  icon with suffixes (`checkLock90r`). closes board #3295
+- **`defineIcons` warns when a name it defines is also what a composition rule would
+  draw** ("icon checkFoo is also a composition rule's name; your definition wins"), once
+  per name. Built-in names never warn.
+- **A redirect to a missing icon names what was asked for.** `defineIcons({ myChevron:
+  'chevronDwon' })` warned "icon chevronDwon does not exist", naming only the target; it
+  now adds "(requested as myChevron)", through stacks too. closes board #3294
+- **Six live examples on the doc site showed nothing; a Playwright spec now fails on any
+  that does.**
+  - The table's Column Width section rendered an empty `<tosi-table>` (an `html` fence
+    meant as syntax). It is now a live before/after with a test.
+  - The router page's examples shared the one router, so the last to run blanked "Named
+    Views". Each example now claims the router when used, and Basic Usage has links.
+  - Code meant to be read no longer runs as an empty example: the token-palette `css` on
+    highlight-block and highlight-styles, liveTheme's programmatic-control snippet, and the
+    migrating guide's setSchemaValidator lines are `:static`.
+
 ## 1.16.19
 
 - **`iconSvg()` resolves the built-in icons that rotate or flip another.** 27 built-in
