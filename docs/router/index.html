@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=84a5cd95db4b" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=c663d1608cc5" data-tosi-doc-system />
   <title>router — tosijs-ui</title>
   <meta name="description" content="A lightweight client-side router for single-page applications. Supports pattern matching with named parameters, hash-based routing, and multiple named route…" />
   <link rel="canonical" href="https://ui.tosijs.net/router/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=75ba29cd4cac" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=428dbc4deae4" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="router">router</h1>
 <p>A lightweight client-side router for single-page applications. Supports
@@ -84,6 +84,13 @@ preview.append(
 // Navigate programmatically
 go(&#39;greet/World&#39;)()
 </code></pre>
+<pre><code class="language-test">test(&#39;the first example holds the router when the page loads&#39;, async () =&gt; {
+  for (let i = 0; i &lt; 50 &amp;&amp; !preview.textContent.includes(&#39;Hello, World!&#39;); i++) {
+    await waitMs(20)
+  }
+  expect(preview.textContent).toContain(&#39;Hello, World!&#39;)
+})
+</code></pre>
 <h2 id="named-views">Named Views</h2>
 <p>Routes can target multiple named views simultaneously. This is useful
 for layouts where a route change should update several areas of the page.</p>
@@ -128,12 +135,14 @@ container.append(
   tosiRouteView({ name: &#39;main&#39;, style: { flex: &#39;1&#39; } }),
   tosiRouteView({ name: &#39;tools&#39;, style: { width: &#39;200px&#39; } }),
 )
+// An app has one router, and so does this page: the example above holds it, so this one
+// routes when you ask it to.
+const note = document.createElement(&#39;p&#39;)
+note.textContent = &#39;One router serves the page; the example above holds it until you press:&#39;
 const showButton = document.createElement(&#39;button&#39;)
 showButton.textContent = &#39;Edit photo 42&#39;
 showButton.addEventListener(&#39;click&#39;, show)
-preview.append(showButton, container)
-
-show()
+preview.append(note, showButton, container)
 </code></pre>
 <h2 id="hash-routing">Hash Routing</h2>
 <p>Set <code>hashRouting: true</code> when defining routes to use hash-based URLs
@@ -257,6 +266,6 @@ preview<span class="token punctuation">.</span><span class="token function">appe
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-aafgpaak.js"></script>
+  <script type="module" src="../hydrate-3rhanmtc.js"></script>
 </body>
 </html>

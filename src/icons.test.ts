@@ -559,6 +559,17 @@ describe('icons', () => {
         icons.checkTestShadow()
         icons.checkTestShadow()
         icons.checkCircle()
+        // Defining the same name again is not a new choice.
+        defineIcons({
+          checkTestShadow: '<svg viewBox="0 0 24 24"><path d="M0 0h1"/></svg>',
+        })
+        // Overriding built-ins a rule would also draw is deliberate.
+        defineIcons({
+          unlock: iconData.unlock,
+          checkCircle: iconData.checkCircle,
+        })
+        // A lowercase run is a word, not a prefix plus an icon (icon packs).
+        defineIcons({ unlink: 'link', checkbox: 'square', searchlight: 'sun' })
       } finally {
         console.warn = warn
       }

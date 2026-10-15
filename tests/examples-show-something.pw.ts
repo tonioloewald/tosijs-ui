@@ -20,6 +20,11 @@ empty but which shows its console output instead (`-output-only`). An example th
 an iframe has no inline `.preview` and is not checked.
 
 Code meant to be read rather than run belongs in a `:static` fence (` ```js:static `).
+
+What this cannot see: a control beside an empty view. Controls count as content, because a
+button that opens a dialog, a menu or a tooltip IS the demo (sixteen examples here are one);
+measured, discounting them flags all sixteen. So an example whose control drives a view that
+can be empty needs its own ```test that the view shows something, as the router page has.
 */
 
 const slugs = readdirSync('docs')

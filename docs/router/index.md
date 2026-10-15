@@ -54,6 +54,14 @@ preview.append(
 // Navigate programmatically
 go('greet/World')()
 ```
+```test
+test('the first example holds the router when the page loads', async () => {
+  for (let i = 0; i < 50 && !preview.textContent.includes('Hello, World!'); i++) {
+    await waitMs(20)
+  }
+  expect(preview.textContent).toContain('Hello, World!')
+})
+```
 
 ## Named Views
 
@@ -102,12 +110,14 @@ container.append(
   tosiRouteView({ name: 'main', style: { flex: '1' } }),
   tosiRouteView({ name: 'tools', style: { width: '200px' } }),
 )
+// An app has one router, and so does this page: the example above holds it, so this one
+// routes when you ask it to.
+const note = document.createElement('p')
+note.textContent = 'One router serves the page; the example above holds it until you press:'
 const showButton = document.createElement('button')
 showButton.textContent = 'Edit photo 42'
 showButton.addEventListener('click', show)
-preview.append(showButton, container)
-
-show()
+preview.append(note, showButton, container)
 ```
 
 ## Hash Routing

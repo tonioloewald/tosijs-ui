@@ -6,9 +6,10 @@
   drew the `check` rule over a rotated `circle`; it is now `checkCircle` turned 90°, in the
   renderer and in `iconSvg`. A rule still applies where the whole name is not a registered
   icon with suffixes (`checkLock90r`). closes board #3295
-- **`defineIcons` warns when a name it defines is also what a composition rule would
-  draw** ("icon checkFoo is also a composition rule's name; your definition wins"), once
-  per name. Built-in names never warn.
+- **`defineIcons` warns when a new name it defines is also what a composition rule would
+  draw** ("icon checkFoo is also a composition rule's name; your definition wins"). Only a
+  name that reads as the rule's warns (`checkFoo`, not `checkbox` or `unlink`), and
+  overriding a name that already exists, a built-in such as `unlock` included, never does.
 - **A redirect to a missing icon names what was asked for.** `defineIcons({ myChevron:
   'chevronDwon' })` warned "icon chevronDwon does not exist", naming only the target; it
   now adds "(requested as myChevron)", through stacks too. closes board #3294
@@ -16,8 +17,9 @@
   that does.**
   - The table's Column Width section rendered an empty `<tosi-table>` (an `html` fence
     meant as syntax). It is now a live before/after with a test.
-  - The router page's examples shared the one router, so the last to run blanked "Named
-    Views". Each example now claims the router when used, and Basic Usage has links.
+  - The router page's examples shared the page's one router, so the last to run blanked
+    the others. Basic Usage holds it on load and has links; Named Views routes when you
+    press its button, and a test checks the first example shows its route.
   - Code meant to be read no longer runs as an empty example: the token-palette `css` on
     highlight-block and highlight-styles, liveTheme's programmatic-control snippet, and the
     migrating guide's setSchemaValidator lines are `:static`.

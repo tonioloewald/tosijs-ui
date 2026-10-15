@@ -565,18 +565,30 @@ copies or substantial portions of the Software.
 import { elements, svgElements, Color, vars, varDefault, withAttributes, } from 'tosijs';
 import iconData from './icon-data.js';
 import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
-import { iconRules, spinRule, matchRule, canResolve, ruleDraws, } from './icon-rules.js';
+import { iconRules, spinRule, matchRule, canResolve } from './icon-rules.js';
 export { iconRules } from './icon-rules.js';
 export const defineIcons = (newIcons) => {
+    const data = iconData;
+    const isNew = Object.keys(newIcons).filter((name) => !data[name]);
     Object.assign(iconData, newIcons);
     /*
     A defined icon always wins over a composition rule that would produce the same name, but
-    the author may not know the rule exists (`checkCircle` is the `check` rule over `circle`
-    too). Say so once, here, where the name was chosen. Built-in collisions are deliberate
-    and never warn.
+    the author may not know the rule exists. Say so once, here, where the name was chosen, and
+    only for a NEW name that reads as the rule's: `checkTestShadow`, not `checkbox` or `unlink`
+    (a lowercase run is a word, not a prefix plus an icon, so icon packs stay quiet).
+    Overriding a name that already existed, a built-in such as `unlock` or `checkCircle`
+    included, is a deliberate choice of that name and never warns, so neither does defining a
+    name a second time.
     */
-    for (const name of Object.keys(newIcons)) {
-        if (ruleDraws(name)) {
+    for (const name of isNew) {
+        const readsAsRule = iconRules.some((rule) => {
+            const matched = matchRule(rule, name);
+            if (matched == null || !canResolve(matched.baseName))
+                return false;
+            return (typeof rule.prefix !== 'string' ||
+                /[A-Z]/.test(name[rule.prefix.length]));
+        });
+        if (readsAsRule) {
             console.warn(`icon ${name} is also a composition rule's name; your definition wins`);
         }
     }
