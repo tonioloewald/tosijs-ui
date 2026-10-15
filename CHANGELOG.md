@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.16.21
+
+- **Expanding or collapsing a table row's detail no longer corrects `scrollTop` itself.**
+  tosijs 1.10.9's variable-height list keeps the row in place across the height change, so
+  `<tosi-table>` stopped measuring the row and nudging the scroll position up to three
+  times. closes board #3326
+- **tosijs peer floor raised to `^1.10.9`**, the release that anchors the list. On an older
+  tosijs the toggled row now jumps when its detail opens or closes; upgrade tosijs alongside
+  (`dist/iife.js` already bundles 1.10.9).
+- **The icons page points to [lucide](https://lucide.dev)** in its introduction and under
+  Icon Sources: a fork and expansion of Feather, and the place to start for more icons in
+  the same style.
+
+
 ## 1.16.20
 
 - **A registered icon with style suffixes wins over a composition rule.** `checkCircle90r`
