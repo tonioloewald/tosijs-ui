@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3ca12219417c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=75ba29cd4cac" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="highlight-block">highlight-block</h1>
 <p><code>&lt;tosi-highlight&gt;</code> pretty-prints a static code sample. It is <strong>not</strong> an editor — for that
@@ -64,7 +64,7 @@ contrast-checked against the <code>--code-bg</code> it actually sits on. Not one
 other: a light-mode default derived from dark-mode literals is unreadable, which is how this
 shipped failing WCAG AA on every token type.</p>
 <p>Every colour is a <code>varDefault</code>, so retheme one token type without touching the rest:</p>
-<pre><code class="language-css">:root { --token-keyword: rebeccapurple; }
+<pre data-example-mode="static"><code class="language-css" data-highlighted><span class="token selector">:root</span> <span class="token punctuation">{</span> <span class="token property">--token-keyword</span><span class="token punctuation">:</span> rebeccapurple<span class="token punctuation">;</span> <span class="token punctuation">}</span>
 </code></pre>
 <p>The spec is also exported, if you want it somewhere this element is not:
 <code>import { highlightStyleSpec, ensureHighlightStyles } from &#39;tosijs-ui/doc-system/highlight-styles&#39;</code>.</p>

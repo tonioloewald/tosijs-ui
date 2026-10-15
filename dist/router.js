@@ -9,6 +9,7 @@ named route views (slots).
 
 ```js
 import { defineRoutes, navigate, router, tosiRouteView } from 'tosijs-ui'
+import { elements } from 'tosijs'
 
 const home = () => {
   const el = document.createElement('div')
@@ -28,21 +29,31 @@ const greeting = (params) => {
   return el
 }
 
-defineRoutes(
-  [
-    { pattern: '', targets: [{ component: home }] },
-    { pattern: 'about', targets: [{ component: about }] },
-    { pattern: 'greet/:name', targets: [{ component: greeting }] },
-  ],
-  { hashRouting: true }
-)
+const routes = [
+  { pattern: '', targets: [{ component: home }] },
+  { pattern: 'about', targets: [{ component: about }] },
+  { pattern: 'greet/:name', targets: [{ component: greeting }] },
+]
 
+// An app calls defineRoutes once. This page has several router examples sharing the
+// one router, so each link here defines its routes again before it navigates.
+const go = (path) => () => {
+  defineRoutes(routes, { hashRouting: true })
+  navigate(path)
+}
+
+const { button, nav } = elements
 preview.append(
+  nav(
+    button({ onClick: go('') }, 'Home'),
+    button({ onClick: go('about') }, 'About'),
+    button({ onClick: go('greet/World') }, 'Greet World')
+  ),
   tosiRouteView(),
 )
 
 // Navigate programmatically
-navigate('greet/World')
+go('greet/World')()
 ```
 
 ## Named Views
@@ -69,18 +80,21 @@ const sidebar = () => {
   return el
 }
 
-defineRoutes(
-  [
-    {
-      pattern: 'photos/:id/edit',
-      targets: [
-        { view: 'main', component: mainContent },
-        { view: 'tools', component: sidebar },
-      ],
-    },
-  ],
-  { hashRouting: true }
-)
+const show = () => {
+  defineRoutes(
+    [
+      {
+        pattern: 'photos/:id/edit',
+        targets: [
+          { view: 'main', component: mainContent },
+          { view: 'tools', component: sidebar },
+        ],
+      },
+    ],
+    { hashRouting: true }
+  )
+  navigate('photos/42/edit')
+}
 
 const container = document.createElement('div')
 container.style.display = 'flex'
@@ -89,9 +103,12 @@ container.append(
   tosiRouteView({ name: 'main', style: { flex: '1' } }),
   tosiRouteView({ name: 'tools', style: { width: '200px' } }),
 )
-preview.append(container)
+const showButton = document.createElement('button')
+showButton.textContent = 'Edit photo 42'
+showButton.addEventListener('click', show)
+preview.append(showButton, container)
 
-navigate('photos/42/edit')
+show()
 ```
 
 ## Hash Routing
@@ -99,8 +116,9 @@ navigate('photos/42/edit')
 Set `hashRouting: true` when defining routes to use hash-based URLs
 (`#/path`) instead of History API paths. This is useful when your app
 is served from a static file server that doesn't support URL rewriting.
+The examples above all use it.
 
-```js
+```js:static
 import { defineRoutes, navigate, tosiRouteView } from 'tosijs-ui'
 
 defineRoutes(

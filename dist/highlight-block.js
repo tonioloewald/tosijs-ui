@@ -43,7 +43,7 @@ shipped failing WCAG AA on every token type.
 
 Every colour is a `varDefault`, so retheme one token type without touching the rest:
 
-```css
+```css:static
 :root { --token-keyword: rebeccapurple; }
 ```
 

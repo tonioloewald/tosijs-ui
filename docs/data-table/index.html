@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3ca12219417c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=75ba29cd4cac" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="table">table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
@@ -872,8 +872,35 @@ by adding the <code>noreorder</code> attribute to the <code>&lt;tosi-table&gt;</
 <h2 id="column-width">Column Width</h2>
 <p>Columns are laid out at the widths you give them, so a table whose columns add up to less
 than its container leaves a strip of blank space on the right. Add the <code>full-width-header</code>
-attribute and the leftover space goes to the last <strong>unpinned</strong> column instead:</p>
-<pre><code class="language-html">&lt;tosi-table full-width-header&gt;&lt;/tosi-table&gt;
+attribute (<code>fullWidthHeader: true</code> from the creator) and the leftover space goes to the last
+<strong>unpinned</strong> column instead. The same columns, without and with it:</p>
+<pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
+
+const array = [
+  { id: 1, name: &#39;Ada&#39;, role: &#39;Analyst&#39; },
+  { id: 2, name: &#39;Grace&#39;, role: &#39;Admiral&#39; },
+  { id: 3, name: &#39;Margaret&#39;, role: &#39;Director&#39; },
+]
+const columns = () =&gt; [
+  { prop: &#39;id&#39;, name: &#39;ID&#39;, width: 60 },
+  { prop: &#39;name&#39;, name: &#39;Name&#39;, width: 120 },
+  { prop: &#39;role&#39;, name: &#39;Role&#39;, width: 120 },
+]
+const style = { display: &#39;block&#39;, height: &#39;150px&#39; }
+preview.append(
+  tosiTable({ array, columns: columns(), style }),
+  tosiTable({ array, columns: columns(), style, fullWidthHeader: true })
+)
+</code></pre>
+<pre><code class="language-test">const roleWidth = (table) =&gt;
+  [...table.querySelectorAll(&#39;.thead .th&#39;)].at(-1).getBoundingClientRect().width
+test(&#39;only the full-width table stretches its last column&#39;, async () =&gt; {
+  const [plain, full] = preview.querySelectorAll(&#39;tosi-table&#39;)
+  for (let i = 0; i &lt; 100 &amp;&amp; !full.querySelector(&#39;.thead .th&#39;); i++) await waitMs(20)
+  expect(full.hasAttribute(&#39;full-width-header&#39;)).toBe(true)
+  expect(Math.round(roleWidth(plain))).toBe(120)
+  expect(roleWidth(full)).toBeGreaterThan(120)
+})
 </code></pre>
 <p>Right-pinned columns are skipped because they sit against the right edge by definition —
 stretching one would push the leftover space back into the middle of the table.</p>

@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3ca12219417c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=75ba29cd4cac" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="router">router</h1>
 <p>A lightweight client-side router for single-page applications. Supports
@@ -38,6 +38,7 @@ pattern matching with named parameters, hash-based routing, and multiple
 named route views (slots).</p>
 <h2 id="basic-usage">Basic Usage</h2>
 <pre><code class="language-js">import { defineRoutes, navigate, router, tosiRouteView } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
 
 const home = () =&gt; {
   const el = document.createElement(&#39;div&#39;)
@@ -57,21 +58,31 @@ const greeting = (params) =&gt; {
   return el
 }
 
-defineRoutes(
-  [
-    { pattern: &#39;&#39;, targets: [{ component: home }] },
-    { pattern: &#39;about&#39;, targets: [{ component: about }] },
-    { pattern: &#39;greet/:name&#39;, targets: [{ component: greeting }] },
-  ],
-  { hashRouting: true }
-)
+const routes = [
+  { pattern: &#39;&#39;, targets: [{ component: home }] },
+  { pattern: &#39;about&#39;, targets: [{ component: about }] },
+  { pattern: &#39;greet/:name&#39;, targets: [{ component: greeting }] },
+]
 
+// An app calls defineRoutes once. This page has several router examples sharing the
+// one router, so each link here defines its routes again before it navigates.
+const go = (path) =&gt; () =&gt; {
+  defineRoutes(routes, { hashRouting: true })
+  navigate(path)
+}
+
+const { button, nav } = elements
 preview.append(
+  nav(
+    button({ onClick: go(&#39;&#39;) }, &#39;Home&#39;),
+    button({ onClick: go(&#39;about&#39;) }, &#39;About&#39;),
+    button({ onClick: go(&#39;greet/World&#39;) }, &#39;Greet World&#39;)
+  ),
   tosiRouteView(),
 )
 
 // Navigate programmatically
-navigate(&#39;greet/World&#39;)
+go(&#39;greet/World&#39;)()
 </code></pre>
 <h2 id="named-views">Named Views</h2>
 <p>Routes can target multiple named views simultaneously. This is useful
@@ -94,18 +105,21 @@ const sidebar = () =&gt; {
   return el
 }
 
-defineRoutes(
-  [
-    {
-      pattern: &#39;photos/:id/edit&#39;,
-      targets: [
-        { view: &#39;main&#39;, component: mainContent },
-        { view: &#39;tools&#39;, component: sidebar },
-      ],
-    },
-  ],
-  { hashRouting: true }
-)
+const show = () =&gt; {
+  defineRoutes(
+    [
+      {
+        pattern: &#39;photos/:id/edit&#39;,
+        targets: [
+          { view: &#39;main&#39;, component: mainContent },
+          { view: &#39;tools&#39;, component: sidebar },
+        ],
+      },
+    ],
+    { hashRouting: true }
+  )
+  navigate(&#39;photos/42/edit&#39;)
+}
 
 const container = document.createElement(&#39;div&#39;)
 container.style.display = &#39;flex&#39;
@@ -114,34 +128,38 @@ container.append(
   tosiRouteView({ name: &#39;main&#39;, style: { flex: &#39;1&#39; } }),
   tosiRouteView({ name: &#39;tools&#39;, style: { width: &#39;200px&#39; } }),
 )
-preview.append(container)
+const showButton = document.createElement(&#39;button&#39;)
+showButton.textContent = &#39;Edit photo 42&#39;
+showButton.addEventListener(&#39;click&#39;, show)
+preview.append(showButton, container)
 
-navigate(&#39;photos/42/edit&#39;)
+show()
 </code></pre>
 <h2 id="hash-routing">Hash Routing</h2>
 <p>Set <code>hashRouting: true</code> when defining routes to use hash-based URLs
 (<code>#/path</code>) instead of History API paths. This is useful when your app
-is served from a static file server that doesn&#39;t support URL rewriting.</p>
-<pre><code class="language-js">import { defineRoutes, navigate, tosiRouteView } from &#39;tosijs-ui&#39;
+is served from a static file server that doesn&#39;t support URL rewriting.
+The examples above all use it.</p>
+<pre data-example-mode="static"><code class="language-js" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> defineRoutes<span class="token punctuation">,</span> navigate<span class="token punctuation">,</span> tosiRouteView <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
 
-defineRoutes(
-  [
-    {
-      pattern: &#39;page/:id&#39;,
-      targets: [{
-        component: (p) =&gt; {
-          const el = document.createElement(&#39;div&#39;)
-          el.textContent = `Page ${p.id}`
-          return el
-        },
-      }],
-    },
-  ],
-  { hashRouting: true }
-)
+<span class="token function">defineRoutes</span><span class="token punctuation">(</span>
+  <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token literal-property property">pattern</span><span class="token operator">:</span> <span class="token string">'page/:id'</span><span class="token punctuation">,</span>
+      <span class="token literal-property property">targets</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>
+        <span class="token function-variable function">component</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token parameter">p</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+          <span class="token keyword">const</span> el <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">createElement</span><span class="token punctuation">(</span><span class="token string">'div'</span><span class="token punctuation">)</span>
+          el<span class="token punctuation">.</span>textContent <span class="token operator">=</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Page </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>p<span class="token punctuation">.</span>id<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span>
+          <span class="token keyword">return</span> el
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span> <span class="token literal-property property">hashRouting</span><span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
 
-preview.append(tosiRouteView())
-navigate(&#39;page/1&#39;)
+preview<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token function">tosiRouteView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token function">navigate</span><span class="token punctuation">(</span><span class="token string">'page/1'</span><span class="token punctuation">)</span>
 </code></pre>
 
   </article>

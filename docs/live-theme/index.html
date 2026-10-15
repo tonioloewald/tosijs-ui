@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3ca12219417c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=75ba29cd4cac" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="live-theme">live-theme</h1>
 <blockquote>
@@ -48,14 +48,14 @@ preview.append(tosiThemeEditor())
 </code></pre>
 <h2 id="programmatic-control">Programmatic Control</h2>
 <p>The <code>liveTheme</code> observable lets you read and write theme values from code:</p>
-<pre><code class="language-js">import { liveTheme } from &#39;tosijs-ui&#39;
+<pre data-example-mode="static"><code class="language-js" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> liveTheme <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
 
-// Read current values
-// liveTheme.accent.value   // &#39;#d92270&#39;
-// liveTheme.dark.value     // false
+<span class="token comment">// Read current values</span>
+<span class="token comment">// liveTheme.accent.value   // '#d92270'</span>
+<span class="token comment">// liveTheme.dark.value     // false</span>
 
-// Set values programmatically (triggers immediate theme update)
-// liveTheme.accent.value = &#39;#0064d2&#39;
+<span class="token comment">// Set values programmatically (triggers immediate theme update)</span>
+<span class="token comment">// liveTheme.accent.value = '#0064d2'</span>
 </code></pre>
 <h2 id="css-canary">CSS canary</h2>
 <p>A smoke test for the whole styling chain — <code>StyleSheet()</code> injection → the <code>vars</code>

@@ -947,10 +947,38 @@ by adding the `noreorder` attribute to the `<tosi-table>`.
 
 Columns are laid out at the widths you give them, so a table whose columns add up to less
 than its container leaves a strip of blank space on the right. Add the `full-width-header`
-attribute and the leftover space goes to the last **unpinned** column instead:
+attribute (`fullWidthHeader: true` from the creator) and the leftover space goes to the last
+**unpinned** column instead. The same columns, without and with it:
 
-```html
-<tosi-table full-width-header></tosi-table>
+```js
+import { tosiTable } from 'tosijs-ui'
+
+const array = [
+  { id: 1, name: 'Ada', role: 'Analyst' },
+  { id: 2, name: 'Grace', role: 'Admiral' },
+  { id: 3, name: 'Margaret', role: 'Director' },
+]
+const columns = () => [
+  { prop: 'id', name: 'ID', width: 60 },
+  { prop: 'name', name: 'Name', width: 120 },
+  { prop: 'role', name: 'Role', width: 120 },
+]
+const style = { display: 'block', height: '150px' }
+preview.append(
+  tosiTable({ array, columns: columns(), style }),
+  tosiTable({ array, columns: columns(), style, fullWidthHeader: true })
+)
+```
+```test
+const roleWidth = (table) =>
+  [...table.querySelectorAll('.thead .th')].at(-1).getBoundingClientRect().width
+test('only the full-width table stretches its last column', async () => {
+  const [plain, full] = preview.querySelectorAll('tosi-table')
+  for (let i = 0; i < 100 && !full.querySelector('.thead .th'); i++) await waitMs(20)
+  expect(full.hasAttribute('full-width-header')).toBe(true)
+  expect(Math.round(roleWidth(plain))).toBe(120)
+  expect(roleWidth(full)).toBeGreaterThan(120)
+})
 ```
 
 Right-pinned columns are skipped because they sit against the right edge by definition —

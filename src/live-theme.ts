@@ -22,7 +22,7 @@ preview.append(tosiThemeEditor())
 
 The `liveTheme` observable lets you read and write theme values from code:
 
-```js
+```js:static
 import { liveTheme } from 'tosijs-ui'
 
 // Read current values

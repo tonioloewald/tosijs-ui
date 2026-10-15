@@ -22,7 +22,7 @@ ensureHighlightStyles()
 Every colour is a `varDefault`, so retheme any single token type — in either mode —
 by setting its variable:
 
-```css
+```css:static
 :root { --token-keyword: rebeccapurple; }
 ```
 

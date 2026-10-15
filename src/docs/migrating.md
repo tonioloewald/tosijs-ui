@@ -86,7 +86,7 @@ If you use `<tosi-schema-form>`, `<tosi-crud>` or an editable `<tosi-table>` **f
 one line. Nothing else changes, and nothing breaks silently — a form with no validator warns
 in the console and reports `validationAvailable === false`.
 
-```js
+```js:static
 import { setSchemaValidator } from 'tosijs-ui'
 import { validate, inferSchema, unenforcedKeywords } from 'tosijs-schema' // ^1.8.0
 
