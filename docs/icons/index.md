@@ -10,6 +10,11 @@
 e.g. `icons.chevronDown()` produces an `<svg>` element containing a downward-pointing chevron
 icon with the class `icon-chevron-down`.
 
+Most of the built-in icons come from [Feather](https://feathericons.com). If you want more
+icons in the same style, [lucide](https://lucide.dev) is a fork and expansion of Feather and a
+great place to start: its SVGs drop straight into `defineIcons()` (see
+[Need More Icons?](#need-more-icons)).
+
 ```js
 const  { tosi, elements } = tosijs
 import { icons, svgIcon, postNotification } from 'tosijs-ui'
@@ -201,8 +206,8 @@ probably be broken out as a standalone library to allow the use of whatever icon
 
 ### Need More Icons?
 
-[lucide](https://lucide.dev) is a fork of feather that maintains the style and adds a lot more
-options. Obviously it's completely compatible with this icon system and generously licensed. A
+[lucide](https://lucide.dev) is a fork and expansion of feather that maintains the style and
+adds a lot more options. Obviously it's completely compatible with this icon system and generously licensed. A
 good place to find more icons in a pinch.
 
 Concretely: lucide emits the same geometry feather does — `24×24` viewBox, `fill="none"`,
@@ -531,6 +536,7 @@ and render a `square` (in fact, `icons.square()`) as a fallback.
 
 Many of these icons are sourced from [Feather Icons](https://github.com/feathericons/feather), but
 all the icons have been processed to have integer coordinates in a `viewBox` typically scaled to 1024  &times; 1024.
+For more in the same style, [lucide](https://lucide.dev) is a fork and expansion of Feather.
 
 The corporate logos (Google, etc.) are from a variety of sources, in many cases ultimately from the
 organizations themselves. It's up to you to use them correctly.
