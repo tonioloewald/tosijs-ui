@@ -648,3 +648,23 @@ gap, recorded rather than hidden.
 - **Lanes (final tree):** unit 1848; Playwright 576 passed, 15 skipped; consumer 55;
   test-browser 84 over 18 pages. **Open:** #3294 (alias in the missing-target warning),
   #3295 (rule vs suffix order, maintainer's call).
+
+## 1.16.20 (2026-10-15)
+
+- **The gate missed six blank examples for months, all green in every lane.** The maintainer
+  saw the table's Column Width demo as an empty rectangle. An example that runs without error
+  and has no test cannot fail, so `tests/examples-show-something.pw.ts` now fails on any live
+  example that draws nothing. Its first cut passed the blank table (an empty component with a
+  grey background counted as drawn); the control run against the old tree is what showed it.
+- **What the new spec cannot see:** a control beside an empty view. Discounting controls
+  flagged sixteen legitimate button-only demos, so that case needs its own inline test, as
+  the router page now has.
+- **The review caught:** `defineIcons` warning on overrides of existing names (M1), and the
+  router page's later examples taking the shared router from the first (M2). Both were fixed
+  with checks that fail on the old code; follow-ups are on board #3332.
+- **Process slip:** test-consumer was run alongside Playwright and failed because the dev server
+  rebuilt `dist/` under it. Run the lanes one after another.
+- **Lanes:** unit 1851; Playwright 783 in three browsers; consumer 55; haltija 86. Approval
+  came after the 60-minute window, so verification ran as a separate `verify_only` run (green).
+  **Open:** #3326 (drop tosi-table's scrollTop loop), blocked on tosijs #3333 (Firefox snaps
+  back after a large jump with focus in a row, on 1.10.9).
