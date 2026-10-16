@@ -66,6 +66,17 @@ const VALUE = {
   rule: { kind: 'fixed', amount: 10, memo: 'keep me' },
 }
 
+/*
+The page's own inline tests run while these specs drive their form, and one of them focuses
+its example's \`name\` input: a focus test then fails whenever that test runs mid-assertion
+(about half the runs in WebKit). The spec's form is the subject, not the page's tests.
+*/
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+})
+
 async function makeForm(page: any, fields: any, extra: any = {}) {
   await page.goto('/schema-form/')
   await page.waitForFunction(() => !!customElements.get('tosi-schema-form'))

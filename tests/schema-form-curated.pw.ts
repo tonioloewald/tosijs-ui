@@ -6,6 +6,13 @@ Curated schema forms (#221), through the mounted component. The picking rule has
 lands, what `readOnly` reaches, and what a custom editor writes.
 */
 
+// The page's own inline tests run alongside and move focus; keep them out of these specs.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+})
+
 async function makeForm(page: any) {
   await page.goto('/schema-form/')
   await page.waitForFunction(() => !!customElements.get('tosi-schema-form'))
