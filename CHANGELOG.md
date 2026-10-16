@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.16.23
+
+- **`rule:icon` applies an icon composition rule explicitly.** A `:` marks the boundary
+  between a rule's prefix and the icon it applies to. `checkSquare` is a registered icon, so
+  it draws that icon; `check:square` is the `check` rule over `square`. The explicit form
+  always applies the rule, needs no capital after the prefix (`check:Square` is the same), and
+  takes suffixes and stacking as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not
+  valid in an identifier, so write `icons['check:square']()` or
+  `<tosi-icon icon="check:square">`. Names without a `:` resolve exactly as before.
+- **The kitchen sink page stays on the site and leaves the books.** It is a component
+  showcase, not reading; the ePub and Print no longer include it.
+
 ## 1.16.22
 
 Three site options asked for by adopters, and a review pass over the documentation.
