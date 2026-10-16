@@ -981,6 +981,13 @@ minimum"):** `iconSvg()` throwing where it returned `undefined` ships in a patch
 as 1.16.15: every name that now throws was already producing nothing, and an unknown name
 still returns `undefined`.
 
+**Ruled for 1.16.21 (the maintainer approved it with the question open):** raising a peer floor
+ships in a patch when the new floor is a patch release inside the range adopters already
+resolve, encodes a fix they want anyway, and lets us delete a local workaround. tosijs
+`^1.10.3` → `^1.10.9` let `toggleRowDetail` drop its `scrollTop` loop; the iife already bundled
+1.10.9, and the CHANGELOG says to upgrade tosijs alongside. A floor that crosses a minor or
+major of the dependency is a different case and still the maintainer's decision.
+
 **Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
 about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
 removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a

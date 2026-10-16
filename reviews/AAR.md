@@ -668,3 +668,20 @@ gap, recorded rather than hidden.
   came after the 60-minute window, so verification ran as a separate `verify_only` run (green).
   **Open:** #3326 (drop tosi-table's scrollTop loop), blocked on tosijs #3333 (Firefox snaps
   back after a large jump with focus in a row, on 1.10.9).
+
+## 1.16.21 (2026-10-16)
+
+- **An upstream "bug" was our spec.** tosijs #3333 (Firefox snapping back after a large jump)
+  was Firefox's pending caret scroll after `fill()`, overriding a `scrollTop` written in the
+  same task. tosijs diagnosed it; the control here was 11/24 failures without a frame between
+  typing and jumping, 24/24 passes with one. Filing with the spec attached is what let them
+  find it in one pass.
+- **Deleting a workaround needed a proof the test still guards it.** With the loop gone, "the
+  toggled row keeps its place" fails on tosijs 1.10.7 in all three browsers, which is why the
+  peer floor moved to `^1.10.9` (patch ruling recorded in CLAUDE.md).
+- **Lane sequencing, again:** `test-browser` started before Playwright's 8799 server had exited
+  and refused on the build lock. Serial lanes are not enough; the previous lane's server must
+  be gone. Reran clean: 86 over 19 pages.
+- **Flake:** `entry-once.pw.ts` failed once in Firefox (known, #3253), then 20/20.
+- **Lanes:** unit 1851; Playwright 782 + the flake; consumer 55; haltija 86. Approval came
+  after the window again; `verify_only` run 38855963840 green.
