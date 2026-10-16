@@ -257,6 +257,10 @@ export function parseFrontmatter(content: string): {
       if (val === 'full-width' || val === 'full-screen') data.layout = val
       else if (val)
         console.error(`unknown layout ${JSON.stringify(val)} in frontmatter`)
+    } else if (key === 'header') {
+      if (/^(false|no|0)$/i.test(val)) data.header = false
+    } else if (key === 'home') {
+      if (/^(true|yes|1)$/i.test(val)) data.home = true
     }
   }
   if (!matched) return { data: {}, body: content } // a bare `---`, not frontmatter

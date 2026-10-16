@@ -836,7 +836,8 @@ export async function buildEpub(
   docs and anything marked `book: "none"`, so a doc that belongs to no volume cannot leak
   into the default one just by not naming a book.
   */
-  const volumes = partitionByBook(corpus, buildSlugMap(corpus))
+  const siteSlugs = buildSlugMap(corpus)
+  const volumes = partitionByBook(corpus, siteSlugs)
   const visible: Doc[] = volumes.get(opts.bookTarget ?? DEFAULT_BOOK) ?? []
   /*
   A volume with no chapters is a failure, not a book.
@@ -883,7 +884,10 @@ export async function buildEpub(
   }
   // Curate/reorder for the book (a no-op when config.book is absent).
   const docs = selectBookDocs(placed, config.book)
-  const slugMap = buildSlugMap(docs)
+  // Slugs come from the whole published corpus, as the site's do: computed from this book's
+  // subset, README would take the root whenever the site's `home` doc is outside the book,
+  // and the book's links would disagree with the site's URLs.
+  const slugMap = siteSlugs
   const roots = buildNavTree(docs, slugMap)
 
   const fileFor = (d: Doc): string => `${slugMap[d.filename] || 'index'}.xhtml`

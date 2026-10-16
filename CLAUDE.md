@@ -388,6 +388,7 @@ Components are self-documenting via `/*#` comment blocks containing markdown. A 
 
 - **Nav**: `pin` (`"top"` | `"bottom"`), `order` (number, **lower first**, default 500), `parent` (a doc name/slug — this is how nav _sections_ are built, e.g. `{"pin":"bottom","parent":"Appendices"}`), `hidden`.
 - **Sort order** is: pin bucket (`top` → none → `bottom`), then `order`, then title, then filename. Siblings inside a section sort the same way.
+- **Page shape**: `layout` (`full-width` | `full-screen`), `header: false` (no site header), `home: true` (the site root; README moves to `/readme/`). See doc-site-system.md.
 - **SEO / agent**: `title` (renames the nav item _and_ the heading), `headTitle` (the `<title>` tag only, verbatim, no project suffix), `description`, `keywords`, `image`, `noindex`.
 - Markdown files may use **YAML frontmatter** instead (`title`/`order`/`author`/`date`/`draft`→`hidden`); frontmatter **wins** over the JSON block.
 

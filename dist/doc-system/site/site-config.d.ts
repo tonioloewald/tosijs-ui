@@ -614,6 +614,8 @@ export interface SiteConfig {
      * Trust the local network for reading and editing source (#227). With `editableSources` on,
      * a browser on another device on your LAN (a phone, a headset) can open and save source
      * directly, as one at this keyboard can, instead of needing the tunnel and an invite link.
+     * That is "Edit page source"; a live example's "Save to source" is still offered only on
+     * `localhost`.
      *
      * Trusted: a direct peer at a private address (RFC 1918 IPv4, IPv6 unique-local or
      * link-local). Never trusted: tunnel traffic (it needs a session as before) or a request

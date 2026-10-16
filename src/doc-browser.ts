@@ -111,6 +111,7 @@ import {
   buildSlugMap,
   pathForSlug,
   filenameForPath,
+  homeDoc,
 } from './doc-system/routing.js'
 import { buildNavTree, NavNode } from './doc-system/nav-tree.js'
 import { renderDocMarkdown } from './doc-system/render.js'
@@ -627,10 +628,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   }
 
   const docName =
-    filenameFromLocation() ||
-    docs.find((doc) => doc.home)?.filename ||
-    docs[0]?.filename ||
-    'README.md'
+    filenameFromLocation() || homeDoc(docs) || docs[0]?.filename || 'README.md'
 
   const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0]
 

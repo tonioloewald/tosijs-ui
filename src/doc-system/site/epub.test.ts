@@ -568,3 +568,48 @@ test('the cover is written beside the ePub under its real type, where attachCove
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+// ── #225: a site whose home is not README ─────────────────────────────────────
+
+test('a home doc outside the book leaves README at its site URL, /readme/', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-home-'))
+  const corpus = path.join(dir, 'docs.json')
+  fs.writeFileSync(
+    corpus,
+    JSON.stringify([
+      {
+        filename: 'host.md',
+        title: 'Host',
+        text: '# Host',
+        path: 'host.md',
+        home: true,
+        book: 'none',
+      },
+      {
+        filename: 'README.md',
+        title: 'Readme',
+        text: '# Readme\n\nSee [the guide](/guide/).',
+        path: 'README.md',
+      },
+      {
+        filename: 'guide.md',
+        title: 'Guide',
+        text: '# Guide\n\nBack to [the readme](/readme/).',
+        path: 'guide.md',
+      },
+    ])
+  )
+  try {
+    const out = await buildEpub(
+      { name: 'B', outputDir: dir, docsJson: corpus } as any,
+      { output: path.join(dir, 'b.epub'), author: 'T' }
+    )
+    const files = (await Bun.$`unzip -Z1 ${out}`.quiet().text()).split('\n')
+    expect(files).toContain('OEBPS/readme.xhtml')
+    const guide = await Bun.$`unzip -p ${out} OEBPS/guide.xhtml`.quiet().text()
+    // The site link /readme/ is rewritten to the README chapter inside the book.
+    expect(guide).toContain('href="readme.xhtml"')
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+}, 60000)

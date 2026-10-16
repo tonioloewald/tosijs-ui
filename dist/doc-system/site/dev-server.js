@@ -2229,6 +2229,14 @@ export async function devServer(config, opts = {}) {
         process.exit(code);
     };
     console.log(`Listening on https://localhost:${PORT}`);
+    // trustLan widens who may write; say so every launch, never silently (#227).
+    if (config.trustLan && config.editableSources) {
+        console.warn(`⚠️  trustLan: any device on a private network that can reach this machine may read and ` +
+            `edit source. Use it on a network you control.`);
+    }
+    else if (config.trustLan) {
+        console.warn(`⚠️  trustLan does nothing without editableSources: true (there is no source endpoint to trust).`);
+    }
     if (SINK_PATH) {
         console.log(`Debug sink: POST /__debug-sink  ->  tail -f ${SINK_PATH}`);
     }

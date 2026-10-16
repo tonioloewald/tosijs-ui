@@ -536,7 +536,8 @@ export async function generateSite(
     const dir = slug === '' ? outputDir : `${outputDir}/${slug}`
     const rendered = renderDocMarkdown(doc.text)
     const dead = deadInPageAnchors(rendered)
-    const bare = bareNameLinks(rendered)
+    // On the root page (`/`) a bare name resolves to `/name`, which works; elsewhere it does not.
+    const bare = slug === '' ? [] : bareNameLinks(rendered)
     if (bare.length)
       bareLinks.push(`    ${doc.path || doc.filename}: ${bare.join(', ')}`)
     if (dead.length)

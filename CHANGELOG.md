@@ -15,8 +15,9 @@ Three site options asked for by adopters, and a review pass over the documentati
   toolbar or an installed PWA. The page links back to the docs its own way. closes #226
 - **`trustLan`: LAN devices may read and edit source (opt-in).** With `editableSources` on,
   a direct peer at a private address (RFC 1918, IPv6 unique-local or link-local) may read and
-  save source as one at the dev machine can, so a phone or headset on the LAN edits without
-  the tunnel. Tunnel traffic still needs a session, a request with forwarding headers is
+  save source as one at the dev machine can, so a phone or headset on the LAN uses "Edit page
+  source" without the tunnel (a live example's "Save to source" is still offered only on
+  `localhost`). Tunnel traffic still needs a session, a request with forwarding headers is
   never trusted, and writes must still come from the dev server's own origin. **Anyone on
   the network can then edit your working tree**: use it on a network you control. Agent
   driving, invite links, builds and test reports stay this machine only. The edit and save
@@ -49,6 +50,7 @@ Three site options asked for by adopters, and a review pass over the documentati
   - Smaller: size-break's container-query intro, the iife size (~484KB gzip), code-editor's
     mode list (`ajs`), a stray CSS line in editable-rect's example, the menu demo's link, and
     typos across six pages.
+- `dist/iife.js` grows by about 0.2KB gzip.
 
 
 ## 1.16.21

@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=3c4ab09ca441" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=4be44a5873ea" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=c4ba3f00b6f5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=a570d4e8f93e" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -593,7 +593,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>trustLan</code></td>
 <td><code>false</code></td>
-<td>With <code>editableSources</code> on, trust the local network for reading and editing source, so a phone or headset on your LAN can save directly instead of going through the tunnel (#227). Trusted: a <strong>direct</strong> peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server&#39;s own origin. <strong>It means anyone on the network can edit your working tree</strong>: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Agent driving, invite links, builds and test reports stay this machine only.</td>
+<td>With <code>editableSources</code> on, trust the local network for reading and editing source, so a phone or headset on your LAN can use &quot;Edit page source&quot; directly instead of going through the tunnel (#227); a live example&#39;s &quot;Save to source&quot; is still offered only on <code>localhost</code>. Trusted: a <strong>direct</strong> peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server&#39;s own origin. <strong>It means anyone on the network can edit your working tree</strong>: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Agent driving, invite links, builds and test reports stay this machine only.</td>
 </tr>
 <tr>
 <td><code>memoryLimitMb</code></td>
@@ -997,6 +997,13 @@ already shows the nav <em>or</em> the content and takes turns between them, whic
 full-screen page wants, so this reuses that behaviour rather than adding a second layout. Before
 hydration there is no sidenav yet — just static markup — so a stylesheet rule covers the first
 paint.</p>
+<p><code>&quot;header&quot;: false</code> removes the site&#39;s header bar on a page, before hydration and after, and
+gives its space to the page. With <code>layout: &quot;full-screen&quot;</code> the page has no site chrome at all,
+for an app page with its own toolbar or an installed PWA (#226). The ☰ button lives in the
+header, so such a page links back to the docs its own way. See <a href="/no-header-demo/">the demo page</a>.</p>
+<p><code>&quot;home&quot;: true</code> (or the site&#39;s <code>home</code> option) makes a page the site root, <code>/</code>. README then moves
+to <code>/readme/</code>, so <strong>README&#39;s URL and canonical link change</strong>: inbound links to <code>/</code> now reach
+the new home page, and anything that linked to README by its root URL needs <code>/readme/</code> (#225).</p>
 <h4 id="preview--deploy-the-built-site-to-a-host-you-control"><code>preview</code> — deploy the built site to a host you control</h4>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>
@@ -1754,8 +1761,10 @@ case is fully covered.</p>
 markdown. The first heading is the page title.</li>
 <li><strong>Metadata</strong> via a JSON block — <code>&lt;!--{ &quot;pin&quot;: &quot;top&quot; }--&gt;</code> (html) or
 <code>/*{ &quot;pin&quot;: &quot;bottom&quot; }*/</code> (ts/js/css) — controls nav ordering, plus per-page
-SEO overrides (<code>description</code>, <code>keywords</code>, <code>image</code>, <code>noindex</code>, <code>headTitle</code>) and
-the section <code>parent</code>, all in the same block.</li>
+SEO overrides (<code>description</code>, <code>keywords</code>, <code>image</code>, <code>noindex</code>, <code>headTitle</code>), the
+section <code>parent</code>, and the page&#39;s shape (<code>layout</code>, <code>header</code>, <code>home</code>), all in the same
+block. YAML frontmatter can set <code>title</code>, <code>order</code>, <code>author</code>, <code>date</code>, <code>draft</code>, <code>layout</code>,
+<code>header</code> and <code>home</code>.</li>
 <li><strong>Nav order</strong> is: pin bucket (<code>top</code> → none → <code>bottom</code>), then <code>order</code>, then
 title, then filename. Use <strong><code>order</code></strong> (a number, <strong>lower first</strong>; default 500)
 to rank items <em>within</em> the same <code>pin</code> — e.g. two <code>&quot;pin&quot;: &quot;top&quot;</code> docs with
@@ -2122,6 +2131,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-ct0q57dc.js"></script>
+  <script type="module" src="../hydrate-356ap1k2.js"></script>
 </body>
 </html>

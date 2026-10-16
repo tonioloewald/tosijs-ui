@@ -12,6 +12,17 @@ import os from 'os'
 import path from 'path'
 
 describe('parseFrontmatter', () => {
+  test('header: false and home: true are read, as in a JSON metadata block', () => {
+    const { data } = parseFrontmatter(
+      '---\nheader: false\nhome: true\n---\n# App'
+    )
+    expect(data.header).toBe(false)
+    expect(data.home).toBe(true)
+    expect(
+      parseFrontmatter('---\nheader: true\n---\n# A').data.header
+    ).toBeUndefined()
+  })
+
   test('parses & strips YAML frontmatter, maps keys, body starts at the H1', () => {
     const src = [
       '---',

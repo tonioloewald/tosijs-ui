@@ -4,6 +4,13 @@ export interface DocLike {
     home?: boolean;
 }
 /**
+ * The doc served at the site root: the one doc marked `home`, or README when none is.
+ * Marked by the build from the site's `home` option, or by a doc's own `{"home": true}`.
+ * The build refuses a corpus with more than one, so a second mark is ignored here rather
+ * than giving two docs the root.
+ */
+export declare function homeDoc(docs: DocLike[]): string | null;
+/**
  * Build a deterministic { filename -> slug } map for a set of docs.
  *
  * Collisions (e.g. `layout.ts` and `layout.css` both -> `layout`) are resolved by

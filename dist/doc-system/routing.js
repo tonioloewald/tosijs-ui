@@ -17,7 +17,7 @@ const README = /^readme\.md$/i;
  * The build refuses a corpus with more than one, so a second mark is ignored here rather
  * than giving two docs the root.
  */
-function homeDoc(docs) {
+export function homeDoc(docs) {
     const marked = docs.filter((doc) => doc.home);
     return marked.length === 1 ? marked[0].filename : null;
 }

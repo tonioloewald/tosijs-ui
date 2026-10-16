@@ -648,6 +648,12 @@ export function mayWriteSource(opts) {
         return opts.hasValidSession && opts.sessionMayWrite !== false;
     if (isLoopbackAddressForAuth(opts.peer))
         return true;
+    /*
+    LAN trust leans on the same-origin check the caller applies (`isSameOriginRequest`), and that
+    check rules out DNS rebinding from a LAN browser only because the dev server is HTTPS-only,
+    with a certificate for localhost and <host>.local: a rebound hostname fails TLS. A plain-HTTP
+    listener would turn this into a rebinding path. Do not add one without revisiting this.
+    */
     return (opts.trustLan === true &&
         opts.proxied !== true &&
         isPrivateNetworkAddress(opts.peer));

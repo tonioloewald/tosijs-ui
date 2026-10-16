@@ -250,3 +250,42 @@ describe('markdown copies of pages', () => {
     )
   })
 })
+
+describe('bare-name links under strict', () => {
+  const build = async (docs: any[]) => {
+    const dir = `${tmpdir()}/tosi-bare-${Math.floor(performance.now() * 1000)}`
+    try {
+      await generateSite({
+        docs,
+        outputDir: dir,
+        projectName: 'T',
+        strict: true,
+      } as any)
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  }
+  const doc = (filename: string, text: string) => ({
+    filename,
+    title: filename,
+    path: filename,
+    text,
+  })
+
+  test('on the root page a bare name resolves (/name), so it does not fail the build', async () => {
+    await build([
+      doc('README.md', '# Home\n\nSee [the table](table).'),
+      doc('table.md', '# Table\n\ntext'),
+    ])
+  })
+
+  test('on any other page it fails a strict build', async () => {
+    await expect(
+      build([
+        doc('README.md', '# Home\n\ntext'),
+        doc('guide.md', '# Guide\n\nSee [the table](table).'),
+        doc('table.md', '# Table\n\ntext'),
+      ])
+    ).rejects.toThrow('bare page name')
+  })
+})

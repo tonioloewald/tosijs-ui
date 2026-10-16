@@ -95,7 +95,7 @@ history, for a browser embedded in another page: drive it with `initialRoute`,
 */
 /*{ "parent": "Documentation System", "order": 50 }*/
 import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';
-import { buildSlugMap, pathForSlug, filenameForPath, } from './doc-system/routing.js';
+import { buildSlugMap, pathForSlug, filenameForPath, homeDoc, } from './doc-system/routing.js';
 import { buildNavTree } from './doc-system/nav-tree.js';
 import { renderDocMarkdown } from './doc-system/render.js';
 import { pageTitle } from './doc-system/doc-title.js';
@@ -419,10 +419,7 @@ export function createDocBrowser(options) {
         }
         return null;
     };
-    const docName = filenameFromLocation() ||
-        docs.find((doc) => doc.home)?.filename ||
-        docs[0]?.filename ||
-        'README.md';
+    const docName = filenameFromLocation() || homeDoc(docs) || docs[0]?.filename || 'README.md';
     const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
     // tosi() registers its top-level keys in a GLOBAL observable registry, so two
     // doc browsers on one page (e.g. a page whose live example embeds a nested
