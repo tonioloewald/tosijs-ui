@@ -19,6 +19,7 @@ tables, menus, layout, media, and more.
 - [float](/float/)
 - [gamepads](/gamepad/)
 - [header](/header/)
+- [icons](/icons/)
 - [layout](/layout/)
 - [lottie / bodymovin](/bodymovin-player/)
 - [map](/mapbox/)

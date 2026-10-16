@@ -56,7 +56,7 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 ```
 */
 
-/*{ "parent": "Appendices" }*/
+/*{ "parent": "Documentation System", "order": 40 }*/
 
 import {
   ElementCreator,

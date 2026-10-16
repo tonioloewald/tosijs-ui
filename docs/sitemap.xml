@@ -2,7 +2,18 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://ui.tosijs.net/</loc></url>
   <url><loc>https://ui.tosijs.net/adopting-the-doc-system/</loc></url>
+  <url><loc>https://ui.tosijs.net/icon-composition/</loc></url>
+  <url><loc>https://ui.tosijs.net/icon-svg/</loc></url>
   <url><loc>https://ui.tosijs.net/one-source-every-artifact/</loc></url>
+  <url><loc>https://ui.tosijs.net/doc-site-system/</loc></url>
+  <url><loc>https://ui.tosijs.net/make-icon-data/</loc></url>
+  <url><loc>https://ui.tosijs.net/doc-system/</loc></url>
+  <url><loc>https://ui.tosijs.net/doc-browser/</loc></url>
+  <url><loc>https://ui.tosijs.net/docs/</loc></url>
+  <url><loc>https://ui.tosijs.net/highlight-block/</loc></url>
+  <url><loc>https://ui.tosijs.net/highlight-styles/</loc></url>
+  <url><loc>https://ui.tosijs.net/full-screen-demo/</loc></url>
+  <url><loc>https://ui.tosijs.net/kitchen-sink/</loc></url>
   <url><loc>https://ui.tosijs.net/babylon-3d/</loc></url>
   <url><loc>https://ui.tosijs.net/ab-test/</loc></url>
   <url><loc>https://ui.tosijs.net/carousel/</loc></url>
@@ -11,7 +22,6 @@
   <url><loc>https://ui.tosijs.net/crud/</loc></url>
   <url><loc>https://ui.tosijs.net/dialog/</loc></url>
   <url><loc>https://ui.tosijs.net/diff/</loc></url>
-  <url><loc>https://ui.tosijs.net/doc-system/</loc></url>
   <url><loc>https://ui.tosijs.net/drag-and-drop/</loc></url>
   <url><loc>https://ui.tosijs.net/editable-rect/</loc></url>
   <url><loc>https://ui.tosijs.net/component/</loc></url>
@@ -21,15 +31,11 @@
   <url><loc>https://ui.tosijs.net/gamepad/</loc></url>
   <url><loc>https://ui.tosijs.net/hash-state/</loc></url>
   <url><loc>https://ui.tosijs.net/header/</loc></url>
-  <url><loc>https://ui.tosijs.net/highlight-block/</loc></url>
-  <url><loc>https://ui.tosijs.net/highlight-styles/</loc></url>
   <url><loc>https://ui.tosijs.net/icons/</loc></url>
-  <url><loc>https://ui.tosijs.net/kitchen-sink/</loc></url>
   <url><loc>https://ui.tosijs.net/layout/</loc></url>
   <url><loc>https://ui.tosijs.net/live-theme/</loc></url>
   <url><loc>https://ui.tosijs.net/localize/</loc></url>
   <url><loc>https://ui.tosijs.net/bodymovin-player/</loc></url>
-  <url><loc>https://ui.tosijs.net/make-icon-data/</loc></url>
   <url><loc>https://ui.tosijs.net/make-sorter/</loc></url>
   <url><loc>https://ui.tosijs.net/mapbox/</loc></url>
   <url><loc>https://ui.tosijs.net/markdown-viewer/</loc></url>
@@ -59,15 +65,10 @@
   <url><loc>https://ui.tosijs.net/tooltip/</loc></url>
   <url><loc>https://ui.tosijs.net/track-drag/</loc></url>
   <url><loc>https://ui.tosijs.net/value-renderer/</loc></url>
-  <url><loc>https://ui.tosijs.net/icon-svg/</loc></url>
-  <url><loc>https://ui.tosijs.net/full-screen-demo/</loc></url>
   <url><loc>https://ui.tosijs.net/components/</loc></url>
   <url><loc>https://ui.tosijs.net/form-components/</loc></url>
   <url><loc>https://ui.tosijs.net/helper-libraries/</loc></url>
+  <url><loc>https://ui.tosijs.net/documentation-system/</loc></url>
   <url><loc>https://ui.tosijs.net/appendices/</loc></url>
   <url><loc>https://ui.tosijs.net/migrating/</loc></url>
-  <url><loc>https://ui.tosijs.net/doc-browser/</loc></url>
-  <url><loc>https://ui.tosijs.net/doc-site-system/</loc></url>
-  <url><loc>https://ui.tosijs.net/docs/</loc></url>
-  <url><loc>https://ui.tosijs.net/icon-composition/</loc></url>
 </urlset>

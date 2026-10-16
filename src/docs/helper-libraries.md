@@ -11,6 +11,7 @@ General purpose utilities and behaviors — routing, theming, localization, sort
 - [live-theme](/live-theme/)
 - [localize](/localize/)
 - [makeSorter](/make-sorter/)
+- [naturalCompare](/natural-compare/)
 - [router](/router/)
 - [scriptTag & styleSheet](/via-tag/)
 - [theme](/theme/)

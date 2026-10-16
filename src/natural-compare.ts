@@ -1,7 +1,6 @@
+/*{ "parent": "Helper Libraries" }*/
 /*#
 # naturalCompare
-
-<!--{ "parent": "Helper Libraries" }-->
 
 Comparing values the way a reader expects, for sorting tables, navs and lists.
 

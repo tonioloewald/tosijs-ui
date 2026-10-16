@@ -10,13 +10,21 @@ before the name is asked for.
 */
 import iconData from './icon-data.js';
 import { splitSuffixes } from './icon-suffixes.js';
+/**
+ * Style suffixes on a registered icon (`checkCircle90r`), split, or null. Such a name is
+ * that icon styled, and it wins over a composition rule (#3295): `checkCircle90r` is
+ * `checkCircle` turned, not the `check` rule over `circle90r`. Both the DOM renderer and
+ * `iconSvg` resolve in that order by asking this.
+ */
+export function suffixedIcon(name) {
+    const split = splitSuffixes(name);
+    return split != null && iconData[split.baseName]
+        ? split
+        : null;
+}
 /** A registered icon, or style suffixes on one (`chevronRight50o`). */
 export function canResolve(name) {
-    const data = iconData;
-    if (data[name])
-        return true;
-    const split = splitSuffixes(name);
-    return split != null && !!data[split.baseName];
+    return (!!iconData[name] || suffixedIcon(name) != null);
 }
 /**
  * `spinN<Icon>` animates, so it is drawn by the DOM renderer, which installs `apply` when

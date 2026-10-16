@@ -55,7 +55,7 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 </tosi-doc-system>
 ```
 */
-/*{ "parent": "Appendices" }*/
+/*{ "parent": "Documentation System", "order": 40 }*/
 import { StyleSheet, elements, tosi, vars, withAttributes, } from 'tosijs';
 import * as tosijsModule from 'tosijs';
 import { createDocBrowser, } from '../doc-browser.js';

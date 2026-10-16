@@ -1,6 +1,6 @@
 # Icon Composition
 
-<!--{"pin":"bottom","parent":"Appendices"}-->
+<!--{ "parent": "icons", "order": 10 }-->
 
 This is a toy for playing with the icon composition language introduced in tosijs-ui 1.5.10. It's documented [here](/?icons.ts).
 

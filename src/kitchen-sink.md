@@ -1,6 +1,6 @@
 # kitchen sink
 
-<!--{ "parent": "Appendices" }-->
+<!--{ "parent": "Documentation System", "order": 100 }-->
 
 This is a testbed for checking styles
 

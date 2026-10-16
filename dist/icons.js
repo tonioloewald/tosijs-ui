@@ -1,3 +1,4 @@
+/*{ "parent": "Components" }*/
 /*#
 # icons
 
@@ -571,7 +572,7 @@ copies or substantial portions of the Software.
 import { elements, svgElements, Color, vars, varDefault, withAttributes, } from 'tosijs';
 import iconData from './icon-data.js';
 import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
-import { iconRules, spinRule, matchRule, canResolve } from './icon-rules.js';
+import { iconRules, spinRule, matchRule, canResolve, suffixedIcon, } from './icon-rules.js';
 export { iconRules } from './icon-rules.js';
 export const defineIcons = (newIcons) => {
     const data = iconData;
@@ -901,14 +902,10 @@ export function resolveIcon(prop, parts) {
         });
         return wrapIcon(prop, parts, base, ...overlays);
     }
-    /*
-    Style suffixes on a registered icon win over a composition rule (#3295): `checkCircle90r`
-    is `checkCircle` turned, not the `check` rule over `circle90r`. A rule still applies
-    when its suffixes are on an icon that only the rule makes (`spin90Loader50o`).
-    */
+    // Suffixes on a registered icon win over a rule (suffixedIcon, #3295). A rule still
+    // applies when its suffixes are on an icon only the rule makes (`spin90Loader50o`).
     const parsed = parseStyleSuffixes(prop);
-    const native = parsed != null && iconData[parsed.baseName];
-    if (!native) {
+    if (!suffixedIcon(prop)) {
         const composed = composeIcon(prop, parts);
         if (composed)
             return composed;

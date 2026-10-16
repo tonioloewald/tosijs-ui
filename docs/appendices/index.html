@@ -14,42 +14,32 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=3b159155cb03" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=ee67af9bb447" data-tosi-doc-system />
   <title>Appendices — tosijs-ui</title>
-  <meta name="description" content="Reference material on the library&#39;s own systems — the doc browser, the doc-site build system, doc extraction, and icon tooling." />
+  <meta name="description" content="Upgrading and release tooling." />
   <link rel="canonical" href="https://ui.tosijs.net/appendices/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="Appendices — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="Appendices — tosijs-ui" />
-  <meta property="og:description" content="Reference material on the library&#39;s own systems — the doc browser, the doc-site build system, doc extraction, and icon tooling." />
+  <meta property="og:description" content="Upgrading and release tooling." />
   <meta property="og:url" content="https://ui.tosijs.net/appendices/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Appendices","description":"Reference material on the library's own systems — the doc browser, the doc-site build system, doc extraction, and icon tooling.","url":"https://ui.tosijs.net/appendices/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Appendices","description":"Upgrading and release tooling.","url":"https://ui.tosijs.net/appendices/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=2a1919e6e83b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=f7691f109a0b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="appendices">Appendices</h1>
-<!--{ "pin": "bottom", "order": 4 }-->
+<!--{ "pin": "bottom", "order": 5 }-->
 
-<p>Reference material on the library&#39;s own systems — the doc browser, the
-doc-site build system, doc extraction, and icon tooling.</p>
+<p>Upgrading and release tooling.</p>
 <!-- toc -->
 <ul>
-<li><a href="/doc-system/">doc-system</a></li>
-<li><a href="/kitchen-sink/">kitchen sink</a></li>
-<li><a href="/make-icon-data/">make-icon-data</a></li>
 <li><a href="/release-notes/">release-notes</a></li>
-<li><a href="/icon-svg/">iconSvg — icon markup without a DOM</a></li>
-<li><a href="/full-screen-demo/">Full-screen layout</a></li>
 <li><a href="/migrating/">Migrating from older versions</a></li>
-<li><a href="/doc-browser/">doc-browser</a></li>
-<li><a href="/doc-site-system/">Doc-Site System</a></li>
-<li><a href="/docs/">docs</a></li>
-<li><a href="/icon-composition/">Icon Composition</a></li>
 </ul>
 <!-- /toc -->
 
@@ -57,12 +47,6 @@ doc-site build system, doc extraction, and icon tooling.</p>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
-    <li><a class="doc-link" href="../adopting-the-doc-system/">Adopting the doc system</a></li>
-    <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
-    <li><a class="doc-link" href="../highlight-block/">highlight-block</a></li>
-    <li><a class="doc-link" href="../highlight-styles/">highlight-styles</a></li>
-    <li><a class="doc-link" href="../icons/">icons</a></li>
-    <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
     <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
@@ -76,6 +60,13 @@ doc-site build system, doc extraction, and icon tooling.</p>
       <li><a class="doc-link" href="../float/">float</a></li>
       <li><a class="doc-link" href="../gamepad/">gamepads</a></li>
       <li><a class="doc-link" href="../header/">header</a></li>
+      <li><details><summary><a class="doc-link" href="../icons/">icons</a></summary>
+      <ul>
+        <li><a class="doc-link" href="../icon-composition/">Icon Composition</a></li>
+        <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
+        <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
+      </ul>
+      </details></li>
       <li><a class="doc-link" href="../layout/">layout</a></li>
       <li><a class="doc-link" href="../bodymovin-player/">lottie / bodymovin</a></li>
       <li><a class="doc-link" href="../mapbox/">map</a></li>
@@ -116,6 +107,7 @@ doc-site build system, doc extraction, and icon tooling.</p>
       <li><a class="doc-link" href="../live-theme/">live-theme</a></li>
       <li><a class="doc-link" href="../localize/">localize</a></li>
       <li><a class="doc-link" href="../make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
       <li><a class="doc-link" href="../router/">router</a></li>
       <li><a class="doc-link" href="../via-tag/">scriptTag &amp; styleSheet</a></li>
       <li><a class="doc-link" href="../theme/">theme</a></li>
@@ -123,19 +115,24 @@ doc-site build system, doc extraction, and icon tooling.</p>
       <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
     </ul>
     </details></li>
+    <li><details><summary><a class="doc-link" href="../documentation-system/">Documentation System</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../adopting-the-doc-system/">Adopting the doc system</a></li>
+      <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
+      <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="../docs/">docs</a></li>
+      <li><a class="doc-link" href="../highlight-block/">highlight-block</a></li>
+      <li><a class="doc-link" href="../highlight-styles/">highlight-styles</a></li>
+      <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
+      <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
+    </ul>
+    </details></li>
     <li><details open><summary><a class="doc-link current" href="../appendices/" aria-current="page">Appendices</a></summary>
     <ul>
-      <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
-      <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
-      <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
       <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
-      <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
-      <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
-      <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
-      <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>
-      <li><a class="doc-link" href="../docs/">docs</a></li>
-      <li><a class="doc-link" href="../icon-composition/">Icon Composition</a></li>
     </ul>
     </details></li>
   </ul>
@@ -148,6 +145,6 @@ doc-site build system, doc extraction, and icon tooling.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-ttf42hsk.js"></script>
+  <script type="module" src="../hydrate-eg3d95kc.js"></script>
 </body>
 </html>
