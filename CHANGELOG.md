@@ -7,22 +7,18 @@ Three site options asked for by adopters, and a review pass over the documentati
 - **`home`: choose the page served at `/`.** `defineSiteConfig({ home: 'host' })` (a slug or
   filename) makes that page the site root, for a site that is an app. README then has its own
   page at `/readme/`, and the nav, canonical links, sitemap, `llms.txt` and books follow. A
-  doc can claim the root itself with `{"home": true}`. The build fails when `home` names no
-  page or a hidden one, or when two docs claim the root. closes #225
+  doc can claim the root itself with `{"home": true}` (or `home: true` in YAML frontmatter).
+  The build fails when `home` names no page or a hidden one, or when two docs claim the root.
+  **README's URL and canonical link change** when you turn it on; Doc-Site System says so. An
+  ePub takes its slugs from the whole site, so README keeps `/readme/` in a book even when the
+  home doc is not in that book. closes #225
 - **`{"header": false}`: a page without the site header.** It removes the header bar on that
   page, before hydration and after, and gives its space to the page. With
   `layout: "full-screen"` the page has no site chrome at all, for an app page with its own
   toolbar or an installed PWA. The page links back to the docs its own way. closes #226
-- **`trustLan`: LAN devices may read and edit source (opt-in).** With `editableSources` on,
-  a direct peer at a private address (RFC 1918, IPv6 unique-local or link-local) may read and
-  save source as one at the dev machine can, so a phone or headset on the LAN uses "Edit page
-  source" without the tunnel (a live example's "Save to source" is still offered only on
-  `localhost`). Tunnel traffic still needs a session, a request with forwarding headers is
-  never trusted, and writes must still come from the dev server's own origin. **Anyone on
-  the network can then edit your working tree**: use it on a network you control. Agent
-  driving, invite links, builds and test reports stay this machine only. The edit and save
-  alerts now tell a LAN reader this instead of sending them round the invite-link loop.
-  closes #227
+- **YAML frontmatter reads `header: false` and `home: true`**, as the JSON metadata block does.
+- **Doc-Site System documents `header: false` and `home`**, including that home moves
+  README's URL.
 - **The build warns (fails under `strict`) on a link written as a bare page name.**
   `[valueRenderer](value-renderer)` resolves under the page it is on and reaches nothing;
   three shipped that way here.
@@ -51,6 +47,27 @@ Three site options asked for by adopters, and a review pass over the documentati
     mode list (`ajs`), a stray CSS line in editable-rect's example, the menu demo's link, and
     typos across six pages.
 - `dist/iife.js` grows by about 0.2KB gzip.
+
+### Dev-server access: `trustLan` (opt-in)
+
+Who may read and write source through the dev server changed, but only for a project that
+sets the new option; with it unset the rules are exactly 1.16.21's.
+
+- **`trustLan`: LAN devices may read and edit source.** With `editableSources` on, a direct
+  peer at a private address (RFC 1918, IPv6 unique-local or link-local) may read and save
+  source as one at the dev machine can, so a phone or headset on the LAN uses "Edit page
+  source" without the tunnel (a live example's "Save to source" is still offered only on
+  `localhost`). closes #227
+- **What is never trusted:** tunnel traffic (it still needs a session), a request with
+  forwarding headers, and a write from any origin but the dev server's own. Agent driving,
+  invite links, builds and test reports stay this machine only; agent driving no longer
+  inherits the write rule's options, so LAN trust cannot widen it.
+- **Anyone on the network can then edit your working tree**, which includes code that runs on
+  this machine: use it on a network you control. The dev server prints a warning at every
+  launch while it is on, and says so when it is set without `editableSources` (it then does
+  nothing).
+- The edit and save alerts tell a LAN reader that invite links cannot help them, instead of
+  sending them round that loop.
 
 
 ## 1.16.21
