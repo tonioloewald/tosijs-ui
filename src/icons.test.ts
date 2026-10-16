@@ -381,6 +381,15 @@ describe('icons', () => {
       expect(inner.style.transform).toContain('scale(0.4)')
     })
 
+    test('rules chain: a rule may apply to another rule', () => {
+      // The slash over (the check rule over square): three svgs, none a placeholder.
+      for (const name of ['un:check:square', 'unCheckLock']) {
+        const icon = icons[name]()
+        expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+        expect(icon.querySelectorAll('svg').length).toBe(3)
+      }
+    })
+
     test('an explicit name must name a whole rule and a real icon', () => {
       const warn = console.warn
       const warnings: string[] = []

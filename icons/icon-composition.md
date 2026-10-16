@@ -56,6 +56,7 @@ const ideas = [
   'write a rule for unLock:slash25o$lock75s',
   'checkSquare is an icon:checkSquare',
   'check:square is the rule:check:square',
+  'rules chain:un:check:square',
   'un flip pin is unPin0f:unPin0f',
   'and:earth',
   'it:earth150s75o',
@@ -113,7 +114,19 @@ preview.append(
       max: 512,
       step: 4,
     }),
-    code('icons.', suzy.icon, '()')
+    code({
+      bind: {
+        value: suzy.icon,
+        binding: {
+          // A name with a `:` is not an identifier, so it needs the bracket form.
+          toDOM(element, name) {
+            element.textContent = /^[A-Za-z_$][\w$]*$/.test(name)
+              ? `icons.${name}()`
+              : `icons['${name}']()`
+          },
+        },
+      },
+    })
   )
 )
 ```

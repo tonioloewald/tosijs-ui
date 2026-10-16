@@ -450,7 +450,9 @@ icon. Put a `:` at the boundary to ask for the rule: `check:square`,
 `un:lock`, `spin90:loader`. The explicit form applies the rule (unless
 you `defineIcons` that exact name, which warns), needs no capital letter
 after the prefix, and takes suffixes and stacking
-as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not valid in a
+as usual (`spin90:loader40s`, `un:lock$shield`). Rules chain: a rule
+may apply to another rule, so `un:check:square` slashes the checked square
+(and `unCheckLock` works too). A `:` is not valid in a
 JavaScript identifier, so write `icons['check:square']()`, or
 `<tosi-icon icon="check:square">`.
 
@@ -606,7 +608,7 @@ import {
   iconRules,
   spinRule,
   matchRule,
-  canResolve,
+  drawable,
   suffixedIcon,
 } from './icon-rules.js'
 export { iconRules, type IconRule } from './icon-rules.js'
@@ -627,7 +629,7 @@ export const defineIcons = (newIcons: { [key: string]: string }): void => {
   for (const name of isNew) {
     const readsAsRule = iconRules.some((rule) => {
       const matched = matchRule(rule, name)
-      if (matched == null || !canResolve(matched.baseName)) return false
+      if (matched == null || !drawable(matched.baseName)) return false
       return (
         typeof rule.prefix !== 'string' ||
         name.includes(':') ||
@@ -841,8 +843,8 @@ export function wrapIcon(
 function composeIcon(prop: string, parts: ElementPart[]): Element | null {
   for (const rule of iconRules) {
     const matched = matchRule(rule, prop)
-    // Only apply if baseName can actually resolve to an icon
-    if (!matched || !canResolve(matched.baseName)) continue
+    // Only apply if baseName draws: an icon, or another rule (`un:check:square`)
+    if (!matched || !drawable(matched.baseName)) continue
     const result = rule.apply(
       safeIconSuffix(matched.baseName),
       matched.match,

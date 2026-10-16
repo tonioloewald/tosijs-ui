@@ -118,9 +118,16 @@ export function matchRule(
   }
 }
 
-/** Whether some rule would draw `name`: it matches, and the icon it applies to exists. */
+/**
+ * Whether some rule would draw `name`: it matches, and what it applies to draws, which may be
+ * another rule (`un:check:square`, `unCheckLock`). Each step strips a prefix, so it ends.
+ */
 export const ruleDraws = (name: string): boolean =>
   iconRules.some((rule) => {
     const matched = matchRule(rule, name)
-    return matched != null && canResolve(matched.baseName)
+    return matched != null && drawable(matched.baseName)
   })
+
+/** A registered icon, suffixes on one, or a rule that draws (so rules chain). */
+export const drawable = (name: string): boolean =>
+  canResolve(name) || ruleDraws(name)

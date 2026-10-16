@@ -123,6 +123,11 @@ test('an explicit rule name (`check:square`) is a rule, not the registered icon'
   expect(iconSvg('nope:lock')).toBeUndefined()
 })
 
+test('a chained rule is a rule, so iconSvg says it needs the renderer', () => {
+  expect(() => iconSvg('un:check:square')).toThrow("icons['un:check:square']()")
+  expect(() => iconSvg('unCheckLock')).toThrow('icons.unCheckLock()')
+})
+
 test('a name that only looks like a rule is unknown, not an error', () => {
   // A capital letter followed by an icon's name is not a rule: the renderer draws these
   // as the placeholder, so iconSvg answers undefined, as it does for any unknown name.
