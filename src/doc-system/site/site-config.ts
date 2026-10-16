@@ -75,6 +75,13 @@ export interface SiteConfig {
    */
   docPaths?: string[]
   /**
+   * The page served at the site root (`/`), by slug or filename, e.g. `home: 'host'` for a
+   * site that is an app. Default: README. README then has its own page at `/readme/`, and
+   * the nav, canonical links, sitemap, llms.txt and books follow. The build fails if it
+   * names no page. A doc can also claim the root itself with `{"home": true}`.
+   */
+  home?: string
+  /**
    * Directories to skip while scanning `docPaths` — by basename (skipped wherever it
    * appears) or by path (skipped only at that location). Added to the built-in
    * `node_modules` / `dist` / `build` / output-dir set, never replacing it.

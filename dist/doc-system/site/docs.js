@@ -513,7 +513,7 @@ walked) {
     return markdownFiles.sort(pinnedSort);
 }
 export function extractDocs(options) {
-    const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options;
+    const { paths, ignore = ['node_modules', 'dist', 'build'], output, home, } = options;
     const walked = new Set();
     const found = findMarkdownFiles(paths, ignore, new Set(DEFAULT_DOC_IGNORES), walked);
     /*
@@ -529,7 +529,18 @@ export function extractDocs(options) {
     Filtering at extraction makes it structural: hidden docs do not exist as far as the
     rest of the pipeline is concerned. Descendants of a hidden doc go with it.
     */
+    if (home != null)
+        markHome(found, home);
+    const homes = found.filter((doc) => doc.home);
+    if (homes.length > 1) {
+        throw new Error(`more than one doc is the home page: ${homes
+            .map((doc) => doc.path)
+            .join(', ')}. Mark one, with the site's \`home\` option or {"home": true}.`);
+    }
     const docs = withoutHidden(found, buildSlugMap(found));
+    if (homes.length === 1 && !docs.includes(homes[0])) {
+        throw new Error(`the home page ${homes[0].path} is hidden, so the site would have no root page.`);
+    }
     /*
     Insets and conditional text are resolved HERE, for the same reason hidden docs are dropped
     here: the corpus is the thing that ships, so anything assembled later is assembled by each
@@ -549,6 +560,21 @@ export function extractDocs(options) {
         saveDocsJSON(docs, output);
     }
     return docs;
+}
+/*
+The site's `home` option names the root doc by slug or filename. Matched against the slugs
+the corpus would have with README as root, which are the names an author sees in the nav
+today. Naming nothing fails the build: a site whose root is not the page its config asks for
+is the silent-failure class this system refuses.
+*/
+function markHome(docs, home) {
+    const slugs = buildSlugMap(docs.map(({ filename }) => ({ filename })));
+    const wanted = home.replace(/^\/+|\/+$/g, '');
+    const match = docs.filter((doc) => doc.filename === wanted || slugs[doc.filename] === wanted);
+    if (match.length !== 1) {
+        throw new Error(`site option home: "${home}" names ${match.length === 0 ? 'no doc' : `${match.length} docs`}. Use a page's slug (as in its URL) or its filename.`);
+    }
+    match[0].home = true;
 }
 export function saveDocsJSON(docs, outputPath) {
     const jsonData = JSON.stringify(docs, null, 2);

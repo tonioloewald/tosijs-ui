@@ -1,5 +1,7 @@
 export interface DocLike {
     filename: string;
+    /** this doc is the site root (`/`) instead of README; see `homeDoc` */
+    home?: boolean;
 }
 /**
  * Build a deterministic { filename -> slug } map for a set of docs.

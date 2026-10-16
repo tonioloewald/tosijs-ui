@@ -23,6 +23,11 @@ export interface Doc {
      */
     hidden?: boolean;
     /**
+     * This doc is the site root (`/`) instead of README, which then gets `/readme/`. Set by the
+     * site's `home` option, or by the doc's own `{"home": true}`. At most one doc may be home.
+     */
+    home?: boolean;
+    /**
      * Which book(s) this doc binds into. A name, a list of names, or `'none'` to keep it
      * on the site and out of every book. Unset means the default book; `'default'` names
      * the default book so a list can include it — `["default", "appendices"]` binds the
@@ -91,6 +96,8 @@ export interface ExtractDocsOptions {
     paths: string[];
     ignore?: string[];
     output?: string;
+    /** the doc served at `/` instead of README, by slug or filename (the site's `home`) */
+    home?: string;
 }
 /**
  * The title a markdown file implies, when nothing declares one.

@@ -476,7 +476,10 @@ export function createDocBrowser(options) {
         }
         return null;
     };
-    const docName = filenameFromLocation() || docs[0]?.filename || 'README.md';
+    const docName = filenameFromLocation() ||
+        docs.find((doc) => doc.home)?.filename ||
+        docs[0]?.filename ||
+        'README.md';
     const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
     // tosi() registers its top-level keys in a GLOBAL observable registry, so two
     // doc browsers on one page (e.g. a page whose live example embeds a nested

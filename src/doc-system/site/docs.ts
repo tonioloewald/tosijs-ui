@@ -131,6 +131,11 @@ export interface Doc {
    */
   hidden?: boolean
   /**
+   * This doc is the site root (`/`) instead of README, which then gets `/readme/`. Set by the
+   * site's `home` option, or by the doc's own `{"home": true}`. At most one doc may be home.
+   */
+  home?: boolean
+  /**
    * Which book(s) this doc binds into. A name, a list of names, or `'none'` to keep it
    * on the site and out of every book. Unset means the default book; `'default'` names
    * the default book so a list can include it — `["default", "appendices"]` binds the
@@ -208,6 +213,8 @@ export interface ExtractDocsOptions {
   paths: string[]
   ignore?: string[]
   output?: string
+  /** the doc served at `/` instead of README, by slug or filename (the site's `home`) */
+  home?: string
 }
 
 const TRIM_REGEX = /^#+ |`/g
@@ -626,7 +633,12 @@ function findMarkdownFiles(
 }
 
 export function extractDocs(options: ExtractDocsOptions): Doc[] {
-  const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options
+  const {
+    paths,
+    ignore = ['node_modules', 'dist', 'build'],
+    output,
+    home,
+  } = options
   const walked = new Set<string>()
   const found = findMarkdownFiles(
     paths,
@@ -647,7 +659,23 @@ export function extractDocs(options: ExtractDocsOptions): Doc[] {
   Filtering at extraction makes it structural: hidden docs do not exist as far as the
   rest of the pipeline is concerned. Descendants of a hidden doc go with it.
   */
+  if (home != null) markHome(found, home)
+  const homes = found.filter((doc) => doc.home)
+  if (homes.length > 1) {
+    throw new Error(
+      `more than one doc is the home page: ${homes
+        .map((doc) => doc.path)
+        .join(
+          ', '
+        )}. Mark one, with the site's \`home\` option or {"home": true}.`
+    )
+  }
   const docs = withoutHidden(found, buildSlugMap(found))
+  if (homes.length === 1 && !docs.includes(homes[0])) {
+    throw new Error(
+      `the home page ${homes[0].path} is hidden, so the site would have no root page.`
+    )
+  }
   /*
   Insets and conditional text are resolved HERE, for the same reason hidden docs are dropped
   here: the corpus is the thing that ships, so anything assembled later is assembled by each
@@ -667,6 +695,28 @@ export function extractDocs(options: ExtractDocsOptions): Doc[] {
     saveDocsJSON(docs, output)
   }
   return docs
+}
+
+/*
+The site's `home` option names the root doc by slug or filename. Matched against the slugs
+the corpus would have with README as root, which are the names an author sees in the nav
+today. Naming nothing fails the build: a site whose root is not the page its config asks for
+is the silent-failure class this system refuses.
+*/
+function markHome(docs: Doc[], home: string): void {
+  const slugs = buildSlugMap(docs.map(({ filename }) => ({ filename })))
+  const wanted = home.replace(/^\/+|\/+$/g, '')
+  const match = docs.filter(
+    (doc) => doc.filename === wanted || slugs[doc.filename] === wanted
+  )
+  if (match.length !== 1) {
+    throw new Error(
+      `site option home: "${home}" names ${
+        match.length === 0 ? 'no doc' : `${match.length} docs`
+      }. Use a page's slug (as in its URL) or its filename.`
+    )
+  }
+  match[0].home = true
 }
 
 export function saveDocsJSON(docs: Doc[], outputPath: string): void {

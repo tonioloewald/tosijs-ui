@@ -640,6 +640,7 @@ export async function buildSite(config, opts = {}) {
                     ...(config.ignoreDocPaths ?? []),
                 ],
                 output: DOCS_JSON,
+                home: config.home,
             });
             extract();
             /*

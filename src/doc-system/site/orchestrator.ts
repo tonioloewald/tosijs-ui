@@ -803,6 +803,7 @@ export async function buildSite(
             ...(config.ignoreDocPaths ?? []),
           ],
           output: DOCS_JSON,
+          home: config.home,
         })
       extract()
 

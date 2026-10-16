@@ -11,10 +11,25 @@ function here is a pure, order-independent function of the docs array, so the tw
 sides always produce identical slugs.
 */
 const README = /^readme\.md$/i;
-/** filename without its final extension; README.md maps to '' (the site root) */
-function baseSlug(filename) {
-    if (README.test(filename))
+/**
+ * The doc served at the site root: the one doc marked `home`, or README when none is.
+ * Marked by the build from the site's `home` option, or by a doc's own `{"home": true}`.
+ * The build refuses a corpus with more than one, so a second mark is ignored here rather
+ * than giving two docs the root.
+ */
+function homeDoc(docs) {
+    const marked = docs.filter((doc) => doc.home);
+    return marked.length === 1 ? marked[0].filename : null;
+}
+/**
+ * filename without its final extension. The home doc maps to '' (the site root); README
+ * does too unless another doc is home, and is then `readme`.
+ */
+function baseSlug(filename, home) {
+    if (filename === home)
         return '';
+    if (README.test(filename))
+        return home == null ? '' : 'readme';
     return filename.replace(/\.[^.]+$/, '');
 }
 /**
@@ -26,15 +41,16 @@ function baseSlug(filename) {
  * on array order.
  */
 export function buildSlugMap(docs) {
+    const home = homeDoc(docs);
     const counts = {};
     for (const doc of docs) {
-        const base = baseSlug(doc.filename);
+        const base = baseSlug(doc.filename, home);
         counts[base] = (counts[base] || 0) + 1;
     }
     const map = {};
     for (const doc of docs) {
-        const base = baseSlug(doc.filename);
-        // README ('' base) is unique by construction; never disambiguate it.
+        const base = baseSlug(doc.filename, home);
+        // The root ('' base) is unique by construction; never disambiguate it.
         map[doc.filename] =
             base !== '' && counts[base] > 1 ? doc.filename.replace(/\./g, '-') : base;
     }

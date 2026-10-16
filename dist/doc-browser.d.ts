@@ -38,6 +38,8 @@ export interface Doc {
     path: string;
     pin?: string;
     hidden?: boolean;
+    /** this doc is the site root instead of README (the site's `home` option) */
+    home?: boolean;
     /** `'full-width'` drops the reading measure; `'full-screen'` also puts the nav away. */
     layout?: 'full-width' | 'full-screen';
     testStatus?: 'passed' | 'failed' | 'pending';

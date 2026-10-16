@@ -13,13 +13,30 @@ sides always produce identical slugs.
 
 export interface DocLike {
   filename: string
+  /** this doc is the site root (`/`) instead of README; see `homeDoc` */
+  home?: boolean
 }
 
 const README = /^readme\.md$/i
 
-/** filename without its final extension; README.md maps to '' (the site root) */
-function baseSlug(filename: string): string {
-  if (README.test(filename)) return ''
+/**
+ * The doc served at the site root: the one doc marked `home`, or README when none is.
+ * Marked by the build from the site's `home` option, or by a doc's own `{"home": true}`.
+ * The build refuses a corpus with more than one, so a second mark is ignored here rather
+ * than giving two docs the root.
+ */
+function homeDoc(docs: DocLike[]): string | null {
+  const marked = docs.filter((doc) => doc.home)
+  return marked.length === 1 ? marked[0].filename : null
+}
+
+/**
+ * filename without its final extension. The home doc maps to '' (the site root); README
+ * does too unless another doc is home, and is then `readme`.
+ */
+function baseSlug(filename: string, home: string | null): string {
+  if (filename === home) return ''
+  if (README.test(filename)) return home == null ? '' : 'readme'
   return filename.replace(/\.[^.]+$/, '')
 }
 
@@ -32,15 +49,16 @@ function baseSlug(filename: string): string {
  * on array order.
  */
 export function buildSlugMap(docs: DocLike[]): Record<string, string> {
+  const home = homeDoc(docs)
   const counts: Record<string, number> = {}
   for (const doc of docs) {
-    const base = baseSlug(doc.filename)
+    const base = baseSlug(doc.filename, home)
     counts[base] = (counts[base] || 0) + 1
   }
   const map: Record<string, string> = {}
   for (const doc of docs) {
-    const base = baseSlug(doc.filename)
-    // README ('' base) is unique by construction; never disambiguate it.
+    const base = baseSlug(doc.filename, home)
+    // The root ('' base) is unique by construction; never disambiguate it.
     map[doc.filename] =
       base !== '' && counts[base] > 1 ? doc.filename.replace(/\./g, '-') : base
   }

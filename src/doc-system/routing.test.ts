@@ -83,3 +83,26 @@ test('rewriteDocLinks: leaves unknown, external, and real query links alone', ()
   const realQuery = '<a href="?x=1&y=2">x</a>'
   expect(rewriteDocLinks(realQuery, hrefFor)).toBe(realQuery)
 })
+
+test('a doc marked home is the root and README moves to readme (#225)', () => {
+  const map = buildSlugMap([
+    { filename: 'README.md' },
+    { filename: 'host.md', home: true },
+    { filename: 'foo.ts' },
+  ])
+  expect(map['host.md']).toBe('')
+  expect(map['README.md']).toBe('readme')
+  expect(map['foo.ts']).toBe('foo')
+})
+
+test('two docs marked home leave README at the root rather than share it', () => {
+  // The build refuses this corpus; the runtime must still not give two docs '/'.
+  const map = buildSlugMap([
+    { filename: 'README.md' },
+    { filename: 'a.md', home: true },
+    { filename: 'b.md', home: true },
+  ])
+  expect(map['README.md']).toBe('')
+  expect(map['a.md']).toBe('a')
+  expect(map['b.md']).toBe('b')
+})

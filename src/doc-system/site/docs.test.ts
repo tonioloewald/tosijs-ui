@@ -6,6 +6,7 @@ import {
   titleFromMarkdown,
   DEFAULT_DOC_IGNORES,
 } from './docs.js'
+import { buildSlugMap } from '../routing.js'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -373,6 +374,76 @@ describe('#B3: the reviews/ exclusion has a working escape, and is accountable',
       expect(docs).toEqual([])
     } finally {
       cleanup()
+    }
+  })
+})
+
+describe('#225: the site chooses its home page', () => {
+  const corpus = (files: Record<string, string>) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'home225-'))
+    for (const [name, text] of Object.entries(files)) {
+      fs.writeFileSync(path.join(dir, name), text)
+    }
+    return dir
+  }
+
+  test('home names a doc by slug; README moves to /readme/', () => {
+    const dir = corpus({
+      'README.md': '# Readme\n\ntext\n',
+      'host.md': '# Host\n\nthe app\n',
+    })
+    try {
+      const docs = extractDocs({ paths: [dir], ignore: [], home: 'host' })
+      const slugs = buildSlugMap(docs)
+      expect(slugs['host.md']).toBe('')
+      expect(slugs['README.md']).toBe('readme')
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('a doc can claim the root with {"home": true}', () => {
+    const dir = corpus({
+      'README.md': '# Readme\n\ntext\n',
+      'host.md': '<!--{ "home": true }-->\n# Host\n\nthe app\n',
+    })
+    try {
+      const slugs = buildSlugMap(extractDocs({ paths: [dir], ignore: [] }))
+      expect(slugs['host.md']).toBe('')
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('a home that names no page, or a second home, fails the build', () => {
+    const dir = corpus({
+      'README.md': '# Readme\n\ntext\n',
+      'host.md': '<!--{ "home": true }-->\n# Host\n\nthe app\n',
+      'other.md': '# Other\n\ntext\n',
+    })
+    try {
+      expect(() =>
+        extractDocs({ paths: [dir], ignore: [], home: 'nope' })
+      ).toThrow('names no doc')
+      expect(() =>
+        extractDocs({ paths: [dir], ignore: [], home: 'other' })
+      ).toThrow('more than one doc is the home page')
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('a hidden home fails the build', () => {
+    const dir = corpus({
+      'README.md': '# Readme\n\ntext\n',
+      'host.md': '<!--{ "hidden": true }-->\n# Host\n\nthe app\n',
+    })
+    try {
+      expect(() =>
+        extractDocs({ paths: [dir], ignore: [], home: 'host' })
+      ).toThrow('is hidden')
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
     }
   })
 })

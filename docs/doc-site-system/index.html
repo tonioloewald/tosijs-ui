@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=ee67af9bb447" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=8c244d7e3ec6" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=f7691f109a0b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=4ab01143fc3e" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -367,6 +367,11 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td><code>ignoreDocPaths</code></td>
 <td><code>[&#39;reviews&#39;]</code></td>
 <td>directory basenames skipped while scanning. <strong><code>reviews/</code> is excluded by default</strong> — an adopter listing a docPath whose tree contained one published their internal pre-release review reports, BLOCK verdicts and all, to the open web (#153). Name a directory in <code>docPaths</code> explicitly to publish it anyway</td>
+</tr>
+<tr>
+<td><code>home</code></td>
+<td>README</td>
+<td>the page served at <code>/</code>, by slug or filename (<code>home: &#39;host&#39;</code> for a site that is an app). README then gets its own page at <code>/readme/</code>, and the nav, canonical links, sitemap, <code>llms.txt</code> and books follow. The build fails if it names no page, if it names a hidden one, or if a second doc claims the root. A doc can claim the root itself with <code>{&quot;home&quot;: true}</code></td>
 </tr>
 <tr>
 <td><code>sectionsDir</code></td>
@@ -2141,6 +2146,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-eg3d95kc.js"></script>
+  <script type="module" src="../hydrate-qf1nvx2f.js"></script>
 </body>
 </html>
