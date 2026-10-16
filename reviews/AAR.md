@@ -685,3 +685,24 @@ gap, recorded rather than hidden.
 - **Flake:** `entry-once.pw.ts` failed once in Firefox (known, #3253), then 20/20.
 - **Lanes:** unit 1851; Playwright 782 + the flake; consumer 55; haltija 86. Approval came
   after the window again; `verify_only` run 38855963840 green.
+
+## 1.16.22 (2026-10-16)
+
+- **A content audit found what every lane had passed.** One agent reading every page against
+  the code found 37 problems: the naturalCompare example printed the sort it warns against
+  (not exported from the root), and two pages taught a CLI that does not exist. Lanes check
+  that examples run, not that prose is true. A docs pass per few releases is worth its cost.
+- **A fix shipped its own defect, and the review caught it.** The bare-page-name link warning
+  would have failed `strict` builds on the root page, where such links work. Cleared by a test
+  that fails with the fix reverted.
+- **Two red e2e tests, neither a regression of the code under test.** The nav regrouping hid
+  a link a spec clicked; and a schema-form focus test failed ~half the runs in WebKit on
+  1.16.21 too, because the page's own inline test moved focus mid-assertion. Specs that drive
+  a doc page should turn page tests off; two of three schema-form specs did not.
+- **Probe before you patch.** My first fix for that flake (skip read-only controls) changed
+  nothing: the focused input was not in the form under test at all. One probe of
+  `document.activeElement` found it.
+- **trustLan verified at the boundary**, against a real dev server from this machine's LAN
+  address (off 403, on 200, proxied and cross-site refused); handler-level tests are #3346.
+- **Lanes:** unit 1867; Playwright 800 + fixes; consumer 55; haltija 87 over 20 pages.
+  Approved inside the window; publish run 38894262486 verified green.
