@@ -54,3 +54,11 @@ demo/xinjs-icon-font/
 
 *.markdown
 *.mdx
+
+# SVG — prettier does not format it, by request (2026-10-16).
+#
+# Prettier itself has no SVG parser and skips these, but an editor that maps .svg to HTML or
+# XML, or a plugin such as prettier-plugin-xml, will reformat them. An SVG is artwork exported
+# from a drawing tool: its whitespace and attribute order are the tool's, and reflowing it
+# churns the diff against the next export. bin/make-icon-data.js reads icons/ as-is.
+*.svg

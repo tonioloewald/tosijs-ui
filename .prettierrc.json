@@ -23,6 +23,12 @@
       "options": {
         "requirePragma": true
       }
+    },
+    {
+      "files": ["*.svg"],
+      "options": {
+        "requirePragma": true
+      }
     }
   ]
 }

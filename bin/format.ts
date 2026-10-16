@@ -2,8 +2,8 @@
 /*
 tosijs-format — the house format step, shipped as a command (#187).
 
-    tosijs-format           eslint --fix, then prettier --write (markdown excluded)
-    tosijs-format --check   eslint, then prettier --check (markdown excluded); exit 1 on any finding
+    tosijs-format           eslint --fix, then prettier --write (markdown and SVG excluded)
+    tosijs-format --check   eslint, then prettier --check (markdown and SVG excluded); exit 1 on any finding
 
 **Prettier never touches markdown** in this stack. The rule itself lives in the Prettier
 CONFIG, where every entry point reads it (editors, lint-staged, a bare `prettier --write`):
@@ -31,10 +31,11 @@ import { parseArgv } from './resolve-site-config.ts'
 
 const { has } = parseArgv(process.argv.slice(2), {
   bin: 'tosijs-format',
-  summary: 'the house format step: eslint, then prettier (never markdown)',
+  summary:
+    'the house format step: eslint, then prettier (never markdown or SVG)',
   flags: ['check'],
   usage:
-    `  tosijs-format            eslint --fix ., then prettier --write . (markdown excluded)\n` +
+    `  tosijs-format            eslint --fix ., then prettier --write . (markdown and SVG excluded)\n` +
     `  tosijs-format --check    check only: exit 1 on anything unformatted or any lint error\n\n` +
     `Uses the project's own prettier and eslint (node_modules/.bin). ESLint runs only when the\n` +
     `project has an eslint.config.* file.`,
@@ -81,13 +82,18 @@ if (hasEslintConfig) {
   }
 }
 
-// The exclusion is the point of this command: prettier never touches markdown.
+/*
+The exclusion is the point of this command: prettier never touches markdown, or SVG.
+Prettier has no SVG parser of its own, but an editor association or a plugin
+(prettier-plugin-xml) gives it one, and an SVG is a drawing tool's export, not source to
+reflow.
+*/
 if (
   run([
     bin('prettier'),
     check ? '--check' : '--write',
     '.',
-    '!**/*.{md,markdown,mdx}',
+    '!**/*.{md,markdown,mdx,svg}',
   ]) !== 0
 ) {
   failed = true
