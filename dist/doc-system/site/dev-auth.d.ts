@@ -287,6 +287,13 @@ export declare function mayWriteSource(opts: {
      * never be the permissive-by-accident case for anything but the status quo.
      */
     sessionMayWrite?: boolean;
+    /**
+     * The project opted in to trusting its LAN (`trustLan`, #227): a direct, unproxied peer at a
+     * private address counts as this machine. Off unless the caller says so.
+     */
+    trustLan?: boolean;
+    /** did the request carry forwarding headers? A proxied request is never LAN trust */
+    proxied?: boolean;
 }): boolean;
 /**
  * May the holder of this session token write?
@@ -329,6 +336,12 @@ export declare function mayDriveWithAgent(opts: {
  * dual-stack listener, and missing it would lock out the local machine on some setups.
  */
 export declare function isLoopbackAddressForAuth(address: string | undefined | null): boolean;
+/**
+ * A private-network peer: RFC 1918 IPv4 (10/8, 172.16/12, 192.168/16), IPv6 unique-local
+ * (fc00::/7) or link-local (fe80::/10), including IPv4 mapped into IPv6. Loopback is not
+ * included; ask `isLoopbackAddressForAuth` for that. Used ONLY behind the `trustLan` opt-in.
+ */
+export declare function isPrivateNetworkAddress(address: string | undefined | null): boolean;
 export declare function isProxiedRequest(headers: {
     get(name: string): string | null;
 }): boolean;

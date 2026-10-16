@@ -1294,7 +1294,7 @@ export function createDocBrowser(options) {
             window.alert('This workspace needs an invite link before it can save.\n\n' +
                 'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
                 'then try again. Your edit is still here.\n\n' +
-                'If you opened this over the LAN (a `.local` address), saving will keep failing however many links you redeem — reach the workspace through its tunnel URL instead.');
+                'If you opened this over the LAN (a `.local` or local IP address), invite links will not help: set `trustLan: true` in the site config, or use its tunnel URL instead.');
         }
         else {
             // Genuinely no write endpoint (a deployed static site) — hand the file back.
@@ -1308,7 +1308,8 @@ export function createDocBrowser(options) {
         if (content === null) {
             window.alert(sourceUnauthorized
                 ? 'This workspace needs an invite link before you can edit.\n\n' +
-                    'Run `tosijs-tunnel --link` on the machine hosting it and open the link once.'
+                    'Run `tosijs-tunnel --link` on the machine hosting it and open the link once.\n\n' +
+                    'If you opened this over the LAN (a `.local` or local IP address), invite links will not help: set `trustLan: true` in the site config, or use its tunnel URL instead.'
                 : `Could not load source for ${doc.path}`);
             return;
         }

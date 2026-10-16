@@ -1202,3 +1202,74 @@ test('resolveShareTtlMs: default, override, config, and the cap', () => {
     READONLY_SESSION_TTL_MS
   )
 })
+
+import {
+  isPrivateNetworkAddress,
+  mayWriteSource as writeGate,
+  mayDriveWithAgent as driveGate,
+} from './dev-auth.js'
+
+describe('#227: trustLan', () => {
+  test('private addresses are recognised; public, loopback and junk are not', () => {
+    for (const a of [
+      '10.0.0.5',
+      '172.16.0.1',
+      '172.31.255.255',
+      '192.168.1.20',
+      '::ffff:192.168.1.20',
+      'fd12:3456::1',
+      'fc00::1',
+      'fe80::1',
+      'fe80::1%en0',
+      '[fe80::1]',
+    ])
+      expect(isPrivateNetworkAddress(a)).toBe(true)
+    for (const a of [
+      '172.15.0.1',
+      '172.32.0.1',
+      '192.169.0.1',
+      '8.8.8.8',
+      '::ffff:8.8.8.8',
+      '2001:db8::1',
+      '127.0.0.1',
+      '::1',
+      'localhost',
+      '',
+      null,
+      undefined,
+      'not-an-ip',
+    ])
+      expect(isPrivateNetworkAddress(a as any)).toBe(false)
+  })
+
+  const lan = { viaTunnel: false, peer: '192.168.1.20', hasValidSession: false }
+
+  test('off by default: a LAN peer may not write (the control)', () => {
+    expect(writeGate(lan)).toBe(false)
+  })
+
+  test('on: a direct LAN peer may write; loopback still may', () => {
+    expect(writeGate({ ...lan, trustLan: true })).toBe(true)
+    expect(writeGate({ ...lan, peer: '127.0.0.1', trustLan: true })).toBe(true)
+  })
+
+  test('on: a public peer, a proxied request and tunnel traffic are never trusted', () => {
+    expect(writeGate({ ...lan, peer: '8.8.8.8', trustLan: true })).toBe(false)
+    expect(writeGate({ ...lan, trustLan: true, proxied: true })).toBe(false)
+    // The tunnel arrives on loopback; it needs a session whatever trustLan says.
+    expect(
+      writeGate({
+        viaTunnel: true,
+        peer: '127.0.0.1',
+        hasValidSession: false,
+        trustLan: true,
+      })
+    ).toBe(false)
+  })
+
+  test('agent driving never extends to the LAN', () => {
+    // mayDriveWithAgent takes no trustLan; even a caller passing one extra must not widen it.
+    expect(driveGate({ ...lan, trustLan: true } as any)).toBe(false)
+    expect(driveGate({ ...lan, peer: '127.0.0.1' })).toBe(true)
+  })
+})

@@ -2188,6 +2188,8 @@ export async function devServer(
           // A share link's session may browse and may not save (asked AFTER validity, which
           // is the call-order `cookieMayWrite` documents).
           sessionMayWrite: cookieMayWrite(auth, session),
+          trustLan: config.trustLan === true,
+          proxied: isProxiedRequest(request.headers),
         }) &&
         /*
         CSRF (#90). The direct path is peer-address-only, so without this any page the
@@ -2200,7 +2202,11 @@ export async function devServer(
         console.warn(
           `⚠️  refused ${request.method} /__docstore/source from ${
             peer ?? 'unknown'
-          } — ` + `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link).`
+          } — ` +
+            `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
+            `${
+              config.trustLan ? '' : ', or set trustLan: true for LAN devices'
+            }).`
         )
         return new Response('not authorized to edit source', {
           status: 403,

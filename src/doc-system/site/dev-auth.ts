@@ -780,10 +780,22 @@ export function mayWriteSource(opts: {
    * never be the permissive-by-accident case for anything but the status quo.
    */
   sessionMayWrite?: boolean
+  /**
+   * The project opted in to trusting its LAN (`trustLan`, #227): a direct, unproxied peer at a
+   * private address counts as this machine. Off unless the caller says so.
+   */
+  trustLan?: boolean
+  /** did the request carry forwarding headers? A proxied request is never LAN trust */
+  proxied?: boolean
 }): boolean {
   if (opts.viaTunnel)
     return opts.hasValidSession && opts.sessionMayWrite !== false
-  return isLoopbackAddressForAuth(opts.peer)
+  if (isLoopbackAddressForAuth(opts.peer)) return true
+  return (
+    opts.trustLan === true &&
+    opts.proxied !== true &&
+    isPrivateNetworkAddress(opts.peer)
+  )
 }
 
 /**
@@ -832,7 +844,10 @@ export function mayDriveWithAgent(opts: {
   peer?: string | null
   hasValidSession: boolean
 }): boolean {
-  return mayWriteSource(opts)
+  // LAN trust (#227) is for reading and editing source, and is never passed here: driving a
+  // page with an agent stays this machine and authorized tunnel sessions only.
+  const { viaTunnel, peer, hasValidSession } = opts
+  return mayWriteSource({ viaTunnel, peer, hasValidSession })
 }
 
 /**
@@ -853,6 +868,36 @@ export function isLoopbackAddressForAuth(
   if (a === '::1' || a === 'localhost') return true
   const mapped = a.startsWith('::ffff:') ? a.slice(7) : a
   return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(mapped)
+}
+
+/**
+ * A private-network peer: RFC 1918 IPv4 (10/8, 172.16/12, 192.168/16), IPv6 unique-local
+ * (fc00::/7) or link-local (fe80::/10), including IPv4 mapped into IPv6. Loopback is not
+ * included; ask `isLoopbackAddressForAuth` for that. Used ONLY behind the `trustLan` opt-in.
+ */
+export function isPrivateNetworkAddress(
+  address: string | undefined | null
+): boolean {
+  if (!address) return false
+  const a = address
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/%.*$/, '') // an IPv6 zone id (fe80::1%en0)
+  const v4 = (a.startsWith('::ffff:') ? a.slice(7) : a).match(
+    /^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/
+  )
+  if (v4) {
+    const [first, second] = [Number(v4[1]), Number(v4[2])]
+    return (
+      first === 10 ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168)
+    )
+  }
+  if (!a.includes(':')) return false
+  const head = parseInt(a.split(':')[0] || '0', 16)
+  return (head & 0xfe00) === 0xfc00 || (head & 0xffc0) === 0xfe80
 }
 
 /*

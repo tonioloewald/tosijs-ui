@@ -611,6 +611,22 @@ export interface SiteConfig {
      */
     editableSources?: boolean;
     /**
+     * Trust the local network for reading and editing source (#227). With `editableSources` on,
+     * a browser on another device on your LAN (a phone, a headset) can open and save source
+     * directly, as one at this keyboard can, instead of needing the tunnel and an invite link.
+     *
+     * Trusted: a direct peer at a private address (RFC 1918 IPv4, IPv6 unique-local or
+     * link-local). Never trusted: tunnel traffic (it needs a session as before) or a request
+     * carrying forwarding headers. Writes still have to come from the dev server's own origin,
+     * so a page another site serves cannot write through a LAN browser.
+     *
+     * What it means: ANYONE on the network can edit your working tree. Turn it on for a network
+     * you control, never on shared wifi. And a reverse proxy on your LAN that forwards outside
+     * traffic WITHOUT forwarding headers would make that traffic look like a LAN peer. Agent
+     * driving, invite links, builds and test reports stay this machine only. Off by default.
+     */
+    trustLan?: boolean;
+    /**
      * Give a coding agent (Claude) eyes + hands on your running dev page via
      * [haltija](https://github.com/tonioloewald/haltija). When on, the dev server
      * injects a tiny localhost-gated loader into served HTML — a runtime

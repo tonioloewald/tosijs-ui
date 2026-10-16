@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=40412b5361ee" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=c4ba3f00b6f5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -588,7 +588,12 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>editableSources</code></td>
 <td><code>false</code></td>
-<td>Enables the dev server&#39;s <code>/__docstore/source</code> read+write endpoints, so &quot;edit page source&quot; and a live example&#39;s &quot;Save to source&quot; write the actual file. <strong>Off</strong> by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set <code>true</code> to author in place. <strong>Authorization depends on how the request arrived.</strong> The dev server binds every interface (so you can view the site from a phone), but reading serves any file in the repo and writing is remote code execution. So: a request that arrived <strong>directly</strong> is authorized only by a <strong>loopback peer</strong> — you, at this keyboard. A request that arrived <strong>through the tunnel</strong> is authorized only by a <strong>valid session</strong>, earned by redeeming an invite link (<code>tosijs-tunnel --link</code>), because &quot;looks local&quot; is exactly what a tunnel counterfeits. Note what this means in practice: a phone on <code>https://&lt;host&gt;.local:8787</code> can <em>view</em> the site but cannot save, session or not — reach the workspace through the tunnel URL instead, which is the path the session is for. There is no env-var override. (The endpoint always answers <code>/__docstore/source</code> with a real status; it never serves the SPA <code>index.html</code>, so a disabled/misconfigured server can&#39;t leak the rendered page as the &quot;source&quot;.)</td>
+<td>Enables the dev server&#39;s <code>/__docstore/source</code> read+write endpoints, so &quot;edit page source&quot; and a live example&#39;s &quot;Save to source&quot; write the actual file. <strong>Off</strong> by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set <code>true</code> to author in place. <strong>Authorization depends on how the request arrived.</strong> The dev server binds every interface (so you can view the site from a phone), but reading serves any file in the repo and writing is remote code execution. So: a request that arrived <strong>directly</strong> is authorized only by a <strong>loopback peer</strong> — you, at this keyboard. A request that arrived <strong>through the tunnel</strong> is authorized only by a <strong>valid session</strong>, earned by redeeming an invite link (<code>tosijs-tunnel --link</code>), because &quot;looks local&quot; is exactly what a tunnel counterfeits. Note what this means in practice: a phone on <code>https://&lt;host&gt;.local:8787</code> can <em>view</em> the site but cannot save, session or not — reach the workspace through the tunnel URL instead, which is the path the session is for, or set <code>trustLan</code>. There is no env-var override. (The endpoint always answers <code>/__docstore/source</code> with a real status; it never serves the SPA <code>index.html</code>, so a disabled/misconfigured server can&#39;t leak the rendered page as the &quot;source&quot;.)</td>
+</tr>
+<tr>
+<td><code>trustLan</code></td>
+<td><code>false</code></td>
+<td>With <code>editableSources</code> on, trust the local network for reading and editing source, so a phone or headset on your LAN can save directly instead of going through the tunnel (#227). Trusted: a <strong>direct</strong> peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server&#39;s own origin. <strong>It means anyone on the network can edit your working tree</strong>: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Agent driving, invite links, builds and test reports stay this machine only.</td>
 </tr>
 <tr>
 <td><code>memoryLimitMb</code></td>
@@ -2117,6 +2122,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-vdpr0k43.js"></script>
+  <script type="module" src="../hydrate-gvse1xvk.js"></script>
 </body>
 </html>

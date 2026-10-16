@@ -646,7 +646,11 @@ export function isSameOriginRequest(request) {
 export function mayWriteSource(opts) {
     if (opts.viaTunnel)
         return opts.hasValidSession && opts.sessionMayWrite !== false;
-    return isLoopbackAddressForAuth(opts.peer);
+    if (isLoopbackAddressForAuth(opts.peer))
+        return true;
+    return (opts.trustLan === true &&
+        opts.proxied !== true &&
+        isPrivateNetworkAddress(opts.peer));
 }
 /**
  * May the holder of this session token write?
@@ -682,7 +686,10 @@ export function cookieMayWrite(state, cookieValue) {
  * diverge, this is the one place to change, and every caller already says which it means.
  */
 export function mayDriveWithAgent(opts) {
-    return mayWriteSource(opts);
+    // LAN trust (#227) is for reading and editing source, and is never passed here: driving a
+    // page with an agent stays this machine and authorized tunnel sessions only.
+    const { viaTunnel, peer, hasValidSession } = opts;
+    return mayWriteSource({ viaTunnel, peer, hasValidSession });
 }
 /**
  * THE loopback test. dev-server re-exports this as `isLoopbackAddress`; it used to
@@ -702,6 +709,31 @@ export function isLoopbackAddressForAuth(address) {
         return true;
     const mapped = a.startsWith('::ffff:') ? a.slice(7) : a;
     return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(mapped);
+}
+/**
+ * A private-network peer: RFC 1918 IPv4 (10/8, 172.16/12, 192.168/16), IPv6 unique-local
+ * (fc00::/7) or link-local (fe80::/10), including IPv4 mapped into IPv6. Loopback is not
+ * included; ask `isLoopbackAddressForAuth` for that. Used ONLY behind the `trustLan` opt-in.
+ */
+export function isPrivateNetworkAddress(address) {
+    if (!address)
+        return false;
+    const a = address
+        .trim()
+        .toLowerCase()
+        .replace(/^\[|\]$/g, '')
+        .replace(/%.*$/, ''); // an IPv6 zone id (fe80::1%en0)
+    const v4 = (a.startsWith('::ffff:') ? a.slice(7) : a).match(/^(\d{1,3})\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/);
+    if (v4) {
+        const [first, second] = [Number(v4[1]), Number(v4[2])];
+        return (first === 10 ||
+            (first === 172 && second >= 16 && second <= 31) ||
+            (first === 192 && second === 168));
+    }
+    if (!a.includes(':'))
+        return false;
+    const head = parseInt(a.split(':')[0] || '0', 16);
+    return (head & 0xfe00) === 0xfc00 || (head & 0xffc0) === 0xfe80;
 }
 /*
 Was this request proxied (i.e. did it arrive through something in front of us)?
