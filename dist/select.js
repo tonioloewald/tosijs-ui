@@ -211,6 +211,7 @@ import { elements, vars, throttle, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { popMenu, removeLastMenu, resolveMenuItems, findShortcutAction, } from './menu.js';
 import { localize, XinLocalized } from './localize.js';
+import { splitCaptionIcon } from './caption-icon.js';
 const { button, span, input } = elements;
 const hasValue = (options, value) => {
     return !!options.find((option) => {
@@ -320,7 +321,7 @@ export class TosiSelect extends withAttributes({
                 // Simple format: just "value" means value=caption
                 return { value, caption: value };
             }
-            const [caption, iconName] = remains.split(':').map((v) => v.trim());
+            const [caption, iconName] = splitCaptionIcon(remains);
             return {
                 value,
                 caption: caption || value,

@@ -88,6 +88,14 @@ describe('TosiSelect', () => {
         { value: 'no', caption: 'No', icon: 'thumbsDown' },
       ])
     })
+
+    test('an icon may hold a colon (an explicit rule, `check:square`)', () => {
+      const select = tosiSelect({ options: 'done=Done:check:square' })
+      container.appendChild(select)
+      expect(select.selectOptions).toEqual([
+        { value: 'done', caption: 'Done', icon: 'check:square' },
+      ])
+    })
   })
 
   describe('accessibility', () => {

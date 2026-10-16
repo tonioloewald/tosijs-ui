@@ -8,7 +8,10 @@
   always applies the rule, needs no capital after the prefix (`check:Square` is the same), and
   takes suffixes and stacking as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not
   valid in an identifier, so write `icons['check:square']()` or
-  `<tosi-icon icon="check:square">`. Names without a `:` resolve exactly as before.
+  `<tosi-icon icon="check:square">`, and it works in the `caption:icon` option strings of
+  `<tosi-select>` and `<tosi-segmented>` (`done=Done:check:square`), whose caption now ends at
+  the first colon. Names without a `:` resolve exactly as before. `defineIcons` warns when
+  it defines a `rule:icon` name, since the definition then wins over the rule.
 - **The kitchen-sink style testbed is no longer bound into the ePub or print.** It stays on
   the site; it is a component showcase, not reading. Docs-only: no API or rendering moved.
 

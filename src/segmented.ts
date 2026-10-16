@@ -147,6 +147,7 @@ import {
 import { icons } from './icons.js'
 import type { IconElement } from './icon-types.js'
 import { tosiLocalized } from './localize.js'
+import { splitCaptionIcon } from './caption-icon.js'
 
 const { div, slot, label, span, input } = elements
 
@@ -196,9 +197,7 @@ export class TosiSegmented extends withAttributes({
       .filter((c) => c.trim() !== '')
       .map((c) => {
         const [value, remains] = c.split('=').map((v) => v.trim())
-        const [caption, iconName] = (remains || value)
-          .split(':')
-          .map((v) => v.trim())
+        const [caption, iconName] = splitCaptionIcon(remains || value)
 
         const icon = iconName ? icons[iconName]() : ''
         return { value, icon, caption }
@@ -423,7 +422,7 @@ export class TosiSegmented extends withAttributes({
     const options: Choice[] = [...this.choices]
 
     if (this.other && !this.multiple) {
-      const [caption, icon] = this.other.split(':')
+      const [caption, icon] = splitCaptionIcon(this.other)
       options.push({
         value: '',
         caption,

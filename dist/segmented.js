@@ -138,6 +138,7 @@ The following CSS variables can be used to control customize the `<tosi-segmente
 import { elements, varDefault, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { tosiLocalized } from './localize.js';
+import { splitCaptionIcon } from './caption-icon.js';
 const { div, slot, label, span, input } = elements;
 export class TosiSegmented extends withAttributes({
     direction: 'row',
@@ -170,9 +171,7 @@ export class TosiSegmented extends withAttributes({
             .filter((c) => c.trim() !== '')
             .map((c) => {
             const [value, remains] = c.split('=').map((v) => v.trim());
-            const [caption, iconName] = (remains || value)
-                .split(':')
-                .map((v) => v.trim());
+            const [caption, iconName] = splitCaptionIcon(remains || value);
             const icon = iconName ? icons[iconName]() : '';
             return { value, icon, caption };
         });
@@ -363,7 +362,7 @@ export class TosiSegmented extends withAttributes({
     get _choicesWithOther() {
         const options = [...this.choices];
         if (this.other && !this.multiple) {
-            const [caption, icon] = this.other.split(':');
+            const [caption, icon] = splitCaptionIcon(this.other);
             options.push({
                 value: '',
                 caption,

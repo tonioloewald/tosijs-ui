@@ -447,8 +447,9 @@ viewBox** for best results on non-square base icons.
 `checkSquare` is ambiguous: it is a registered icon, and it also reads as
 the `check` rule over `square`. A registered icon wins, so it draws the
 icon. Put a `:` at the boundary to ask for the rule: `check:square`,
-`un:lock`, `spin90:loader`. The explicit form always applies the rule,
-needs no capital letter after the prefix, and takes suffixes and stacking
+`un:lock`, `spin90:loader`. The explicit form applies the rule (unless
+you `defineIcons` that exact name, which warns), needs no capital letter
+after the prefix, and takes suffixes and stacking
 as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not valid in a
 JavaScript identifier, so write `icons['check:square']()`, or
 `<tosi-icon icon="check:square">`.
@@ -629,6 +630,7 @@ export const defineIcons = (newIcons: { [key: string]: string }): void => {
       if (matched == null || !canResolve(matched.baseName)) return false
       return (
         typeof rule.prefix !== 'string' ||
+        name.includes(':') ||
         /[A-Z]/.test(name[rule.prefix.length])
       )
     })

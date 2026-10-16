@@ -593,6 +593,8 @@ describe('icons', () => {
           checkTestShadow: '<svg viewBox="0 0 24 24"><path d="M0 0h1"/></svg>',
           testShadow: '<svg viewBox="0 0 24 24"><path d="M0 0h2"/></svg>',
           testNoRule: 'check',
+          // The explicit form reads as the rule whatever the case after the colon.
+          'check:testShadow': 'lock',
         })
         icons.checkTestShadow()
         icons.checkTestShadow()
@@ -613,6 +615,7 @@ describe('icons', () => {
       }
       expect(warnings).toEqual([
         "icon checkTestShadow is also a composition rule's name; your definition wins",
+        "icon check:testShadow is also a composition rule's name; your definition wins",
       ])
       expect(icons.checkTestShadow().innerHTML).toContain('M0 0h1')
     })
