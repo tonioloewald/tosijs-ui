@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { readdirSync, existsSync } from 'fs'
+import { readFileSync } from 'fs'
+import { buildSlugMap } from '../src/doc-system/routing'
 
 /*
 Every live example must show the reader something. An example whose preview is empty passes
@@ -27,13 +28,22 @@ measured, discounting them flags all sixteen. So an example whose control drives
 can be empty needs its own ```test that the view shows something, as the router page has.
 */
 
-const slugs = readdirSync('docs')
-  .filter((dir) => existsSync(`docs/${dir}/index.html`))
+// Pages come from the source corpus, not the built folder: a page missing from the build then
+// fails here (its examples are not found) instead of silently getting no test.
+const docs: { filename: string; hidden?: boolean }[] = JSON.parse(
+  readFileSync('demo/docs.json', 'utf8')
+)
+const slugMap = buildSlugMap(docs)
+const slugs = docs
+  .filter((doc) => !doc.hidden)
+  .map((doc) => slugMap[doc.filename])
   .sort()
 
 for (const slug of slugs) {
-  test(`every live example on /${slug}/ shows something`, async ({ page }) => {
-    await page.goto(`/${slug}/`)
+  const url = slug ? `/${slug}/` : '/'
+  test(`every live example on ${url} shows something`, async ({ page }) => {
+    const response = await page.goto(url)
+    expect(response?.status(), `${url} is built`).toBe(200)
     const blank = async () =>
       page.evaluate(() => {
         const MEDIA =
