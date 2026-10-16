@@ -205,7 +205,7 @@ export interface ColumnOptions {
 ## Column value types
 
 Give a column a `type` and it's formatted (and aligned) automatically — no hand-rolled
-`dataCell`. The `type` is a [`valueRenderer`](value-renderer) string:
+`dataCell`. The `type` is a [`valueRenderer`](/value-renderer/) string:
 
 ```
 [

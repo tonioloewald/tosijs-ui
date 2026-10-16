@@ -32,7 +32,11 @@ import {
   docDescription,
   type ExampleBakes,
 } from '../render.js'
-import { deadInPageAnchors, misconfigured } from './build-warnings.js'
+import {
+  bareNameLinks,
+  deadInPageAnchors,
+  misconfigured,
+} from './build-warnings.js'
 
 declare global {
   var Bun: any
@@ -526,10 +530,15 @@ export async function generateSite(
 
   let count = 0
   const deadAnchors: string[] = []
+  const bareLinks: string[] = []
   for (const doc of docs) {
     const slug = slugMap[doc.filename]
     const dir = slug === '' ? outputDir : `${outputDir}/${slug}`
-    const dead = deadInPageAnchors(renderDocMarkdown(doc.text))
+    const rendered = renderDocMarkdown(doc.text)
+    const dead = deadInPageAnchors(rendered)
+    const bare = bareNameLinks(rendered)
+    if (bare.length)
+      bareLinks.push(`    ${doc.path || doc.filename}: ${bare.join(', ')}`)
     if (dead.length)
       deadAnchors.push(
         `    ${doc.path || doc.filename}: ${dead
@@ -545,6 +554,14 @@ export async function generateSite(
       await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n')
     }
     count += 1
+  }
+  if (bareLinks.length) {
+    misconfigured(
+      config.strict,
+      `\n⚠️  Links written as a bare page name. Every page is served at /slug/, so these\n` +
+        `    resolve under the page they are on and reach nothing; write /name/ instead:\n` +
+        `${bareLinks.join('\n')}\n`
+    )
   }
   if (deadAnchors.length) {
     misconfigured(

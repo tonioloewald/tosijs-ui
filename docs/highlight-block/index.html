@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>highlight-block — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-highlight&gt; pretty-prints a static code sample. It is not an editor — for that use &lt;tosi-code&gt;, which wraps CodeMirror and weighs accordingly." />
   <link rel="canonical" href="https://ui.tosijs.net/highlight-block/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="highlight-block">highlight-block</h1>
 <p><code>&lt;tosi-highlight&gt;</code> pretty-prints a static code sample. It is <strong>not</strong> an editor — for that
@@ -54,15 +54,8 @@ and an unknown language renders as plain, readable code rather than failing.</p>
 <h2 id="styling">Styling</h2>
 <p><strong>Colours work out of the box, anywhere.</strong> The element injects its token palette on first use,
 so a <code>&lt;tosi-highlight&gt;</code> on an ordinary page is coloured without importing anything.</p>
-<p>That was not always true, and the way it failed is worth knowing if you are debugging
-something similar: this package ships <strong>no CSS files at all</strong> — every style is a <code>StyleSheet()</code>
-call — and the palette used to live inside the doc-system stylesheet. So a standalone element
-produced perfectly correct <code>&lt;span class=&quot;token …&quot;&gt;</code> markup rendering in flat black, and this
-very paragraph told you to &quot;import the doc-system CSS&quot;, which was not an import that existed.</p>
-<p>There are <strong>two palettes</strong> — a light set (the default) and a dark set under <code>.darkmode</code> — each
-contrast-checked against the <code>--code-bg</code> it actually sits on. Not one recomputed from the
-other: a light-mode default derived from dark-mode literals is unreadable, which is how this
-shipped failing WCAG AA on every token type.</p>
+<p>There are <strong>two palettes</strong>, a light set (the default) and a dark set under <code>.darkmode</code>, each
+contrast-checked against the <code>--code-bg</code> it sits on (see <a href="/highlight-styles/">highlight-styles</a>).</p>
 <p>Every colour is a <code>varDefault</code>, so retheme one token type without touching the rest:</p>
 <pre data-example-mode="static"><code class="language-css" data-highlighted><span class="token selector">:root</span> <span class="token punctuation">{</span> <span class="token property">--token-keyword</span><span class="token punctuation">:</span> rebeccapurple<span class="token punctuation">;</span> <span class="token punctuation">}</span>
 </code></pre>
@@ -174,6 +167,6 @@ page stylesheet, and a shadow root would make every consumer re-declare the pale
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

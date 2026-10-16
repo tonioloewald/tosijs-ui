@@ -582,10 +582,9 @@ attribute directly.
   `tosijs`/`tosijs-ui` are the host's own instances, so `tosi()` singletons stay shared;
   namespace your state to keep examples from stomping each other. (The boolean `iframe`
   attribute is a back-compat alias for `mode="iframe"`.)
-- **`ide`** — fully sandboxed: real, **published** dependencies (all imports resolved by
-  the import-resolver, not your working copy) in an isolated realm — the standalone-app
-  mode, for running arbitrary code rather than demoing the library under development.
-  *(Recognized now; its distinct real-module execution is in progress.)*
+- **`ide`** — reserved for a fully sandboxed mode (published dependencies in an isolated
+  realm). **Today it runs exactly like `iframe`**, so don't choose it for isolation it does
+  not yet provide.
 
 *Fully-isolated examples (a separate module realm, so even `tosi()` state and
 imported dependencies are sandboxed — the way tjs-lang's playgrounds do it with a

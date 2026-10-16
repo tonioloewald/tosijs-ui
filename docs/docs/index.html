@@ -14,98 +14,55 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>docs — tosijs-ui</title>
-  <meta name="description" content="Utility for extracting documentation from markdown files and inline comments in source code." />
+  <meta name="description" content="ExtractDocs collects documentation from markdown files and /*# comment blocks in source code into one corpus, the docs.json that the doc-browser and the static" />
   <link rel="canonical" href="https://ui.tosijs.net/docs/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="docs — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="docs — tosijs-ui" />
-  <meta property="og:description" content="Utility for extracting documentation from markdown files and inline comments in source code." />
+  <meta property="og:description" content="ExtractDocs collects documentation from markdown files and /*# comment blocks in source code into one corpus, the docs.json that the doc-browser and the static" />
   <meta property="og:url" content="https://ui.tosijs.net/docs/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"docs","description":"Utility for extracting documentation from markdown files and inline comments in source code.","url":"https://ui.tosijs.net/docs/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"docs","description":"ExtractDocs collects documentation from markdown files and /*# comment blocks in source code into one corpus, the docs.json that the doc-browser and the static","url":"https://ui.tosijs.net/docs/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="docs">docs</h1>
-<p>Utility for extracting documentation from markdown files and inline comments in source code.</p>
-<blockquote>
-<p><code>docs.ts</code> is intended to be run directly using <code>bun</code>. You can transpile it to javascript if you
-want to run it using node.</p>
-</blockquote>
-<p>This is used by the <code>doc-browser</code> component to build searchable, navigable documentation
-from your project&#39;s source files.</p>
+<p><code>extractDocs</code> collects documentation from markdown files and <code>/*#</code> comment blocks in source
+code into one corpus, the <code>docs.json</code> that the <a href="/doc-browser/">doc-browser</a> and the static
+site render. <code>tosijs-ui/site</code> runs it for you; call it yourself only to build a corpus
+outside that pipeline. It reads files, so it runs under bun or node.</p>
 <h2 id="usage">Usage</h2>
-<pre><code>import { extractDocs } from &#39;docs&#39;
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> extractDocs <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
 
-extractDocs({
-  paths: [&#39;src&#39;, &#39;README.md&#39;],
-  ignore: [&#39;node_modules&#39;, &#39;dist&#39;, &#39;build&#39;]
-  path: &#39;public/docs.json&#39;
-})
+<span class="token keyword">const</span> docs <span class="token operator">=</span> <span class="token function">extractDocs</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  paths<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'src'</span><span class="token punctuation">,</span> <span class="token string">'README.md'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  output<span class="token operator">:</span> <span class="token string">'public/docs.json'</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
-<h2 id="api">API</h2>
-<h3 id="extractdocsoptions"><code>extractDocs(options)</code></h3>
-<p>Scans directories for markdown files and source code comments.</p>
-<p><strong>Options:</strong></p>
+<h2 id="extractdocsoptions"><code>extractDocs(options)</code></h2>
 <ul>
-<li><code>paths</code>: Array of directory paths or file paths to scan</li>
-<li><code>ignore</code>: Array of directory names to ignore (default: [&#39;node_modules&#39;, &#39;dist&#39;])</li>
-<li><code>output</code>: if provided, path to write json result.</li>
+<li><code>paths</code>: directories to scan, and individual files (list root <code>.md</code> files explicitly)</li>
+<li><code>ignore</code>: directory names to skip (default <code>[&#39;node_modules&#39;, &#39;dist&#39;, &#39;build&#39;]</code>)</li>
+<li><code>output</code>: if given, the path the corpus is written to as JSON</li>
+<li><code>home</code>: the doc served at <code>/</code> instead of README, by slug or filename</li>
 </ul>
-<p><strong>Returns:</strong> Array of <code>Doc</code> objects</p>
-<h3 id="doc-object-structure"><code>Doc</code> object structure</h3>
-<pre><code>{
-  text: string,        // Markdown content
-  title: string,       // First heading or filename
-  filename: string,    // Just the filename
-  path: string,        // Full file path
-  pin?: &#39;top&#39; | &#39;bottom&#39;  // Optional pinning for sort order
-}
-</code></pre>
-<h2 id="documentation-format">Documentation Format</h2>
-<h3 id="markdown-files">Markdown files</h3>
-<p>Any <code>.md</code> file will be included in its entirety.</p>
-<h3 id="source-code-comments">Source code comments</h3>
-<p>Multi-line comments that start with <code>/*#</code> will be extracted as markdown:</p>
-<pre><code>/*#
-# My Component
-
-This is documentation for my component.
-
-```html
-&lt;my-component&gt;&lt;/my-component&gt;
-```
-```js
-console.log(&#39;hello world&#39;)
-```
-```css
-my-componet {
-  color: blue
-}
-```
-*‎/
-
-export class MyComponent extends Component {
-  // implementation
-}
-...
-</code></pre>
-<p>The <a href="../doc-browser/">doc-browser</a> will render the output as a test-bed project with documentation and live examples.</p>
-<h3 id="metadata">Metadata</h3>
-<p>You can include JSON metadata in comments to control sorting:</p>
-<p>html:
-    <!--{ "pin": "bottom" }--></p>
-<p>ts, js, css:
-    /*{ &quot;pin&quot;: &quot;bottom&quot; }*‎/</p>
-<p>This pins the document to the top or bottom of the navigation list. Within a
-pin bucket, add <code>&quot;order&quot;</code> (a number, lower first; default 500) to rank items —
-e.g. <code>{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 1 }</code> above <code>{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 2 }</code>.</p>
+<p>Returns an array of <code>Doc</code> objects: <code>text</code> (the markdown), <code>title</code>, <code>filename</code>, <code>path</code>, and
+whatever metadata the doc declares (<code>pin</code>, <code>order</code>, <code>parent</code>, <code>layout</code>, <code>description</code>, …).</p>
+<h2 id="what-is-collected">What is collected</h2>
+<ul>
+<li><strong><code>.md</code> files</strong>, whole. YAML frontmatter is read and removed.</li>
+<li><strong><code>/*#</code> … <code>*‎/</code> blocks</strong> in <code>.ts</code>, <code>.tjs</code>, <code>.js</code> and <code>.css</code> files, as markdown. The first heading
+is the page title. A block counts only when <code>/*#</code> starts a line.</li>
+<li><strong>Files whose name starts with <code>_</code></strong> are skipped: use the prefix for drafts and fragments.</li>
+</ul>
+<p>Metadata blocks (<code>&lt;!--{ … }--&gt;</code> in markdown, <code>/*{ … }*‎/</code> in code), nav order, sections and
+which code fences run live are described under <a href="/doc-site-system/#doc-format">Doc format</a>.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -210,6 +167,6 @@ e.g. <code>{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 1 }</code> abo
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

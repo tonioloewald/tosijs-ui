@@ -20,6 +20,7 @@ export * from './layout.js';
 export * from './live-theme.js';
 export * from './localize.js';
 export { makeSorter } from './make-sorter.js';
+export { naturalCompare, naturalSorter, isBlank } from './natural-compare.js';
 export * from './mapbox.js';
 export * from './match-shortcut.js';
 export * from './markdown-viewer.js';

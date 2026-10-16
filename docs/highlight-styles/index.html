@@ -14,34 +14,28 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>highlight-styles — tosijs-ui</title>
-  <meta name="description" content="The syntax-highlighting token palette, on its own." />
+  <meta name="description" content="The syntax-highlighting token palette, on its own. The package ships no CSS files (every style is a StyleSheet() call), so this is how token colours reach a…" />
   <link rel="canonical" href="https://ui.tosijs.net/highlight-styles/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="highlight-styles — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="highlight-styles — tosijs-ui" />
-  <meta property="og:description" content="The syntax-highlighting token palette, on its own." />
+  <meta property="og:description" content="The syntax-highlighting token palette, on its own. The package ships no CSS files (every style is a StyleSheet() call), so this is how token colours reach a…" />
   <meta property="og:url" content="https://ui.tosijs.net/highlight-styles/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"highlight-styles","description":"The syntax-highlighting token palette, on its own.","url":"https://ui.tosijs.net/highlight-styles/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"highlight-styles","description":"The syntax-highlighting token palette, on its own. The package ships no CSS files (every style is a StyleSheet() call), so this is how token colours reach a…","url":"https://ui.tosijs.net/highlight-styles/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="highlight-styles">highlight-styles</h1>
-<p>The syntax-highlighting token palette, on its own.</p>
-<p>It lives here rather than inside <code>docSystemStyleSpec</code> because the package ships <strong>no CSS
-files at all</strong> — every style is a <code>StyleSheet()</code> call — so before this existed, the only way
-to get token colours was to import the whole doc-site chrome. A standalone
-<a href="/highlight-block/"><code>&lt;tosi-highlight&gt;</code></a> on an ordinary page therefore produced perfectly
-correct <code>&lt;span class=&quot;token …&quot;&gt;</code> markup rendering in flat black, which is the one thing that
-component is for. The doc block even told you to &quot;import the doc-system CSS&quot;, naming an
-import that did not exist.</p>
-<p><code>&lt;tosi-highlight&gt;</code> now injects this itself on first use, so the standalone case needs nothing.
+<p>The syntax-highlighting token palette, on its own. The package ships no CSS files (every
+style is a <code>StyleSheet()</code> call), so this is how token colours reach a page.</p>
+<p><a href="/highlight-block/"><code>&lt;tosi-highlight&gt;</code></a> injects it on first use, so that needs nothing.
 Import it directly only if you are highlighting markup you produced some other way:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> ensureHighlightStyles <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-system/highlight-styles'</span>
 
@@ -51,13 +45,9 @@ Import it directly only if you are highlighting markup you produced some other w
 by setting its variable:</p>
 <pre data-example-mode="static"><code class="language-css" data-highlighted><span class="token selector">:root</span> <span class="token punctuation">{</span> <span class="token property">--token-keyword</span><span class="token punctuation">:</span> rebeccapurple<span class="token punctuation">;</span> <span class="token punctuation">}</span>
 </code></pre>
-<p>Two palettes, not one recomputed from the other: a light default and a dark set under
-<code>.darkmode</code>. Deriving light from dark literals is how this shipped failing WCAG AA on every
-token type. Measured, both directions (AA needs 4.5:1): light on <code>#fdfdfd</code> worst <strong>5.32:1</strong>
-(comment); dark on <code>#020202</code> worst <strong>6.01:1</strong> (punctuation). <code>doc-system-styles.test.ts</code>
-asserts both, so they are checked rather than claimed.</p>
-<p>Dark uses DESCENDANT selectors rather than a nested <code>.darkmode</code> block, because the doc-system
-spec already has one and a duplicate key loses silently to the last writer instead of merging.</p>
+<p>Two palettes: a light default and a dark set under <code>.darkmode</code>, each meeting WCAG AA
+(4.5:1) against its own background. Light on <code>#fdfdfd</code> is at worst <strong>5.32:1</strong> (comment); dark
+on <code>#020202</code> at worst <strong>6.01:1</strong> (punctuation). Tests check both.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -162,6 +152,6 @@ spec already has one and a duplicate key loses silently to the last writer inste
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

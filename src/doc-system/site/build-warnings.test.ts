@@ -1,5 +1,6 @@
 import { test, expect, spyOn } from 'bun:test'
 import {
+  bareNameLinks,
   liveFenceLanguages,
   misconfigured,
   SiteMisconfiguredError,
@@ -109,4 +110,19 @@ test('a fence in a list item counts', () => {
   expect([
     ...liveFenceLanguages(doc('- item\n\n  ```ts\n  x\n  ```\n')),
   ]).toEqual(['ts'])
+})
+
+test('a link written as a bare page name is reported; assets and real routes are not', () => {
+  const html = [
+    '<a href="value-renderer">valueRenderer</a>', // the 1.16 defect: /this-page/value-renderer
+    '<a href="popFloat/">positionFloat</a>',
+    '<a href="/value-renderer/">fine</a>',
+    '<a href="diagram.svg">an asset</a>',
+    '<a href="img/x.png">an asset</a>',
+    '<a href="https://example.com">external</a>',
+    '<a href="#anchor">in page</a>',
+    '<a href="?legacy.ts">legacy</a>',
+    '<img src="value-renderer">',
+  ].join('')
+  expect(bareNameLinks(html).sort()).toEqual(['popFloat/', 'value-renderer'])
 })

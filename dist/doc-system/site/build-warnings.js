@@ -104,3 +104,27 @@ export function deadInPageAnchors(html) {
     }
     return [...dead];
 }
+/**
+ * Links in a RENDERED page written as a bare page name (`[valueRenderer](value-renderer)`).
+ *
+ * Every page is served at `/slug/`, so a relative `value-renderer` resolves to
+ * `/this-page/value-renderer`, which is never a page: the link is broken with or without
+ * script. It is the natural thing to write and reads correctly in the source, which is how
+ * three of them shipped. Only a name with no `.` and no `/` is reported, so a relative asset
+ * (`diagram.svg`, `img/x.png`) is left alone. The fix is the root-relative `/value-renderer/`.
+ */
+export function bareNameLinks(html) {
+    const found = new Set();
+    for (const tag of html.matchAll(START_TAG)) {
+        if (tag[1].toLowerCase() !== 'a')
+            continue;
+        for (const attr of tag[2].matchAll(ATTRIBUTE)) {
+            if (attr[1].toLowerCase() !== 'href')
+                continue;
+            const value = unescapeAttr(attr[2] ?? attr[3] ?? attr[4] ?? '');
+            if (/^[A-Za-z0-9_-]+\/?$/.test(value))
+                found.add(value);
+        }
+    }
+    return [...found];
+}

@@ -7,8 +7,8 @@
 </div>
 
 `icons` is a proxy that generates an `ElementCreator` for a given icon on demand,
-e.g. `icons.chevronDown()` produces an `<svg>` element containing a downward-pointing chevron
-icon with the class `icon-chevron-down`.
+e.g. `icons.chevronDown()` produces an `<svg>` element (class `tosi-icon`) containing a
+downward-pointing chevron.
 
 Most of the built-in icons come from [Feather](https://feathericons.com). If you want more
 icons in the same style, [lucide](https://lucide.dev) is a fork and expansion of Feather and a
@@ -199,12 +199,12 @@ test('filter input and prefix select exist', () => {
 })
 ```
 
-These icons are completely unstyled and can be colored using the css `fill` property. This will
-probably be broken out as a standalone library to allow the use of whatever icons you like
-(its source data is currently generated from an [icomoon](https://icomoon.com/app)
-`selection.json` file, but could just as easily be generated from a directory full of SVGs).
+Icons take their colour from the text around them (`currentColor`). Override fill and stroke
+with `--tosi-icon-fill` and `--tosi-icon-stroke`, or per icon with the `F` and `S` suffixes
+(see [Icon modifier suffixes](#icon-modifier-suffixes)). The icon data is generated from a
+directory of SVGs (see [Building icon data](#building-icon-data)).
 
-### Need More Icons?
+## Need More Icons?
 
 [lucide](https://lucide.dev) is a fork and expansion of feather that maintains the style and
 adds a lot more options. Obviously it's completely compatible with this icon system and generously licensed. A

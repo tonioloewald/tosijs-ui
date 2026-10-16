@@ -69,7 +69,7 @@ them to see the bar grow in its `direction`.
 
 ## Attributes
 
-- `icon` — the handle icon (any icon name or [composition](icon-composition)). By
+- `icon` — the handle icon (any icon name or [composition](/icon-composition/)). By
   default it hints the growth axis: `moreHorizontal` (⋯) for a horizontal bar,
   `moreVertical` (⋮) for a vertical one.
 - `direction` — where the bar grows, using the `FloatPosition` vocabulary
@@ -77,7 +77,7 @@ them to see the bar grow in its `direction`.
   (the default) grows a **horizontal** bar toward the nearer edge of the screen.
   `e` / `w` (and `en` / `es` / `wn` / `ws`) grow a horizontal bar; `n` / `s` (and
   `ne` / `nw` / `se` / `sw`) grow a **vertical** one. The bar is placed
-  edge-contiguous with the handle via [positionFloat](popFloat).
+  edge-contiguous with the handle via [positionFloat](/pop-float/).
 - `open` — reflects the open state. Hover / focus / tap peek it open; clicking the
   handle keeps it open until you click the handle again or click outside.
 

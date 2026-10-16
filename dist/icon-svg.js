@@ -27,17 +27,13 @@ other style suffix (`check50o`), a redirect to a name that is not an icon, or a 
 cycle. Render those with `icons.<name>()` where there is a DOM; the suffixes and rules are
 described on the [[icons]] page. Only a name that nothing would draw returns `undefined`.
 
-Deliberately a separate module from `icons.ts`: that one imports tosijs to build
-elements, so importing it drags in code that needs `HTMLElement` and throws in a build
-script — the exact context that wanted the markup in the first place. This module
-imports nothing but the data.
-
-Background: `defineIcons()` could write to the icon map but nothing could read it, and
-`icons.foo()` returns a DOM `SVGElement`. So a static-page generator, an ePub pass or a
-server-rendered template had no way to get markup except by parsing
-`src/icons/data/*.ts` out of the installed package — which is exactly what this project
-resorted to when putting its own logo on a generated page. There is nothing to protect:
-the map ships in the bundle either way.
+It needs no DOM, so it works in a build script, a static-page generator, an ePub pass or a
+server-rendered template, where `icons.<name>()` (which builds DOM elements) cannot run.
+*/
+/*
+Deliberately a separate module from `icons.ts`: that one imports tosijs to build elements, so
+importing it drags in code that needs `HTMLElement` and throws in a build script, the exact
+context that wanted the markup. This module imports nothing but the data and the grammars.
 */
 import iconData from './icon-data.js';
 import { suffixNumber } from './icon-suffixes.js';

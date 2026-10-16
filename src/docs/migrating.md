@@ -1,11 +1,34 @@
 # Migrating from older versions
 
-<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.21's tosijs floor, 1.16.19's throwing iconSvg, 1.16.17's tjs-lang 0.14, 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
 Notices for releases you may be upgrading *past*. If you are starting fresh, none of
 this applies — go to the [Quick Start](/) instead.
 
 Current releases are described in [CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).
+
+## tosijs `^1.10.9` — 1.16.21
+
+tosijs-ui now needs **tosijs `^1.10.9`**; upgrade it alongside. `<tosi-table>` relies on that
+release to keep a row in place when its detail opens or closes. On an older tosijs the row
+jumps, with nothing in the console to say why. `dist/iife.js` already includes 1.10.9.
+
+## `iconSvg()` throws for a name it cannot draw as one SVG — 1.16.19
+
+A stack (`tosi$hat`), a composition rule (`unLock`, `spin90Loader`), a style suffix other
+than rotation or flip (`check50o`), a redirect to a missing icon, or a redirect cycle used to
+return `undefined`. Each now **throws**, naming the problem. A name nothing would draw still
+returns `undefined`. Code that relied on `undefined` for those names should catch, or draw them
+with `icons.<name>()` where there is a DOM.
+
+## `tjs` examples compile with tjs-lang 0.14 — 1.16.17
+
+Sites that load tjs-lang from the CDN (no copy of their own installed) now get
+**0.14.0-rc.5**. It refuses some code 0.13 accepted, among others `||` in a type (a union is
+`|`), `unsafe var` and `unsafe eval`; tjs-lang's
+[changelog](https://github.com/tonioloewald/tjs-lang/blob/main/CHANGELOG.md) lists them. Fix
+the example, or install `tjs-lang@0.13.13` in your project: the build ships the installed copy
+with your pages and they prefer it to the CDN.
 
 ## `<tosi-md>` sanitizes by default — 1.16.0
 
@@ -120,13 +143,16 @@ upstream author deprecated it over.
 
 ## Edit links are shorter and shorter-lived — 1.11.0
 
-Only affects `tosijs-ui/site` users running `bun run tunnel`. The token is now **7 Crockford
+Only affects `tosijs-ui/site` users running the `tosijs-tunnel` bin. The token is now **7 Crockford
 base32 characters** instead of 22, and `linkTtlMinutes` defaults to **5** rather than 15. A
 link minted by an older dev server is not redeemable by a newer one; both live in memory, so
 this only matters across a restart mid-session.
 
 The token is case-insensitive and forgives the lookalikes — `I`/`L` read as `1`, `O` as `0`,
 hyphens ignored — because it is meant to be read off one screen and typed on another.
+
+**Changed again in 1.14.0:** the token is now eight letters with no digits. See
+[the token is eight letters](/doc-site-system/#the-token-is-eight-letters-and-you-can-type-it).
 
 ## `Cannot find module` under Node — fixed in 1.9.1
 
@@ -165,8 +191,8 @@ Those three are unchanged in 1.9.1 and are not bugs; only the module *resolution
 
 **1.7.0 is a breaking release shipping under a minor version, deliberately.** `<tosi-code>`
 moved from ACE to CodeMirror 6. `value`, `mode`, the `change` event, `disabled`, and
-`undo`/`redo` are unchanged; the ACE-era **`theme`** and **`options`** props are **removed** with
-no shim. Dark mode is now automatic (`body.darkmode`) and styling comes from `--code-bg` /
+`undo`/`redo` are unchanged; the ACE-era **`theme`** and **`options`** props are **removed**: setting
+one warns once and does nothing. Dark mode is now automatic (`body.darkmode`) and styling comes from `--code-bg` /
 `--text-color`. The `2.0` name is reserved for the tjs-native tosijs port, so this ships as
 1.7.0 — **pin `tosijs-ui@1.6` to defer.** Full detail and rationale in
 [CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).

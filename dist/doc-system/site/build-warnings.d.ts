@@ -22,3 +22,13 @@ export declare function liveFenceLanguages(docs: Array<{
     text?: string;
 }>, policy?: ExamplePolicy): Set<string>;
 export declare function deadInPageAnchors(html: string): string[];
+/**
+ * Links in a RENDERED page written as a bare page name (`[valueRenderer](value-renderer)`).
+ *
+ * Every page is served at `/slug/`, so a relative `value-renderer` resolves to
+ * `/this-page/value-renderer`, which is never a page: the link is broken with or without
+ * script. It is the natural thing to write and reads correctly in the source, which is how
+ * three of them shipped. Only a name with no `.` and no `/` is reported, so a relative asset
+ * (`diagram.svg`, `img/x.png`) is left alone. The fix is the root-relative `/value-renderer/`.
+ */
+export declare function bareNameLinks(html: string): string[];

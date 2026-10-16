@@ -1,26 +1,34 @@
 /*#
 # doc-browser
 
-The `tosijs-ui` library provides everything you need to create a self-documented testbed similar
-to the [tosijs-ui documentation site](https://ui.tosijs.net). It's like Storybook but much simpler
-to set up and maintain.
+`createDocBrowser()` renders a documentation corpus as a browsable, searchable testbed with
+live examples, like the [tosijs-ui documentation site](https://ui.tosijs.net). It's like
+Storybook but much simpler to set up and maintain.
+
+For a whole documentation site (static, pre-rendered pages, SEO, ePub, a dev server), use
+[`tosijs-ui/site`](/adopting-the-doc-system/) instead; it builds on this component. Reach for
+`createDocBrowser` directly to embed a doc browser in an app of your own.
 
 ## Quick Start
 
-### 1. Extract Documentation
+### 1. Extract the documentation
 
-Use the CLI tool to extract documentation from your source files:
+Run once at build time (it reads files, so it runs under bun or node, not in the browser):
 
-```bash
-npx tosijs-ui-docs --dirs src,README.md --output docs.json
+```typescript
+import { extractDocs } from 'tosijs-ui/site'
+
+extractDocs({
+  paths: ['src', 'README.md'],
+  output: 'docs.json',
+})
 ```
 
-This scans for:
+This collects every `.md` file and every `/*#` comment block in your sources. The format,
+metadata and which code fences run are described under
+[Doc format](/doc-site-system/#doc-format).
 
-- `.md` files (uses entire content)
-- Multi-line comments starting with `/*#` in `.ts`, `.js`, `.css` files
-
-### 2. Create Your Doc Browser
+### 2. Create your doc browser
 
 ```typescript
 import { createDocBrowser } from 'tosijs-ui/doc-browser'
@@ -40,20 +48,16 @@ const browser = createDocBrowser({
 document.body.append(browser)
 ```
 
-### 3. Add Live Examples in Your Docs
+### 3. Add live examples to your docs
 
-In your source files or markdown, use code fences. Any sequence of
-html, js, and css code examples will be turned in to a live, interactive
-example.
+Consecutive `html`, `css`, `js` (or `ts`, `tjs`) and `test` code fences become one live,
+editable example. `context` supplies the modules those examples import:
 
     /*#
     # My Component
 
     This component does amazing things!
 
-    ```html
-    <my-component></my-component>
-    ```
     ```js
     import { myComponent } from 'mylib'
     preview.append(myComponent({ value: 'Hello!' }))
@@ -65,90 +69,29 @@ example.
     ```
     *‎/
 
-    export class MyComponent extends Component {
-      // ...
-    }
-
-    export const myComponent = MyComponent.elementCreator({
-      tag: 'my-component'
-    })
-
-## Documentation Format
-
-### Inline Comments
-
-Start multi-line comments with `/*#` to mark them as documentation:
-
-```typescript
-/*#
-# Component Name
-
-Description and examples go here...
-*‎/
-```
-
-### Metadata
-
-Control sort order with JSON metadata:
-
-```
-<!--{ "pin": "bottom" }-->
-```
-
-or
-
-```
-/*{ "pin": "bottom" }*‎/
-```
-
-## Programmatic API
-
-```typescript
-import { extractDocs, saveDocsJSON } from 'tosijs-ui'
-
-const docs = extractDocs({
-  dirs: ['src', 'README.md'],
-  ignore: ['node_modules', 'dist'],
-})
-
-saveDocsJSON(docs, './docs.json')
-
-// Or use the docs directly
-import { createDocBrowser } from 'tosijs-ui/doc-browser'
-const browser = createDocBrowser({ docs, context: { mylib } })
-```
-
 ## createDocBrowser Options
 
 ```typescript
 interface DocBrowserOptions {
-  docs: Doc[] // Array of documentation objects
-  context?: Record<string, any> // Modules for live examples
-  projectName?: string // Display name
-  projectLinks?: ProjectLinks // Links to show in header
-  navSize?: number // Nav width (default: 200)
-  minSize?: number // Min width before compact (default: 600)
-}
-
-interface ProjectLinks {
-  github?: string
-  npm?: string
-  discord?: string
-  blog?: string
-  tosijs?: string
-  bundle?: string
-  cdn?: string
-  [key: string]: string | undefined
+  docs: Doc[] // the extracted corpus
+  context?: Record<string, any> // modules live examples can import
+  projectName?: string // display name
+  projectLinks?: ProjectLinks // links in the header
+  logo?: string // header logo
+  navSize?: number // nav width (default: 200)
+  minSize?: number // width below which the nav goes compact (default: 600)
+  routing?: 'query' | 'path' | 'memory' // see below (default: 'query')
+  initialRoute?: string // memory routing: the first page
+  onRouteChange?: (slug: string) => void // memory routing: page changes
+  navbarLinks?: LinkItem[] // icon links in the header bar
+  contentElement?: HTMLElement // adopt this element as the content area
 }
 ```
 
-## See Also
-
-The `tosijs-ui` demo is a complete working example. See:
-
-- `/tosijs-site.config.ts` - How this repo configures its doc site (`defineSiteConfig` / `tosijs-ui/site`)
-- `/src/doc-system/site/docs.ts` - The extraction tool (`extractDocs`, exported from `tosijs-ui/site`)
-- `/src/doc-browser.ts` - The createDocBrowser implementation
+`routing` picks how pages map to URLs. `'query'` links pages as `?filename`. `'path'` uses
+clean `/slug/` URLs, as the static site does. `'memory'` never touches the page's URL or
+history, for a browser embedded in another page: drive it with `initialRoute`,
+`onRouteChange` and the element's `navigate(slug)` method.
 */
 /*{ "parent": "Documentation System", "order": 50 }*/
 import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';

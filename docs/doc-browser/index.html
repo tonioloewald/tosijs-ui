@@ -14,39 +14,45 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>doc-browser — tosijs-ui</title>
-  <meta name="description" content="The tosijs-ui library provides everything you need to create a self-documented testbed similar to the tosijs-ui documentation site." />
+  <meta name="description" content="CreateDocBrowser() renders a documentation corpus as a browsable, searchable testbed with live examples, like the tosijs-ui documentation site. It&#39;s like" />
   <link rel="canonical" href="https://ui.tosijs.net/doc-browser/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="doc-browser — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="doc-browser — tosijs-ui" />
-  <meta property="og:description" content="The tosijs-ui library provides everything you need to create a self-documented testbed similar to the tosijs-ui documentation site." />
+  <meta property="og:description" content="CreateDocBrowser() renders a documentation corpus as a browsable, searchable testbed with live examples, like the tosijs-ui documentation site. It&#39;s like" />
   <meta property="og:url" content="https://ui.tosijs.net/doc-browser/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"doc-browser","description":"The tosijs-ui library provides everything you need to create a self-documented testbed similar to the tosijs-ui documentation site.","url":"https://ui.tosijs.net/doc-browser/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"doc-browser","description":"CreateDocBrowser() renders a documentation corpus as a browsable, searchable testbed with live examples, like the tosijs-ui documentation site. It's like","url":"https://ui.tosijs.net/doc-browser/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="doc-browser">doc-browser</h1>
-<p>The <code>tosijs-ui</code> library provides everything you need to create a self-documented testbed similar
-to the <a href="https://ui.tosijs.net">tosijs-ui documentation site</a>. It&#39;s like Storybook but much simpler
-to set up and maintain.</p>
+<p><code>createDocBrowser()</code> renders a documentation corpus as a browsable, searchable testbed with
+live examples, like the <a href="https://ui.tosijs.net">tosijs-ui documentation site</a>. It&#39;s like
+Storybook but much simpler to set up and maintain.</p>
+<p>For a whole documentation site (static, pre-rendered pages, SEO, ePub, a dev server), use
+<a href="/adopting-the-doc-system/"><code>tosijs-ui/site</code></a> instead; it builds on this component. Reach for
+<code>createDocBrowser</code> directly to embed a doc browser in an app of your own.</p>
 <h2 id="quick-start">Quick Start</h2>
-<h3 id="1-extract-documentation">1. Extract Documentation</h3>
-<p>Use the CLI tool to extract documentation from your source files:</p>
-<pre><code class="language-bash" data-highlighted>npx tosijs-ui-docs <span class="token parameter variable">--dirs</span> src,README.md <span class="token parameter variable">--output</span> docs.json
+<h3 id="1-extract-the-documentation">1. Extract the documentation</h3>
+<p>Run once at build time (it reads files, so it runs under bun or node, not in the browser):</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> extractDocs <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
+
+<span class="token function">extractDocs</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  paths<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'src'</span><span class="token punctuation">,</span> <span class="token string">'README.md'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  output<span class="token operator">:</span> <span class="token string">'docs.json'</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
-<p>This scans for:</p>
-<ul>
-<li><code>.md</code> files (uses entire content)</li>
-<li>Multi-line comments starting with <code>/*#</code> in <code>.ts</code>, <code>.js</code>, <code>.css</code> files</li>
-</ul>
-<h3 id="2-create-your-doc-browser">2. Create Your Doc Browser</h3>
+<p>This collects every <code>.md</code> file and every <code>/*#</code> comment block in your sources. The format,
+metadata and which code fences run are described under
+<a href="/doc-site-system/#doc-format">Doc format</a>.</p>
+<h3 id="2-create-your-doc-browser">2. Create your doc browser</h3>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> createDocBrowser <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-browser'</span>
 <span class="token keyword">import</span> <span class="token operator">*</span> <span class="token keyword">as</span> mylib <span class="token keyword">from</span> <span class="token string">'./my-library.js'</span>
 <span class="token keyword">import</span> docs <span class="token keyword">from</span> <span class="token string">'./docs.json'</span>
@@ -63,18 +69,14 @@ to set up and maintain.</p>
 
 document<span class="token punctuation">.</span>body<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span>browser<span class="token punctuation">)</span>
 </code></pre>
-<h3 id="3-add-live-examples-in-your-docs">3. Add Live Examples in Your Docs</h3>
-<p>In your source files or markdown, use code fences. Any sequence of
-html, js, and css code examples will be turned in to a live, interactive
-example.</p>
+<h3 id="3-add-live-examples-to-your-docs">3. Add live examples to your docs</h3>
+<p>Consecutive <code>html</code>, <code>css</code>, <code>js</code> (or <code>ts</code>, <code>tjs</code>) and <code>test</code> code fences become one live,
+editable example. <code>context</code> supplies the modules those examples import:</p>
 <pre><code>/*#
 # My Component
 
 This component does amazing things!
 
-```html
-&lt;my-component&gt;&lt;/my-component&gt;
-```
 ```js
 import { myComponent } from &#39;mylib&#39;
 preview.append(myComponent({ value: &#39;Hello!&#39; }))
@@ -85,73 +87,27 @@ my-component {
 }
 ```
 *‎/
-
-export class MyComponent extends Component {
-  // ...
-}
-
-export const myComponent = MyComponent.elementCreator({
-  tag: &#39;my-component&#39;
-})
-</code></pre>
-<h2 id="documentation-format">Documentation Format</h2>
-<h3 id="inline-comments">Inline Comments</h3>
-<p>Start multi-line comments with <code>/*#</code> to mark them as documentation:</p>
-<pre><code class="language-typescript" data-highlighted><span class="token comment">/*#
-# Component Name
-
-Description and examples go here...
-*‎/
-</span></code></pre>
-<h3 id="metadata">Metadata</h3>
-<p>Control sort order with JSON metadata:</p>
-<pre><code>&lt;!--{ &quot;pin&quot;: &quot;bottom&quot; }--&gt;
-</code></pre>
-<p>or</p>
-<pre><code>/*{ &quot;pin&quot;: &quot;bottom&quot; }*‎/
-</code></pre>
-<h2 id="programmatic-api">Programmatic API</h2>
-<pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> extractDocs<span class="token punctuation">,</span> saveDocsJSON <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
-
-<span class="token keyword">const</span> docs <span class="token operator">=</span> <span class="token function">extractDocs</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
-  dirs<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'src'</span><span class="token punctuation">,</span> <span class="token string">'README.md'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-  ignore<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'node_modules'</span><span class="token punctuation">,</span> <span class="token string">'dist'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span>
-
-<span class="token function">saveDocsJSON</span><span class="token punctuation">(</span>docs<span class="token punctuation">,</span> <span class="token string">'./docs.json'</span><span class="token punctuation">)</span>
-
-<span class="token comment">// Or use the docs directly</span>
-<span class="token keyword">import</span> <span class="token punctuation">{</span> createDocBrowser <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-browser'</span>
-<span class="token keyword">const</span> browser <span class="token operator">=</span> <span class="token function">createDocBrowser</span><span class="token punctuation">(</span><span class="token punctuation">{</span> docs<span class="token punctuation">,</span> context<span class="token operator">:</span> <span class="token punctuation">{</span> mylib <span class="token punctuation">}</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
 <h2 id="createdocbrowser-options">createDocBrowser Options</h2>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">interface</span> <span class="token class-name">DocBrowserOptions</span> <span class="token punctuation">{</span>
-  docs<span class="token operator">:</span> Doc<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment">// Array of documentation objects</span>
-  context<span class="token operator">?</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">any</span><span class="token operator">></span> <span class="token comment">// Modules for live examples</span>
-  projectName<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token comment">// Display name</span>
-  projectLinks<span class="token operator">?</span><span class="token operator">:</span> ProjectLinks <span class="token comment">// Links to show in header</span>
-  navSize<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token comment">// Nav width (default: 200)</span>
-  minSize<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token comment">// Min width before compact (default: 600)</span>
-<span class="token punctuation">}</span>
-
-<span class="token keyword">interface</span> <span class="token class-name">ProjectLinks</span> <span class="token punctuation">{</span>
-  github<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
-  npm<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
-  discord<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
-  blog<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
-  tosijs<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
-  bundle<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
-  cdn<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
-  <span class="token punctuation">[</span>key<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">|</span> <span class="token keyword">undefined</span>
+  docs<span class="token operator">:</span> Doc<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment">// the extracted corpus</span>
+  context<span class="token operator">?</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">any</span><span class="token operator">></span> <span class="token comment">// modules live examples can import</span>
+  projectName<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token comment">// display name</span>
+  projectLinks<span class="token operator">?</span><span class="token operator">:</span> ProjectLinks <span class="token comment">// links in the header</span>
+  logo<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token comment">// header logo</span>
+  navSize<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token comment">// nav width (default: 200)</span>
+  minSize<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token comment">// width below which the nav goes compact (default: 600)</span>
+  routing<span class="token operator">?</span><span class="token operator">:</span> <span class="token string">'query'</span> <span class="token operator">|</span> <span class="token string">'path'</span> <span class="token operator">|</span> <span class="token string">'memory'</span> <span class="token comment">// see below (default: 'query')</span>
+  initialRoute<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token comment">// memory routing: the first page</span>
+  onRouteChange<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span>slug<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token keyword">void</span> <span class="token comment">// memory routing: page changes</span>
+  navbarLinks<span class="token operator">?</span><span class="token operator">:</span> LinkItem<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token comment">// icon links in the header bar</span>
+  contentElement<span class="token operator">?</span><span class="token operator">:</span> HTMLElement <span class="token comment">// adopt this element as the content area</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="see-also">See Also</h2>
-<p>The <code>tosijs-ui</code> demo is a complete working example. See:</p>
-<ul>
-<li><code>/tosijs-site.config.ts</code> - How this repo configures its doc site (<code>defineSiteConfig</code> / <code>tosijs-ui/site</code>)</li>
-<li><code>/src/doc-system/site/docs.ts</code> - The extraction tool (<code>extractDocs</code>, exported from <code>tosijs-ui/site</code>)</li>
-<li><code>/src/doc-browser.ts</code> - The createDocBrowser implementation</li>
-</ul>
+<p><code>routing</code> picks how pages map to URLs. <code>&#39;query&#39;</code> links pages as <code>?filename</code>. <code>&#39;path&#39;</code> uses
+clean <code>/slug/</code> URLs, as the static site does. <code>&#39;memory&#39;</code> never touches the page&#39;s URL or
+history, for a browser embedded in another page: drive it with <code>initialRoute</code>,
+<code>onRouteChange</code> and the element&#39;s <code>navigate(slug)</code> method.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -256,6 +212,6 @@ Description and examples go here...
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

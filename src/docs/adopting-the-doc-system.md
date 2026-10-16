@@ -60,7 +60,7 @@ Then `bun bin/site.ts` to develop and `bun bin/site.ts --build` to build. The de
 a local TLS cert the first time — it will tell you to run `bunx tosijs-dev-certs`.
 
 Build-time peers, installed when the build says it needs them:
-`bun add -d happy-dom tjs-lang marked`.
+`bun add -d happy-dom tjs-lang marked chokidar` (`chokidar` is what `bun start` watches with).
 
 ## How to tell it actually worked
 
@@ -69,7 +69,7 @@ problem now and finding it after you have deployed.
 
 1. **Is the doc system alive?** In the browser console:
 
-   ```typescript
+   ```js:static
    customElements.get('tosi-doc-system') // must be truthy
    ```
 
@@ -135,12 +135,12 @@ you are asking to be run:
   usually unstyled, because the rules live in a shadow root and there is no component around
   it. It reads as a broken demo.
 
-Neither fails the build. For illustration rather than execution use `typescript`, `xml` for
-markup, and `scss`/`less` for styles.
+Neither fails the build. For illustration rather than execution, add `:static` to the fence
+(` ```css:static `, ` ```html:static `): it is highlighted as what it is and never runs.
 
-This page is its own worked example: the verification snippet above was written as ` ```js `
-and ran — turning a one-line console check into a live example with an editor. Caught by
-looking at the built output, which is the habit worth forming.
+This page is its own worked example: the verification snippet above was once a plain ` ```js `
+fence and ran, turning a one-line console check into a live example with an editor. It is
+` ```js:static ` now. Caught by looking at the built output, which is the habit worth forming.
 
 If you want CSS that is both real and scoped, write it against the theme variables
 (`--tosi-bg`, `--tosi-text`) and scope the selector to your example's own markup.
@@ -151,8 +151,8 @@ Consecutive code blocks merge into a single `<tosi-example>` with tabs. **Prose 
 starts a new one.**
 
 So moving a ` ```test ` block under its own heading silently detaches it from the demo it was
-written against and gives it a second, empty editor. The tests still run; they just no longer
-run against that example's DOM.
+written against: it becomes an example of its own that shows only its results. The tests still
+run; they just no longer run against that example's DOM.
 
 One executable script block per example — `js`, `ts` and `tjs` are the same slot, so
 consecutive ones discard all but the last.

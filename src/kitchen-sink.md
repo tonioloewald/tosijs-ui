@@ -10,9 +10,9 @@ This is a testbed for checking styles
 
 You are such a nerd. No wonder you only hang out with boys. Mornings are for coffee and contemplation. We never would've upset you if we knew you had superpowers.
 
-If anyone asks where I am, I've left the country. It’s finger-lickin’ good. You are such a nerd. No wonder you only hang out with boys.She shut one door! With her mind! Hey kiddo, would you like a balloon?
+If anyone asks where I am, I've left the country. It’s finger-lickin’ good. You are such a nerd. No wonder you only hang out with boys. She shut one door! With her mind! Hey kiddo, would you like a balloon?
 
-Nobody normal ever accomplished anything meaningful in this world. It's just, sometimes... people don't really say what they're really thinking. But when you capture the right moment, it says more.Why are you keeping this curiosity door lock? Mornings are for coffee and contemplation.
+Nobody normal ever accomplished anything meaningful in this world. It's just, sometimes... people don't really say what they're really thinking. But when you capture the right moment, it says more. Why are you keeping this curiosity door lock? Mornings are for coffee and contemplation.
 
 #### This is an H4
 

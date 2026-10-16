@@ -96,7 +96,7 @@ console warning about handlers that delay scrolling, and that warning only ever 
 
 ## findHighestZ
 
-`findHighestZ(selector = 'body *'): number` returns the the highest `z-index` of any element
+`findHighestZ(selector = 'body *'): number` returns the highest `z-index` of any element
 matching `selector`.
 */
 /*{ "parent": "Helper Libraries" }*/

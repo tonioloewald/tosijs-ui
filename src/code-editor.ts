@@ -6,7 +6,7 @@ A [CodeMirror 6](https://codemirror.net/) wrapper.
 Sometimes, it's nice to be able to just toss a code-editor in a web-page.
 
 `<tosi-code>`'s `value` is the code it contains. Its `mode` attribute sets the
-language (`javascript`, `typescript`, `tjs`, `css`, `html`, `markdown`).
+language (`javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown`).
 
 ```html
 <tosi-code style="width: 100%; height: 100%" mode="css">
@@ -69,8 +69,7 @@ CodeMirror is a **lazy chunk**: with a bundler (ESM), a page that never uses
 `<tosi-code>` doesn't load it. **This is not true of the IIFE** (`dist/iife.js`) —
 bun's IIFE format cannot code-split, so CodeMirror is inlined there. That is a
 deliberate trade: the doc-system's editor (and its save-to-source flow) is the
-point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
-~118KB in 1.6.x.
+point of the IIFE, so it carries the editor; see the README for what the IIFE weighs.
 
 ## Migrating from the ACE editor (pre-1.7)
 

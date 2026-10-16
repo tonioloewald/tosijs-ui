@@ -11,6 +11,11 @@ const rows = ['9', '399', '1200', '3.5', '40']
 preview.textContent = rows.slice().sort(naturalCompare).join(', ')
 // 3.5, 9, 40, 399, 1200   — not 1200, 3.5, 399, 40, 9
 ```
+```test
+test('numeric strings sort numerically', () => {
+  expect(preview.textContent).toBe('3.5, 9, 40, 399, 1200')
+})
+```
 
 A raw `>` compares strings **lexically**, so any column of numeric strings sorts by first
 digit — and real data is full of them: CSV and TSV imports, BigQuery exports, JSON where

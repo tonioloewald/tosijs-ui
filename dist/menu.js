@@ -98,7 +98,7 @@ const menuItems = [
       {
         icon: 'tosi',
         caption: 'tosi',
-        action: 'https://xinjs.net'
+        action: 'https://tosijs.net'
       },
       {
         icon: 'tosiPlatform',
@@ -373,7 +373,7 @@ way.
 
 ## Localization
 
-If you set `localized: true` in `PopMenuOptions` then menu captions will be be
+If you set `localized: true` in `PopMenuOptions` then menu captions will be
 passed through `localize`. You'll need to provide the appropriate localized strings,
 of course.
 

@@ -10,9 +10,8 @@ works with no JavaScript and then upgrades itself into the interactive
 The output is a plain folder of static files — drop it on GitHub Pages,
 Firebase Hosting, or any static host.
 
-> **Status:** shipped. The whole system — build tooling and runtime component —
-> lives in `src/doc-system/` and is importable as `tosijs-ui/site`. See
-> "Where the code lives" at the bottom.
+The build half is importable as `tosijs-ui/site`; the runtime component ships in the
+bundle. [Where the code lives](#where-the-code-lives) maps each part to its module.
 
 ## What you get
 
@@ -45,7 +44,9 @@ Static and hydrated output share the same slug + markdown rendering
 > **First time?** Read **[Adopting the doc system](/adopting-the-doc-system/)** first. This
 > section is the configuration; that one is the narrow path plus the four things that fail
 > silently while the site still serves 200s — most of which cost a real adopter an afternoon
-> each (#144, #145, #146).
+> each ([#144](https://github.com/tonioloewald/tosijs-ui/issues/144),
+> [#145](https://github.com/tonioloewald/tosijs-ui/issues/145),
+> [#146](https://github.com/tonioloewald/tosijs-ui/issues/146)).
 
 
 **1. `site.config.ts`** at your repo root:
@@ -103,11 +104,11 @@ process.argv.includes('--build') ? buildSite(config) : devServer(config)
 ```
 
 **4. build-time dependencies.** The build (not your shipped library) needs a few
-tools installed alongside tosijs-ui. They're declared as optional peers, so
-install whichever the build reports missing:
+tools installed alongside tosijs-ui. `marked` is a peer; the rest are optional peers the
+build or the dev server reports when missing (`chokidar` is what the dev server watches with):
 
 ```bash
-bun add -d happy-dom tjs-lang marked
+bun add -d happy-dom tjs-lang marked chokidar
 ```
 
 `happy-dom` powers the theme-stylesheet step (the build runs with no real DOM);
@@ -517,8 +518,8 @@ advisory) are reported so you delete them.
   ships.
 - Prefer the **minimal** fix: a targeted `overrides`/`resolutions` pin to the patched
   version beats a broad `bun update --latest` that churns dozens of transitive deps,
-  each a new supply-chain surface. (This repo's own `flatted` advisory was fixed with
-  a one-line `overrides: { "flatted": ">=3.4.2" }`.)
+  each a new supply-chain surface. (For example, a `flatted` advisory was fixed with a
+  one-line `overrides: { "flatted": ">=3.4.2" }`.)
 - Treat large churn in a "patch" as itself suspicious; review what moved.
 
 **Continuous drift is GitHub's job, not the gate's.** The gate catches advisories at
@@ -1785,8 +1786,8 @@ barrel. If the code is in your markdown you do not need it.
 
 ## Where the code lives
 
-The extraction is **done**: everything below is in `src/doc-system/`, and the build
-half is what `tosijs-ui/site` exports. Nothing here is imported from `bin/` any more.
+Everything below is in `src/doc-system/`, and the build half is what `tosijs-ui/site`
+exports.
 
 | concern                                     | module                                                                   |
 | ------------------------------------------- | ------------------------------------------------------------------------ |
@@ -1806,13 +1807,4 @@ half is what `tosijs-ui/site` exports. Nothing here is imported from `bin/` any 
 | build guards (bundle, output dir, examples) | `site/bundle-guard.ts`, `site/output-guard.ts`, `site/check-examples.ts` |
 | runtime component                           | `src/doc-system/` (ships in the bundle)                                  |
 
-What remains in `bin/` is **not** part of the system — it is this project's own
-wiring, plus one tool that hasn't been generalized:
-
-| file                    | what it is                                                                                                                                                                                                                  |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bin/dev.ts`            | tosijs-ui's own build entry — a thin wrapper over `buildSite`/`devServer` (declarative config in `tosijs-site.config.ts`, imperative prebuild codegen here)                                                                 |
-| `bin/build-book.ts`     | standalone ePub CLI (`bun book`) — a wrapper over the exported `buildEpub`                                                                                                                                                  |
-| `bin/docs.ts`           | **back-compat shim**, re-exports `site/docs.ts`; kept because `package.json#files` ships it and `import … from 'tosijs-ui/bin/docs'` consumers exist                                                                        |
-| `bin/generate-og.ts`    | **not extracted.** Per-page Open Graph cards (`bun run og`). Opt-in and rarely re-run: it needs Playwright, ffmpeg, and a _running_ dev server to screenshot live examples, so it is a manual step, not part of `buildSite` |
-| `bin/make-icon-data.js` | icon codegen (`icons/` → `src/icon-data.ts`); also shipped as the `tosijs-make-icons` bin                                                                                                                                   |
+Icon data is generated by the `tosijs-make-icons` bin (see [make-icon-data](/make-icon-data/)).

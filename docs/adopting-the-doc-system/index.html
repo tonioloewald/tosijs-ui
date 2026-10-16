@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>Adopting the doc system — tosijs-ui</title>
   <meta name="description" content="A first hour with tosijs-ui/site: the minimum that works, how to tell it is actually working, and the four things that fail silently while the site still serves 200s." />
   <link rel="canonical" href="https://ui.tosijs.net/adopting-the-doc-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="adopting-the-doc-system">Adopting the doc system</h1>
 <!--{ "parent": "Documentation System", "order": 10, "description": "A first hour with tosijs-ui/site: the minimum that works, how to tell it is actually working, and the four things that fail silently while the site still serves 200s." }-->
@@ -80,13 +80,13 @@ process<span class="token punctuation">.</span>argv<span class="token punctuatio
 <p>Then <code>bun bin/site.ts</code> to develop and <code>bun bin/site.ts --build</code> to build. The dev server wants
 a local TLS cert the first time — it will tell you to run <code>bunx tosijs-dev-certs</code>.</p>
 <p>Build-time peers, installed when the build says it needs them:
-<code>bun add -d happy-dom tjs-lang marked</code>.</p>
+<code>bun add -d happy-dom tjs-lang marked chokidar</code> (<code>chokidar</code> is what <code>bun start</code> watches with).</p>
 <h2 id="how-to-tell-it-actually-worked">How to tell it actually worked</h2>
 <p>Do this once on your first build. It takes a minute and it is the difference between finding a
 problem now and finding it after you have deployed.</p>
 <ol>
 <li><p><strong>Is the doc system alive?</strong> In the browser console:</p>
-<pre><code class="language-typescript" data-highlighted>customElements<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'tosi-doc-system'</span><span class="token punctuation">)</span> <span class="token comment">// must be truthy</span>
+<pre data-example-mode="static"><code class="language-js" data-highlighted>customElements<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'tosi-doc-system'</span><span class="token punctuation">)</span> <span class="token comment">// must be truthy</span>
 </code></pre>
 <p>If your <em>own</em> element is defined and this one is not, you have the <code>bundleEntry</code> problem
 below. That combination is exactly what makes it confusing — the bundle looks healthy.</p>
@@ -156,19 +156,19 @@ system&#39;s theme and is a white slab in dark mode.</li>
 usually unstyled, because the rules live in a shadow root and there is no component around
 it. It reads as a broken demo.</li>
 </ul>
-<p>Neither fails the build. For illustration rather than execution use <code>typescript</code>, <code>xml</code> for
-markup, and <code>scss</code>/<code>less</code> for styles.</p>
-<p>This page is its own worked example: the verification snippet above was written as <code>```js</code>
-and ran — turning a one-line console check into a live example with an editor. Caught by
-looking at the built output, which is the habit worth forming.</p>
+<p>Neither fails the build. For illustration rather than execution, add <code>:static</code> to the fence
+(<code>```css:static</code>, <code>```html:static</code>): it is highlighted as what it is and never runs.</p>
+<p>This page is its own worked example: the verification snippet above was once a plain <code>```js</code>
+fence and ran, turning a one-line console check into a live example with an editor. It is
+<code>```js:static</code> now. Caught by looking at the built output, which is the habit worth forming.</p>
 <p>If you want CSS that is both real and scoped, write it against the theme variables
 (<code>--tosi-bg</code>, <code>--tosi-text</code>) and scope the selector to your example&#39;s own markup.</p>
 <h3 id="adjacent-fences-are-one-example">Adjacent fences are ONE example</h3>
 <p>Consecutive code blocks merge into a single <code>&lt;tosi-example&gt;</code> with tabs. <strong>Prose between them
 starts a new one.</strong></p>
 <p>So moving a <code>```test</code> block under its own heading silently detaches it from the demo it was
-written against and gives it a second, empty editor. The tests still run; they just no longer
-run against that example&#39;s DOM.</p>
+written against: it becomes an example of its own that shows only its results. The tests still
+run; they just no longer run against that example&#39;s DOM.</p>
 <p>One executable script block per example — <code>js</code>, <code>ts</code> and <code>tjs</code> are the same slot, so
 consecutive ones discard all but the last.</p>
 <h2 id="writing-the-docs-themselves">Writing the docs themselves</h2>
@@ -291,6 +291,6 @@ success. Restart it.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

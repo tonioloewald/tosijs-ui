@@ -1,7 +1,7 @@
 /*#
 # password strength
 
-Just wrap it a `<tosi-password-strength>` element around an `<input>`
+Just wrap a `<tosi-password-strength>` element around an `<input>`
 and it will gauge its content strength as a password. It will also
 let you **securely verify** that the password hasn't been breached.
 

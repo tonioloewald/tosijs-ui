@@ -14,7 +14,7 @@
   ></tosi-lottie>
 </center>
 
-Copyright ©2023-2025 Tonio Loewald
+Copyright ©2023-2026 Tonio Loewald
 
 > **Upgrading from an older version?** `<tosi-code>` changed editors in 1.7.0, and
 > 1.3.0 renamed everything from `xinjs-ui`. Both are covered in
@@ -53,7 +53,7 @@ The `tosijs-ui` iife build bundles `tosijs`, `tosijs-ui`, `marked` and — as of
 **CodeMirror** into a single minified javascript source file. You can access `xinjs` and
 `xinjsui` as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
 
-> **Size (1.15):** ~468KB gzip, up from ~120KB in 1.6. Two things dominate it, and
+> **Size (1.16.21):** ~484KB gzip, up from ~120KB in 1.6. Two things dominate it, and
 > `bun build --format iife` cannot
 > code-split, so `<tosi-code>`'s lazy CodeMirror import is flattened into this bundle
 > whether or not the page uses an editor. **If you don't need `<tosi-code>`, use the ESM

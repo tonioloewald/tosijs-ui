@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -41,11 +41,8 @@ works with no JavaScript and then upgrades itself into the interactive
 <code>&lt;tosi-doc-system&gt;</code> doc browser when the bundle loads.</p>
 <p>The output is a plain folder of static files — drop it on GitHub Pages,
 Firebase Hosting, or any static host.</p>
-<blockquote>
-<p><strong>Status:</strong> shipped. The whole system — build tooling and runtime component —
-lives in <code>src/doc-system/</code> and is importable as <code>tosijs-ui/site</code>. See
-&quot;Where the code lives&quot; at the bottom.</p>
-</blockquote>
+<p>The build half is importable as <code>tosijs-ui/site</code>; the runtime component ships in the
+bundle. <a href="#where-the-code-lives">Where the code lives</a> maps each part to its module.</p>
 <h2 id="what-you-get">What you get</h2>
 <ul>
 <li><strong>One pre-rendered <code>/{slug}/index.html</code> per doc</strong> (README → site root) with
@@ -73,7 +70,9 @@ host preset                      →  .nojekyll / CNAME / firebase.json
 <p><strong>First time?</strong> Read <strong><a href="/adopting-the-doc-system/">Adopting the doc system</a></strong> first. This
 section is the configuration; that one is the narrow path plus the four things that fail
 silently while the site still serves 200s — most of which cost a real adopter an afternoon
-each (#144, #145, #146).</p>
+each (<a href="https://github.com/tonioloewald/tosijs-ui/issues/144">#144</a>,
+<a href="https://github.com/tonioloewald/tosijs-ui/issues/145">#145</a>,
+<a href="https://github.com/tonioloewald/tosijs-ui/issues/146">#146</a>).</p>
 </blockquote>
 <p><strong>1. <code>site.config.ts</code></strong> at your repo root:</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> defineSiteConfig <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
@@ -120,9 +119,9 @@ and &quot;loads as html&quot;. The initial build still runs your steps explicitl
 <span class="token punctuation">}</span>
 </code></pre>
 <p><strong>4. build-time dependencies.</strong> The build (not your shipped library) needs a few
-tools installed alongside tosijs-ui. They&#39;re declared as optional peers, so
-install whichever the build reports missing:</p>
-<pre><code class="language-bash" data-highlighted>bun <span class="token function">add</span> <span class="token parameter variable">-d</span> happy-dom tjs-lang marked
+tools installed alongside tosijs-ui. <code>marked</code> is a peer; the rest are optional peers the
+build or the dev server reports when missing (<code>chokidar</code> is what the dev server watches with):</p>
+<pre><code class="language-bash" data-highlighted>bun <span class="token function">add</span> <span class="token parameter variable">-d</span> happy-dom tjs-lang marked chokidar
 </code></pre>
 <p><code>happy-dom</code> powers the theme-stylesheet step (the build runs with no real DOM);
 <code>tjs-lang</code> transpiles live-examples (vanilla JS via <code>dialect: &#39;js&#39;</code>, plus real
@@ -750,8 +749,8 @@ by the package&#39;s real maintainers — a fresh release is also how a hijacked
 ships.</li>
 <li>Prefer the <strong>minimal</strong> fix: a targeted <code>overrides</code>/<code>resolutions</code> pin to the patched
 version beats a broad <code>bun update --latest</code> that churns dozens of transitive deps,
-each a new supply-chain surface. (This repo&#39;s own <code>flatted</code> advisory was fixed with
-a one-line <code>overrides: { &quot;flatted&quot;: &quot;&gt;=3.4.2&quot; }</code>.)</li>
+each a new supply-chain surface. (For example, a <code>flatted</code> advisory was fixed with a
+one-line <code>overrides: { &quot;flatted&quot;: &quot;&gt;=3.4.2&quot; }</code>.)</li>
 <li>Treat large churn in a &quot;patch&quot; as itself suspicious; review what moved.</li>
 </ul>
 <p><strong>Continuous drift is GitHub&#39;s job, not the gate&#39;s.</strong> The gate catches advisories at
@@ -1943,8 +1942,8 @@ why <code>version.ts</code> and <code>icon-data.ts</code> — both written by to
 ignored by the watcher.</li>
 </ul>
 <h2 id="where-the-code-lives">Where the code lives</h2>
-<p>The extraction is <strong>done</strong>: everything below is in <code>src/doc-system/</code>, and the build
-half is what <code>tosijs-ui/site</code> exports. Nothing here is imported from <code>bin/</code> any more.</p>
+<p>Everything below is in <code>src/doc-system/</code>, and the build half is what <code>tosijs-ui/site</code>
+exports.</p>
 <table>
 <thead>
 <tr>
@@ -2013,36 +2012,7 @@ half is what <code>tosijs-ui/site</code> exports. Nothing here is imported from 
 <td><code>src/doc-system/</code> (ships in the bundle)</td>
 </tr>
 </tbody></table>
-<p>What remains in <code>bin/</code> is <strong>not</strong> part of the system — it is this project&#39;s own
-wiring, plus one tool that hasn&#39;t been generalized:</p>
-<table>
-<thead>
-<tr>
-<th>file</th>
-<th>what it is</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>bin/dev.ts</code></td>
-<td>tosijs-ui&#39;s own build entry — a thin wrapper over <code>buildSite</code>/<code>devServer</code> (declarative config in <code>tosijs-site.config.ts</code>, imperative prebuild codegen here)</td>
-</tr>
-<tr>
-<td><code>bin/build-book.ts</code></td>
-<td>standalone ePub CLI (<code>bun book</code>) — a wrapper over the exported <code>buildEpub</code></td>
-</tr>
-<tr>
-<td><code>bin/docs.ts</code></td>
-<td><strong>back-compat shim</strong>, re-exports <code>site/docs.ts</code>; kept because <code>package.json#files</code> ships it and <code>import … from &#39;tosijs-ui/bin/docs&#39;</code> consumers exist</td>
-</tr>
-<tr>
-<td><code>bin/generate-og.ts</code></td>
-<td><strong>not extracted.</strong> Per-page Open Graph cards (<code>bun run og</code>). Opt-in and rarely re-run: it needs Playwright, ffmpeg, and a <em>running</em> dev server to screenshot live examples, so it is a manual step, not part of <code>buildSite</code></td>
-</tr>
-<tr>
-<td><code>bin/make-icon-data.js</code></td>
-<td>icon codegen (<code>icons/</code> → <code>src/icon-data.ts</code>); also shipped as the <code>tosijs-make-icons</code> bin</td>
-</tr>
-</tbody></table>
+<p>Icon data is generated by the <code>tosijs-make-icons</code> bin (see <a href="/make-icon-data/">make-icon-data</a>).</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -2147,6 +2117,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

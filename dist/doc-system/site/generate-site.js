@@ -15,7 +15,7 @@ import { highlightHtml } from '../highlight.js';
 import { buildSlugMap, pathForSlug, rewriteDocLinks, withBase, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, docDescription, } from '../render.js';
-import { deadInPageAnchors, misconfigured } from './build-warnings.js';
+import { bareNameLinks, deadInPageAnchors, misconfigured, } from './build-warnings.js';
 const escapeAttr = (s) => s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -310,10 +310,15 @@ export async function generateSite(config) {
     // ./generate-css.ts; pages here just <link> to it.
     let count = 0;
     const deadAnchors = [];
+    const bareLinks = [];
     for (const doc of docs) {
         const slug = slugMap[doc.filename];
         const dir = slug === '' ? outputDir : `${outputDir}/${slug}`;
-        const dead = deadInPageAnchors(renderDocMarkdown(doc.text));
+        const rendered = renderDocMarkdown(doc.text);
+        const dead = deadInPageAnchors(rendered);
+        const bare = bareNameLinks(rendered);
+        if (bare.length)
+            bareLinks.push(`    ${doc.path || doc.filename}: ${bare.join(', ')}`);
         if (dead.length)
             deadAnchors.push(`    ${doc.path || doc.filename}: ${dead
                 .map((d) => `#${d}`)
@@ -324,6 +329,11 @@ export async function generateSite(config) {
             await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n');
         }
         count += 1;
+    }
+    if (bareLinks.length) {
+        misconfigured(config.strict, `\n⚠️  Links written as a bare page name. Every page is served at /slug/, so these\n` +
+            `    resolve under the page they are on and reach nothing; write /name/ instead:\n` +
+            `${bareLinks.join('\n')}\n`);
     }
     if (deadAnchors.length) {
         misconfigured(config.strict, `\n⚠️  In-page links that point at nothing on their page. A heading's id is its text,\n` +

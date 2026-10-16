@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>code — tosijs-ui</title>
   <meta name="description" content="A CodeMirror 6 wrapper." />
   <link rel="canonical" href="https://ui.tosijs.net/code-editor/" />
@@ -30,13 +30,13 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="code">code</h1>
 <p>A <a href="https://codemirror.net/">CodeMirror 6</a> wrapper.</p>
 <p>Sometimes, it&#39;s nice to be able to just toss a code-editor in a web-page.</p>
 <p><code>&lt;tosi-code&gt;</code>&#39;s <code>value</code> is the code it contains. Its <code>mode</code> attribute sets the
-language (<code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>css</code>, <code>html</code>, <code>markdown</code>).</p>
+language (<code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>ajs</code>, <code>css</code>, <code>html</code>, <code>markdown</code>).</p>
 <pre><code class="language-html">&lt;tosi-code style=&quot;width: 100%; height: 100%&quot; mode=&quot;css&quot;&gt;
 body {
   box-sizing: border-box;
@@ -121,8 +121,7 @@ codeEl<span class="token punctuation">.</span><span class="token function">showD
 <code>&lt;tosi-code&gt;</code> doesn&#39;t load it. <strong>This is not true of the IIFE</strong> (<code>dist/iife.js</code>) —
 bun&#39;s IIFE format cannot code-split, so CodeMirror is inlined there. That is a
 deliberate trade: the doc-system&#39;s editor (and its save-to-source flow) is the
-point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
-~118KB in 1.6.x.</p>
+point of the IIFE, so it carries the editor; see the README for what the IIFE weighs.</p>
 <h2 id="migrating-from-the-ace-editor-pre-17">Migrating from the ACE editor (pre-1.7)</h2>
 <p>1.7 replaced ACE with CodeMirror 6. <code>value</code>, <code>original</code>/<code>showDiff()</code>, <code>mode</code> and
 <code>disabled</code> are unchanged. Removed (each warns once, then no-ops):</p>
@@ -274,6 +273,6 @@ one exposed.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

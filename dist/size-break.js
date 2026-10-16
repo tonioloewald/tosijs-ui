@@ -3,9 +3,10 @@ const { slot } = elements;
 /*#
 # size-break
 
-While we wait for enough browsers to implement [container-queries](https://www.w3.org/TR/css-contain-3/),
-and in any event when you simply want to do different things at different sizes (e.g. in the project I'm
-working on right now, a row of buttons turns into a menu at narrow widths) there's `<tosi-sizebreak>`.
+`<tosi-sizebreak>` shows different content at different sizes, for example a row of buttons
+that becomes a menu when there is no room for it. [Container
+queries](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_size_and_style_queries)
+can restyle content by size; this swaps the content itself, without CSS.
 
 Note that the sizes referred to are of the `<tosi-sizebreak>`'s `.offsetParent`, and it watches for
 the window's `resize` events and its own (via `ResizeObserver`).

@@ -14,30 +14,47 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>Migrating from older versions — tosijs-ui</title>
-  <meta name="description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0&#39;s tosijs 1.10 typing and sanitize-by-default, 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
+  <meta name="description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.21&#39;s tosijs floor, 1.16.19&#39;s throwing iconSvg, 1.16.17&#39;s tjs-lang 0.14, 1.16.0&#39;s tosijs 1.10 typing and sanitize-by-default, 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
   <link rel="canonical" href="https://ui.tosijs.net/migrating/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="Migrating from older versions — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="Migrating from older versions — tosijs-ui" />
-  <meta property="og:description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0&#39;s tosijs 1.10 typing and sanitize-by-default, 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
+  <meta property="og:description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.21&#39;s tosijs floor, 1.16.19&#39;s throwing iconSvg, 1.16.17&#39;s tjs-lang 0.14, 1.16.0&#39;s tosijs 1.10 typing and sanitize-by-default, 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
   <meta property="og:url" content="https://ui.tosijs.net/migrating/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.21's tosijs floor, 1.16.19's throwing iconSvg, 1.16.17's tjs-lang 0.14, 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="migrating-from-older-versions">Migrating from older versions</h1>
-<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.21's tosijs floor, 1.16.19's throwing iconSvg, 1.16.17's tjs-lang 0.14, 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
 <p>Notices for releases you may be upgrading <em>past</em>. If you are starting fresh, none of
 this applies — go to the <a href="/">Quick Start</a> instead.</p>
 <p>Current releases are described in <a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<h2 id="tosijs-1109--11621">tosijs <code>^1.10.9</code> — 1.16.21</h2>
+<p>tosijs-ui now needs <strong>tosijs <code>^1.10.9</code></strong>; upgrade it alongside. <code>&lt;tosi-table&gt;</code> relies on that
+release to keep a row in place when its detail opens or closes. On an older tosijs the row
+jumps, with nothing in the console to say why. <code>dist/iife.js</code> already includes 1.10.9.</p>
+<h2 id="iconsvg-throws-for-a-name-it-cannot-draw-as-one-svg--11619"><code>iconSvg()</code> throws for a name it cannot draw as one SVG — 1.16.19</h2>
+<p>A stack (<code>tosi$hat</code>), a composition rule (<code>unLock</code>, <code>spin90Loader</code>), a style suffix other
+than rotation or flip (<code>check50o</code>), a redirect to a missing icon, or a redirect cycle used to
+return <code>undefined</code>. Each now <strong>throws</strong>, naming the problem. A name nothing would draw still
+returns <code>undefined</code>. Code that relied on <code>undefined</code> for those names should catch, or draw them
+with <code>icons.&lt;name&gt;()</code> where there is a DOM.</p>
+<h2 id="tjs-examples-compile-with-tjs-lang-014--11617"><code>tjs</code> examples compile with tjs-lang 0.14 — 1.16.17</h2>
+<p>Sites that load tjs-lang from the CDN (no copy of their own installed) now get
+<strong>0.14.0-rc.5</strong>. It refuses some code 0.13 accepted, among others <code>||</code> in a type (a union is
+<code>|</code>), <code>unsafe var</code> and <code>unsafe eval</code>; tjs-lang&#39;s
+<a href="https://github.com/tonioloewald/tjs-lang/blob/main/CHANGELOG.md">changelog</a> lists them. Fix
+the example, or install <code>tjs-lang@0.13.13</code> in your project: the build ships the installed copy
+with your pages and they prefer it to the CDN.</p>
 <h2 id="tosi-md-sanitizes-by-default--1160"><code>&lt;tosi-md&gt;</code> sanitizes by default — 1.16.0</h2>
 <p>A <code>&lt;tosi-md&gt;</code> with no <code>sanitize</code> attribute now strips executable content from the rendered
 markdown, and <strong>unwraps custom elements</strong> (their content stays, the element goes). 1.15.3 logged a
@@ -125,12 +142,14 @@ Since 1.11.0 also floors <code>tosijs-schema</code> at <code>^1.8.0</code>, stay
 upstream author deprecated it over.</p>
 </blockquote>
 <h2 id="edit-links-are-shorter-and-shorter-lived--1110">Edit links are shorter and shorter-lived — 1.11.0</h2>
-<p>Only affects <code>tosijs-ui/site</code> users running <code>bun run tunnel</code>. The token is now <strong>7 Crockford
+<p>Only affects <code>tosijs-ui/site</code> users running the <code>tosijs-tunnel</code> bin. The token is now <strong>7 Crockford
 base32 characters</strong> instead of 22, and <code>linkTtlMinutes</code> defaults to <strong>5</strong> rather than 15. A
 link minted by an older dev server is not redeemable by a newer one; both live in memory, so
 this only matters across a restart mid-session.</p>
 <p>The token is case-insensitive and forgives the lookalikes — <code>I</code>/<code>L</code> read as <code>1</code>, <code>O</code> as <code>0</code>,
 hyphens ignored — because it is meant to be read off one screen and typed on another.</p>
+<p><strong>Changed again in 1.14.0:</strong> the token is now eight letters with no digits. See
+<a href="/doc-site-system/#the-token-is-eight-letters-and-you-can-type-it">the token is eight letters</a>.</p>
 <h2 id="cannot-find-module-under-node--fixed-in-191"><code>Cannot find module</code> under Node — fixed in 1.9.1</h2>
 <p>If an import of <code>tosijs-ui</code> (any entry point) fails under <strong>Node</strong> with something like:</p>
 <pre><code class="language-text" data-highlighted>Cannot find module '.../dist/doc-system/site/site-config'
@@ -172,8 +191,8 @@ causes:</p>
 <h2 id="️-breaking-change-in-170--tosi-code-ace--codemirror-6">⚠️ Breaking change in 1.7.0 — <code>&lt;tosi-code&gt;</code> (ACE → CodeMirror 6)</h2>
 <p><strong>1.7.0 is a breaking release shipping under a minor version, deliberately.</strong> <code>&lt;tosi-code&gt;</code>
 moved from ACE to CodeMirror 6. <code>value</code>, <code>mode</code>, the <code>change</code> event, <code>disabled</code>, and
-<code>undo</code>/<code>redo</code> are unchanged; the ACE-era <strong><code>theme</code></strong> and <strong><code>options</code></strong> props are <strong>removed</strong> with
-no shim. Dark mode is now automatic (<code>body.darkmode</code>) and styling comes from <code>--code-bg</code> /
+<code>undo</code>/<code>redo</code> are unchanged; the ACE-era <strong><code>theme</code></strong> and <strong><code>options</code></strong> props are <strong>removed</strong>: setting
+one warns once and does nothing. Dark mode is now automatic (<code>body.darkmode</code>) and styling comes from <code>--code-bg</code> /
 <code>--text-color</code>. The <code>2.0</code> name is reserved for the tjs-native tosijs port, so this ships as
 1.7.0 — <strong>pin <code>tosijs-ui@1.6</code> to defer.</strong> Full detail and rationale in
 <a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
@@ -306,6 +325,6 @@ be removed in a future major version.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

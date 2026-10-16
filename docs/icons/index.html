@@ -14,23 +14,23 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1ee0da67fe06" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=e9c74dce1b7f" data-tosi-doc-system />
   <title>icons — tosijs-ui</title>
-  <meta name="description" content="Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an &lt;svg&gt; element containing a downward-pointing…" />
+  <meta name="description" content="Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an &lt;svg&gt; element (class tosi-icon) containing a" />
   <link rel="canonical" href="https://ui.tosijs.net/icons/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="icons — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="icons — tosijs-ui" />
-  <meta property="og:description" content="Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an &lt;svg&gt; element containing a downward-pointing…" />
+  <meta property="og:description" content="Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an &lt;svg&gt; element (class tosi-icon) containing a" />
   <meta property="og:url" content="https://ui.tosijs.net/icons/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"icons","description":"Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an \u003csvg> element containing a downward-pointing…","url":"https://ui.tosijs.net/icons/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"icons","description":"Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an \u003csvg> element (class tosi-icon) containing a","url":"https://ui.tosijs.net/icons/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fae8ffba925d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=56ffa09c18af" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="icons">icons</h1>
 <div class="center" style="display: flex; gap: 10px; padding: 10px">
@@ -40,8 +40,8 @@
 </div>
 
 <p><code>icons</code> is a proxy that generates an <code>ElementCreator</code> for a given icon on demand,
-e.g. <code>icons.chevronDown()</code> produces an <code>&lt;svg&gt;</code> element containing a downward-pointing chevron
-icon with the class <code>icon-chevron-down</code>.</p>
+e.g. <code>icons.chevronDown()</code> produces an <code>&lt;svg&gt;</code> element (class <code>tosi-icon</code>) containing a
+downward-pointing chevron.</p>
 <p>Most of the built-in icons come from <a href="https://feathericons.com">Feather</a>. If you want more
 icons in the same style, <a href="https://lucide.dev">lucide</a> is a fork and expansion of Feather and a
 great place to start: its SVGs drop straight into <code>defineIcons()</code> (see
@@ -226,11 +226,11 @@ test(&#39;filter input and prefix select exist&#39;, () =&gt; {
   expect(preview.querySelector(&#39;select&#39;)).toBeTruthy()
 })
 </code></pre>
-<p>These icons are completely unstyled and can be colored using the css <code>fill</code> property. This will
-probably be broken out as a standalone library to allow the use of whatever icons you like
-(its source data is currently generated from an <a href="https://icomoon.com/app">icomoon</a>
-<code>selection.json</code> file, but could just as easily be generated from a directory full of SVGs).</p>
-<h3 id="need-more-icons">Need More Icons?</h3>
+<p>Icons take their colour from the text around them (<code>currentColor</code>). Override fill and stroke
+with <code>--tosi-icon-fill</code> and <code>--tosi-icon-stroke</code>, or per icon with the <code>F</code> and <code>S</code> suffixes
+(see <a href="#icon-modifier-suffixes">Icon modifier suffixes</a>). The icon data is generated from a
+directory of SVGs (see <a href="#building-icon-data">Building icon data</a>).</p>
+<h2 id="need-more-icons">Need More Icons?</h2>
 <p><a href="https://lucide.dev">lucide</a> is a fork and expansion of feather that maintains the style and
 adds a lot more options. Obviously it&#39;s completely compatible with this icon system and generously licensed. A
 good place to find more icons in a pinch.</p>
@@ -636,6 +636,6 @@ copies or substantial portions of the Software.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-c3stawjc.js"></script>
+  <script type="module" src="../hydrate-vdpr0k43.js"></script>
 </body>
 </html>

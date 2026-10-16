@@ -52,13 +52,11 @@ preview.addEventListener('change', event => console.log(event))
   background: transparent;
   box-shadow: none;
 }
-
-.previw button
 ```
 
 ## Snapping
 
-When `EditableRect.snapToGrid === true` or the shift-key is depresseed, position will snap to `EditableRect.gridSize` pixels (default = 8).
+When `EditableRect.snapToGrid === true` or the shift-key is depressed, position will snap to `EditableRect.gridSize` pixels (default = 8).
 
 Similarly `EditableRect.snapAngle === true` or the shift-key will snap rotation to increments of `EditableRect.angleSize` degrees (default = 15).
 
