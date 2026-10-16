@@ -44,8 +44,11 @@ test('client-side navigation keeps highlighting — hydration must not lose toke
     'the build-time pass should have highlighted this page'
   ).toBeGreaterThan(50)
 
-  // Click through to another doc, in-page.
-  const away = page.locator('.doc-nav a', { hasText: 'icons' }).first()
+  // Click through to another doc, in-page: a sibling in this page's own nav section, which is
+  // open because the current page is in it (a link inside a collapsed section is hidden).
+  const away = page
+    .locator('.doc-nav a', { hasText: 'Adopting the doc system' })
+    .first()
   await away.click()
   await page.waitForFunction(
     () => !location.pathname.includes('doc-site-system'),
