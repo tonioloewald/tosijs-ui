@@ -24,6 +24,8 @@ import {
   SLOW_AFTER_FAILURES,
   isSameOriginRequest,
   sourceRequestAdmission,
+  suggestsTrustLan,
+  trustLanWriteRecord,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -1353,4 +1355,51 @@ describe('sourceRequestAdmission', () => {
       )
     ).toBe(null)
   })
+})
+
+test('a mapped loopback is loopback, and no peer is never LAN trust', () => {
+  const auth = createAuthState()
+  const req = new Request('https://mac.local:8787/__docstore/source', {
+    method: 'POST',
+  })
+  const opts = { viaTunnel: false, auth, now: NOW, trustLan: true }
+  expect(
+    sourceRequestAdmission(req, { ...opts, peer: '::ffff:127.0.0.1' })
+  ).toBe('loopback')
+  expect(sourceRequestAdmission(req, { ...opts, peer: undefined })).toBe(null)
+  expect(sourceRequestAdmission(req, { ...opts, peer: null })).toBe(null)
+})
+
+test('trustLan is suggested only to a direct LAN device, and only while off', () => {
+  const lan = {
+    viaTunnel: false,
+    peer: '192.168.1.20',
+    proxied: false,
+    trustLan: false,
+  }
+  expect(suggestsTrustLan(lan)).toBe(true)
+  expect(suggestsTrustLan({ ...lan, trustLan: true })).toBe(false)
+  expect(suggestsTrustLan({ ...lan, viaTunnel: true })).toBe(false)
+  expect(suggestsTrustLan({ ...lan, proxied: true })).toBe(false)
+  expect(suggestsTrustLan({ ...lan, peer: '203.0.113.9' })).toBe(false)
+  expect(suggestsTrustLan({ ...lan, peer: undefined })).toBe(false)
+})
+
+test('a trustLan write is logged with its outcome, and its file name cannot forge a line', () => {
+  expect(trustLanWriteRecord('192.168.1.20', 'src/docs/a.md', 200)).toBe(
+    '✎ trustLan: 192.168.1.20 saved "src/docs/a.md"'
+  )
+  expect(trustLanWriteRecord('192.168.1.20', 'x.md', 403)).toBe(
+    '✎ trustLan: 192.168.1.20 refused (403) "x.md"'
+  )
+  const forged = trustLanWriteRecord(
+    '192.168.1.20',
+    'a.md\n✎ fake\u001b[2K',
+    200
+  )
+  expect(forged).not.toContain('\n')
+  expect(forged).not.toContain('\u001b')
+  expect(trustLanWriteRecord(undefined, 42, 400)).toBe(
+    '✎ trustLan: unknown refused (400) (no file)'
+  )
 })

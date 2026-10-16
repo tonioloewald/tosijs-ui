@@ -2,22 +2,45 @@
 May this page save a live example back to its source file?
 
 On localhost, yes: the dev server admits loopback. Anywhere else the answer is the server's,
-not the hostname's. A LAN device under `trustLan` and a tunnel visitor with an edit session
-may save; a deployed static site has no endpoint. So ask once, with the read the save itself
-would make, and believe only an answer that carries the dev server's own header: a static
-host that rewrites every path to index.html also answers 200.
+not the hostname's: a LAN device under `trustLan` and a tunnel visitor with an edit session may
+save. The dev server marks the pages it serves with `editableSources` on
+(`SOURCE_ENDPOINT_SNIPPET`), so only those pages ask, and a deployed static site, which has no
+endpoint, never gets the request. The ask is a HEAD of the read the save itself would make,
+and only an answer carrying the dev server's own header counts.
+
+Cached per file, because the server's allow-list is per file.
 */
 /** Set on a source read the dev server admitted; nothing else sends it. */
 export const SOURCE_ACCESS_HEADER = 'x-tosijs-source';
-let probe = null;
-/** Whether `/__docstore/source` admits this page, asked at most once per page. */
+/** Injected by the dev server into pages it serves with `editableSources` on. */
+export const SOURCE_ENDPOINT_SNIPPET = '<script>window.__tosiSourceEndpoint=true</script>';
+const answers = new Map();
+const known = new Map();
+/** Whether the page was served by a dev server with a source endpoint. */
+export const hasSourceEndpoint = () => typeof window !== 'undefined' &&
+    window.__tosiSourceEndpoint === true;
+/** Whether `/__docstore/source` admits this page for `file`, asked once per file. */
 export function sourceAccess(file, fetcher = fetch) {
-    probe ??= fetcher(`/__docstore/source?file=${encodeURIComponent(file)}`)
-        .then((response) => response.ok && response.headers.get(SOURCE_ACCESS_HEADER) === 'editable')
-        .catch(() => false);
-    return probe;
+    let answer = answers.get(file);
+    if (!answer) {
+        answer = fetcher(`/__docstore/source?file=${encodeURIComponent(file)}`, {
+            method: 'HEAD',
+        })
+            .then((response) => response.ok &&
+            response.headers.get(SOURCE_ACCESS_HEADER) === 'editable')
+            .catch(() => false)
+            .then((ok) => {
+            known.set(file, ok);
+            return ok;
+        });
+        answers.set(file, answer);
+    }
+    return answer;
 }
-/** Forget the answer (tests). */
+/** The answer for `file` if it has arrived; false until then. */
+export const sourceWritable = (file) => known.get(file) === true;
+/** Forget every answer (tests). */
 export function resetSourceAccess() {
-    probe = null;
+    answers.clear();
+    known.clear();
 }

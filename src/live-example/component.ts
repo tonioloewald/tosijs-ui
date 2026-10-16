@@ -797,7 +797,11 @@ import {
 } from './example-store.js'
 import { liveExampleStyleSpec } from './styles.js'
 import { runTests, TestResults } from './test-harness.js'
-import { sourceAccess } from './source-access.js'
+import {
+  hasSourceEndpoint,
+  sourceAccess,
+  sourceWritable,
+} from './source-access.js'
 
 const { div, tosiSlot, style, button, pre, span, label, input, textarea } =
   elements
@@ -904,9 +908,6 @@ const isLocalhost =
   typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1')
-
-// Set once the dev server has admitted this page's source reads (source-access.ts).
-let sourceWritable = false
 
 function getStoredTestsEnabled(): boolean {
   if (typeof localStorage === 'undefined') return false
@@ -2721,6 +2722,13 @@ export class LiveExample extends withAttributes({
     const { sources } = this.parts
     this.initFromElements([...sources.children] as HTMLElement[])
 
+    // Off localhost, ask now whether Save to source may be offered, so the menu has the
+    // answer by the time it opens. Only a dev server with a source endpoint is asked.
+    const sourceFile = this.getAttribute('data-source-file')
+    if (!isLocalhost && sourceFile && hasSourceEndpoint()) {
+      void sourceAccess(sourceFile)
+    }
+
     // Set up remote sync
     this.remoteSync = new RemoteSyncManager(
       this.storageKey,
@@ -2995,17 +3003,8 @@ export class LiveExample extends withAttributes({
 
   sourceMenu = (event: Event) => {
     const key = this.localEditKey()
-    /*
-    Off localhost, Save to source is offered when the dev server admits this page (trustLan,
-    or a tunnel edit session). The first menu opens before the answer arrives; Save is
-    disabled until there are edits anyway, and the next open has it.
-    */
+    // Off localhost, Save to source follows the dev server's answer (asked on connect).
     const sourceFile = this.getAttribute('data-source-file')
-    if (!isLocalhost && sourceFile && !sourceWritable) {
-      void sourceAccess(sourceFile).then((ok) => {
-        sourceWritable = ok
-      })
-    }
     const hasEdits = () => this.hasLocalEdits()
     // View changes / Revert need the source snapshot, which only the page-embedded
     // example has — the pop-out editor window has no originalCode to compare to.
@@ -3075,7 +3074,8 @@ export class LiveExample extends withAttributes({
               },
             ]
           : []),
-        ...(key && (isLocalhost || sourceWritable)
+        ...(key &&
+        (isLocalhost || (sourceFile != null && sourceWritable(sourceFile)))
           ? [
               {
                 icon: 'upload',

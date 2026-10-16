@@ -13,6 +13,7 @@ import {
   defineIcons,
   resolveIcon,
   wrapIcon,
+  iconRules,
 } from './icons.js'
 import iconData from './icon-data.js'
 
@@ -387,6 +388,29 @@ describe('icons', () => {
         const icon = icons[name]()
         expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
         expect(icon.querySelectorAll('svg').length).toBe(3)
+      }
+    })
+
+    test('chaining is bounded: a hostile name is cheap, and a prefix that matches nothing ends', () => {
+      const warn = console.warn
+      console.warn = () => {}
+      try {
+        const start = performance.now()
+        icons['un'.repeat(2000) + 'Lock']()
+        expect(performance.now() - start).toBeLessThan(250)
+        iconRules.push({
+          prefix: /^(?:testBig)?/,
+          apply: (base) => `${base}50s`,
+        })
+        try {
+          expect(() => icons.testNoSuchIcon()).not.toThrow()
+          // The rule still applies where it shortens the name.
+          expect(icons.testBigLock().style.transform).toContain('scale(0.5)')
+        } finally {
+          iconRules.pop()
+        }
+      } finally {
+        console.warn = warn
       }
     })
 

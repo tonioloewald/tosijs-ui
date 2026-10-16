@@ -46,11 +46,15 @@ import {
   sessionRejection,
   mayDriveWithAgent,
   isProxiedRequest,
-  isPrivateNetworkAddress,
   sourceRequestAdmission,
+  suggestsTrustLan,
+  trustLanWriteRecord,
   SESSION_COOKIE,
 } from './dev-auth.js'
-import { SOURCE_ACCESS_HEADER } from '../../live-example/source-access.js'
+import {
+  SOURCE_ACCESS_HEADER,
+  SOURCE_ENDPOINT_SNIPPET,
+} from '../../live-example/source-access.js'
 
 /**
  * Every path the dev server watches for changes.
@@ -1247,7 +1251,11 @@ export async function devServer(
         : ''
       : HALTIJA_SNIPPET
     const extras =
-      haltijaExtra + (testMode ? '' : statusSnippet(request, viaTunnel))
+      haltijaExtra +
+      (testMode ? '' : statusSnippet(request, viaTunnel)) +
+      // Tells a live example there is a source endpoint to ask (source-access.ts), so a
+      // deployed static site, which has none, is never asked.
+      (config.editableSources ? SOURCE_ENDPOINT_SNIPPET : '')
     const encoding = negotiateEncoding(
       request?.headers.get('accept-encoding') ?? null
     )
@@ -2192,39 +2200,54 @@ export async function devServer(
         now: Date.now(),
       })
       if (admission === null) {
-        // Suggest trustLan only to a direct device on a private network, the one case it
-        // would admit; anyone else is pointed at an edit link.
-        const lanDevice =
-          !viaTunnel &&
-          !isProxiedRequest(request.headers) &&
-          isPrivateNetworkAddress(peer)
-        console.warn(
-          `⚠️  refused ${request.method} /__docstore/source from ${
-            peer ?? 'unknown'
-          } — ` +
-            `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
-            `${
-              lanDevice && !config.trustLan
-                ? '; trustLan: true in the site config admits devices on this network'
-                : ''
-            }).`
-        )
+        // A HEAD is a page asking whether it may offer Save to source; a no is not news.
+        if (request.method !== 'HEAD') {
+          console.warn(
+            `⚠️  refused ${request.method} /__docstore/source from ${
+              peer ?? 'unknown'
+            } — ` +
+              `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
+              `${
+                suggestsTrustLan({
+                  viaTunnel,
+                  peer,
+                  proxied: isProxiedRequest(request.headers),
+                  trustLan: config.trustLan === true,
+                })
+                  ? '; trustLan: true in the site config admits devices on this network'
+                  : ''
+              }).`
+          )
+        }
         return new Response('not authorized to edit source', {
           status: 403,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         })
       }
-      // A write admitted only by LAN trust is recorded, so it is never silent (#3346).
-      if (admission === 'lan' && request.method === 'POST') {
-        const file = await request
-          .clone()
-          .json()
-          .then((body: { file?: unknown }) => String(body?.file ?? '?'))
-          .catch(() => '?')
-        console.log(`✎ trustLan: ${peer} is saving ${file}`)
-      }
       if (request.method === 'GET') return handleReadSource(request)
-      if (request.method === 'POST') return handleWriteSource(request)
+      if (request.method === 'HEAD') {
+        const read = await handleReadSource(request)
+        return new Response(null, {
+          status: read.status,
+          headers: read.headers,
+        })
+      }
+      if (request.method === 'POST') {
+        // A write admitted only by LAN trust is recorded with its outcome (#3346).
+        const file =
+          admission === 'lan'
+            ? await request
+                .clone()
+                .json()
+                .then((body: { file?: unknown }) => body?.file)
+                .catch(() => undefined)
+            : undefined
+        const response = await handleWriteSource(request)
+        if (admission === 'lan') {
+          console.log(trustLanWriteRecord(peer, file, response.status))
+        }
+        return response
+      }
       return new Response('method not allowed', { status: 405 })
     }
 

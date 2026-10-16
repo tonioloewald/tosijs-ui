@@ -318,6 +318,22 @@ export declare function sourceRequestAdmission(request: {
     now: number;
 }): 'loopback' | 'lan' | 'session' | null;
 /**
+ * Whether to tell a refused source request about `trustLan`: only a direct, unproxied device on
+ * a private network, the one case turning it on would admit, and only while it is off. Anyone
+ * else is pointed at an edit link, which is what would help them.
+ */
+export declare function suggestsTrustLan(opts: {
+    viaTunnel: boolean;
+    peer?: string | null;
+    proxied: boolean;
+    trustLan: boolean;
+}): boolean;
+/**
+ * The log line for a source write admitted only by `trustLan`. The file name is the client's,
+ * so it is quoted as JSON: a newline or an escape sequence in it cannot forge a log line.
+ */
+export declare function trustLanWriteRecord(peer: string | null | undefined, file: unknown, status: number): string;
+/**
  * May the holder of this session token write?
  *
  * `true` for an unknown token as well as a full one — this answers only "is this session

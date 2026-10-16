@@ -90,3 +90,49 @@ test('off localhost, turning tests on runs the page showing now', async ({
     await browser.close()
   }
 })
+
+/*
+Save to source off localhost follows the dev server, not the hostname (#3346). A made-up
+hostname still reaches the server from loopback, which it admits, so a live example must offer
+Save to source here, as it would to a LAN device under trustLan or a tunnel edit session. This
+covers the server half too: the page marker, the HEAD route and its header.
+*/
+test('off localhost, a live example offers Save to source when the server admits the page', async ({
+  baseURL,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'host mapping is a Chromium flag')
+  const origin = baseURL!.replace('localhost', HOST)
+  const browser = await chromium.launch({
+    args: [
+      `--host-resolver-rules=MAP ${HOST} 127.0.0.1`,
+      '--ignore-certificate-errors',
+    ],
+  })
+  try {
+    const page = await browser.newPage({ ignoreHTTPSErrors: true })
+    await page.goto(`${origin}/rating/`)
+    const example = page.locator('tosi-example[data-source-file]').first()
+    await example.waitFor({ state: 'attached', timeout: 10_000 })
+    expect(
+      await page.evaluate(() => (window as any).__tosiSourceEndpoint)
+    ).toBe(true)
+    const file = await example.getAttribute('data-source-file')
+    const head = await page.evaluate(async (f) => {
+      const r = await fetch(
+        `/__docstore/source?file=${encodeURIComponent(f!)}`,
+        { method: 'HEAD' }
+      )
+      return { status: r.status, header: r.headers.get('x-tosijs-source') }
+    }, file)
+    expect(head).toEqual({ status: 200, header: 'editable' })
+
+    await example.evaluate((e: any) => e.showCode())
+    await page.locator('button.source-menu').first().click({ timeout: 10_000 })
+    await expect(
+      page.locator('tosi-menu, .tosi-menu').getByText('Save to source')
+    ).toBeVisible()
+  } finally {
+    await browser.close()
+  }
+})

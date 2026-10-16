@@ -690,6 +690,26 @@ export function sourceRequestAdmission(request, opts) {
     return isLoopbackAddressForAuth(opts.peer) ? 'loopback' : 'lan';
 }
 /**
+ * Whether to tell a refused source request about `trustLan`: only a direct, unproxied device on
+ * a private network, the one case turning it on would admit, and only while it is off. Anyone
+ * else is pointed at an edit link, which is what would help them.
+ */
+export function suggestsTrustLan(opts) {
+    return (!opts.trustLan &&
+        !opts.viaTunnel &&
+        !opts.proxied &&
+        isPrivateNetworkAddress(opts.peer));
+}
+/**
+ * The log line for a source write admitted only by `trustLan`. The file name is the client's,
+ * so it is quoted as JSON: a newline or an escape sequence in it cannot forge a log line.
+ */
+export function trustLanWriteRecord(peer, file, status) {
+    const name = typeof file === 'string' ? JSON.stringify(file) : '(no file)';
+    const outcome = status >= 200 && status < 300 ? 'saved' : `refused (${status})`;
+    return `✎ trustLan: ${peer ?? 'unknown'} ${outcome} ${name}`;
+}
+/**
  * May the holder of this session token write?
  *
  * `true` for an unknown token as well as a full one — this answers only "is this session

@@ -92,13 +92,21 @@ export function matchRule(rule, name) {
         match: rule.prefix,
     };
 }
-/**
- * Whether some rule would draw `name`: it matches, and what it applies to draws, which may be
- * another rule (`un:check:square`, `unCheckLock`). Each step strips a prefix, so it ends.
- */
-export const ruleDraws = (name) => iconRules.some((rule) => {
-    const matched = matchRule(rule, name);
-    return matched != null && drawable(matched.baseName);
-});
-/** A registered icon, suffixes on one, or a rule that draws (so rules chain). */
-export const drawable = (name) => canResolve(name) || ruleDraws(name);
+/*
+How deep rules may chain. Real composites need two (`un:check:square`); the bound is what keeps a
+hostile name cheap. Unbounded, `'un'.repeat(400) + 'Lock'` took over a second, because every
+level asks every rule again (1.16.24 review), and a custom prefix that can match nothing
+(`/^(?:big)?/`) never shortened the name and overflowed the stack.
+*/
+const MAX_RULE_DEPTH = 4;
+/** Whether some rule would draw `name`: it matches, and what it applies to draws (rules chain). */
+export const ruleDraws = (name, depth = 0) => depth < MAX_RULE_DEPTH &&
+    iconRules.some((rule) => {
+        const matched = matchRule(rule, name);
+        return (matched != null &&
+            // A rule must shorten the name, or it is not applying to anything.
+            matched.baseName.length < name.length &&
+            drawable(matched.baseName, depth + 1));
+    });
+/** A registered icon, suffixes on one, or a rule that draws (`un:check:square`, `unCheckLock`). */
+export const drawable = (name, depth = 0) => canResolve(name) || ruleDraws(name, depth);

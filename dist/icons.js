@@ -786,8 +786,11 @@ export function wrapIcon(prop, parts, ...children) {
 function composeIcon(prop, parts) {
     for (const rule of iconRules) {
         const matched = matchRule(rule, prop);
-        // Only apply if baseName draws: an icon, or another rule (`un:check:square`)
-        if (!matched || !drawable(matched.baseName))
+        // Only apply if baseName draws (an icon, or another rule: `un:check:square`), and the
+        // rule shortened the name: a prefix that matched nothing is not applying to anything.
+        if (!matched ||
+            matched.baseName.length >= prop.length ||
+            !drawable(matched.baseName))
             continue;
         const result = rule.apply(safeIconSuffix(matched.baseName), matched.match, parts);
         if (typeof result === 'string')

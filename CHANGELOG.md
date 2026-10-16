@@ -2,25 +2,33 @@
 
 ## 1.16.24
 
+`dist/iife.js` grows by about 0.2 kB gzip.
+
 - **Composition rules chain.** A rule may apply to another rule, so `un:check:square` slashes
   the checked square, and `unCheckLock` draws instead of the placeholder. `iconSvg` reports a
-  chained rule as needing the renderer, as it does any rule.
+  chained rule as needing the renderer, as it does any rule. Chains stop at four rules deep,
+  which keeps a hostile icon name cheap to resolve, and a custom rule whose prefix can match
+  nothing no longer recurses. `defineIcons` may now warn about a new name that reads as a
+  chain (`unCheckFoo`); it is a warning, and your definition still wins.
 - **The icon composition demo shows the bracket form.** It printed `icons.check:square()`,
   which is not JavaScript; a name with a `:` now shows as `icons['check:square']()`.
 - **Prettier never formats SVG files.** `*.svg` is in `.prettierignore` and a `requirePragma`
   override, and `tosijs-format` excludes it on the command line as it does markdown. Prettier
   has no SVG parser of its own, but an editor association or a plugin such as
   `prettier-plugin-xml` would reflow a drawing tool's export. Adopters using `tosijs-format`
-  get the command-line exclusion; add the same two lines to your own config to cover editors.
+  get the command-line exclusion. To cover editors too, add `*.svg` to `.prettierignore` and
+  `{ "files": ["*.svg"], "options": { "requirePragma": true } }` to your Prettier `overrides`.
 
 ### Dev-server access
 
 - **A live example's "Save to source" is offered wherever the dev server admits the page**:
   a LAN device under `trustLan`, or a tunnel visitor with an edit session, not only
-  `localhost`. The page asks once, and believes only a response carrying the dev server's
-  own header, so a static host that answers every path with `index.html` does not count.
-- **Every source write admitted by `trustLan` is logged** with the device's address and the
-  file.
+  `localhost`. The dev server marks the pages it serves with `editableSources` on, and an
+  example on such a page asks with a `HEAD` request when it connects, once per source file; it
+  believes only an answer carrying the dev server's own header. A deployed static site is never
+  asked.
+- **Every source write admitted by `trustLan` is logged** with the device's address, the file
+  (quoted, so a crafted name cannot forge a log line) and whether it was saved.
 - **The dev server suggests `trustLan` only to a refused device on a private network**, the
   one case it would admit; anyone else is pointed at an edit link.
 

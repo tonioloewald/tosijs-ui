@@ -32,10 +32,7 @@ export declare function matchRule(rule: IconRule, name: string): {
     baseName: string;
     match: RegExpMatchArray | string;
 } | null;
-/**
- * Whether some rule would draw `name`: it matches, and what it applies to draws, which may be
- * another rule (`un:check:square`, `unCheckLock`). Each step strips a prefix, so it ends.
- */
-export declare const ruleDraws: (name: string) => boolean;
-/** A registered icon, suffixes on one, or a rule that draws (so rules chain). */
-export declare const drawable: (name: string) => boolean;
+/** Whether some rule would draw `name`: it matches, and what it applies to draws (rules chain). */
+export declare const ruleDraws: (name: string, depth?: number) => boolean;
+/** A registered icon, suffixes on one, or a rule that draws (`un:check:square`, `unCheckLock`). */
+export declare const drawable: (name: string, depth?: number) => boolean;
