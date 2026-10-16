@@ -21,7 +21,13 @@ export declare function canResolve(name: string): boolean;
  */
 export declare const spinRule: IconRule;
 export declare const iconRules: IconRule[];
-/** The icon a rule would apply to in `name`, or null if the rule does not match it. */
+/**
+ * The icon a rule would apply to in `name`, or null if the rule does not match it.
+ *
+ * A `:` makes the boundary explicit: `check:box` is the `check` rule applied to `box`, with
+ * no camelCase guess, so it never reads as an icon called `checkBox`. Everything before the
+ * first `:` must be the whole prefix (`spin90:loader`, `un:lock`).
+ */
 export declare function matchRule(rule: IconRule, name: string): {
     baseName: string;
     match: RegExpMatchArray | string;

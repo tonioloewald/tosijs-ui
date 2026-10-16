@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=4be44a5873ea" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=27a93d67b944" data-tosi-doc-system />
   <title>Icon Composition — tosijs-ui</title>
   <meta name="description" content="Toy for playing with the icon composition language introduced in tosijs-ui 1.5.10. It&#39;s documented here." />
   <link rel="canonical" href="https://ui.tosijs.net/icon-composition/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=1038aee65203" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=9a9759f90ee2" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1 id="icon-composition">Icon Composition</h1>
 <!--{ "parent": "icons", "order": 10 }-->
@@ -85,6 +85,8 @@ const ideas = [
   &#39;get sick:plus_f00S50s4W_25x_20y$truck&#39;,
   &#39;get well:plus_f00S50s4W25x_20y$truck0f&#39;,
   &#39;write a rule for unLock:slash25o$lock75s&#39;,
+  &#39;checkSquare is an icon:checkSquare&#39;,
+  &#39;check:square is the rule:check:square&#39;,
   &#39;un flip pin is unPin0f:unPin0f&#39;,
   &#39;and:earth&#39;,
   &#39;it:earth150s75o&#39;,
@@ -96,18 +98,10 @@ const ideas = [
   &#39;reach for the stars:mousePointer30x30y50s_fffF$spin_120Star120s_0000S_f00F$spin90Star48r130s_0000S_fffF$spin180Star24r140s_0000S_00fF&#39;,
   &#39;Love tosijs-ui:tosi70s$heart_0000S_brandColorF&#39;,
 ].map((idea) =&gt; {
-  const parts = idea.split(&#39;:&#39;)
-  return parts.length &gt; 1
-    ? {
-        icon: parts[1],
-        value: parts[1],
-        caption: parts[0],
-      }
-    : {
-        icon: parts[0],
-        value: parts[0],
-        caption: parts[0],
-      }
+  // The caption ends at the FIRST colon: an icon may use one itself (`check:square`).
+  const colon = idea.indexOf(&#39;:&#39;)
+  const icon = colon === -1 ? idea : idea.slice(colon + 1)
+  return { icon, value: icon, caption: colon === -1 ? idea : idea.slice(0, colon) }
 })
 
 const { h2, div, input, option, code, button } = elements
@@ -275,6 +269,6 @@ preview.append(
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-356ap1k2.js"></script>
+  <script type="module" src="../hydrate-c26mdwzt.js"></script>
 </body>
 </html>

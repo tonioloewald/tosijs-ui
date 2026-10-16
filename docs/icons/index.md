@@ -440,6 +440,23 @@ The overlay rules are just string rewrites — for example, `unFoo`
 becomes `slash25o$foo75s75o`. **Overlay icons should have a square
 viewBox** for best results on non-square base icons.
 
+#### Explicit rules: `rule:icon`
+
+`checkSquare` is ambiguous: it is a registered icon, and it also reads as
+the `check` rule over `square`. A registered icon wins, so it draws the
+icon. Put a `:` at the boundary to ask for the rule: `check:square`,
+`un:lock`, `spin90:loader`. The explicit form always applies the rule,
+needs no capital letter after the prefix, and takes suffixes and stacking
+as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not valid in a
+JavaScript identifier, so write `icons['check:square']()`, or
+`<tosi-icon icon="check:square">`.
+
+```html
+<tosi-icon icon="checkSquare" size="48"></tosi-icon>
+<tosi-icon icon="check:square" size="48"></tosi-icon>
+<tosi-icon icon="un:lock" size="48"></tosi-icon>
+```
+
 ### Custom rules
 
 `iconRules` is a mutable array. Each rule has a `prefix` (string or

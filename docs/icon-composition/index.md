@@ -54,6 +54,8 @@ const ideas = [
   'get sick:plus_f00S50s4W_25x_20y$truck',
   'get well:plus_f00S50s4W25x_20y$truck0f',
   'write a rule for unLock:slash25o$lock75s',
+  'checkSquare is an icon:checkSquare',
+  'check:square is the rule:check:square',
   'un flip pin is unPin0f:unPin0f',
   'and:earth',
   'it:earth150s75o',
@@ -65,18 +67,10 @@ const ideas = [
   'reach for the stars:mousePointer30x30y50s_fffF$spin_120Star120s_0000S_f00F$spin90Star48r130s_0000S_fffF$spin180Star24r140s_0000S_00fF',
   'Love tosijs-ui:tosi70s$heart_0000S_brandColorF',
 ].map((idea) => {
-  const parts = idea.split(':')
-  return parts.length > 1
-    ? {
-        icon: parts[1],
-        value: parts[1],
-        caption: parts[0],
-      }
-    : {
-        icon: parts[0],
-        value: parts[0],
-        caption: parts[0],
-      }
+  // The caption ends at the FIRST colon: an icon may use one itself (`check:square`).
+  const colon = idea.indexOf(':')
+  const icon = colon === -1 ? idea : idea.slice(colon + 1)
+  return { icon, value: icon, caption: colon === -1 ? idea : idea.slice(0, colon) }
 })
 
 const { h2, div, input, option, code, button } = elements

@@ -359,6 +359,44 @@ describe('icons', () => {
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
     })
 
+    test('a colon applies the rule explicitly, even over a registered name', () => {
+      // `checkSquare` is a registered icon; `check:square` is the check rule over `square`.
+      expect(
+        icons.checkSquare().classList.contains('tosi-icon-composite')
+      ).toBe(false)
+      for (const name of ['check:square', 'check:Square']) {
+        const icon = icons[name]()
+        expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+        expect(icon.querySelectorAll('svg').length).toBe(2)
+      }
+      expect(icons['un:lock']().querySelectorAll('svg').length).toBe(2)
+      expect(icons['check:trash2']().querySelectorAll('svg').length).toBe(2)
+    })
+
+    test('explicit rule names stack and take suffixes', () => {
+      expect(icons['un:lock$shield']().children.length).toBe(2)
+      const spun = icons['spin90:loader40s']()
+      expect(spun.classList.contains('tosi-icon-composite')).toBe(true)
+      const inner = spun.querySelector('svg') as SVGElement
+      expect(inner.style.transform).toContain('scale(0.4)')
+    })
+
+    test('an explicit name must name a whole rule and a real icon', () => {
+      const warn = console.warn
+      const warnings: string[] = []
+      console.warn = (msg: string) => warnings.push(msg)
+      try {
+        for (const name of ['ch:square', 'nope:lock', 'check:nope', 'check:']) {
+          expect(icons[name]().classList.contains('tosi-icon-composite')).toBe(
+            false
+          )
+        }
+      } finally {
+        console.warn = warn
+      }
+      expect(warnings.length).toBe(4)
+    })
+
     test('composite has pointer-events none', () => {
       const icon = icons.unLock()
       expect(icon.style.pointerEvents).toBe('none')

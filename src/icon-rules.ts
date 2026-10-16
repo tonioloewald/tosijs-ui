@@ -78,11 +78,29 @@ export const iconRules: IconRule[] = [
   },
 ]
 
-/** The icon a rule would apply to in `name`, or null if the rule does not match it. */
+/**
+ * The icon a rule would apply to in `name`, or null if the rule does not match it.
+ *
+ * A `:` makes the boundary explicit: `check:box` is the `check` rule applied to `box`, with
+ * no camelCase guess, so it never reads as an icon called `checkBox`. Everything before the
+ * first `:` must be the whole prefix (`spin90:loader`, `un:lock`).
+ */
 export function matchRule(
   rule: IconRule,
   name: string
 ): { baseName: string; match: RegExpMatchArray | string } | null {
+  const colon = name.indexOf(':')
+  if (colon !== -1) {
+    const head = name.slice(0, colon)
+    const tail = name.slice(colon + 1)
+    if (!tail) return null
+    const baseName = tail[0].toLowerCase() + tail.slice(1)
+    if (rule.prefix instanceof RegExp) {
+      const m = head.match(new RegExp(rule.prefix.source + '$'))
+      return m && m.index === 0 ? { baseName, match: m } : null
+    }
+    return head === rule.prefix ? { baseName, match: rule.prefix } : null
+  }
   if (rule.prefix instanceof RegExp) {
     const m = name.match(new RegExp(rule.prefix.source + '(.+)$'))
     if (!m) return null

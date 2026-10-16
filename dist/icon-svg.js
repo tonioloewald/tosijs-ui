@@ -60,6 +60,9 @@ export function iconSvg(name) {
         return undefined;
     return resolve(name, key, new Set());
 }
+// How to call the creator for a name: `icons.lock()`, or `icons['check:box']()` for a name
+// that is not an identifier.
+const creatorCall = (name) => /^[A-Za-z_$][\w$]*$/.test(name) ? `icons.${name}()` : `icons['${name}']()`;
 function resolve(asked, name, seen) {
     const key = stripEscape(name);
     const value = data[key];
@@ -81,7 +84,7 @@ function resolve(asked, name, seen) {
     const what = key === stripEscape(asked) ? `"${key}"` : `it resolves to "${key}", which`;
     if (isComposition(key)) {
         throw new Error(`iconSvg("${asked}"): ${what} is not a single SVG (a stack, a rule, or a style ` +
-            `suffix other than rotation or flip). Render it with icons.${stripEscape(asked)}() ` +
+            `suffix other than rotation or flip). Render it with ${creatorCall(stripEscape(asked))} ` +
             `where there is a DOM.`);
     }
     throw new Error(`iconSvg("${asked}"): it redirects to "${key}", which is not a registered icon`);

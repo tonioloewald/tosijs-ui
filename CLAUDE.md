@@ -812,7 +812,7 @@ Classes managed by the library:
 
 The icon system (introduced in 1.5.10) supports a compact composition language for combining and modifying icons inline. SVG sources live in `icons/` (subdirs `color/`, `filled/`, `stroked/`); `bin/make-icon-data.js` regenerates `src/icon-data.ts` when files there change.
 
-The composition language uses single-character suffixes on icon names — e.g. size, fill/stroke color, x/y offset, rotation, weight — and `$` to stack multiple icons into one composite. Examples like `tool_fffF70s50x$tosi` (a tool overlaid on a person), `spin90Loader` (a rotated spinning loader), and `messageCircle80s70x_60y1W_fffF$tosiHat$glasses4y$coat$tosi` (a multi-layer composite) appear throughout the demos.
+The composition language uses single-character suffixes on icon names — e.g. size, fill/stroke color, x/y offset, rotation, weight — `$` to stack multiple icons into one composite, and an optional `:` to apply a prefix rule explicitly (`check:square` is the rule, `checkSquare` the registered icon; owned by `matchRule` in `src/icon-rules.ts`). Examples like `tool_fffF70s50x$tosi` (a tool overlaid on a person), `spin90Loader` (a rotated spinning loader), and `messageCircle80s70x_60y1W_fffF$tosiHat$glasses4y$coat$tosi` (a multi-layer composite) appear throughout the demos.
 
 See `icons/icon-composition.md` for the full grammar — suffix codes (`o/s/r/f/x/y/F/S/W`), stacking (`$`), prefix rules, redirects, and `spin`. When working with icons, read that file first rather than guessing the syntax.
 
