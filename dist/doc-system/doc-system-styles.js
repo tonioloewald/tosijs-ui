@@ -159,6 +159,17 @@ export function docSystemStyleSpec(theme = {}) {
         'tosi-doc-system[data-layout="full-screen"] > .doc-nav.doc-nav, tosi-doc-system[data-layout="full-screen"] > .doc-navbar.doc-navbar': {
             display: 'none',
         },
+        /*
+        `header: false` — no header bar on this page (#226). One variable takes the bar's space
+        away everywhere it is reserved (the pre-hydration inset, the nav's top, the hydrated
+        column), and the bar itself is hidden before hydration (`::before`) and after (`header`).
+        */
+        'tosi-doc-system[data-no-header]': {
+            _headerHeight: '0px',
+        },
+        'tosi-doc-system[data-no-header]::before, tosi-doc-system[data-no-header] header': {
+            display: 'none',
+        },
         '.darkmode': {
             ...invertLuminance(colors),
             /*

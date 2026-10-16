@@ -40,6 +40,8 @@ export interface Doc {
     hidden?: boolean;
     /** this doc is the site root instead of README (the site's `home` option) */
     home?: boolean;
+    /** `false` drops the site header on this page (see the site `Doc.header`) */
+    header?: boolean;
     /** `'full-width'` drops the reading measure; `'full-screen'` also puts the nav away. */
     layout?: 'full-width' | 'full-screen';
     testStatus?: 'passed' | 'failed' | 'pending';

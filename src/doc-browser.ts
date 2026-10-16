@@ -413,6 +413,8 @@ export interface Doc {
   hidden?: boolean
   /** this doc is the site root instead of README (the site's `home` option) */
   home?: boolean
+  /** `false` drops the site header on this page (see the site `Doc.header`) */
+  header?: boolean
   /** `'full-width'` drops the reading measure; `'full-screen'` also puts the nav away. */
   layout?: 'full-width' | 'full-screen'
   testStatus?: 'passed' | 'failed' | 'pending'
@@ -1314,6 +1316,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       if (layoutHost) {
         if (doc.layout) layoutHost.setAttribute('data-layout', doc.layout)
         else layoutHost.removeAttribute('data-layout')
+        layoutHost.toggleAttribute('data-no-header', doc.header === false)
       }
       /*
       `full-screen` also collapses the nav, and that has to go through the COMPONENT rather than

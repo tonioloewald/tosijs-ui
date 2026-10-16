@@ -19,5 +19,6 @@ Start with [Adopting the doc system](/adopting-the-doc-system/) for a first buil
 - [highlight-block](/highlight-block/)
 - [highlight-styles](/highlight-styles/)
 - [Full-screen layout](/full-screen-demo/)
+- [Page without the header](/no-header-demo/)
 - [kitchen sink](/kitchen-sink/)
 <!-- /toc -->

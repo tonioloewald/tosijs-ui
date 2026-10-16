@@ -1056,6 +1056,7 @@ export function createDocBrowser(options) {
                     layoutHost.setAttribute('data-layout', doc.layout);
                 else
                     layoutHost.removeAttribute('data-layout');
+                layoutHost.toggleAttribute('data-no-header', doc.header === false);
             }
             /*
             `full-screen` also collapses the nav, and that has to go through the COMPONENT rather than

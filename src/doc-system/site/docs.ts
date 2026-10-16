@@ -136,6 +136,13 @@ export interface Doc {
    */
   home?: boolean
   /**
+   * `false` drops the site's header bar on this page, as `layout: "full-screen"` drops the
+   * nav: for an app page with its own toolbar, above all as an installed PWA, where the bar
+   * is the only thing between the app and the whole screen. The page links back to the docs
+   * its own way; the builder adds nothing. Unset means the header shows.
+   */
+  header?: boolean
+  /**
    * Which book(s) this doc binds into. A name, a list of names, or `'none'` to keep it
    * on the site and out of every book. Unset means the default book; `'default'` names
    * the default book so a list can include it — `["default", "appendices"]` binds the

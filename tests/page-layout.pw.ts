@@ -889,3 +889,65 @@ test('#113: a page with NO tests offers nothing, so the default stays quiet', as
   await expect(page.locator('.tosi-menu')).toBeVisible({ timeout: 5000 })
   await expect(page.locator('.tosi-menu').getByText(/^Tests\b/)).toHaveCount(0)
 })
+
+/*
+`header: false` (#226): no site header on the page, before hydration and after, and the header
+comes back on the next page. The content box measured is the viewport's full height, so a
+header that is hidden but still reserves its space fails too.
+*/
+const headerShape = (page: any) =>
+  page.evaluate(() => {
+    const header = document.querySelector('tosi-doc-system header')
+    const content = document.querySelector('.doc-content') as HTMLElement
+    return {
+      header: header ? Math.round(header.getBoundingClientRect().height) : 0,
+      contentTop: Math.round(content.getBoundingClientRect().top),
+      contentHeight: Math.round(content.getBoundingClientRect().height),
+    }
+  })
+
+test('header: false drops the site header and gives its space to the page', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/no-header-demo/')
+  await page.waitForFunction(() => !!document.querySelector('tosi-sidenav'))
+  await expect
+    .poll(async () => (await headerShape(page)).contentHeight)
+    .toBe(900)
+  expect(await headerShape(page)).toEqual({
+    header: 0,
+    contentTop: 0,
+    contentHeight: 900,
+  })
+
+  // The next page has its header back.
+  await page.click('.nh-demo a')
+  await page.waitForURL('**/documentation-system/')
+  await expect
+    .poll(async () => (await headerShape(page)).header)
+    .toBeGreaterThan(0)
+})
+
+test('header: false is right before hydration too', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.route('**/hydrate*.js*', (r: any) => r.abort())
+  await page.goto('/no-header-demo/')
+  const shape = await page.evaluate(() => {
+    const host = document.querySelector('tosi-doc-system') as HTMLElement
+    return {
+      top: Math.round(host.getBoundingClientRect().top),
+      bar: getComputedStyle(host, '::before').display,
+    }
+  })
+  expect(shape).toEqual({ top: 0, bar: 'none' })
+})
+
+test('a page with its header keeps it (the control)', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await page.waitForFunction(() => !!document.querySelector('tosi-sidenav'))
+  await expect
+    .poll(async () => (await headerShape(page)).header)
+    .toBeGreaterThan(0)
+})

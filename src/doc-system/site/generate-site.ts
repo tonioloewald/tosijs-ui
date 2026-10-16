@@ -295,9 +295,9 @@ async function pageHtml(
   flicker the nav-hydration fix chased in 1.7.3. An attribute in the served markup means the
   first paint is already correct, and the doc-browser keeps it in step on SPA navigation.
   */
-  const layoutAttr = doc.layout
-    ? ` data-layout="${escapeAttr(doc.layout)}"`
-    : ''
+  const layoutAttr =
+    (doc.layout ? ` data-layout="${escapeAttr(doc.layout)}"` : '') +
+    (doc.header === false ? ' data-no-header' : '')
 
   // ONE rule, shared with the doc-browser's hydration path — see doc-title.ts. Writing
   // it twice is what made the title change on hydration (issue #6).
