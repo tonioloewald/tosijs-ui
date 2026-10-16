@@ -9,8 +9,8 @@
   takes suffixes and stacking as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not
   valid in an identifier, so write `icons['check:square']()` or
   `<tosi-icon icon="check:square">`. Names without a `:` resolve exactly as before.
-- **The kitchen sink page stays on the site and leaves the books.** It is a component
-  showcase, not reading; the ePub and Print no longer include it.
+- **The kitchen-sink style testbed is no longer bound into the ePub or print.** It stays on
+  the site; it is a component showcase, not reading. Docs-only: no API or rendering moved.
 
 ## 1.16.22
 
