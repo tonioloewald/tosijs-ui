@@ -659,6 +659,37 @@ export function mayWriteSource(opts) {
         isPrivateNetworkAddress(opts.peer));
 }
 /**
+ * Who a `/__docstore/source` request is admitted as, or null to refuse it.
+ *
+ * The WHOLE gate for that endpoint, taking the real `Request`: `mayWriteSource` on the peer and
+ * listener, `trustLan` refused through a proxy, and the same-origin check (#90) on the direct
+ * path. It was inline in the server closure, where the 1.16.22 review could only verify LAN
+ * trust by hand (#3346); here it is tested with the headers a browser actually sends.
+ *
+ * `'lan'` is a write admitted only because the project trusts its LAN, which the server logs.
+ */
+export function sourceRequestAdmission(request, opts) {
+    const session = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
+    const allowed = mayWriteSource({
+        viaTunnel: opts.viaTunnel,
+        peer: opts.peer,
+        hasValidSession: validSessionCookie(opts.auth, session, opts.now),
+        // A share link's session may browse and may not save (asked AFTER validity, which is
+        // the call-order `cookieMayWrite` documents).
+        sessionMayWrite: cookieMayWrite(opts.auth, session),
+        trustLan: opts.trustLan === true,
+        proxied: isProxiedRequest(request.headers),
+    }) &&
+        // CSRF (#90): the direct path is peer-address-only. The tunnel path is legitimately
+        // cross-site and is gated by the session cookie instead.
+        (opts.viaTunnel || isSameOriginRequest(request));
+    if (!allowed)
+        return null;
+    if (opts.viaTunnel)
+        return 'session';
+    return isLoopbackAddressForAuth(opts.peer) ? 'loopback' : 'lan';
+}
+/**
  * May the holder of this session token write?
  *
  * `true` for an unknown token as well as a full one — this answers only "is this session

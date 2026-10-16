@@ -450,7 +450,9 @@ icon. Put a `:` at the boundary to ask for the rule: `check:square`,
 `un:lock`, `spin90:loader`. The explicit form applies the rule (unless
 you `defineIcons` that exact name, which warns), needs no capital letter
 after the prefix, and takes suffixes and stacking
-as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not valid in a
+as usual (`spin90:loader40s`, `un:lock$shield`). Rules chain: a rule
+may apply to another rule, so `un:check:square` slashes the checked square
+(and `unCheckLock` works too). A `:` is not valid in a
 JavaScript identifier, so write `icons['check:square']()`, or
 `<tosi-icon icon="check:square">`.
 
@@ -590,7 +592,7 @@ copies or substantial portions of the Software.
 import { elements, svgElements, Color, vars, varDefault, withAttributes, } from 'tosijs';
 import iconData from './icon-data.js';
 import { splitSuffixes, suffixNumber } from './icon-suffixes.js';
-import { iconRules, spinRule, matchRule, canResolve, suffixedIcon, } from './icon-rules.js';
+import { iconRules, spinRule, matchRule, drawable, suffixedIcon, } from './icon-rules.js';
 export { iconRules } from './icon-rules.js';
 export const defineIcons = (newIcons) => {
     const data = iconData;
@@ -608,7 +610,7 @@ export const defineIcons = (newIcons) => {
     for (const name of isNew) {
         const readsAsRule = iconRules.some((rule) => {
             const matched = matchRule(rule, name);
-            if (matched == null || !canResolve(matched.baseName))
+            if (matched == null || !drawable(matched.baseName))
                 return false;
             return (typeof rule.prefix !== 'string' ||
                 name.includes(':') ||
@@ -784,8 +786,8 @@ export function wrapIcon(prop, parts, ...children) {
 function composeIcon(prop, parts) {
     for (const rule of iconRules) {
         const matched = matchRule(rule, prop);
-        // Only apply if baseName can actually resolve to an icon
-        if (!matched || !canResolve(matched.baseName))
+        // Only apply if baseName draws: an icon, or another rule (`un:check:square`)
+        if (!matched || !drawable(matched.baseName))
             continue;
         const result = rule.apply(safeIconSuffix(matched.baseName), matched.match, parts);
         if (typeof result === 'string')

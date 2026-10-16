@@ -23,6 +23,7 @@ import {
   REDEEM_SLOW_MS,
   SLOW_AFTER_FAILURES,
   isSameOriginRequest,
+  sourceRequestAdmission,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -1271,5 +1272,85 @@ describe('#227: trustLan', () => {
     // mayDriveWithAgent takes no trustLan; even a caller passing one extra must not widen it.
     expect(driveGate({ ...lan, trustLan: true } as any)).toBe(false)
     expect(driveGate({ ...lan, peer: '127.0.0.1' })).toBe(true)
+  })
+})
+
+/*
+The /__docstore/source gate as the server applies it, on real Requests (#3346): the 1.16.22
+review could only verify trustLan by hand against a live server.
+*/
+describe('sourceRequestAdmission', () => {
+  const URL_ = 'https://mac.local:8787/__docstore/source'
+  const post = (headers: Record<string, string> = {}) =>
+    new Request(URL_, { method: 'POST', headers })
+  const LAN = '192.168.1.20'
+  const base = { viaTunnel: false, auth: createAuthState(), now: NOW }
+
+  test('loopback is admitted; a LAN device only with trustLan', () => {
+    expect(sourceRequestAdmission(post(), { ...base, peer: '127.0.0.1' })).toBe(
+      'loopback'
+    )
+    expect(sourceRequestAdmission(post(), { ...base, peer: LAN })).toBe(null)
+    expect(
+      sourceRequestAdmission(post(), { ...base, peer: LAN, trustLan: true })
+    ).toBe('lan')
+    // A same-origin browser POST from that device, as Safari on an iPad sends it.
+    expect(
+      sourceRequestAdmission(
+        post({
+          'sec-fetch-site': 'same-origin',
+          origin: 'https://mac.local:8787',
+        }),
+        { ...base, peer: LAN, trustLan: true }
+      )
+    ).toBe('lan')
+  })
+
+  test('trustLan never admits a public peer, a proxied request or a cross-site page', () => {
+    const lan = { ...base, peer: LAN, trustLan: true }
+    expect(
+      sourceRequestAdmission(post(), { ...lan, peer: '203.0.113.9' })
+    ).toBe(null)
+    expect(
+      sourceRequestAdmission(post({ 'x-forwarded-for': '203.0.113.9' }), lan)
+    ).toBe(null)
+    expect(
+      sourceRequestAdmission(post({ 'x-forwarded-host': 'evil.example' }), lan)
+    ).toBe(null)
+    expect(
+      sourceRequestAdmission(post({ 'sec-fetch-site': 'cross-site' }), lan)
+    ).toBe(null)
+    expect(
+      sourceRequestAdmission(post({ origin: 'https://evil.example' }), lan)
+    ).toBe(null)
+    // Cross-site is refused on loopback too (#90).
+    expect(
+      sourceRequestAdmission(post({ 'sec-fetch-site': 'cross-site' }), {
+        ...base,
+        peer: '127.0.0.1',
+      })
+    ).toBe(null)
+  })
+
+  test('the tunnel needs a writing session, and trustLan does not change that', () => {
+    const auth = createAuthState()
+    const tunnel = { viaTunnel: true, peer: '127.0.0.1', auth, now: NOW }
+    expect(sourceRequestAdmission(post(), { ...tunnel, trustLan: true })).toBe(
+      null
+    )
+    const token = redeemLink(auth, issueLink(auth, NOW), NOW)!
+    const cookie = sessionCookie(token).split(';')[0]
+    expect(sourceRequestAdmission(post({ cookie }), tunnel)).toBe('session')
+    const readOnly = redeemLink(
+      auth,
+      issueLink(auth, NOW, undefined, { readOnly: true }),
+      NOW
+    )!
+    expect(
+      sourceRequestAdmission(
+        post({ cookie: sessionCookie(readOnly).split(';')[0] }),
+        tunnel
+      )
+    ).toBe(null)
   })
 })

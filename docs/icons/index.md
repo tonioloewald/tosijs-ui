@@ -448,7 +448,9 @@ icon. Put a `:` at the boundary to ask for the rule: `check:square`,
 `un:lock`, `spin90:loader`. The explicit form applies the rule (unless
 you `defineIcons` that exact name, which warns), needs no capital letter
 after the prefix, and takes suffixes and stacking
-as usual (`spin90:loader40s`, `un:lock$shield`). A `:` is not valid in a
+as usual (`spin90:loader40s`, `un:lock$shield`). Rules chain: a rule
+may apply to another rule, so `un:check:square` slashes the checked square
+(and `unCheckLock` works too). A `:` is not valid in a
 JavaScript identifier, so write `icons['check:square']()`, or
 `<tosi-icon icon="check:square">`.
 

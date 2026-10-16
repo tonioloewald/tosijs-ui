@@ -296,6 +296,28 @@ export declare function mayWriteSource(opts: {
     proxied?: boolean;
 }): boolean;
 /**
+ * Who a `/__docstore/source` request is admitted as, or null to refuse it.
+ *
+ * The WHOLE gate for that endpoint, taking the real `Request`: `mayWriteSource` on the peer and
+ * listener, `trustLan` refused through a proxy, and the same-origin check (#90) on the direct
+ * path. It was inline in the server closure, where the 1.16.22 review could only verify LAN
+ * trust by hand (#3346); here it is tested with the headers a browser actually sends.
+ *
+ * `'lan'` is a write admitted only because the project trusts its LAN, which the server logs.
+ */
+export declare function sourceRequestAdmission(request: {
+    url?: string;
+    headers: {
+        get(name: string): string | null;
+    };
+}, opts: {
+    viaTunnel: boolean;
+    peer?: string | null;
+    auth: AuthState;
+    trustLan?: boolean;
+    now: number;
+}): 'loopback' | 'lan' | 'session' | null;
+/**
  * May the holder of this session token write?
  *
  * `true` for an unknown token as well as a full one — this answers only "is this session

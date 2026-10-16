@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=268dfcce4fd3" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=041c6aed2ed9" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=223c46be038f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=da817eaeae75" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -593,7 +593,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>trustLan</code></td>
 <td><code>false</code></td>
-<td>With <code>editableSources</code> on, trust the local network for reading and editing source, so a phone or headset on your LAN can use &quot;Edit page source&quot; directly instead of going through the tunnel (#227); a live example&#39;s &quot;Save to source&quot; is still offered only on <code>localhost</code>. Trusted: a <strong>direct</strong> peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server&#39;s own origin. <strong>It means anyone on the network can edit your working tree</strong>: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Agent driving, invite links, builds and test reports stay this machine only.</td>
+<td>With <code>editableSources</code> on, trust the local network for reading and editing source, so a phone or headset on your LAN can use &quot;Edit page source&quot; directly instead of going through the tunnel (#227), and a live example&#39;s &quot;Save to source&quot; is offered there too. Each write admitted this way is logged with the device&#39;s address and the file. Trusted: a <strong>direct</strong> peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server&#39;s own origin. <strong>It means anyone on the network can edit your working tree</strong>: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Agent driving, invite links, builds and test reports stay this machine only.</td>
 </tr>
 <tr>
 <td><code>memoryLimitMb</code></td>
@@ -2131,6 +2131,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-j446pv7a.js"></script>
+  <script type="module" src="../hydrate-4aw806n6.js"></script>
 </body>
 </html>

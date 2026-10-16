@@ -747,6 +747,7 @@ import { mayHaveSingleSourceDirective } from '../doc-system/book-target.js';
 import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, hasExampleEdit, } from './example-store.js';
 import { liveExampleStyleSpec } from './styles.js';
 import { runTests } from './test-harness.js';
+import { sourceAccess } from './source-access.js';
 const { div, tosiSlot, style, button, pre, span, label, input, textarea } = elements;
 /** Every string property name reachable from a value, prototype chain included. */
 function propertyNamesOf(value) {
@@ -828,6 +829,8 @@ const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled';
 const isLocalhost = typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1');
+// Set once the dev server has admitted this page's source reads (source-access.ts).
+let sourceWritable = false;
 function getStoredTestsEnabled() {
     if (typeof localStorage === 'undefined')
         return false;
@@ -2213,7 +2216,7 @@ export class LiveExample extends withAttributes({
                 window.alert('This workspace needs an invite link before it can save.\n\n' +
                     'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
                     'then try again. Your edit is still here.\n\n' +
-                    'If you opened this over the LAN (a `.local` address), saving will keep failing however many links you redeem — reach the workspace through its tunnel URL instead.');
+                    'If you opened this over the LAN (a `.local` address), saving will keep failing however many links you redeem — reach the workspace through its tunnel URL instead, or set trustLan: true in the site config.');
                 return;
             }
             if (!response.ok) {
@@ -2549,7 +2552,7 @@ export class LiveExample extends withAttributes({
         this.updateEditedIndicator();
         // A local save is a per-browser scratchpad, not a file write — say so, or it
         // reads as a no-op ("I saved but the file didn't change"). "Save to source"
-        // (localhost + editableSources) is the one that writes the file.
+        // (editableSources, where the dev server admits the page) is the one that writes the file.
         postNotification({
             type: 'success',
             message: 'Saved to this browser only — use “Save to source” to write the file.',
@@ -2647,6 +2650,17 @@ export class LiveExample extends withAttributes({
     };
     sourceMenu = (event) => {
         const key = this.localEditKey();
+        /*
+        Off localhost, Save to source is offered when the dev server admits this page (trustLan,
+        or a tunnel edit session). The first menu opens before the answer arrives; Save is
+        disabled until there are edits anyway, and the next open has it.
+        */
+        const sourceFile = this.getAttribute('data-source-file');
+        if (!isLocalhost && sourceFile && !sourceWritable) {
+            void sourceAccess(sourceFile).then((ok) => {
+                sourceWritable = ok;
+            });
+        }
         const hasEdits = () => this.hasLocalEdits();
         // View changes / Revert need the source snapshot, which only the page-embedded
         // example has — the pop-out editor window has no originalCode to compare to.
@@ -2716,7 +2730,7 @@ export class LiveExample extends withAttributes({
                         },
                     ]
                     : []),
-                ...(key && isLocalhost
+                ...(key && (isLocalhost || sourceWritable)
                     ? [
                         {
                             icon: 'upload',

@@ -35,21 +35,22 @@ import {
   createAuthState,
   issueLink,
   resolveShareTtlMs,
-  cookieMayWrite,
   readCookie,
   redeemThroughGate,
   createRedemptionGate,
   resolveLinkSettings,
   sessionCookie,
   urlWithoutToken,
-  mayWriteSource,
   isSameOriginRequest,
   validSessionCookie,
   sessionRejection,
   mayDriveWithAgent,
   isProxiedRequest,
+  isPrivateNetworkAddress,
+  sourceRequestAdmission,
   SESSION_COOKIE,
 } from './dev-auth.js'
+import { SOURCE_ACCESS_HEADER } from '../../live-example/source-access.js'
 
 /**
  * Every path the dev server watches for changes.
@@ -983,7 +984,11 @@ export async function devServer(
     if (!(await file.exists()))
       return new Response('not found', { status: 404 })
     return new Response(await file.text(), {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        // Lets a live example off localhost offer Save to source (source-access.ts).
+        [SOURCE_ACCESS_HEADER]: 'editable',
+      },
     })
   }
 
@@ -2179,39 +2184,44 @@ export async function devServer(
         "looks local" is precisely what a tunnel counterfeits.
         */
       const peer = srv?.requestIP?.(request)?.address
-      const session = readCookie(request.headers.get('cookie'), SESSION_COOKIE)
-      const authorized =
-        mayWriteSource({
-          viaTunnel,
-          peer,
-          hasValidSession: validSessionCookie(auth, session, Date.now()),
-          // A share link's session may browse and may not save (asked AFTER validity, which
-          // is the call-order `cookieMayWrite` documents).
-          sessionMayWrite: cookieMayWrite(auth, session),
-          trustLan: config.trustLan === true,
-          proxied: isProxiedRequest(request.headers),
-        }) &&
-        /*
-        CSRF (#90). The direct path is peer-address-only, so without this any page the
-        developer visits can write any file under the repo root — `.git/hooks/*` included.
-        Non-tunnel only: the tunnel path is legitimately cross-site and is gated by the
-        session cookie instead.
-        */
-        csrfOk(request, viaTunnel)
-      if (!authorized) {
+      const admission = sourceRequestAdmission(request, {
+        viaTunnel,
+        peer,
+        auth,
+        trustLan: config.trustLan === true,
+        now: Date.now(),
+      })
+      if (admission === null) {
+        // Suggest trustLan only to a direct device on a private network, the one case it
+        // would admit; anyone else is pointed at an edit link.
+        const lanDevice =
+          !viaTunnel &&
+          !isProxiedRequest(request.headers) &&
+          isPrivateNetworkAddress(peer)
         console.warn(
           `⚠️  refused ${request.method} /__docstore/source from ${
             peer ?? 'unknown'
           } — ` +
             `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
             `${
-              config.trustLan ? '' : ', or set trustLan: true for LAN devices'
+              lanDevice && !config.trustLan
+                ? '; trustLan: true in the site config admits devices on this network'
+                : ''
             }).`
         )
         return new Response('not authorized to edit source', {
           status: 403,
           headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         })
+      }
+      // A write admitted only by LAN trust is recorded, so it is never silent (#3346).
+      if (admission === 'lan' && request.method === 'POST') {
+        const file = await request
+          .clone()
+          .json()
+          .then((body: { file?: unknown }) => String(body?.file ?? '?'))
+          .catch(() => '?')
+        console.log(`✎ trustLan: ${peer} is saving ${file}`)
       }
       if (request.method === 'GET') return handleReadSource(request)
       if (request.method === 'POST') return handleWriteSource(request)
