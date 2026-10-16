@@ -1,4 +1,4 @@
-/*{"parent":"Appendices","order":600}*/
+/*{ "parent": "icons", "order": 20 }*/
 /*#
 # `iconSvg` — icon markup without a DOM
 
@@ -41,8 +41,8 @@ the map ships in the bundle either way.
 */
 
 import iconData from './icon-data.js'
-import { splitSuffixes, suffixNumber } from './icon-suffixes.js'
-import { canResolve, ruleDraws } from './icon-rules.js'
+import { suffixNumber } from './icon-suffixes.js'
+import { canResolve, ruleDraws, suffixedIcon } from './icon-rules.js'
 
 const data = iconData as Record<string, string>
 
@@ -84,13 +84,9 @@ function resolve(asked: string, name: string, seen: Set<string>): string {
     return resolve(asked, value, seen)
   }
   // The renderer's order for a name that is not registered: a stack, then suffixes on a
-  // registered icon (they win over a rule, #3295), then a rule.
-  const split = key.includes('$') ? null : splitSuffixes(key)
-  if (
-    split &&
-    data[split.baseName] !== undefined &&
-    split.tokens.every(isGeometry)
-  ) {
+  // registered icon (suffixedIcon, #3295), then a rule.
+  const split = key.includes('$') ? null : suffixedIcon(key)
+  if (split && split.tokens.every(isGeometry)) {
     return transformed(
       asked,
       resolve(asked, split.baseName, seen),

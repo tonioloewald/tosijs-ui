@@ -23,12 +23,26 @@ export interface IconRule {
   ) => Element | string | null
 }
 
+/**
+ * Style suffixes on a registered icon (`checkCircle90r`), split, or null. Such a name is
+ * that icon styled, and it wins over a composition rule (#3295): `checkCircle90r` is
+ * `checkCircle` turned, not the `check` rule over `circle90r`. Both the DOM renderer and
+ * `iconSvg` resolve in that order by asking this.
+ */
+export function suffixedIcon(
+  name: string
+): { baseName: string; tokens: string[] } | null {
+  const split = splitSuffixes(name)
+  return split != null && (iconData as Record<string, string>)[split.baseName]
+    ? split
+    : null
+}
+
 /** A registered icon, or style suffixes on one (`chevronRight50o`). */
 export function canResolve(name: string): boolean {
-  const data = iconData as Record<string, string>
-  if (data[name]) return true
-  const split = splitSuffixes(name)
-  return split != null && !!data[split.baseName]
+  return (
+    !!(iconData as Record<string, string>)[name] || suffixedIcon(name) != null
+  )
 }
 
 /**
