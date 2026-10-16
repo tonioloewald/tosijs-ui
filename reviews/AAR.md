@@ -706,3 +706,19 @@ gap, recorded rather than hidden.
   address (off 403, on 200, proxied and cross-site refused); handler-level tests are #3346.
 - **Lanes:** unit 1867; Playwright 800 + fixes; consumer 55; haltija 87 over 20 pages.
   Approved inside the window; publish run 38894262486 verified green.
+
+## 1.16.23 (2026-10-16)
+
+- **The new syntax collided with its own neighbours.** `:` was chosen because no icon name
+  used it, and I fixed the composition demo's `caption:icon` split. I did not look for the
+  same grammar in shipped components. The review found it in `<tosi-select>` options and
+  `<tosi-segmented>` choices/other, where `done=Done:check:square` drew the plain check. When
+  adding a character to a grammar, grep for every place that already splits on it.
+- **Fixed with one owner, not three edits.** `src/caption-icon.ts` splits at the first colon
+  for both components; the new tests fail with the fix reverted.
+- **An unverified nit was real.** `defineIcons({'check:x': …})` silently beat the rule the
+  docs said always applies. It now warns, and the docs say the definition wins.
+- **Approval landed after the 60-minute window** ("verification owed"); the verify-only run
+  38934436297 was green.
+- **Lanes:** unit 1874; Playwright 801 passed, 15 skipped; consumer 55; haltija 87 over 20 pages. Review
+  always-on/fast: GO_WITH_FOLLOWUPS, both findings fixed before the tag.
