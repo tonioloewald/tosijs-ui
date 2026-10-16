@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.16.22
+
+Three site options asked for by adopters, and a review pass over the documentation.
+
+- **`home`: choose the page served at `/`.** `defineSiteConfig({ home: 'host' })` (a slug or
+  filename) makes that page the site root, for a site that is an app. README then has its own
+  page at `/readme/`, and the nav, canonical links, sitemap, `llms.txt` and books follow. A
+  doc can claim the root itself with `{"home": true}`. The build fails when `home` names no
+  page or a hidden one, or when two docs claim the root. closes #225
+- **`{"header": false}`: a page without the site header.** It removes the header bar on that
+  page, before hydration and after, and gives its space to the page. With
+  `layout: "full-screen"` the page has no site chrome at all, for an app page with its own
+  toolbar or an installed PWA. The page links back to the docs its own way. closes #226
+- **`trustLan`: LAN devices may read and edit source (opt-in).** With `editableSources` on,
+  a direct peer at a private address (RFC 1918, IPv6 unique-local or link-local) may read and
+  save source as one at the dev machine can, so a phone or headset on the LAN edits without
+  the tunnel. Tunnel traffic still needs a session, a request with forwarding headers is
+  never trusted, and writes must still come from the dev server's own origin. **Anyone on
+  the network can then edit your working tree**: use it on a network you control. Agent
+  driving, invite links, builds and test reports stay this machine only. The edit and save
+  alerts now tell a LAN reader this instead of sending them round the invite-link loop.
+  closes #227
+- **The build warns (fails under `strict`) on a link written as a bare page name.**
+  `[valueRenderer](value-renderer)` resolves under the page it is on and reaches nothing;
+  three shipped that way here.
+- **`naturalCompare`, `naturalSorter` and `isBlank` are exported from the package root.**
+  The naturalCompare page imported `naturalCompare` from `'tosijs-ui'`, got `undefined`, and
+  showed the lexical sort it warns against.
+- **The documentation site is regrouped.** A new Documentation System section holds every
+  page about the doc system (adopting, One Source, Doc-Site System, doc-system, doc-browser,
+  docs, highlight-block, highlight-styles, the layout demos, kitchen sink). Icons moves under
+  Components, with Icon Composition, iconSvg and make-icon-data beneath it; naturalCompare
+  joins Helper Libraries; Appendices keeps migrating and release-notes.
+- **Documentation fixes.**
+  - The doc-browser and docs pages showed a CLI that does not exist, imports from the wrong
+    module and wrong option names. Both are rewritten against the real API.
+  - Three links (data-table → value-renderer, pocket-bar → icon-composition and popFloat)
+    reached nothing.
+  - Migrating: the ACE-era `theme`/`options` props warn and do nothing, rather than being
+    gone; the 1.11.0 edit-link note points to the 1.14.0 change; new notices for 1.16.17
+    (tjs-lang 0.14), 1.16.19 (`iconSvg` throws) and 1.16.21 (tosijs `^1.10.9`).
+  - Adopting and Doc-Site System: install `chokidar` with the build peers; display-only
+    fences use `:static`; a detached test block shows its results.
+  - Icons: the class added is `tosi-icon` (no `icon-chevron-down`); how icons are coloured
+    replaces the old icomoon paragraph.
+  - Live examples: `ide` mode is described as what it is today (it runs like `iframe`).
+  - Smaller: size-break's container-query intro, the iife size (~484KB gzip), code-editor's
+    mode list (`ajs`), a stray CSS line in editable-rect's example, the menu demo's link, and
+    typos across six pages.
+
+
 ## 1.16.21
 
 - **Expanding or collapsing a table row's detail no longer corrects `scrollTop` itself.**
