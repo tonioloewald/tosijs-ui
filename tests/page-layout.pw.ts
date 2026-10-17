@@ -761,6 +761,16 @@ test('#119: a full-screen page gets a real scroll container', async ({
     undefined,
     { timeout: 15_000 }
   )
+  /*
+  Polled: "defined" is not "hydrated". The doc-browser sets `overflow` inline when it adopts
+  the article, and since tests/fixtures.ts stopped a render-blocking font stylesheet the element
+  is defined before that happens, so a single read saw `visible`.
+  */
+  await expect
+    .poll(async () => (await contentOverflow(page)).overflowY, {
+      timeout: 15_000,
+    })
+    .toBe('auto')
   const m = await contentOverflow(page)
   expect(m.layout).toBe('full-screen')
   expect(
@@ -794,6 +804,18 @@ test('#119: an ordinary page still clips, so the default is unchanged', async ({
     undefined,
     { timeout: 15_000 }
   )
+  // Polled until the doc-browser has adopted the article (see the test above).
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            !!(document.querySelector('.doc-content') as HTMLElement).style
+              .overflow
+        ),
+      { timeout: 15_000 }
+    )
+    .toBe(true)
   const m = await contentOverflow(page)
   expect(m.layout).not.toBe('full-screen')
   /*
