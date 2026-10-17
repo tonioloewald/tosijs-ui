@@ -1,4 +1,4 @@
-import { test, expect, blockThirdPartyPaint } from './fixtures'
+import { test, expect, isolateThirdParty } from './fixtures'
 
 /*
 Hydration must be PURELY ADDITIVE — nothing already on the page may move.
@@ -39,7 +39,7 @@ const navMetrics = () =>
 test('the nav does not move when the page hydrates', async ({ browser }) => {
   // With JS disabled we see exactly what a no-JS reader (and a crawler) sees.
   const noJs = await browser.newContext({ javaScriptEnabled: false })
-  await blockThirdPartyPaint(noJs)
+  await isolateThirdParty(noJs)
   const staticPage = await noJs.newPage()
   await staticPage.goto('/')
   await staticPage.locator(NAV_LINK).first().waitFor()
@@ -48,7 +48,7 @@ test('the nav does not move when the page hydrates', async ({ browser }) => {
 
   // ...and with JS on, after the component has upgraded.
   const live = await browser.newContext({ javaScriptEnabled: true })
-  await blockThirdPartyPaint(live)
+  await isolateThirdParty(live)
   const livePage = await live.newPage()
   await livePage.goto('/')
   await livePage.waitForFunction(
@@ -78,7 +78,7 @@ test('the nav does not move when the page hydrates', async ({ browser }) => {
 test('the page is readable with no JavaScript at all', async ({ browser }) => {
   // The other half of the thesis: pre-rendered means READABLE, not just present.
   const noJs = await browser.newContext({ javaScriptEnabled: false })
-  await blockThirdPartyPaint(noJs)
+  await isolateThirdParty(noJs)
   const page = await noJs.newPage()
   await page.goto('/')
 

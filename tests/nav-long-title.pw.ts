@@ -1,4 +1,4 @@
-import { test, expect, blockThirdPartyPaint } from './fixtures'
+import { test, expect, isolateThirdParty } from './fixtures'
 
 /*
 A section whose title wraps keeps its disclosure triangle beside the first line (#219).
@@ -16,7 +16,7 @@ for (const hydrated of [false, true]) {
       javaScriptEnabled: hydrated,
       viewport: { width: 1400, height: 900 },
     })
-    await blockThirdPartyPaint(context)
+    await isolateThirdParty(context)
     const page = await context.newPage()
     await page.goto('/')
     if (hydrated)

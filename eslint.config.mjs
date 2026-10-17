@@ -38,7 +38,7 @@ export default tseslint.config(
         {
           name: '@playwright/test',
           message:
-            "Import from './fixtures': it blocks third-party images, fonts and stylesheets, which otherwise hold up page load.",
+            "Import from './fixtures': it keeps third-party servers out of page loads (answers images and stylesheets, caches pinned CDN scripts).",
         },
       ],
     },
