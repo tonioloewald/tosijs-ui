@@ -744,3 +744,28 @@ gap, recorded rather than hidden.
   green.
 - **Lanes:** unit 1889; Playwright 810 passed and 17 skipped, with the one WebKit flake above
   (811 passed with the fixture); consumer 55; haltija 87 over 20 pages.
+
+## 1.16.25 (2026-10-17)
+
+- **Refusing was the wrong default for the fixture.** 1.16.24's `tests/fixtures.ts` refused
+  third-party stylesheets, so `via-tag`'s Quill example, which waits for a stylesheet's
+  `onload`, drew nothing in Chromium. The fixture now answers instead (a 1x1 image, empty
+  CSS) and caches version-pinned CDN scripts. When stubbing a resource, answer it; a refusal
+  changes what the page does, not just how fast.
+- **Faster tests exposed a race.** The two #119 page-layout tests read layout once, right
+  after `customElements.get`. Once Google Fonts stopped holding up `load`, they ran before
+  hydration and failed every time (bisected with worktrees: green at v1.16.24). They poll now.
+- **The `home` e2e found an older defect.** The dev server's SPA fallback served the root
+  page at a deeper URL, so its relative script links 404'd. With `home` set, readers saw the
+  home doc. My first fix, a `<base>` tag, sent in-page `#` links to the home page, and the
+  review caught it. The fix now rewrites relative URLs and checks the pre-render's `data-doc`.
+- **The review (pre-minor, full) was GO_WITH_FOLLOWUPS.** Its three confirmed minors were
+  fixed before the tag, each with a test that fails without it: the `<base>` regression; two
+  saves of one file at once recording the wrong content against a commit; and a commit into a
+  repo mid-rebase. The deferrals are on board #3373.
+- **The Playwright popup stall is now filed** as microsoft/playwright#43496. A 40-line
+  script reproduces it: Chromium only, any route on the opener.
+- **Approval landed after the 60-minute window** a third time running; the verify-only run
+  was 39021382154.
+- **Lanes:** unit 1916; Playwright 821 passed and 31 skipped; consumer 58; haltija 87 over
+  20 pages.

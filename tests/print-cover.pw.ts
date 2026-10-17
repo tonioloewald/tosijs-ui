@@ -28,8 +28,8 @@ test('Print as PDF opens with the cover the build wrote', async ({
   })
   /*
   Any route on the opener stalls an about:blank popup's requests in Chromium (Playwright
-  1.63): the cover was never even requested. The fixture's route has done its job once `goto`
-  is past, so drop it.
+  1.63, microsoft/playwright#43496): the cover was never even requested. The fixture's route
+  has done its job once `goto` is past, so drop it.
   */
   await page.unrouteAll({ behavior: 'ignoreErrors' })
   const [popup] = await Promise.all([

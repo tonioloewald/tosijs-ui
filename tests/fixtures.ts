@@ -91,7 +91,7 @@ async function fromCdnCache(route: Route): Promise<void> {
  *
  * In Chromium (Playwright 1.63) ANY route on an opener, page or context, stalls every request
  * from an `about:blank` popup it opens: the Print popup never asked for its cover. A spec that
- * opens one calls `page.unrouteAll()` first (print-cover.pw.ts; UPSTREAM.md).
+ * opens one calls `page.unrouteAll()` first (print-cover.pw.ts; microsoft/playwright#43496).
  */
 export async function isolateThirdParty<T extends Page | BrowserContext>(
   target: T
