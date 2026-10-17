@@ -1,4 +1,4 @@
-# tosijs-ui v1.16.24
+# tosijs-ui v1.16.25
 
 Simple, robust web-components for use with tosijs or anything else.
 
@@ -41,6 +41,8 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   The goal of this library is not to replace HTML elements that already work very well, such as `<input>`, `<textarea>`...
 - https://ui.tosijs.net/crud/ — crud
   Search, list, edit — [`<tosi-table>`](/data-table/) and
+- https://ui.tosijs.net/data-client/ — data client
+  For an editor running on a dev-server page (a level editor, a scene editor) to open and save
 - https://ui.tosijs.net/dialog/ — dialog
   `<tosi-dialog>` is a simple wrapper around the standard HTML `<dialog>` element designed
 - https://ui.tosijs.net/diff/ — diff

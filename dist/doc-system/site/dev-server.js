@@ -22,7 +22,8 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, isSameOriginRequest, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, sourceRequestAdmission, suggestsTrustLan, trustLanWriteRecord, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, isSameOriginRequest, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, sourceRequestAdmission, suggestsTrustLan, trustLanWriteRecord, resolveLanTrust, describeLanTrust, SESSION_COOKIE, } from './dev-auth.js';
+import { resolveDataStore, resolveDataFile, dataContentProblem, writeDataFile, listDataFiles, commitDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
 /**
  * Every path the dev server watches for changes.
@@ -313,6 +314,17 @@ export function haltijaIsDrivable(stdout) {
     catch {
         return false;
     }
+}
+/**
+ * The root page, to be served at another path by the SPA fallback. Generated pages refer to
+ * their assets relatively (`iife.js`, `../iife.js`) so a site can live under a subpath; the
+ * root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and never hydrate
+ * (#3346). A `<base href="/">` resolves it exactly as it resolves at the root.
+ */
+export function withRootBase(html) {
+    if (/<base\b/i.test(html))
+        return html;
+    return html.replace(/<head\b[^>]*>/i, (head) => `${head}<base href="/">`);
 }
 export function haltijaLoaderSnippet(httpsPort) {
     return (`<script>self===top&&/^localhost$|^127\\./.test(location.hostname)` +
@@ -813,6 +825,13 @@ export async function devServer(config, opts = {}) {
     // Local dev only — your machine, your files — so the lone guard is correctness:
     // confine paths to the repo root so a stray path can't escape it. No auth/token.
     const PROJECT_ROOT = path.resolve('./');
+    // Resolved once, at launch: a network it cannot parse stops the server here (#3346).
+    const lanTrust = resolveLanTrust(config.trustLan, process.env.TOSIJS_TRUST_LAN);
+    // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
+    const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT);
+    if (dataStore?.commit && !isGitWorkTree(dataStore.root)) {
+        throw new Error('editableData: commit is on, but this project is not in a git work tree');
+    }
     const resolveInRepo = (rel) => {
         const resolved = path.resolve(PROJECT_ROOT, rel.replace(/^\/+/, ''));
         if (resolved !== PROJECT_ROOT &&
@@ -896,6 +915,129 @@ export async function devServer(config, opts = {}) {
                 headers: { 'Content-Type': 'application/json' },
             });
         }
+    }
+    /*
+    /__docstore/data (#3365), once admitted:
+      GET ?list               every editable file, newest first
+      GET ?file=F             the file
+      GET ?file=F&at=COMMIT   the file as it was in that commit
+      GET ?history=F          F's commits, newest first
+      POST {file, content}    save; with commit on, also commit it alone
+    */
+    async function handleData(request, store, { admission, peer, }) {
+        const json = (body, status = 200) => new Response(JSON.stringify(body), {
+            status,
+            headers: { 'Content-Type': 'application/json', ...NO_CACHE },
+        });
+        const params = new URL(request.url).searchParams;
+        if (request.method === 'GET') {
+            if (params.has('list'))
+                return json({ files: listDataFiles(store) });
+            const asked = params.get('history') ?? params.get('file');
+            const target = resolveDataFile(store, asked);
+            if ('refused' in target)
+                return json({ error: target.refused }, 403);
+            if (params.has('history')) {
+                try {
+                    return json({ versions: await dataHistory(store, target.rel) });
+                }
+                catch (e) {
+                    return json({ error: e.message }, 500);
+                }
+            }
+            const at = params.get('at');
+            const text = at != null
+                ? await readDataAt(store, target.rel, at)
+                : await Bun.file(target.path)
+                    .text()
+                    .catch(() => null);
+            if (text === null)
+                return json({ error: 'not found' }, 404);
+            return new Response(text, {
+                headers: {
+                    'Content-Type': target.rel.endsWith('.json')
+                        ? 'application/json; charset=utf-8'
+                        : 'text/plain; charset=utf-8',
+                    ...NO_CACHE,
+                },
+            });
+        }
+        if (request.method !== 'POST')
+            return json({ error: 'GET or POST' }, 405);
+        const body = (await request.json().catch(() => null));
+        const target = resolveDataFile(store, body?.file);
+        const record = (status) => {
+            if (admission === 'lan')
+                console.log(trustLanWriteRecord(peer, body?.file, status));
+        };
+        if ('refused' in target) {
+            record(403);
+            return json({ error: target.refused }, 403);
+        }
+        const problem = dataContentProblem(target.rel, body?.content);
+        if (problem) {
+            record(400);
+            return json({ error: problem }, 400);
+        }
+        writeDataFile(target.path, body.content);
+        record(200);
+        console.log('wrote', target.rel);
+        if (!store.commit)
+            return json({ ok: true, file: target.rel });
+        const savedBy = admission === 'loopback'
+            ? 'this machine'
+            : admission === 'lan'
+                ? `${peer ?? 'a LAN device'} (trustLan)`
+                : 'an edit session (tunnel)';
+        try {
+            const commit = await commitDataFile(store, target.rel, savedBy);
+            return json({ ok: true, file: target.rel, commit });
+        }
+        catch (e) {
+            // Saved but not versioned: say both, so the editor does not report a clean save.
+            console.warn(`⚠️  saved ${target.rel} but could not commit it: ${e.message}`);
+            return json({
+                ok: true,
+                file: target.rel,
+                commit: null,
+                commitError: e.message,
+            });
+        }
+    }
+    /*
+    WHO MAY READ OR WRITE files here, for /__docstore/source and /__docstore/data alike: decided
+    by sourceRequestAdmission() in dev-auth.ts, which is pure and tested. The signal is the
+    LISTENER this arrived on, not a header: tunnel traffic lands on a dedicated loopback port and
+    always needs a session, because "looks local" is precisely what a tunnel counterfeits.
+    */
+    function admit(request, endpoint, srv, viaTunnel) {
+        const peer = srv?.requestIP?.(request)?.address;
+        const admission = sourceRequestAdmission(request, {
+            viaTunnel,
+            peer,
+            auth,
+            trustLan: lanTrust.trust,
+            now: Date.now(),
+        });
+        if (admission !== null)
+            return { admission, peer };
+        // A HEAD is a page asking whether it may offer Save to source; a no is not news.
+        if (request.method !== 'HEAD') {
+            console.warn(`⚠️  refused ${request.method} ${endpoint} from ${peer ?? 'unknown'} — ` +
+                `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
+                `${suggestsTrustLan({
+                    viaTunnel,
+                    peer,
+                    proxied: isProxiedRequest(request.headers),
+                    trustLan: lanTrust.trust,
+                })
+                    ? '; trustLan in the site config, or TOSIJS_TRUST_LAN=1 for this session, admits devices on this network'
+                    : ''}).`);
+        }
+        return new Response('not authorized to edit files here', {
+            status: 403,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
     }
     await killStrayServer(PORT);
     function resolveUnder(directory, reqPath) {
@@ -1055,7 +1197,9 @@ export async function devServer(config, opts = {}) {
         Pragma: 'no-cache',
         Expires: '0',
     };
-    async function respondFile(filePath, request, viaTunnel = false) {
+    async function respondFile(filePath, request, viaTunnel = false, 
+    // The SPA fallback serves the root page at another path: resolve it as the root.
+    asRoot = false) {
         /*
         WHICH loader, decided per request rather than once at boot.
     
@@ -1078,8 +1222,9 @@ export async function devServer(config, opts = {}) {
             // deployed static site, which has none, is never asked.
             (config.editableSources ? SOURCE_ENDPOINT_SNIPPET : '');
         const encoding = negotiateEncoding(request?.headers.get('accept-encoding') ?? null);
-        if (extras && filePath.endsWith('.html')) {
-            const html = await Bun.file(filePath).text();
+        if ((extras || asRoot) && filePath.endsWith('.html')) {
+            const read = await Bun.file(filePath).text();
+            const html = asRoot ? withRootBase(read) : read;
             const injected = html.includes('</body>')
                 ? html.replace('</body>', `${extras}</body>`)
                 : html + extras;
@@ -1893,39 +2038,10 @@ export async function devServer(config, opts = {}) {
                     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
                 });
             }
-            /*
-              WHO MAY WRITE — decided by mayWriteSource() in dev-auth.ts, which is pure and
-              tested. The signal is the LISTENER this arrived on, not a header: tunnel
-              traffic lands on a dedicated loopback port and always needs a session, because
-              "looks local" is precisely what a tunnel counterfeits.
-              */
-            const peer = srv?.requestIP?.(request)?.address;
-            const admission = sourceRequestAdmission(request, {
-                viaTunnel,
-                peer,
-                auth,
-                trustLan: config.trustLan === true,
-                now: Date.now(),
-            });
-            if (admission === null) {
-                // A HEAD is a page asking whether it may offer Save to source; a no is not news.
-                if (request.method !== 'HEAD') {
-                    console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` +
-                        `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
-                        `${suggestsTrustLan({
-                            viaTunnel,
-                            peer,
-                            proxied: isProxiedRequest(request.headers),
-                            trustLan: config.trustLan === true,
-                        })
-                            ? '; trustLan: true in the site config admits devices on this network'
-                            : ''}).`);
-                }
-                return new Response('not authorized to edit source', {
-                    status: 403,
-                    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-                });
-            }
+            const admitted = admit(request, reqPath, srv, viaTunnel);
+            if (admitted instanceof Response)
+                return admitted;
+            const { admission, peer } = admitted;
             if (request.method === 'GET')
                 return handleReadSource(request);
             if (request.method === 'HEAD') {
@@ -1951,6 +2067,20 @@ export async function devServer(config, opts = {}) {
                 return response;
             }
             return new Response('method not allowed', { status: 405 });
+        }
+        if (reqPath === '/__docstore/data') {
+            // Answered unconditionally, like the source endpoint, so it never falls through to the
+            // SPA fallback and hands an editor the page as its "data".
+            if (!dataStore) {
+                return new Response('editableData is not set in this doc-site config (name the folders an editor may save to)', {
+                    status: 501,
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                });
+            }
+            const admitted = admit(request, reqPath, srv, viaTunnel);
+            if (admitted instanceof Response)
+                return admitted;
+            return handleData(request, dataStore, admitted);
         }
         /*
           Mint an invite link. Loopback and NOT via the tunnel: you must already be at this
@@ -2059,7 +2189,7 @@ export async function devServer(config, opts = {}) {
         if (isSPA && !looksLikeAsset) {
             const spaFile = resolveFile({ directory: PUBLIC, path: '/index.html' });
             if (spaFile)
-                return await respondFile(spaFile, request, viaTunnel);
+                return await respondFile(spaFile, request, viaTunnel, reqPath !== '/');
         }
         if (looksLikeAsset) {
             // Say what was asked for. "File not found" alone sends people to the wrong layer —
@@ -2258,12 +2388,13 @@ export async function devServer(config, opts = {}) {
     };
     console.log(`Listening on https://localhost:${PORT}`);
     // trustLan widens who may write; say so every launch, never silently (#227).
-    if (config.trustLan && config.editableSources) {
-        console.warn(`⚠️  trustLan: any device on a private network that can reach this machine may read and ` +
-            `edit source. Use it on a network you control.`);
+    if (lanTrust.trust && (config.editableSources || config.editableData)) {
+        console.warn(`⚠️  trustLan (${lanTrust.from}): ${describeLanTrust(lanTrust.trust)} that can reach ` +
+            `this machine may read and change files here, including code that runs on it. Use it ` +
+            `on a network you control.`);
     }
-    else if (config.trustLan) {
-        console.warn(`⚠️  trustLan does nothing without editableSources: true (there is no source endpoint to trust).`);
+    else if (lanTrust.trust) {
+        console.warn(`⚠️  trustLan does nothing without editableSources or editableData (there is nothing to trust it with).`);
     }
     if (SINK_PATH) {
         console.log(`Debug sink: POST /__debug-sink  ->  tail -f ${SINK_PATH}`);

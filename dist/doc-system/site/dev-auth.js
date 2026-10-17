@@ -654,9 +654,7 @@ export function mayWriteSource(opts) {
     with a certificate for localhost and <host>.local: a rebound hostname fails TLS. A plain-HTTP
     listener would turn this into a rebinding path. Do not add one without revisiting this.
     */
-    return (opts.trustLan === true &&
-        opts.proxied !== true &&
-        isPrivateNetworkAddress(opts.peer));
+    return opts.proxied !== true && lanTrusts(opts.trustLan, opts.peer);
 }
 /**
  * Who a `/__docstore/source` request is admitted as, or null to refuse it.
@@ -677,7 +675,7 @@ export function sourceRequestAdmission(request, opts) {
         // A share link's session may browse and may not save (asked AFTER validity, which is
         // the call-order `cookieMayWrite` documents).
         sessionMayWrite: cookieMayWrite(opts.auth, session),
-        trustLan: opts.trustLan === true,
+        trustLan: opts.trustLan,
         proxied: isProxiedRequest(request.headers),
     }) &&
         // CSRF (#90): the direct path is peer-address-only. The tunnel path is legitimately
@@ -791,6 +789,110 @@ export function isPrivateNetworkAddress(address) {
         return false;
     const head = parseInt(a.split(':')[0] || '0', 16);
     return (head & 0xfe00) === 0xfc00 || (head & 0xffc0) === 0xfe80;
+}
+/** An address as a number, or null if it is not one. IPv4 mapped into IPv6 reads as IPv4. */
+function addressValue(address) {
+    const a = address
+        .trim()
+        .toLowerCase()
+        .replace(/^\[|\]$/g, '')
+        .replace(/%.*$/, '');
+    const v4 = (a.startsWith('::ffff:') ? a.slice(7) : a).match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (v4) {
+        const octets = v4.slice(1).map(Number);
+        if (octets.some((o) => o > 255))
+            return null;
+        return {
+            v6: false,
+            value: octets.reduce((n, o) => (n << 8n) | BigInt(o), 0n),
+        };
+    }
+    if (!/^[0-9a-f:]+$/.test(a) || a.split('::').length > 2)
+        return null;
+    const [head, tail] = a.includes('::') ? a.split('::') : [a, null];
+    const groups = (s) => (s ? s.split(':') : []);
+    const left = groups(head);
+    const right = tail === null ? [] : groups(tail);
+    const missing = 8 - left.length - right.length;
+    if (tail === null ? missing !== 0 : missing < 1)
+        return null;
+    const all = [
+        ...left,
+        ...Array(tail === null ? 0 : missing).fill('0'),
+        ...right,
+    ];
+    if (all.some((g) => g.length === 0 || g.length > 4))
+        return null;
+    return {
+        v6: true,
+        value: all.reduce((n, g) => (n << 16n) | BigInt(parseInt(g, 16)), 0n),
+    };
+}
+/** Whether `address` is inside `cidr` (`192.168.1.0/24`, `fd00::/8`). False for a bad CIDR. */
+export function inNetwork(address, cidr) {
+    if (!address)
+        return false;
+    const [net, bitsText] = cidr.split('/');
+    const ip = addressValue(address);
+    const base = addressValue(net ?? '');
+    if (!ip || !base || ip.v6 !== base.v6 || !/^\d{1,3}$/.test(bitsText ?? ''))
+        return false;
+    const width = base.v6 ? 128 : 32;
+    const bits = Number(bitsText);
+    if (bits > width)
+        return false;
+    const shift = BigInt(width - bits);
+    return ip.value >> shift === base.value >> shift;
+}
+/** Whether `trust` admits `peer`. Every form requires a private address first. */
+export function lanTrusts(trust, peer) {
+    if (!trust || !isPrivateNetworkAddress(peer))
+        return false;
+    return trust === true || trust.some((cidr) => inNetwork(peer, cidr));
+}
+/**
+ * The `trustLan` in force, and where it came from. `TOSIJS_TRUST_LAN` wins over the config,
+ * so trust can be turned on for one session without committing it, or off when a committed
+ * setting is wrong for the network you are on: `1`/`true`/`on`, `0`/`false`/`off`, or a
+ * comma-separated list of networks. Throws on a network it cannot parse, rather than trusting
+ * more or less than was written.
+ */
+export function resolveLanTrust(configured, env) {
+    const fromEnv = env != null && env.trim() !== '';
+    const raw = fromEnv ? env.trim() : configured;
+    const from = fromEnv ? 'TOSIJS_TRUST_LAN' : 'config';
+    if (raw === undefined || raw === false)
+        return { trust: false, from: null };
+    if (raw === true)
+        return { trust: true, from };
+    if (typeof raw === 'string' && /^(1|true|on|yes)$/i.test(raw))
+        return { trust: true, from };
+    if (typeof raw === 'string' && /^(0|false|off|no)$/i.test(raw))
+        return { trust: false, from: null };
+    const list = (typeof raw === 'string' ? raw.split(/[\s,]+/) : [...raw])
+        .map((s) => s.trim())
+        .filter(Boolean);
+    for (const cidr of list) {
+        const [net, bits] = cidr.split('/');
+        const base = addressValue(net ?? '');
+        if (!base ||
+            !/^\d{1,3}$/.test(bits ?? '') ||
+            Number(bits) > (base.v6 ? 128 : 32)) {
+            throw new Error(`trustLan (${from}): ${JSON.stringify(cidr)} is not a network. ` +
+                `Write it as an address and a prefix length, e.g. 192.168.1.0/24.`);
+        }
+    }
+    if (list.length === 0)
+        return { trust: false, from: null };
+    return { trust: list, from };
+}
+/** How the launch message names what `trust` admits. */
+export function describeLanTrust(trust) {
+    if (trust === false)
+        return 'nobody';
+    if (trust === true)
+        return 'any device on a private network';
+    return `devices on ${trust.join(', ')} (private addresses only)`;
 }
 /*
 Was this request proxied (i.e. did it arrive through something in front of us)?

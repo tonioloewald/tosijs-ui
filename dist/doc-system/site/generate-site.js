@@ -251,7 +251,7 @@ ${head}
     // That cost a maintainer "a ton of time debugging" before it was traced to a Chrome
     // cache entry. The dev server already sends `no-store`; this is the built site.
     withStamp(relativeUrl(depth, docsUrl), docsStamp ?? assetStamp))}" config="${configAttr}"${localizedAttr}${layoutAttr}>
-  <article class="doc-content">
+  <article class="doc-content" data-doc="${escapeAttr(doc.filename)}">
 ${body}
   </article>
 ${nav}

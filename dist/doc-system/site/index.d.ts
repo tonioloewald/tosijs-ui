@@ -7,6 +7,8 @@ export { SiteMisconfiguredError } from './build-warnings.js';
 export { testReportVerdict } from './test-report.js';
 export type { TestReportLike, TestReportVerdict } from './test-report.js';
 export { devServer } from './dev-server.js';
+export type { EditableDataOptions } from './data-store.js';
+export { DATA_EXTENSIONS } from './data-store.js';
 export { auditDependencies, reportAudit, resolveAuditMode, } from './audit-guard.js';
 export type { AuditConfig, AuditGate, AuditResult, AuditSeverity, AuditMode, AuditAdvisory, } from './audit-guard.js';
 export { openDevBrowser, buildOpenPlan } from './open-browser.js';

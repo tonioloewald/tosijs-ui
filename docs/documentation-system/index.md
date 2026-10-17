@@ -18,6 +18,7 @@ Start with [Adopting the doc system](/adopting-the-doc-system/) for a first buil
 - [docs](/docs/)
 - [highlight-block](/highlight-block/)
 - [highlight-styles](/highlight-styles/)
+- [data client](/data-client/)
 - [Full-screen layout](/full-screen-demo/)
 - [Page without the header](/no-header-demo/)
 - [kitchen sink](/kitchen-sink/)

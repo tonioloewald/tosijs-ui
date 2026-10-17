@@ -15,6 +15,7 @@ export { SiteMisconfiguredError } from './build-warnings.js';
 // own gates: it fails on pages that never reported, not only on failed tests.
 export { testReportVerdict } from './test-report.js';
 export { devServer } from './dev-server.js';
+export { DATA_EXTENSIONS } from './data-store.js';
 export { auditDependencies, reportAudit, resolveAuditMode, } from './audit-guard.js';
 export { openDevBrowser, buildOpenPlan } from './open-browser.js';
 export { extractDocs, saveDocsJSON } from './docs.js';

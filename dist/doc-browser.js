@@ -954,8 +954,18 @@ export function createDocBrowser(options) {
     };
     let adoptInitialContent = contentElement !== undefined && !memoryRouting;
     const showDoc = (doc) => {
-        if (adoptInitialContent) {
-            adoptInitialContent = false; // leave the pre-rendered HTML untouched
+        /*
+        Adopt the pre-render only if it IS this doc. The dev server's SPA fallback serves the root
+        page for a path with no file of its own, so `/guide/` can arrive holding the home page's
+        article (#3346). The generator stamps `data-doc`; a page without it predates the stamp
+        and is adopted as before.
+        */
+        const prerendered = contentElement?.dataset.doc;
+        const adopt = adoptInitialContent &&
+            (prerendered === undefined || prerendered === doc.filename);
+        adoptInitialContent = false;
+        if (adopt) {
+            // leave the pre-rendered HTML untouched
         }
         else {
             // Pass the doc's build-time tjs bakes so this client-rendered page embeds the

@@ -289,9 +289,10 @@ export declare function mayWriteSource(opts: {
     sessionMayWrite?: boolean;
     /**
      * The project opted in to trusting its LAN (`trustLan`, #227): a direct, unproxied peer at a
-     * private address counts as this machine. Off unless the caller says so.
+     * private address (inside the listed networks, when it lists some) counts as this machine.
+     * Off unless the caller says so.
      */
-    trustLan?: boolean;
+    trustLan?: LanTrust;
     /** did the request carry forwarding headers? A proxied request is never LAN trust */
     proxied?: boolean;
 }): boolean;
@@ -314,7 +315,7 @@ export declare function sourceRequestAdmission(request: {
     viaTunnel: boolean;
     peer?: string | null;
     auth: AuthState;
-    trustLan?: boolean;
+    trustLan?: LanTrust;
     now: number;
 }): 'loopback' | 'lan' | 'session' | null;
 /**
@@ -326,7 +327,7 @@ export declare function suggestsTrustLan(opts: {
     viaTunnel: boolean;
     peer?: string | null;
     proxied: boolean;
-    trustLan: boolean;
+    trustLan: LanTrust;
 }): boolean;
 /**
  * The log line for a source write admitted only by `trustLan`. The file name is the client's,
@@ -380,6 +381,28 @@ export declare function isLoopbackAddressForAuth(address: string | undefined | n
  * included; ask `isLoopbackAddressForAuth` for that. Used ONLY behind the `trustLan` opt-in.
  */
 export declare function isPrivateNetworkAddress(address: string | undefined | null): boolean;
+/**
+ * Who `trustLan` admits: nobody (`false`), any private-network peer (`true`), or private peers
+ * inside these networks (CIDR strings, validated by `resolveLanTrust`).
+ */
+export type LanTrust = boolean | readonly string[];
+/** Whether `address` is inside `cidr` (`192.168.1.0/24`, `fd00::/8`). False for a bad CIDR. */
+export declare function inNetwork(address: string | null | undefined, cidr: string): boolean;
+/** Whether `trust` admits `peer`. Every form requires a private address first. */
+export declare function lanTrusts(trust: LanTrust | undefined, peer: string | null | undefined): boolean;
+/**
+ * The `trustLan` in force, and where it came from. `TOSIJS_TRUST_LAN` wins over the config,
+ * so trust can be turned on for one session without committing it, or off when a committed
+ * setting is wrong for the network you are on: `1`/`true`/`on`, `0`/`false`/`off`, or a
+ * comma-separated list of networks. Throws on a network it cannot parse, rather than trusting
+ * more or less than was written.
+ */
+export declare function resolveLanTrust(configured: boolean | string | readonly string[] | undefined, env: string | undefined): {
+    trust: LanTrust;
+    from: 'TOSIJS_TRUST_LAN' | 'config' | null;
+};
+/** How the launch message names what `trust` admits. */
+export declare function describeLanTrust(trust: LanTrust): string;
 export declare function isProxiedRequest(headers: {
     get(name: string): string | null;
 }): boolean;

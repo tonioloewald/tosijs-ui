@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=b586b80b8890" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=51d8cd2040de" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,8 +30,8 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=da817eaeae75" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
-  <article class="doc-content">
+  <tosi-doc-system docs="../docs.json?v=d66b9a9bbfe7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
 <h1 id="tosijs-uisite--static-pre-rendered-hydrating-doc-sites"><code>tosijs-ui/site</code> — static, pre-rendered, hydrating doc sites</h1>
@@ -591,9 +591,14 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <td>Enables the dev server&#39;s <code>/__docstore/source</code> read+write endpoints, so &quot;edit page source&quot; and a live example&#39;s &quot;Save to source&quot; write the actual file. <strong>Off</strong> by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set <code>true</code> to author in place. <strong>Authorization depends on how the request arrived.</strong> The dev server binds every interface (so you can view the site from a phone), but reading serves any file in the repo and writing is remote code execution. So: a request that arrived <strong>directly</strong> is authorized only by a <strong>loopback peer</strong> — you, at this keyboard. A request that arrived <strong>through the tunnel</strong> is authorized only by a <strong>valid session</strong>, earned by redeeming an invite link (<code>tosijs-tunnel --link</code>), because &quot;looks local&quot; is exactly what a tunnel counterfeits. Note what this means in practice: a phone on <code>https://&lt;host&gt;.local:8787</code> can <em>view</em> the site but cannot save, session or not — reach the workspace through the tunnel URL instead, which is the path the session is for, or set <code>trustLan</code>. There is no env-var override. (The endpoint always answers <code>/__docstore/source</code> with a real status; it never serves the SPA <code>index.html</code>, so a disabled/misconfigured server can&#39;t leak the rendered page as the &quot;source&quot;.)</td>
 </tr>
 <tr>
+<td><code>editableData</code></td>
+<td>—</td>
+<td>Folders an editor running on the dev page (a level or scene editor) may list, read and save, through <code>/__docstore/data</code>, behind the same gate as source (this machine, an edit session over the tunnel, or the LAN under <code>trustLan</code>; share links stay read-only). <code>[&#39;static/levels&#39;]</code>, or <code>{ dirs, extensions, commit }</code>. Extensions default to <code>.json</code> and may only be data formats (<code>.json</code> <code>.jsonc</code> <code>.json5</code> <code>.ndjson</code> <code>.txt</code> <code>.csv</code> <code>.tsv</code> <code>.yaml</code> <code>.yml</code> <code>.toml</code>), so nothing saved there runs or renders. Dot-files, symlinks and names tools read as configuration (<code>package.json</code>, <code>tsconfig.json</code>, <code>*.config.*</code>) are never written, and a <code>.json</code> save must parse. Folders must be inside the project, not the project itself, and not in or around <code>.git</code> or <code>node_modules</code>; a bad setting stops the server at launch. With <code>commit: true</code> each save is its own commit (<code>data: save &lt;file&gt;</code>, naming who saved it), leaving other staged work alone, and <code>?history=</code> lists a file&#39;s versions. <code>tosijs-ui/doc-system/data-client</code> wraps the endpoint (<code>listData</code>, <code>readData</code>, <code>saveData</code>, <code>dataHistory</code>).</td>
+</tr>
+<tr>
 <td><code>trustLan</code></td>
 <td><code>false</code></td>
-<td>With <code>editableSources</code> on, trust the local network for reading and editing source, so a phone or headset on your LAN can use &quot;Edit page source&quot; directly instead of going through the tunnel (#227), and a live example&#39;s &quot;Save to source&quot; is offered there too. Each write admitted this way is logged with the device&#39;s address and the file. Trusted: a <strong>direct</strong> peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server&#39;s own origin. <strong>It means anyone on the network can edit your working tree</strong>: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Agent driving, invite links, builds and test reports stay this machine only.</td>
+<td>With <code>editableSources</code> or <code>editableData</code> on, trust the local network for reading and editing source and data, so a phone or headset on your LAN can use &quot;Edit page source&quot; directly instead of going through the tunnel (#227), and a live example&#39;s &quot;Save to source&quot; is offered there too. Each write admitted this way is logged with the device&#39;s address and the file. Trusted: a <strong>direct</strong> peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server&#39;s own origin. <strong>It means anyone on the network can change files here, including code that runs on this machine</strong>: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Prefer naming your network, which trusts only private addresses inside it and so does nothing on anyone else&#39;s: <code>&#39;192.168.1.0/24&#39;</code> or a list. Or keep it out of the config: <code>TOSIJS_TRUST_LAN=1</code> (or a network, or <code>0</code>) sets it for one run and wins over the config. A network that cannot be parsed stops the server at launch. Agent driving, invite links, builds and test reports stay this machine only.</td>
 </tr>
 <tr>
 <td><code>memoryLimitMb</code></td>
@@ -2110,6 +2115,7 @@ exports.</p>
       <li><a class="doc-link" href="../docs/">docs</a></li>
       <li><a class="doc-link" href="../highlight-block/">highlight-block</a></li>
       <li><a class="doc-link" href="../highlight-styles/">highlight-styles</a></li>
+      <li><a class="doc-link" href="../data-client/">data client</a></li>
       <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
       <li><a class="doc-link" href="../no-header-demo/">Page without the header</a></li>
       <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
@@ -2131,6 +2137,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-rae4sb2w.js"></script>
+  <script type="module" src="../hydrate-qz5jw00z.js"></script>
 </body>
 </html>

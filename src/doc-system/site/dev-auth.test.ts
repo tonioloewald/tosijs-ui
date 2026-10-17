@@ -26,6 +26,10 @@ import {
   sourceRequestAdmission,
   suggestsTrustLan,
   trustLanWriteRecord,
+  inNetwork,
+  lanTrusts,
+  resolveLanTrust,
+  describeLanTrust,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -1402,4 +1406,106 @@ test('a trustLan write is logged with its outcome, and its file name cannot forg
   expect(trustLanWriteRecord(undefined, 42, 400)).toBe(
     '✎ trustLan: unknown refused (400) (no file)'
   )
+})
+
+/*
+`trustLan: true` trusts whatever network the machine is on, the café's included. A named
+network, or TOSIJS_TRUST_LAN for one run, is the form that is hard to leave on by accident (#3346).
+*/
+describe('trustLan networks', () => {
+  test('a peer is inside a network or not, IPv4 and IPv6, mapped IPv4 included', () => {
+    expect(inNetwork('192.168.1.20', '192.168.1.0/24')).toBe(true)
+    expect(inNetwork('::ffff:192.168.1.20', '192.168.1.0/24')).toBe(true)
+    expect(inNetwork('192.168.2.20', '192.168.1.0/24')).toBe(false)
+    expect(inNetwork('10.1.2.3', '10.0.0.0/8')).toBe(true)
+    expect(inNetwork('172.20.0.1', '172.16.0.0/12')).toBe(true)
+    expect(inNetwork('172.32.0.1', '172.16.0.0/12')).toBe(false)
+    expect(inNetwork('fd00:1::5', 'fd00:1::/64')).toBe(true)
+    expect(inNetwork('[fd00:1::5]', 'fd00:1::/64')).toBe(true)
+    expect(inNetwork('fd00:2::5', 'fd00:1::/64')).toBe(false)
+    expect(inNetwork('fe80::1%en0', 'fe80::/10')).toBe(true)
+    // An IPv4 peer is never inside an IPv6 network, nor the reverse.
+    expect(inNetwork('192.168.1.20', 'fd00::/8')).toBe(false)
+    expect(inNetwork('fd00::1', '192.168.1.0/24')).toBe(false)
+    expect(inNetwork(undefined, '192.168.1.0/24')).toBe(false)
+    expect(inNetwork('192.168.1.20', 'nonsense')).toBe(false)
+    expect(inNetwork('999.1.1.1', '0.0.0.0/0')).toBe(false)
+  })
+
+  test('a named network still admits only private addresses', () => {
+    const wide = ['0.0.0.0/0', '::/0']
+    expect(lanTrusts(wide, '192.168.1.20')).toBe(true)
+    expect(lanTrusts(wide, '8.8.8.8')).toBe(false)
+    expect(lanTrusts(wide, '2001:4860::8888')).toBe(false)
+    expect(lanTrusts(['192.168.1.0/24'], '192.168.1.20')).toBe(true)
+    expect(lanTrusts(['192.168.1.0/24'], '10.0.0.5')).toBe(false)
+    expect(lanTrusts(true, '10.0.0.5')).toBe(true)
+    expect(lanTrusts(false, '10.0.0.5')).toBe(false)
+  })
+
+  test('the gate admits a LAN device only inside the named network', () => {
+    const post = new Request('https://mac.local:8787/__docstore/source', {
+      method: 'POST',
+    })
+    const opts = {
+      viaTunnel: false,
+      auth: createAuthState(),
+      now: NOW,
+      trustLan: ['192.168.1.0/24'],
+    }
+    expect(
+      sourceRequestAdmission(post, { ...opts, peer: '192.168.1.20' })
+    ).toBe('lan')
+    // The same config on another network trusts nobody there.
+    expect(sourceRequestAdmission(post, { ...opts, peer: '10.0.0.5' })).toBe(
+      null
+    )
+    expect(sourceRequestAdmission(post, { ...opts, peer: '127.0.0.1' })).toBe(
+      'loopback'
+    )
+  })
+
+  test('TOSIJS_TRUST_LAN wins over the config, either way', () => {
+    expect(resolveLanTrust(undefined, undefined)).toEqual({
+      trust: false,
+      from: null,
+    })
+    expect(resolveLanTrust(true, undefined)).toEqual({
+      trust: true,
+      from: 'config',
+    })
+    expect(resolveLanTrust(undefined, '1')).toEqual({
+      trust: true,
+      from: 'TOSIJS_TRUST_LAN',
+    })
+    expect(resolveLanTrust(true, '0')).toEqual({ trust: false, from: null })
+    expect(resolveLanTrust(true, 'off')).toEqual({ trust: false, from: null })
+    expect(resolveLanTrust(true, '192.168.1.0/24, fd00:1::/64')).toEqual({
+      trust: ['192.168.1.0/24', 'fd00:1::/64'],
+      from: 'TOSIJS_TRUST_LAN',
+    })
+    expect(resolveLanTrust('192.168.1.0/24', '')).toEqual({
+      trust: ['192.168.1.0/24'],
+      from: 'config',
+    })
+    expect(resolveLanTrust(['10.0.0.0/8'], undefined).trust).toEqual([
+      '10.0.0.0/8',
+    ])
+  })
+
+  test('a network that cannot be parsed stops the server, saying which', () => {
+    for (const bad of ['192.168.1.0', '192.168.1.0/33', 'home', '::1::2/64']) {
+      expect(() => resolveLanTrust(bad, undefined)).toThrow(JSON.stringify(bad))
+    }
+    expect(() => resolveLanTrust(true, 'yes please')).toThrow(
+      'TOSIJS_TRUST_LAN'
+    )
+  })
+
+  test('the launch message says who is trusted', () => {
+    expect(describeLanTrust(true)).toBe('any device on a private network')
+    expect(describeLanTrust(['192.168.1.0/24'])).toBe(
+      'devices on 192.168.1.0/24 (private addresses only)'
+    )
+  })
 })

@@ -17,6 +17,7 @@ import type { DocSystemTheme } from '../doc-system-styles.js'
 import type { Doc } from './docs.js'
 import type { PreflightMode } from './preflight.js'
 import type { AuditConfig } from './audit-guard.js'
+import type { EditableDataOptions } from './data-store.js'
 import type { BookManifest } from '../book-manifest.js'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
@@ -654,24 +655,61 @@ export interface SiteConfig {
    */
   editableSources?: boolean
   /**
-   * Trust the local network for reading and editing source (#227). With `editableSources` on,
+   * Folders of data an editor running on the dev page may list, read and save (#3365): levels,
+   * scenes, fixtures. `editableSources` writes only the pages' own sources, so a level editor
+   * had nowhere to save its JSON. Same gate as source: this machine, an edit session over the
+   * tunnel, or the LAN under `trustLan`; share links stay read-only.
+   *
+   * ```ts
+   * editableData: ['static/levels', 'static/scenes']
+   * editableData: { dirs: ['static/levels'], extensions: ['.json', '.csv'], commit: true }
+   * ```
+   *
+   * - **Folders** are inside the project, not the project itself, and not in or around `.git`
+   *   or `node_modules`. Files in subfolders count; a missing folder stops the server.
+   * - **Extensions** default to `.json`. Only data formats are allowed (`.json` `.jsonc`
+   *   `.json5` `.ndjson` `.txt` `.csv` `.tsv` `.yaml` `.yml` `.toml`); nothing that runs or
+   *   renders, so a writer cannot plant a script the dev page would load.
+   * - **Never written:** dot-files, symlinks, and names tools read as configuration
+   *   (`package.json`, `tsconfig.json`, `*.config.*`). A `.json` save must parse.
+   * - **`commit: true`** commits each save on its own (`data: save <file>`, naming who saved
+   *   it), so every save is a version you can `git revert`. Other staged work is left alone,
+   *   and the repository's hooks run. A save that wrote but could not commit says so.
+   *
+   * The endpoint is `/__docstore/data`: `GET ?list`, `GET ?file=F`, `GET ?file=F&at=COMMIT`,
+   * `GET ?history=F` and `POST {file, content}`. `tosijs-ui/doc-system/data-client` wraps it.
+   * Dev server only: nothing is built into the site.
+   */
+  editableData?: string[] | EditableDataOptions
+  /**
+   * Trust the local network for reading and editing source and data (#227). With `editableSources` on,
    * a browser on another device on your LAN (a phone, a headset) can open and save source
    * directly, as one at this keyboard can, instead of needing the tunnel and an invite link.
    * That covers "Edit page source" and a live example's "Save to source", which is offered
-   * wherever the server admits the page. Every write admitted this way is logged with the
-   * device's address and the file.
+   * wherever the server admits the page, and `editableData` folders are open to it too. Every
+   * write admitted this way is logged with the device's address and the file.
    *
    * Trusted: a direct peer at a private address (RFC 1918 IPv4, IPv6 unique-local or
    * link-local). Never trusted: tunnel traffic (it needs a session as before) or a request
    * carrying forwarding headers. Writes still have to come from the dev server's own origin,
    * so a page another site serves cannot write through a LAN browser.
    *
-   * What it means: ANYONE on the network can edit your working tree. Turn it on for a network
-   * you control, never on shared wifi. And a reverse proxy on your LAN that forwards outside
-   * traffic WITHOUT forwarding headers would make that traffic look like a LAN peer. Agent
-   * driving, invite links, builds and test reports stay this machine only. Off by default.
+   * What it means: ANYONE on the network can change files here, including code that runs on
+   * this machine. Turn it on for a network you control, never on shared wifi. And a reverse
+   * proxy on your LAN that forwards outside traffic WITHOUT forwarding headers would make that
+   * traffic look like a LAN peer. Agent driving, invite links, builds and test reports stay
+   * this machine only. Off by default.
+   *
+   * **Name your network rather than trusting every one.** `true` trusts whatever network the
+   * machine is on, including the café's. A network, or a list of them, trusts only private
+   * addresses inside it, so a committed setting does nothing elsewhere:
+   * `trustLan: '192.168.1.0/24'`, or `['192.168.1.0/24', 'fd00:1::/64']`.
+   *
+   * **Or leave it out of the config.** `TOSIJS_TRUST_LAN` sets it for one run and wins over the
+   * config either way: `TOSIJS_TRUST_LAN=1 bun start`, `=192.168.1.0/24`, or `=0` to turn off a
+   * committed setting. A network that cannot be parsed stops the server at launch.
    */
-  trustLan?: boolean
+  trustLan?: boolean | string | string[]
   /**
    * Give a coding agent (Claude) eyes + hands on your running dev page via
    * [haltija](https://github.com/tonioloewald/haltija). When on, the dev server

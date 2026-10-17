@@ -117,6 +117,13 @@ export declare function resolveLimitMb(configMb: number | undefined, envMb: stri
  */
 export { isLoopbackAddress };
 export declare function haltijaIsDrivable(stdout: string): boolean;
+/**
+ * The root page, to be served at another path by the SPA fallback. Generated pages refer to
+ * their assets relatively (`iife.js`, `../iife.js`) so a site can live under a subpath; the
+ * root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and never hydrate
+ * (#3346). A `<base href="/">` resolves it exactly as it resolves at the root.
+ */
+export declare function withRootBase(html: string): string;
 export declare function haltijaLoaderSnippet(httpsPort: number): string;
 /**
  * The SAME-ORIGIN loader, for a page reached over the tunnel (`haltijaDev: 'tunnel'`).
