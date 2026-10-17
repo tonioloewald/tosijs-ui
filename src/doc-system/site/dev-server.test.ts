@@ -8,7 +8,7 @@ import {
   resolveIdleMs,
   resolveLimitMb,
   nextBuildStep,
-  withRootBase,
+  rootRelativeUrls,
 } from './dev-server.js'
 
 const HOUR = 3600_000
@@ -557,17 +557,25 @@ describe('nextBuildStep — the delegated-build queue (the loop that spun foreve
 test('the SPA fallback resolves the root page as the root (#3346)', () => {
   // Served at /guide/, `iife.js` would be /guide/iife.js: a 404, and no hydration.
   expect(
-    withRootBase(
-      '<html><head lang="en"><script src="iife.js"></script></head></html>'
+    rootRelativeUrls(
+      '<link href="doc-system.css?v=1"><script src="./iife.js"></script>' +
+        '<tosi-doc-system docs="docs.json?v=1"><a href="guide/">g</a>'
     )
   ).toBe(
-    '<html><head lang="en"><base href="/"><script src="iife.js"></script></head></html>'
+    '<link href="/doc-system.css?v=1"><script src="/iife.js"></script>' +
+      '<tosi-doc-system docs="/docs.json?v=1"><a href="/guide/">g</a>'
   )
-  // A page that sets its own base keeps it; a <header> is not the head.
-  expect(withRootBase('<head><base href="/x/"></head>')).toBe(
-    '<head><base href="/x/"></head>'
-  )
-  expect(withRootBase('<header>no head</header>')).toBe(
-    '<header>no head</header>'
-  )
+  // In-page and query links stay on this page; absolute URLs are left alone.
+  for (const kept of [
+    '<a href="#fn-1">',
+    '<a href="?x">',
+    '<img src="/logo.svg">',
+    '<a href="https://example.com/">',
+    '<a href="mailto:a@b.c">',
+    '<script src="//cdn.example/x.js">',
+    '<img src="data:image/png;base64,AA">',
+    '<a href="">',
+  ]) {
+    expect(rootRelativeUrls(kept)).toBe(kept)
+  }
 })

@@ -330,6 +330,17 @@ export declare function suggestsTrustLan(opts: {
     trustLan: LanTrust;
 }): boolean;
 /**
+ * What the refusal log adds about `trustLan`, or ''. Off: that turning it on would admit this
+ * device. Naming networks this device is outside: which, and the one-run override. A device it
+ * could never admit (tunnel, proxied, public) hears nothing about it.
+ */
+export declare function trustLanRefusalHint(opts: {
+    viaTunnel: boolean;
+    peer?: string | null;
+    proxied: boolean;
+    trustLan: LanTrust;
+}): string;
+/**
  * The log line for a source write admitted only by `trustLan`. The file name is the client's,
  * so it is quoted as JSON: a newline or an escape sequence in it cannot forge a log line.
  */

@@ -2,6 +2,12 @@
 export declare const SOURCE_ACCESS_HEADER = "x-tosijs-source";
 /** Injected by the dev server into pages it serves with `editableSources` on. */
 export declare const SOURCE_ENDPOINT_SNIPPET = "<script>window.__tosiSourceEndpoint=true</script>";
+/**
+ * What a reader refused over the LAN is told, in one place for the page editor and live
+ * examples. It names the forms that are hard to leave on by accident: a one-run environment
+ * variable, or a named network in the config.
+ */
+export declare const LAN_REFUSAL_ADVICE: string;
 /** Whether the page was served by a dev server with a source endpoint. */
 export declare const hasSourceEndpoint: () => boolean;
 /** Whether `/__docstore/source` admits this page for `file`, asked once per file. */

@@ -47,7 +47,7 @@ import {
   mayDriveWithAgent,
   isProxiedRequest,
   sourceRequestAdmission,
-  suggestsTrustLan,
+  trustLanRefusalHint,
   trustLanWriteRecord,
   resolveLanTrust,
   describeLanTrust,
@@ -57,9 +57,8 @@ import {
   resolveDataStore,
   resolveDataFile,
   dataContentProblem,
-  writeDataFile,
   listDataFiles,
-  commitDataFile,
+  saveDataFile,
   dataHistory,
   readDataAt,
   isGitWorkTree,
@@ -398,13 +397,22 @@ export function haltijaIsDrivable(stdout: string): boolean {
 
 /**
  * The root page, to be served at another path by the SPA fallback. Generated pages refer to
- * their assets relatively (`iife.js`, `../iife.js`) so a site can live under a subpath; the
- * root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and never hydrate
- * (#3346). A `<base href="/">` resolves it exactly as it resolves at the root.
+ * their assets relatively (`iife.js`, `docs.json`, `../iife.js`) so a site can live under a
+ * subpath; the root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and
+ * never hydrate (#3346). Its relative `src`, `href` and `docs` URLs are made root-relative.
+ *
+ * Not a `<base href="/">`, which was the first fix: that also sends the page's in-page links
+ * (`#fn-1`, `#a-heading`) and `?query` links to the ROOT document (1.16.25 review). Those, and
+ * absolute, scheme and protocol-relative URLs, are left alone.
  */
-export function withRootBase(html: string): string {
-  if (/<base\b/i.test(html)) return html
-  return html.replace(/<head\b[^>]*>/i, (head) => `${head}<base href="/">`)
+export function rootRelativeUrls(html: string): string {
+  return html.replace(
+    /(\s(?:src|href|docs)=")([^"]*)"/gi,
+    (whole, attr: string, url: string) =>
+      url === '' || /^(?:[#?/]|[a-z][a-z0-9+.-]*:)/i.test(url)
+        ? whole
+        : `${attr}/${url.replace(/^(?:\.\/)+/, '')}"`
+  )
 }
 
 export function haltijaLoaderSnippet(httpsPort: number): string {
@@ -987,7 +995,11 @@ export async function devServer(
     process.env.TOSIJS_TRUST_LAN
   )
   // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
-  const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT)
+  const dataStore = resolveDataStore(
+    config.editableData,
+    PROJECT_ROOT,
+    config.outputDir ?? 'docs'
+  )
   if (dataStore?.commit && !isGitWorkTree(dataStore.root)) {
     throw new Error(
       'editableData: commit is on, but this project is not in a git work tree'
@@ -1158,33 +1170,33 @@ export async function devServer(
       record(400)
       return json({ error: problem }, 400)
     }
-    writeDataFile(target.path, body!.content as string)
-    record(200)
-    console.log('wrote', target.rel)
-    if (!store.commit) return json({ ok: true, file: target.rel })
     const savedBy =
       admission === 'loopback'
         ? 'this machine'
         : admission === 'lan'
         ? `${peer ?? 'a LAN device'} (trustLan)`
         : 'an edit session (tunnel)'
+    let saved: { commit?: string | null; commitError?: string }
     try {
-      const commit = await commitDataFile(store, target.rel, savedBy)
-      return json({ ok: true, file: target.rel, commit })
+      saved = await saveDataFile(
+        store,
+        target,
+        body!.content as string,
+        savedBy
+      )
     } catch (e) {
+      record(500)
+      return json({ error: `could not write: ${(e as Error).message}` }, 500)
+    }
+    record(200)
+    console.log('wrote', target.rel)
+    if (saved.commitError) {
       // Saved but not versioned: say both, so the editor does not report a clean save.
       console.warn(
-        `⚠️  saved ${target.rel} but could not commit it: ${
-          (e as Error).message
-        }`
+        `⚠️  saved ${target.rel} but did not commit it: ${saved.commitError}`
       )
-      return json({
-        ok: true,
-        file: target.rel,
-        commit: null,
-        commitError: (e as Error).message,
-      })
     }
+    return json({ ok: true, file: target.rel, ...saved })
   }
 
   /*
@@ -1219,16 +1231,13 @@ export async function devServer(
           peer ?? 'unknown'
         } — ` +
           `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
-          `${
-            suggestsTrustLan({
-              viaTunnel,
-              peer,
-              proxied: isProxiedRequest(request.headers),
-              trustLan: lanTrust.trust,
-            })
-              ? '; trustLan in the site config, or TOSIJS_TRUST_LAN=1 for this session, admits devices on this network'
-              : ''
-          }).`
+          trustLanRefusalHint({
+            viaTunnel,
+            peer,
+            proxied: isProxiedRequest(request.headers),
+            trustLan: lanTrust.trust,
+          }) +
+          ').'
       )
     }
     return new Response('not authorized to edit files here', {
@@ -1450,7 +1459,7 @@ export async function devServer(
 
     if ((extras || asRoot) && filePath.endsWith('.html')) {
       const read = await Bun.file(filePath).text()
-      const html = asRoot ? withRootBase(read) : read
+      const html = asRoot ? rootRelativeUrls(read) : read
       const injected = html.includes('</body>')
         ? html.replace('</body>', `${extras}</body>`)
         : html + extras

@@ -14,29 +14,32 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=51d8cd2040de" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=9568c43db266" data-tosi-doc-system />
   <title>data client — tosijs-ui</title>
-  <meta name="description" content="For an editor running on a dev-server page (a level editor, a scene editor) to open and save the project&#39;s data files through /__docstore/data, which the site…" />
+  <meta name="description" content="For an editor running on a dev-server page (a level editor, a scene editor) to open and save the project&#39;s data files through /__docstore/data." />
   <link rel="canonical" href="https://ui.tosijs.net/data-client/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="data client — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="data client — tosijs-ui" />
-  <meta property="og:description" content="For an editor running on a dev-server page (a level editor, a scene editor) to open and save the project&#39;s data files through /__docstore/data, which the site…" />
+  <meta property="og:description" content="For an editor running on a dev-server page (a level editor, a scene editor) to open and save the project&#39;s data files through /__docstore/data." />
   <meta property="og:url" content="https://ui.tosijs.net/data-client/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"data client","description":"For an editor running on a dev-server page (a level editor, a scene editor) to open and save the project's data files through /__docstore/data, which the site…","url":"https://ui.tosijs.net/data-client/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"data client","description":"For an editor running on a dev-server page (a level editor, a scene editor) to open and save the project's data files through /__docstore/data.","url":"https://ui.tosijs.net/data-client/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=d66b9a9bbfe7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=fb6c24a3f18b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="data-client.ts">
 <h1 id="data-client">data client</h1>
 <p>For an editor running on a dev-server page (a level editor, a scene editor) to open and save
-the project&#39;s data files through <code>/__docstore/data</code>, which the site config&#39;s <code>editableData</code>
-turns on (see the doc-site system reference). Dev server only: on a deployed site every call
-rejects, so an editor can offer saving only where it works.</p>
+the project&#39;s data files through <code>/__docstore/data</code>. Turn it on by naming the folders in the
+site config; <a href="/doc-site-system/"><code>editableData</code></a> in the doc-site system reference has the
+rules.</p>
+<pre><code class="language-typescript" data-highlighted><span class="token comment">// tosijs-site.config.ts</span>
+editableData<span class="token operator">:</span> <span class="token punctuation">{</span> dirs<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'static/levels'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> commit<span class="token operator">:</span> <span class="token boolean">true</span> <span class="token punctuation">}</span>
+</code></pre>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> listData<span class="token punctuation">,</span> readData<span class="token punctuation">,</span> saveData<span class="token punctuation">,</span> dataHistory <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-system/data-client'</span>
 
 <span class="token keyword">const</span> <span class="token punctuation">{</span> files <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">listData</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
@@ -44,12 +47,23 @@ rejects, so an editor can offer saving only where it works.</p>
 level<span class="token punctuation">.</span>spawn <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span>
 <span class="token keyword">const</span> <span class="token punctuation">{</span> commit <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">saveData</span><span class="token punctuation">(</span><span class="token string">'static/levels/ocean.json'</span><span class="token punctuation">,</span> level<span class="token punctuation">)</span>
 <span class="token keyword">const</span> versions <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">dataHistory</span><span class="token punctuation">(</span><span class="token string">'static/levels/ocean.json'</span><span class="token punctuation">)</span>
-<span class="token keyword">const</span> before <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">readData</span><span class="token punctuation">(</span><span class="token string">'static/levels/ocean.json'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> at<span class="token operator">:</span> versions<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>commit <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>versions<span class="token punctuation">.</span>length <span class="token operator">></span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> before <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">readData</span><span class="token punctuation">(</span><span class="token string">'static/levels/ocean.json'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> at<span class="token operator">:</span> versions<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>commit <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
 </code></pre>
 <p><code>saveData</code> writes an object as JSON (two-space indent, trailing newline) and a string as it
 is. With <code>commit: true</code> in the config each save is its own commit, and <code>commit</code> in the result
 is its hash (<code>null</code> when the save changed nothing). A save that wrote but could not commit
-resolves with <code>commitError</code> set rather than rejecting, because the file was saved.</p>
+(a failing hook, or a repository mid-rebase) resolves with <code>commitError</code> set rather than
+rejecting, because the file was saved. Each committed save runs git and the repository&#39;s
+hooks before it answers, so it suits an explicit Save, not autosave.</p>
+<p><strong>Dev server only.</strong> Everything else rejects with a <code>DataStoreError</code> whose <code>status</code> says why:
+<code>501</code> when the server has no <code>editableData</code>, <code>403</code> when this page may not edit files here or
+the file is not editable, <code>400</code> for content it refuses (JSON that does not parse). A response
+that is not the endpoint&#39;s (a deployed site&#39;s catch-all answering with a page) rejects too, so
+<code>listData()</code> is the probe for whether to offer saving at all.</p>
+<p>File names may use letters, digits, <code>-</code>, <code>_</code>, <code>.</code>, <code>/</code> and spaces. <code>dataHistory</code> returns the
+latest 100 versions.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -155,6 +169,6 @@ resolves with <code>commitError</code> set rather than rejecting, because the fi
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-qz5jw00z.js"></script>
+  <script type="module" src="../hydrate-8tmxcvt7.js"></script>
 </body>
 </html>

@@ -21,7 +21,9 @@ export interface DataStore {
     commit: boolean;
 }
 /** The folder setting, checked and resolved, or null when the project has none. Throws. */
-export declare function resolveDataStore(setting: string[] | EditableDataOptions | undefined, root: string): DataStore | null;
+export declare function resolveDataStore(setting: string[] | EditableDataOptions | undefined, root: string, 
+/** The site's build output, which every build deletes and rewrites. */
+outputDir?: string): DataStore | null;
 /**
  * The absolute path a client's file name may be read or written at, or the reason it may not.
  * `file` is project-relative (`static/levels/ocean.json`).
@@ -45,10 +47,19 @@ export declare function listDataFiles(store: DataStore): {
 /** Whether `root` is in a git work tree, for `commit: true` to be checked at launch. */
 export declare function isGitWorkTree(root: string): boolean;
 /**
- * Commit this one file, leaving anything else staged as it was. The commit hash, or null when
- * the save changed nothing. Repository hooks run, as they would for any commit.
+ * Save a file. With `commit` on, also commit it, alone, leaving other staged work as it was:
+ * `commit` is the hash, or null when the save changed nothing. A save that wrote the file but
+ * could not commit it resolves with `commitError`, because the file WAS saved. The repository's
+ * hooks run, as for any commit; a repository mid-rebase, mid-merge, bisecting or on a detached
+ * HEAD is not committed to, since that commit would land somewhere the developer did not choose.
  */
-export declare function commitDataFile(store: DataStore, rel: string, savedBy: string): Promise<string | null>;
+export declare function saveDataFile(store: DataStore, target: {
+    path: string;
+    rel: string;
+}, content: string, savedBy: string): Promise<{
+    commit?: string | null;
+    commitError?: string;
+}>;
 /** One file's committed versions, newest first. */
 export declare function dataHistory(store: DataStore, rel: string, limit?: number): Promise<{
     commit: string;

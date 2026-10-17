@@ -30,6 +30,7 @@ import {
   lanTrusts,
   resolveLanTrust,
   describeLanTrust,
+  trustLanRefusalHint,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -1500,6 +1501,25 @@ describe('trustLan networks', () => {
     expect(() => resolveLanTrust(true, 'yes please')).toThrow(
       'TOSIJS_TRUST_LAN'
     )
+  })
+
+  test('a refused LAN device hears what would admit it, and nobody else does', () => {
+    const lan = {
+      viaTunnel: false,
+      peer: '10.0.0.5',
+      proxied: false,
+      trustLan: false as const,
+    }
+    expect(trustLanRefusalHint(lan)).toContain('TOSIJS_TRUST_LAN=1')
+    // Outside the named network: say which, rather than suggest turning it on.
+    const named = { ...lan, trustLan: ['192.168.1.0/24'] }
+    expect(trustLanRefusalHint(named)).toBe(
+      '; 10.0.0.5 is outside trustLan (192.168.1.0/24), and TOSIJS_TRUST_LAN=<network> overrides it for one run'
+    )
+    expect(trustLanRefusalHint({ ...named, peer: '8.8.8.8' })).toBe('')
+    expect(trustLanRefusalHint({ ...named, viaTunnel: true })).toBe('')
+    expect(trustLanRefusalHint({ ...named, proxied: true })).toBe('')
+    expect(trustLanRefusalHint({ ...lan, trustLan: true })).toBe('')
   })
 
   test('the launch message says who is trusted', () => {

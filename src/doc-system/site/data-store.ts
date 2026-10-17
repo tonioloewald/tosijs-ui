@@ -57,18 +57,27 @@ export interface DataStore {
   commit: boolean
 }
 
+/*
+Names tools read as configuration, some of which run commands. A backstop, not the boundary:
+no list of every tool's file can be complete, so the folders a project names are what keep
+writes away from configuration, and the docs say so.
+*/
 const CONFIG_NAMES = [
   /^package(-lock)?\.json$/,
   /^[tj]sconfig(\..*)?\.json$/,
   /^bunfig\.toml$/,
   /^deno\.jsonc?$/,
   /\.config\.[^.]+$/,
+  /^(project|turbo|nx|lerna|composer|firebase|vercel|now)\.json$/,
+  /^(Cargo|pyproject|netlify|wrangler|fly|Pipfile)\.toml$/i,
 ]
 
 /** The folder setting, checked and resolved, or null when the project has none. Throws. */
 export function resolveDataStore(
   setting: string[] | EditableDataOptions | undefined,
-  root: string
+  root: string,
+  /** The site's build output, which every build deletes and rewrites. */
+  outputDir?: string
 ): DataStore | null {
   if (setting == null) return null
   const options: EditableDataOptions = Array.isArray(setting)
@@ -92,6 +101,7 @@ export function resolveDataStore(
       )
   }
   const realRoot = fs.realpathSync(root)
+  const output = outputDir ? path.resolve(realRoot, outputDir) : null
   const dirs = options.dirs.map((name) => {
     if (typeof name !== 'string' || path.isAbsolute(name))
       fail(`${JSON.stringify(name)} must be a folder relative to the project`)
@@ -115,6 +125,18 @@ export function resolveDataStore(
     for (const inner of ['.git', 'node_modules'])
       if (fs.existsSync(path.join(real, inner)))
         fail(`${JSON.stringify(name)} contains ${inner}`)
+    if (
+      output &&
+      (real === output ||
+        real.startsWith(output + path.sep) ||
+        output.startsWith(real + path.sep))
+    )
+      fail(
+        `${JSON.stringify(name)} overlaps the build output (${path.relative(
+          realRoot,
+          output
+        )}), which every build deletes`
+      )
     return { real, name: name.replace(/\/+$/, '') }
   })
   return {
@@ -246,13 +268,23 @@ async function git(
     // A signing prompt or an editor must fail, not wait for a terminal nobody is watching.
     env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_EDITOR: 'false' },
   })
-  const timer = setTimeout(() => proc.kill(), timeoutMs)
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    proc.kill()
+  }, timeoutMs)
   const [out, err, code] = await Promise.all([
     new Response(proc.stdout).text(),
     new Response(proc.stderr).text(),
     proc.exited,
   ])
   clearTimeout(timer)
+  if (timedOut)
+    throw new Error(
+      `git ${args[0]} took over ${
+        timeoutMs / 1000
+      }s (a slow hook, or a prompt) and was stopped`
+    )
   if (code !== 0)
     throw new Error(
       (err.trim() || out.trim() || `git ${args[0]} exited ${code}`).slice(
@@ -273,41 +305,92 @@ export function isGitWorkTree(root: string): boolean {
   return result.exitCode === 0 && result.stdout.toString().trim() === 'true'
 }
 
-// Saves commit one at a time: two concurrent commits fight over .git/index.lock.
-let commitQueue: Promise<unknown> = Promise.resolve()
+/** Why the repository is in no state to take a commit, or null. */
+async function repositoryBusy(root: string): Promise<string | null> {
+  const states: [string, string][] = [
+    ['rebase-merge', 'in the middle of a rebase'],
+    ['rebase-apply', 'in the middle of a rebase'],
+    ['MERGE_HEAD', 'in the middle of a merge'],
+    ['CHERRY_PICK_HEAD', 'in the middle of a cherry-pick'],
+    ['REVERT_HEAD', 'in the middle of a revert'],
+    ['BISECT_LOG', 'in the middle of a bisect'],
+  ]
+  for (const [name, state] of states) {
+    const where = (await git(root, ['rev-parse', '--git-path', name])).trim()
+    if (fs.existsSync(path.resolve(root, where))) return state
+  }
+  try {
+    await git(root, ['symbolic-ref', '-q', 'HEAD'])
+  } catch {
+    return 'on a detached HEAD'
+  }
+  return null
+}
 
-/**
- * Commit this one file, leaving anything else staged as it was. The commit hash, or null when
- * the save changed nothing. Repository hooks run, as they would for any commit.
- */
-export function commitDataFile(
+async function commitFile(
   store: DataStore,
   rel: string,
   savedBy: string
 ): Promise<string | null> {
-  const run = async () => {
-    await git(store.root, ['add', '--', rel])
-    const changed = await git(store.root, [
-      'diff',
-      '--cached',
-      '--name-only',
-      '--',
-      rel,
-    ])
-    if (!changed.trim()) return null
-    await git(store.root, [
-      'commit',
-      '-m',
-      `data: save ${rel}`,
-      '-m',
-      `Saved through the dev server by ${savedBy}.`,
-      '--',
-      rel,
-    ])
-    return (await git(store.root, ['rev-parse', 'HEAD'])).trim()
+  await git(store.root, ['add', '--', rel])
+  const changed = await git(store.root, [
+    'diff',
+    '--cached',
+    '--name-only',
+    '--',
+    rel,
+  ])
+  if (!changed.trim()) return null
+  await git(store.root, [
+    'commit',
+    '-m',
+    `data: save ${rel}`,
+    '-m',
+    `Saved through the dev server by ${savedBy}.`,
+    '--',
+    rel,
+  ])
+  return (await git(store.root, ['rev-parse', 'HEAD'])).trim()
+}
+
+// With `commit` on, saves run one at a time, each writing and then committing: two commits
+// fight over .git/index.lock, and a write that lands between another save's write and its
+// `git add` would put one save's content under the other's name (1.16.25 review).
+let saveQueue: Promise<unknown> = Promise.resolve()
+
+/**
+ * Save a file. With `commit` on, also commit it, alone, leaving other staged work as it was:
+ * `commit` is the hash, or null when the save changed nothing. A save that wrote the file but
+ * could not commit it resolves with `commitError`, because the file WAS saved. The repository's
+ * hooks run, as for any commit; a repository mid-rebase, mid-merge, bisecting or on a detached
+ * HEAD is not committed to, since that commit would land somewhere the developer did not choose.
+ */
+export function saveDataFile(
+  store: DataStore,
+  target: { path: string; rel: string },
+  content: string,
+  savedBy: string
+): Promise<{ commit?: string | null; commitError?: string }> {
+  if (!store.commit) {
+    writeDataFile(target.path, content)
+    return Promise.resolve({})
   }
-  const result = commitQueue.then(run, run)
-  commitQueue = result.catch(() => undefined)
+  const run = async () => {
+    writeDataFile(target.path, content)
+    try {
+      const busy = await repositoryBusy(store.root)
+      if (busy)
+        return {
+          commit: null,
+          commitError: `not committed: the repository is ${busy}`,
+        }
+      return { commit: await commitFile(store, target.rel, savedBy) }
+    } catch (e) {
+      return { commit: null, commitError: (e as Error).message }
+    }
+  }
+  const result = saveQueue.then(run, run)
+  saveQueue = result.catch(() => undefined)
   return result
 }
 

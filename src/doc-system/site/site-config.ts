@@ -665,16 +665,20 @@ export interface SiteConfig {
    * editableData: { dirs: ['static/levels'], extensions: ['.json', '.csv'], commit: true }
    * ```
    *
-   * - **Folders** are inside the project, not the project itself, and not in or around `.git`
-   *   or `node_modules`. Files in subfolders count; a missing folder stops the server.
+   * - **Folders** are inside the project, not the project itself, not in or around `.git` or
+   *   `node_modules`, and not overlapping the build output. Files in subfolders count; a bad
+   *   folder stops the server. Name folders that hold only data: they are the boundary.
    * - **Extensions** default to `.json`. Only data formats are allowed (`.json` `.jsonc`
    *   `.json5` `.ndjson` `.txt` `.csv` `.tsv` `.yaml` `.yml` `.toml`); nothing that runs or
    *   renders, so a writer cannot plant a script the dev page would load.
-   * - **Never written:** dot-files, symlinks, and names tools read as configuration
-   *   (`package.json`, `tsconfig.json`, `*.config.*`). A `.json` save must parse.
+   * - **Never written:** dot-files, symlinks, and common configuration names such as
+   *   `package.json`, `tsconfig.json` and `*.config.*` (a backstop, not a complete list). A
+   *   `.json` save must parse.
    * - **`commit: true`** commits each save on its own (`data: save <file>`, naming who saved
    *   it), so every save is a version you can `git revert`. Other staged work is left alone,
-   *   and the repository's hooks run. A save that wrote but could not commit says so.
+   *   and the repository's hooks run. Nothing is committed while the repository is mid-rebase,
+   *   mid-merge, bisecting or on a detached HEAD, and a save that wrote but did not commit says
+   *   why. Each save waits for git, so this suits an explicit Save, not autosave.
    *
    * The endpoint is `/__docstore/data`: `GET ?list`, `GET ?file=F`, `GET ?file=F&at=COMMIT`,
    * `GET ?history=F` and `POST {file, content}`. `tosijs-ui/doc-system/data-client` wraps it.

@@ -8,7 +8,7 @@ import {
   dataContentProblem,
   writeDataFile,
   listDataFiles,
-  commitDataFile,
+  saveDataFile,
   dataHistory,
   readDataAt,
   isGitWorkTree,
@@ -82,6 +82,20 @@ describe('the folder setting', () => {
     }
   })
 
+  test('refuses a folder that overlaps the build output, which every build deletes', () => {
+    fs.mkdirSync(path.join(root, 'docs/levels'), { recursive: true })
+    for (const dirs of [['docs'], ['docs/levels'], ['.']])
+      expect(() => resolveDataStore(dirs, root, 'docs')).toThrow(
+        dirs[0] === '.' ? 'not the project itself' : 'overlaps the build output'
+      )
+    // A folder that CONTAINS the output is refused too.
+    fs.mkdirSync(path.join(root, 'site/out'), { recursive: true })
+    expect(() => resolveDataStore(['site'], root, 'site/out')).toThrow(
+      'overlaps the build output'
+    )
+    expect(resolveDataStore(['static/levels'], root, 'docs')).not.toBe(null)
+  })
+
   test('refuses any format that runs or renders', () => {
     for (const ext of ['.js', '.ts', '.html', '.svg', '.md', '.css', '.sh']) {
       expect(() =>
@@ -128,6 +142,8 @@ describe('which files', () => {
       ['static/levels/package.json', 'configuration'],
       ['static/levels/tsconfig.json', 'configuration'],
       ['static/levels/vite.config.json', 'configuration'],
+      ['static/levels/firebase.json', 'configuration'],
+      ['static/levels/turbo.json', 'configuration'],
       ['static/levels/a;b.json', 'file names may use'],
       ['static/levels/missing/x.json', 'does not exist'],
       ['static/levels/link.json', 'symlink'],
@@ -177,59 +193,96 @@ describe('versions', () => {
     git('config', 'user.email', 'test@example.com')
     git('config', 'user.name', 'Test')
     git('config', 'commit.gpgsign', 'false')
+    // A developer's global core.hooksPath must not reach these repositories.
+    git('config', 'core.hooksPath', '.git/hooks')
     git('add', '.')
     git('commit', '-qm', 'start')
   })
 
+  const versioned = () => store({ dirs: ['static/levels'], commit: true })
+  const target = (s: DataStore, rel: string) => {
+    const t = resolveDataFile(s, rel)
+    if ('refused' in t) throw new Error(t.refused)
+    return t
+  }
+  const head = () => git('rev-parse', 'HEAD').trim()
+
   test('each save is its own commit, and other staged work stays staged', async () => {
-    const s = store({ dirs: ['static/levels'], commit: true })
+    const s = versioned()
     expect(isGitWorkTree(root)).toBe(true)
     write('static/scenes/a.json', '{"staged":true}')
     git('add', 'static/scenes/a.json')
 
-    writeDataFile(path.join(root, 'static/levels/ocean.json'), '{"v":2}')
-    const commit = await commitDataFile(
+    const file = 'static/levels/ocean.json'
+    const { commit } = await saveDataFile(
       s,
-      'static/levels/ocean.json',
+      target(s, file),
+      '{"v":2}',
       'this machine'
     )
     expect(commit).toMatch(/^[0-9a-f]{40}$/)
-    expect(git('show', '--name-only', '--format=%B', 'HEAD')).toContain(
-      'data: save static/levels/ocean.json\n\nSaved through the dev server by this machine.'
+    expect(git('show', '--format=%B', '--name-only', 'HEAD')).toContain(
+      `data: save ${file}\n\nSaved through the dev server by this machine.`
     )
-    expect(git('show', '--name-only', '--format=', 'HEAD').trim()).toBe(
-      'static/levels/ocean.json'
-    )
+    expect(git('show', '--name-only', '--format=', 'HEAD').trim()).toBe(file)
     expect(git('diff', '--cached', '--name-only').trim()).toBe(
       'static/scenes/a.json'
     )
 
     // An unchanged save is not a version.
-    expect(
-      await commitDataFile(s, 'static/levels/ocean.json', 'this machine')
-    ).toBe(null)
+    expect(await saveDataFile(s, target(s, file), '{"v":2}', 'x')).toEqual({
+      commit: null,
+    })
     // A new file is added and committed.
-    writeDataFile(path.join(root, 'static/levels/new.json'), '{}')
-    expect(await commitDataFile(s, 'static/levels/new.json', 'x')).toMatch(
-      /^[0-9a-f]{40}$/
-    )
+    expect(
+      (await saveDataFile(s, target(s, 'static/levels/new.json'), '{}', 'x'))
+        .commit
+    ).toMatch(/^[0-9a-f]{40}$/)
   })
 
-  test('saves made at once all commit', async () => {
-    const s = store({ dirs: ['static/levels'], commit: true })
-    const names = ['a', 'b', 'c', 'd'].map((n) => `static/levels/${n}.json`)
-    for (const n of names) writeDataFile(path.join(root, n), `{"n":"${n}"}`)
+  test('without commit, a save only writes', async () => {
+    const s = store()
+    const before = head()
+    expect(
+      await saveDataFile(
+        s,
+        target(s, 'static/levels/ocean.json'),
+        '{"v":9}',
+        'x'
+      )
+    ).toEqual({})
+    expect(
+      fs.readFileSync(path.join(root, 'static/levels/ocean.json'), 'utf8')
+    ).toBe('{"v":9}')
+    expect(head()).toBe(before)
+  })
+
+  test('saves made at once each get their own version, the same file included', async () => {
+    const s = versioned()
+    const file = 'static/levels/ocean.json'
+    // Two saves of ONE file at once: each commit must hold its own content.
+    const [a, b] = await Promise.all([
+      saveDataFile(s, target(s, file), '{"save":"a"}', 'a'),
+      saveDataFile(s, target(s, file), '{"save":"b"}', 'b'),
+    ])
+    expect(git('show', `${a.commit}:${file}`)).toBe('{"save":"a"}')
+    expect(git('show', `${b.commit}:${file}`)).toBe('{"save":"b"}')
+    const others = ['c', 'd', 'e'].map((n) => `static/levels/${n}.json`)
     const commits = await Promise.all(
-      names.map((n) => commitDataFile(s, n, 'x'))
+      others.map((n) => saveDataFile(s, target(s, n), `{"n":"${n}"}`, 'x'))
     )
-    expect(new Set(commits).size).toBe(4)
+    expect(new Set(commits.map((c) => c.commit)).size).toBe(3)
   })
 
   test('history lists a file’s versions, and any version can be read back', async () => {
-    const s = store({ dirs: ['static/levels'], commit: true })
+    const s = versioned()
     const file = 'static/levels/ocean.json'
-    writeDataFile(path.join(root, file), '{"v":2}')
-    const second = await commitDataFile(s, file, 'x')
+    const { commit: second } = await saveDataFile(
+      s,
+      target(s, file),
+      '{"v":2}',
+      'x'
+    )
     const versions = await dataHistory(s, file)
     expect(versions.map((v) => v.subject)).toEqual([
       `data: save ${file}`,
@@ -244,18 +297,79 @@ describe('versions', () => {
     expect(await readDataAt(s, file, 'deadbeef')).toBe(null)
   })
 
-  test('a commit that fails rejects, with git’s reason', async () => {
-    const s = store({ dirs: ['static/levels'], commit: true })
+  test('a commit that fails still saves, and says why it did not commit', async () => {
+    const s = versioned()
     fs.writeFileSync(
       path.join(root, '.git/hooks/pre-commit'),
-      '#!/bin/sh\necho no >&2\nexit 1\n',
-      {
-        mode: 0o755,
-      }
+      '#!/bin/sh\necho hook says no >&2\nexit 1\n',
+      { mode: 0o755 }
     )
-    writeDataFile(path.join(root, 'static/levels/ocean.json'), '{"v":3}')
-    await expect(
-      commitDataFile(s, 'static/levels/ocean.json', 'x')
-    ).rejects.toThrow('no')
+    const before = head()
+    const saved = await saveDataFile(
+      s,
+      target(s, 'static/levels/ocean.json'),
+      '{"v":3}',
+      'x'
+    )
+    expect(saved.commit).toBe(null)
+    expect(saved.commitError).toContain('hook says no')
+    expect(
+      fs.readFileSync(path.join(root, 'static/levels/ocean.json'), 'utf8')
+    ).toBe('{"v":3}')
+    expect(head()).toBe(before)
+  })
+
+  test('never commits into a rebase, merge, cherry-pick, revert, bisect or detached HEAD', async () => {
+    const s = versioned()
+    const file = 'static/levels/ocean.json'
+    const states: [string, () => void, () => void][] = [
+      [
+        'rebase',
+        () => fs.mkdirSync(path.join(root, '.git/rebase-merge')),
+        () =>
+          fs.rmSync(path.join(root, '.git/rebase-merge'), { recursive: true }),
+      ],
+      [
+        'merge',
+        () => fs.writeFileSync(path.join(root, '.git/MERGE_HEAD'), head()),
+        () => fs.rmSync(path.join(root, '.git/MERGE_HEAD')),
+      ],
+      [
+        'cherry-pick',
+        () =>
+          fs.writeFileSync(path.join(root, '.git/CHERRY_PICK_HEAD'), head()),
+        () => fs.rmSync(path.join(root, '.git/CHERRY_PICK_HEAD')),
+      ],
+      [
+        'revert',
+        () => fs.writeFileSync(path.join(root, '.git/REVERT_HEAD'), head()),
+        () => fs.rmSync(path.join(root, '.git/REVERT_HEAD')),
+      ],
+      [
+        'bisect',
+        () => fs.writeFileSync(path.join(root, '.git/BISECT_LOG'), ''),
+        () => fs.rmSync(path.join(root, '.git/BISECT_LOG')),
+      ],
+      [
+        'detached HEAD',
+        () => git('checkout', '-q', '--detach'),
+        () => git('checkout', '-q', '-'),
+      ],
+    ]
+    let n = 0
+    for (const [state, enter, leave] of states) {
+      enter()
+      const before = head()
+      const saved = await saveDataFile(s, target(s, file), `{"n":${++n}}`, 'x')
+      expect(saved.commit).toBe(null)
+      expect(saved.commitError).toContain(state)
+      expect(head()).toBe(before)
+      expect(fs.readFileSync(path.join(root, file), 'utf8')).toBe(`{"n":${n}}`)
+      leave()
+    }
+    // And once the repository is clear, saving commits again.
+    expect(
+      (await saveDataFile(s, target(s, file), '{"n":0}', 'x')).commit
+    ).toMatch(/^[0-9a-f]{40}$/)
   })
 })

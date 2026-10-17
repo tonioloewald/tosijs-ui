@@ -22,6 +22,17 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ---
 
+## playwright — a route on an opener stalls its about:blank popup's requests (NOT YET FILED, 2026-10-17)
+
+Playwright 1.63, Chromium only. With any `page.route` or `context.route` registered on a page,
+a popup it opens with `window.open()` (an `about:blank` document written by script) never
+issues its subresource requests: the Print popup's cover `<img>` was never requested, so
+`complete` stayed false. Firefox and WebKit load it. Dropping the routes before the popup
+opens (`page.unrouteAll`) fixes it, which is the workaround in `tests/print-cover.pw.ts`; the
+routes come from `tests/fixtures.ts`. No matching issue found on microsoft/playwright
+(searched 2026-10-17). Filing is outward-facing and waits on the maintainer's go-ahead; when
+filed, link it here and in both comments so the workaround can go when it is fixed.
+
 ## dependabot — bun updater nested stale CodeMirror copies (commented 2026-09-28)
 
 [dependabot-core#15897](https://github.com/dependabot/dependabot-core/issues/15897#issuecomment-5875033803)

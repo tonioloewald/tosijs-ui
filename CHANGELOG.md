@@ -10,29 +10,40 @@
   over the tunnel, or the LAN under `trustLan`. Share links stay read-only.
   `editableData: ['static/levels']`, or `{ dirs, extensions, commit }`. Only data formats may
   be allowed (`.json` by default; also `.jsonc` `.json5` `.ndjson` `.txt` `.csv` `.tsv`
-  `.yaml` `.yml` `.toml`), so nothing saved there runs or renders. Dot-files, symlinks and
-  names tools read as configuration (`package.json`, `tsconfig.json`, `*.config.*`) are never
-  written, a `.json` save must parse, and a save replaces the file whole. A folder outside the
-  project, the project itself, or one in or around `.git` or `node_modules` stops the server at
-  launch.
+  `.yaml` `.yml` `.toml`), so nothing saved there runs or renders. Dot-files and symlinks are
+  never written, nor are common configuration names (`package.json`, `tsconfig.json`,
+  `firebase.json`, `*.config.*`), though the folders you name are the real boundary. A `.json`
+  save must parse, and a save replaces the file whole. A folder outside the project, the
+  project itself, one in or around `.git` or `node_modules`, or one overlapping the build
+  output stops the server at launch. `tosijs-ui/site` exports the `EditableDataOptions` type
+  and the `DATA_EXTENSIONS` list.
 - **`commit: true` makes every save a version.** Each save is its own commit
   (`data: save <file>`, naming who saved it), and other staged work is left alone. The
-  repository's hooks run. `?history=<file>` lists a file's versions and `?file=<file>&at=<commit>`
-  reads one back. A save that wrote the file but could not commit says so instead of reporting a
-  clean save.
+  repository's hooks run, and each git step gets 20 seconds. Nothing is committed while the
+  repository is mid-rebase, mid-merge, cherry-picking, reverting, bisecting or on a detached
+  HEAD. `?history=<file>` lists a file's latest 100 versions and `?file=<file>&at=<commit>` reads
+  one back. A save that wrote the file but did not commit answers with `commitError` instead of
+  reporting a clean save. Each committed save waits for git, so it suits an explicit Save, not
+  autosave.
 - **`tosijs-ui/doc-system/data-client`** wraps the endpoint for an editor: `listData`,
   `readData` (text, or `{ json: true }`, or `{ at }`), `saveData` (a string as is, anything
-  else as formatted JSON) and `dataHistory`.
+  else as formatted JSON) and `dataHistory`. A refusal rejects with a `DataStoreError` carrying
+  the status, and so does a page answering for the endpoint (a static host's catch-all), so
+  `listData()` tells an editor whether to offer saving.
 - **`trustLan` can name your network**, so a committed setting trusts nobody on anyone else's:
   `trustLan: '192.168.1.0/24'` or a list, IPv4 or IPv6. Only private addresses inside it are
   trusted. **`TOSIJS_TRUST_LAN`** sets it for one run and wins over the config either way: `1`,
   a network, or `0` to turn a committed setting off. A network that cannot be parsed stops the
   server at launch, and the launch warning names who is trusted and where the setting came from.
-- **The SPA fallback shows the page the URL names.** A path with no file of its own is answered
-  with the root page, which asked for its assets relative to the wrong folder and never
-  hydrated, and with `home` set it showed the home doc. The fallback now resolves the root page
-  from the root, and hydration adopts a pre-rendered article only when it is the doc being
-  shown: generated pages stamp it with `data-doc`.
+  A refused device outside the named networks is told so in the log, and the messages readers
+  see when the LAN is refused now suggest these forms rather than `trustLan: true`.
+- **The SPA fallback shows the page the URL names.** Was: a path with no file of its own got
+  the root page, which then asked for its assets relative to that path, got 404s and never
+  hydrated; with `home` set, a reader saw the home doc. Now the dev server serves the root page
+  with its relative URLs made root-relative (in-page `#` links still stay on the page), and
+  hydration adopts a pre-rendered article only when it is the doc being shown. Generated pages
+  stamp the article with `data-doc` for that. The asset fix is the dev server's; a static host's
+  own catch-all rewrite is unchanged.
 
 ## 1.16.24
 

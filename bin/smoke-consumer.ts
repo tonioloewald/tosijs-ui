@@ -423,6 +423,8 @@ try {
     'tosijs-ui/hash-state',
     'tosijs-ui/crud',
     'tosijs-ui/highlight-block',
+    // Nested, through the wildcard: what an editor imports to save data (#3365).
+    'tosijs-ui/doc-system/data-client',
   ]) {
     check(
       `node resolves ${entry} (no missing-module error)`,
@@ -470,6 +472,29 @@ try {
     'tosijs-ui/site exposes the build-lock reader (currentHolder/describeHolder)',
     lockRead.stdout.toString().includes('OK'),
     lockRead.stderr.toString().slice(0, 200)
+  )
+
+  // The data endpoint's client runs under node (it needs only `fetch`), and the site entry
+  // carries the editableData allow-list a consumer's config is checked against (#3365).
+  const dataClient =
+    await $`node -e ${"import('tosijs-ui/doc-system/data-client').then(m=>{for(const n of ['listData','readData','saveData','dataHistory','DataStoreError'])if(typeof m[n]!=='function')throw new Error('missing '+n);console.log('OK')})"}`
+      .cwd(proj)
+      .nothrow()
+      .quiet()
+  check(
+    'tosijs-ui/doc-system/data-client exports its four calls and DataStoreError',
+    dataClient.stdout.toString().includes('OK'),
+    dataClient.stderr.toString().slice(0, 200)
+  )
+  const dataExtensions =
+    await $`bun -e ${"import('tosijs-ui/site').then(m=>{if(!Array.isArray(m.DATA_EXTENSIONS)||!m.DATA_EXTENSIONS.includes('.json'))throw new Error('no DATA_EXTENSIONS');console.log('OK')})"}`
+      .cwd(proj)
+      .nothrow()
+      .quiet()
+  check(
+    'tosijs-ui/site exports DATA_EXTENSIONS',
+    dataExtensions.stdout.toString().includes('OK'),
+    dataExtensions.stderr.toString().slice(0, 200)
   )
 
   // ── the manifest's own consistency ────────────────────────────────────────

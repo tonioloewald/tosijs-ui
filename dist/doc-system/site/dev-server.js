@@ -22,8 +22,8 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, isSameOriginRequest, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, sourceRequestAdmission, suggestsTrustLan, trustLanWriteRecord, resolveLanTrust, describeLanTrust, SESSION_COOKIE, } from './dev-auth.js';
-import { resolveDataStore, resolveDataFile, dataContentProblem, writeDataFile, listDataFiles, commitDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, isSameOriginRequest, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, SESSION_COOKIE, } from './dev-auth.js';
+import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
 /**
  * Every path the dev server watches for changes.
@@ -317,14 +317,18 @@ export function haltijaIsDrivable(stdout) {
 }
 /**
  * The root page, to be served at another path by the SPA fallback. Generated pages refer to
- * their assets relatively (`iife.js`, `../iife.js`) so a site can live under a subpath; the
- * root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and never hydrate
- * (#3346). A `<base href="/">` resolves it exactly as it resolves at the root.
+ * their assets relatively (`iife.js`, `docs.json`, `../iife.js`) so a site can live under a
+ * subpath; the root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and
+ * never hydrate (#3346). Its relative `src`, `href` and `docs` URLs are made root-relative.
+ *
+ * Not a `<base href="/">`, which was the first fix: that also sends the page's in-page links
+ * (`#fn-1`, `#a-heading`) and `?query` links to the ROOT document (1.16.25 review). Those, and
+ * absolute, scheme and protocol-relative URLs, are left alone.
  */
-export function withRootBase(html) {
-    if (/<base\b/i.test(html))
-        return html;
-    return html.replace(/<head\b[^>]*>/i, (head) => `${head}<base href="/">`);
+export function rootRelativeUrls(html) {
+    return html.replace(/(\s(?:src|href|docs)=")([^"]*)"/gi, (whole, attr, url) => url === '' || /^(?:[#?/]|[a-z][a-z0-9+.-]*:)/i.test(url)
+        ? whole
+        : `${attr}/${url.replace(/^(?:\.\/)+/, '')}"`);
 }
 export function haltijaLoaderSnippet(httpsPort) {
     return (`<script>self===top&&/^localhost$|^127\\./.test(location.hostname)` +
@@ -828,7 +832,7 @@ export async function devServer(config, opts = {}) {
     // Resolved once, at launch: a network it cannot parse stops the server here (#3346).
     const lanTrust = resolveLanTrust(config.trustLan, process.env.TOSIJS_TRUST_LAN);
     // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
-    const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT);
+    const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT, config.outputDir ?? 'docs');
     if (dataStore?.commit && !isGitWorkTree(dataStore.root)) {
         throw new Error('editableData: commit is on, but this project is not in a git work tree');
     }
@@ -979,30 +983,26 @@ export async function devServer(config, opts = {}) {
             record(400);
             return json({ error: problem }, 400);
         }
-        writeDataFile(target.path, body.content);
-        record(200);
-        console.log('wrote', target.rel);
-        if (!store.commit)
-            return json({ ok: true, file: target.rel });
         const savedBy = admission === 'loopback'
             ? 'this machine'
             : admission === 'lan'
                 ? `${peer ?? 'a LAN device'} (trustLan)`
                 : 'an edit session (tunnel)';
+        let saved;
         try {
-            const commit = await commitDataFile(store, target.rel, savedBy);
-            return json({ ok: true, file: target.rel, commit });
+            saved = await saveDataFile(store, target, body.content, savedBy);
         }
         catch (e) {
-            // Saved but not versioned: say both, so the editor does not report a clean save.
-            console.warn(`⚠️  saved ${target.rel} but could not commit it: ${e.message}`);
-            return json({
-                ok: true,
-                file: target.rel,
-                commit: null,
-                commitError: e.message,
-            });
+            record(500);
+            return json({ error: `could not write: ${e.message}` }, 500);
         }
+        record(200);
+        console.log('wrote', target.rel);
+        if (saved.commitError) {
+            // Saved but not versioned: say both, so the editor does not report a clean save.
+            console.warn(`⚠️  saved ${target.rel} but did not commit it: ${saved.commitError}`);
+        }
+        return json({ ok: true, file: target.rel, ...saved });
     }
     /*
     WHO MAY READ OR WRITE files here, for /__docstore/source and /__docstore/data alike: decided
@@ -1025,14 +1025,13 @@ export async function devServer(config, opts = {}) {
         if (request.method !== 'HEAD') {
             console.warn(`⚠️  refused ${request.method} ${endpoint} from ${peer ?? 'unknown'} — ` +
                 `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link` +
-                `${suggestsTrustLan({
+                trustLanRefusalHint({
                     viaTunnel,
                     peer,
                     proxied: isProxiedRequest(request.headers),
                     trustLan: lanTrust.trust,
-                })
-                    ? '; trustLan in the site config, or TOSIJS_TRUST_LAN=1 for this session, admits devices on this network'
-                    : ''}).`);
+                }) +
+                ').');
         }
         return new Response('not authorized to edit files here', {
             status: 403,
@@ -1224,7 +1223,7 @@ export async function devServer(config, opts = {}) {
         const encoding = negotiateEncoding(request?.headers.get('accept-encoding') ?? null);
         if ((extras || asRoot) && filePath.endsWith('.html')) {
             const read = await Bun.file(filePath).text();
-            const html = asRoot ? withRootBase(read) : read;
+            const html = asRoot ? rootRelativeUrls(read) : read;
             const injected = html.includes('</body>')
                 ? html.replace('</body>', `${extras}</body>`)
                 : html + extras;

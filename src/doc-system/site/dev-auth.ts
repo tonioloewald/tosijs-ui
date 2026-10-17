@@ -861,6 +861,32 @@ export function suggestsTrustLan(opts: {
 }
 
 /**
+ * What the refusal log adds about `trustLan`, or ''. Off: that turning it on would admit this
+ * device. Naming networks this device is outside: which, and the one-run override. A device it
+ * could never admit (tunnel, proxied, public) hears nothing about it.
+ */
+export function trustLanRefusalHint(opts: {
+  viaTunnel: boolean
+  peer?: string | null
+  proxied: boolean
+  trustLan: LanTrust
+}): string {
+  if (suggestsTrustLan(opts))
+    return '; trustLan in the site config, or TOSIJS_TRUST_LAN=1 for this run, admits devices on this network'
+  if (
+    Array.isArray(opts.trustLan) &&
+    !opts.viaTunnel &&
+    !opts.proxied &&
+    isPrivateNetworkAddress(opts.peer) &&
+    !lanTrusts(opts.trustLan, opts.peer)
+  )
+    return `; ${opts.peer} is outside trustLan (${opts.trustLan.join(
+      ', '
+    )}), and TOSIJS_TRUST_LAN=<network> overrides it for one run`
+  return ''
+}
+
+/**
  * The log line for a source write admitted only by `trustLan`. The file name is the client's,
  * so it is quoted as JSON: a newline or an escape sequence in it cannot forge a log line.
  */

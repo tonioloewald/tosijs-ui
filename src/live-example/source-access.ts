@@ -18,6 +18,16 @@ export const SOURCE_ACCESS_HEADER = 'x-tosijs-source'
 export const SOURCE_ENDPOINT_SNIPPET =
   '<script>window.__tosiSourceEndpoint=true</script>'
 
+/**
+ * What a reader refused over the LAN is told, in one place for the page editor and live
+ * examples. It names the forms that are hard to leave on by accident: a one-run environment
+ * variable, or a named network in the config.
+ */
+export const LAN_REFUSAL_ADVICE =
+  'If you opened this over the LAN (a `.local` or local IP address), invite links will not help: ' +
+  'start the dev server with TOSIJS_TRUST_LAN=1, or name your network in the site config ' +
+  "(trustLan: '192.168.1.0/24'), or use its tunnel URL instead."
+
 const answers = new Map<string, Promise<boolean>>()
 const known = new Map<string, boolean>()
 

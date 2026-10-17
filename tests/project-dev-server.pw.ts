@@ -63,7 +63,7 @@ test.beforeAll(async ({ browserName }) => {
         docs: [
           { filename: 'README.md', title: 'Read me', path: 'README.md', text: '# Read me\\n\\nThe readme page.' },
           { filename: 'app.md', title: 'The App', path: 'app.md', home: true, text: '# The App\\n\\nThe home page.' },
-          { filename: 'guide.md', title: 'Guide', path: 'guide.md', text: '# Guide\\n\\nThe guide page.' },
+          { filename: 'guide.md', title: 'Guide', path: 'guide.md', text: '# Guide\\n\\nThe guide page. [Back to the top](#guide).' },
         ],
         outputDir: ${JSON.stringify(path.join(dir, 'docs'))},
         projectName: 'Project Test',
@@ -87,6 +87,8 @@ test.beforeAll(async ({ browserName }) => {
   git('config', 'user.email', 'test@example.com')
   git('config', 'user.name', 'Test')
   git('config', 'commit.gpgsign', 'false')
+  // A developer's global core.hooksPath must not reach this repository.
+  git('config', 'core.hooksPath', '.git/hooks')
   git('add', '.')
   git('commit', '-qm', 'start')
 
@@ -169,6 +171,12 @@ test('home: a path with no file of its own hydrates into the doc it names', asyn
   // ...and the reader sees the guide.
   await page.goto(`${origin}/guide/`)
   await expect.poll(() => heading(page), { timeout: 15_000 }).toBe('Guide')
+  // An in-page link stays on the page: a document-wide <base href="/"> sent it to the root.
+  await page.locator('.doc-content a[href="#guide"]').click()
+  await expect
+    .poll(() => page.evaluate(() => location.pathname))
+    .toBe('/guide/')
+  expect(await heading(page)).toBe('Guide')
   // The root is still the home doc, and README still has /readme/.
   await page.goto(`${origin}/`)
   await expect.poll(() => heading(page), { timeout: 15_000 }).toBe('The App')
@@ -364,6 +372,38 @@ test('editableData: list, save, commit, history and an old version, from the pag
     'start',
   ])
   expect(git('status', '--porcelain').trim()).toBe('')
+})
+
+test('editableData: a save that cannot be committed is saved, and says so', async ({
+  page,
+}) => {
+  const hook = path.join(dir, '.git/hooks/pre-commit')
+  writeFileSync(hook, '#!/bin/sh\necho hook says no >&2\nexit 1\n', {
+    mode: 0o755,
+  })
+  try {
+    await page.goto(`${origin}/`)
+    const result = await page.evaluate(async () => {
+      const r = await fetch('/__docstore/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file: 'static/levels/ocean.json',
+          content: '{"name":"hooked"}\n',
+        }),
+      })
+      return { status: r.status, body: await r.json() }
+    })
+    expect(result.status).toBe(200)
+    expect(result.body).toMatchObject({ ok: true, commit: null })
+    expect(result.body.commitError).toContain('hook says no')
+    expect(
+      readFileSync(path.join(dir, 'static/levels/ocean.json'), 'utf8')
+    ).toBe('{"name":"hooked"}\n')
+  } finally {
+    rmSync(hook)
+    git('checkout', '--', 'static/levels/ocean.json')
+  }
 })
 
 test('editableData: a page on another site cannot write through this browser', async ({

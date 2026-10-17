@@ -747,7 +747,7 @@ import { mayHaveSingleSourceDirective } from '../doc-system/book-target.js';
 import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, hasExampleEdit, } from './example-store.js';
 import { liveExampleStyleSpec } from './styles.js';
 import { runTests } from './test-harness.js';
-import { hasSourceEndpoint, sourceAccess, sourceWritable, } from './source-access.js';
+import { hasSourceEndpoint, sourceAccess, sourceWritable, LAN_REFUSAL_ADVICE, } from './source-access.js';
 const { div, tosiSlot, style, button, pre, span, label, input, textarea } = elements;
 /** Every string property name reachable from a value, prototype chain included. */
 function propertyNamesOf(value) {
@@ -2214,7 +2214,7 @@ export class LiveExample extends withAttributes({
                 window.alert('This workspace needs an invite link before it can save.\n\n' +
                     'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
                     'then try again. Your edit is still here.\n\n' +
-                    'If you opened this over the LAN (a `.local` address), saving will keep failing however many links you redeem — reach the workspace through its tunnel URL instead, or set trustLan: true in the site config.');
+                    LAN_REFUSAL_ADVICE);
                 return;
             }
             if (!response.ok) {

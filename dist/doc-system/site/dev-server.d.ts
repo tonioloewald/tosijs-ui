@@ -119,11 +119,15 @@ export { isLoopbackAddress };
 export declare function haltijaIsDrivable(stdout: string): boolean;
 /**
  * The root page, to be served at another path by the SPA fallback. Generated pages refer to
- * their assets relatively (`iife.js`, `../iife.js`) so a site can live under a subpath; the
- * root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and never hydrate
- * (#3346). A `<base href="/">` resolves it exactly as it resolves at the root.
+ * their assets relatively (`iife.js`, `docs.json`, `../iife.js`) so a site can live under a
+ * subpath; the root page served at `/guide/` would ask for `/guide/iife.js`, get a 404 and
+ * never hydrate (#3346). Its relative `src`, `href` and `docs` URLs are made root-relative.
+ *
+ * Not a `<base href="/">`, which was the first fix: that also sends the page's in-page links
+ * (`#fn-1`, `#a-heading`) and `?query` links to the ROOT document (1.16.25 review). Those, and
+ * absolute, scheme and protocol-relative URLs, are left alone.
  */
-export declare function withRootBase(html: string): string;
+export declare function rootRelativeUrls(html: string): string;
 export declare function haltijaLoaderSnippet(httpsPort: number): string;
 /**
  * The SAME-ORIGIN loader, for a page reached over the tunnel (`haltijaDev: 'tunnel'`).

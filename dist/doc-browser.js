@@ -111,6 +111,7 @@ import { tosiLocalized } from './localize.js';
 import { popMenu } from './menu.js';
 import { codeEditor } from './code-editor.js';
 import { tosiDiff } from './diff.js';
+import { LAN_REFUSAL_ADVICE } from './live-example/source-access.js';
 /*
 Does this doc contain a REAL ` ```test ` block, as opposed to mentioning one?
 
@@ -1301,7 +1302,7 @@ export function createDocBrowser(options) {
             window.alert('This workspace needs an invite link before it can save.\n\n' +
                 'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
                 'then try again. Your edit is still here.\n\n' +
-                'If you opened this over the LAN (a `.local` or local IP address), invite links will not help: set `trustLan: true` in the site config, or use its tunnel URL instead.');
+                LAN_REFUSAL_ADVICE);
         }
         else {
             // Genuinely no write endpoint (a deployed static site) — hand the file back.
@@ -1316,7 +1317,7 @@ export function createDocBrowser(options) {
             window.alert(sourceUnauthorized
                 ? 'This workspace needs an invite link before you can edit.\n\n' +
                     'Run `tosijs-tunnel --link` on the machine hosting it and open the link once.\n\n' +
-                    'If you opened this over the LAN (a `.local` or local IP address), invite links will not help: set `trustLan: true` in the site config, or use its tunnel URL instead.'
+                    LAN_REFUSAL_ADVICE
                 : `Could not load source for ${doc.path}`);
             return;
         }
