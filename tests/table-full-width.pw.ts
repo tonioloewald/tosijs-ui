@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 The pages' own inline doc tests are OFF for this file — a doc page under test is also a page

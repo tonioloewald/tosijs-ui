@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Page } from './fixtures'
 
 /*
 #210 item 3: an example whose whole output is `console.log` was an empty box. What it logged

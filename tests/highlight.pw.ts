@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Syntax highlighting must work IN A BROWSER — the environment it is for.

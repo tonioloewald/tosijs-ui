@@ -28,6 +28,21 @@ export default tseslint.config(
       ],
     },
   },
+  // Specs take `test` from tests/fixtures.ts, which keeps third-party servers out of the lane
+  // (a hung README badge timed out `goto('/')` in the 1.16.24 release run).
+  {
+    files: ['tests/**/*.pw.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          name: '@playwright/test',
+          message:
+            "Import from './fixtures': it blocks third-party images, fonts and stylesheets, which otherwise hold up page load.",
+        },
+      ],
+    },
+  },
   // Mirrors .prettierignore's non-markdown entries: format-check now runs ESLint over `.`, and
   // `eslint --fix` must not rewrite what Prettier deliberately leaves alone (vendored or
   // generated files). 1.16.0 re-review 3.

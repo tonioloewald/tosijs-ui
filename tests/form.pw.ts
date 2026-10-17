@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test.beforeEach(async ({ page }) => {
   // Go straight to the form doc. Its nav link lives inside a collapsed nav

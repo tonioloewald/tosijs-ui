@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Curated schema forms (#221), through the mounted component. The picking rule has unit tests

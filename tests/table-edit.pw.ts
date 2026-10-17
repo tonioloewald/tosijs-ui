@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Schema validation of an edited cell, tested on a REAL page rather than in the doc tier.

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Print as PDF opens with the book cover.
@@ -26,6 +26,12 @@ test('Print as PDF opens with the cover the build wrote', async ({
     })
     header[header.length - 1].click()
   })
+  /*
+  Any route on the opener stalls an about:blank popup's requests in Chromium (Playwright
+  1.63): the cover was never even requested. The fixture's route has done its job once `goto`
+  is past, so drop it.
+  */
+  await page.unrouteAll({ behavior: 'ignoreErrors' })
   const [popup] = await Promise.all([
     context.waitForEvent('page'),
     page.locator('.tosi-menu').getByText('Print as PDF').click(),

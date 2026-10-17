@@ -722,3 +722,25 @@ gap, recorded rather than hidden.
   38934436297 was green.
 - **Lanes:** unit 1874; Playwright 801 passed, 15 skipped; consumer 55; haltija 87 over 20 pages. Review
   always-on/fast: GO_WITH_FOLLOWUPS, both findings fixed before the tag.
+
+## 1.16.24 (2026-10-16)
+
+- **A flake I explained wrongly.** WebKit's `page-layout.pw.ts` timed out on `goto('/')` in
+  the release run. It passed 115 of 115 when repeated alone, so I called it load contention.
+  The real cause: the home page carries the README's badges (badge.fury.io,
+  data.jsdelivr.com) and Google Fonts, and `goto` waits for `load`, which waits for them.
+  Hanging the badge host reproduced it on all three engines. Repeating the test only proved
+  the badge host was up at the time. Before blaming load, check for third-party servers.
+- **Fixed after the release** (test-only, no version): `tests/fixtures.ts` refuses
+  third-party images, fonts and stylesheets for every spec, and ESLint refuses
+  `@playwright/test` imports in `tests/*.pw.ts`. Specs that make their own contexts call
+  `blockThirdPartyPaint` themselves.
+- **The fix found a Playwright trap.** In Chromium (Playwright 1.63), any route on an opener
+  stalls every request from an `about:blank` popup it opens. The Print popup never asked for
+  its cover. `print-cover.pw.ts` drops the routes before opening it.
+- **The review's findings were all fixed before the tag**: bounded rule chains, the Save to
+  source probe on connect, a quoted `trustLan` record.
+- **Approval landed after the 60-minute window** again; the verify-only run 39009945707 was
+  green.
+- **Lanes:** unit 1889; Playwright 810 passed and 17 skipped, with the one WebKit flake above
+  (811 passed with the fixture); consumer 55; haltija 87 over 20 pages.

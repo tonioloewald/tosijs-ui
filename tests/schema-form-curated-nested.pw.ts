@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Curation inside arrays and unions, sections, and proposals (#221, second round), through the

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 A missing ASSET must 404. A missing route may still get the SPA shell.

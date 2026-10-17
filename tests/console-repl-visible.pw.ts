@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test'
+import { test, expect, devices } from './fixtures'
 
 /*
 The Console tab's REPL input lives at the very bottom of the full-screen code panel. Sized

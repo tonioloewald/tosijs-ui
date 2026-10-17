@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 A column that is both PINNED and listed in `nonRepeatingGroupedRowCells` (tosijs-ui#83).

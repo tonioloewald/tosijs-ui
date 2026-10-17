@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 #216 item 3: a console line shows the JavaScript it became, behind a toggle, when the

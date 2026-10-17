@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 #204: the dots are 8px but must be tappable at ~44px, and a resize must not leave the carousel

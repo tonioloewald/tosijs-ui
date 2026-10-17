@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 `iconSvg()` builds markup for icons that rotate or flip another (`chevronDown` is

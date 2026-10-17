@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 The inline ` ```test ` blocks in the doc corpus are the only automated coverage of many

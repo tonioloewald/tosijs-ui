@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Page } from './fixtures'
 
 /*
 The spinner a `run` dialect shows while pending (1.16.2), checked where it is SEEN: a real

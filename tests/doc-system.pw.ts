@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 // Paths are relative to playwright.config.ts's baseURL (the E2E lane's own server).
 const BASE = ''

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 // Regression: in Firefox the selection highlight did not move when a different
 // segment was clicked — the radio's checked state updated correctly, but

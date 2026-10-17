@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 In an :iframe example the REPL runs INSIDE the iframe, as the example does: $ / $$ and its own

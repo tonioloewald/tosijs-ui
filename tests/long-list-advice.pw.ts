@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 tosijs 1.10.7 warns once per list binding of more than 10 items with neither `virtual` nor a

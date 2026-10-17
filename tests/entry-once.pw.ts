@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 The ESM entry is requested ONCE per page, by one URL (#191).

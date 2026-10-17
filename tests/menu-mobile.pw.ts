@@ -1,4 +1,4 @@
-import { test, expect, devices } from '@playwright/test'
+import { test, expect, devices } from './fixtures'
 
 /*
 #2460: on iPhone a long menu popped low on the page ran past the visible area (it was sized

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 // Guards the ACE → CodeMirror 6 migration (v1.7): <tosi-code> must render CM in
 // its shadow root, honor the value get/set contract, edit via the keyboard, and

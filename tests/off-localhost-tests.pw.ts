@@ -1,4 +1,4 @@
-import { test, expect, chromium } from '@playwright/test'
+import { test, expect, chromium, blockThirdPartyPaint } from './fixtures'
 
 /*
 Off localhost, tests are off until the reader turns them on from the menu, and then only the
@@ -33,6 +33,7 @@ test('off localhost, turning tests on runs the page showing now', async ({
       ignoreHTTPSErrors: true,
       viewport: { width: 1400, height: 900 },
     })
+    await blockThirdPartyPaint(page.context())
     await page.goto(`${origin}/`)
     await page.waitForFunction(() => !!(window as any).__docTestResults)
     expect(
@@ -111,6 +112,7 @@ test('off localhost, a live example offers Save to source when the server admits
   })
   try {
     const page = await browser.newPage({ ignoreHTTPSErrors: true })
+    await blockThirdPartyPaint(page.context())
     await page.goto(`${origin}/rating/`)
     const example = page.locator('tosi-example[data-source-file]').first()
     await example.waitFor({ state: 'attached', timeout: 10_000 })

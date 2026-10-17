@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Slice 4 of self-contained examples (self-contained-examples-plan.md): the build-time

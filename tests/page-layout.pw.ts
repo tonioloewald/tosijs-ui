@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Cover for the `layout` page metadata (#105): a route can opt out of the reading column.

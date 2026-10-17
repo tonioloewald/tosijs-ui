@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 `hashState`'s whole subject is the URL, so it is tested against a real one.

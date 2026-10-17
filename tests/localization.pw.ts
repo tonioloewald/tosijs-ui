@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, blockThirdPartyPaint } from './fixtures'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -16,6 +16,7 @@ test('the title survives hydration unchanged', async ({ page, browser }) => {
   // what must still be there after hydration. (A hard-coded string would only pin
   // today's copy — and did: changing `headTitle` in the README broke it.)
   const noJs = await browser.newContext({ javaScriptEnabled: false })
+  await blockThirdPartyPaint(noJs)
   const staticPage = await noJs.newPage()
   await staticPage.goto('/')
   const staticTitle = await staticPage.title()

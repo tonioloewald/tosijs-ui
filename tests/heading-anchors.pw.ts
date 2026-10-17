@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, blockThirdPartyPaint } from './fixtures'
 
 /*
 Headings have ids, so an in-page link goes somewhere (board #3178).
@@ -23,6 +23,7 @@ for (const js of [false, true]) {
       javaScriptEnabled: js,
       viewport: { width: 1400, height: 900 },
     })
+    await blockThirdPartyPaint(context)
     const page = await context.newPage()
     await page.goto(`/doc-site-system/#${ID}`)
     if (js) await page.waitForFunction(() => !!(window as any).__docTestResults)

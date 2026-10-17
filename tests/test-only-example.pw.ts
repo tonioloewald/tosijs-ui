@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 A ` ```test ` fence with nothing beside it must SHOW ITS RESULTS, not an empty box.

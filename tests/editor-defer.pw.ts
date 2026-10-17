@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 Slice 3 of self-contained examples (self-contained-examples-plan.md): the <tosi-code>

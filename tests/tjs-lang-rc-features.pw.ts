@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 The two tjs-lang features tosijs-ui feature-detects, against the tjs-lang the site actually

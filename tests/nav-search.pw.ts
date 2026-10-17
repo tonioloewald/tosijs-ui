@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 /*
 The doc nav's search field has its own clear button: `type="search"` alone gave one only in
