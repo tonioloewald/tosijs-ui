@@ -778,3 +778,12 @@ gap, recorded rather than hidden.
 - **Box-side work tested off the box:** the Caddy template ran under a scratchpad Caddy 2.11.7 with curl, and `build-index.sh` ran against a fake `/srv/preview` plus a Playwright check of its script. The real box (Debian Caddy 2.6) and the full round trip are untested until the maintainer's next `tosijs-caddy-install --go` (board #3377).
 - **A test that would start a shared haltija was refused.** The bridge gate became a pure function (`haltijaBridgeAdmission`) and is unit-tested instead.
 - **Lanes:** unit 1934; Playwright 826 passed, 41 skipped; consumer 58; haltija 87 over 20 pages. Approval came inside the window, so the publish run's own verify passed.
+
+## 1.16.27 (2026-10-18)
+
+- **The first real install found what off-box testing could not.** 1.16.26's box steps installed a Caddyfile Caddy could not read (`umask 077`, root-only, since 1.10.0): the reload failed, the file stayed on disk, and the bin said "Nothing was installed". A restart would have taken every site down. The scratchpad Caddy ran as the same user that wrote the file, so it could never see this. Test a deploy tool against a box where the service runs as its own user.
+- **The first fix had a hole the review caught.** Rolling back on a failed reload restored the broken root-only file whenever Caddy was stopped, which is exactly the state the bug leaves a box in. A 644 fallback would have exposed both keys. Both came from guessing who Caddy runs as; the fix asks systemd (`Group=`, else `User=`'s group), and every branch is a test with a mutant that fails it.
+- **The prefix-matched cookie gate dated from 1.9.0.** It still needed the whole key. Found by curling a wrong cookie at the live box; `git log -S` set the affected range (the CHANGELOG first guessed 1.10.0).
+- **A running `bun start` faked a red unit lane twice:** it rebuilt `dist/` while the installer tests imported from it (every test failed in ~10ms). Stop the dev server before running lanes, as CLAUDE.md already says for git surgery.
+- **Exporting the keys in `~/.zshenv` leaked into the fake-ssh tests,** which filled in values preview.env left out. They now scrub `PREVIEW_*`.
+- **Lanes:** unit 1942; Playwright 826 passed, 41 skipped; consumer 58; haltija 87 over 20 pages. Publish run 39147334158 green including verify; the published dist and installer are identical to the tag.
