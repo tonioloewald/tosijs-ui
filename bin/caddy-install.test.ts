@@ -7,6 +7,7 @@ import {
   existsSync,
   readFileSync,
   chmodSync,
+  statSync,
 } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -76,7 +77,17 @@ async function run(args: string[] = [], templatePath?: string) {
     ],
     {
       cwd: REPO,
-      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+      // The fake ssh runs the script with OUR environment, which a real ssh does not
+      // forward: a developer with the preview keys exported would otherwise fill in what
+      // preview.env leaves out.
+      env: {
+        ...Object.fromEntries(
+          Object.entries(process.env).filter(
+            ([k]) => !/^(PREVIEW_|ACME_EMAIL$)/.test(k)
+          )
+        ),
+        PATH: `${bin}:${process.env.PATH}`,
+      },
       stdout: 'pipe',
       stderr: 'pipe',
     }
@@ -204,6 +215,18 @@ test('the shipped template still carries the placeholders the guard looks for', 
   expect(shipped).toContain('__PREVIEW_EDIT_TOKEN__')
 })
 
+test('the shipped gate matches a key cookie exactly, not by prefix', () => {
+  // Unanchored, `tosi_edit=<key>x` passed the gate (found on the maintainer's box, 1.16.26).
+  const shipped = readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
+  const gates = shipped.match(/header_regexp Cookie "[^"]*"/g) ?? []
+  expect(gates.length).toBe(2)
+  for (const gate of gates) {
+    expect(gate).toMatch(
+      /"\(\^\|; \*\)tosi_(preview|edit)=__PREVIEW_\w+__\(;\|\$\)"/
+    )
+  }
+})
+
 test(
   '--go keeps the outgoing config as .bak',
   () => {
@@ -219,6 +242,42 @@ test(
         'the previous config\n'
       )
     })
+  },
+  SPAWN_TIMEOUT
+)
+
+test(
+  'REGRESSION: the installed config is readable by a Caddy that does not run as root',
+  async () => {
+    // `umask 077` installed it root-only; Debian's Caddy runs as `caddy` and the reload
+    // failed reading it (the maintainer's box, 1.16.26).
+    writeEnv(FULL_ENV)
+    const tpl = join(sandbox, 'Ok')
+    writeFileSync(tpl, 'x.{{PREVIEW_DOMAIN}} {\n  respond "hi"\n}\n')
+    const { code } = await run(['--go'], tpl)
+    expect(code).toBe(0)
+    expect(statSync(etc('Caddyfile')).mode & 0o040).toBe(0o040)
+  },
+  SPAWN_TIMEOUT
+)
+
+test(
+  'REGRESSION: a refused reload puts the previous config back',
+  async () => {
+    // Caddy keeps serving what it loaded, so a new file it refused would only bite at the
+    // next restart — taking down every site on the box, long after anyone was looking.
+    writeFileSync(
+      join(bin, 'systemctl'),
+      '#!/bin/sh\n[ "$1" = reload ] && exit 1\nexit 0\n'
+    )
+    writeEnv(FULL_ENV)
+    const tpl = join(sandbox, 'Ok')
+    writeFileSync(tpl, 'x.{{PREVIEW_DOMAIN}} {\n  respond "hi"\n}\n')
+    writeFileSync(etc('Caddyfile'), 'the previous config\n')
+    const { code, out } = await run(['--go'], tpl)
+    expect(code).not.toBe(0)
+    expect(out).toContain('restored the previous')
+    expect(readFileSync(etc('Caddyfile'), 'utf8')).toBe('the previous config\n')
   },
   SPAWN_TIMEOUT
 )

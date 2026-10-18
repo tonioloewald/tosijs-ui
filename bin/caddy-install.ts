@@ -155,11 +155,32 @@ caddy validate --config /etc/caddy/Caddyfile.new
 if [ "${go ? '1' : '0'}" = "1" ]; then
   # Keep the outgoing config. This replaces a file that may be serving OTHER sites, and
   # "validated" only means it parses — it does not mean it is the config you wanted.
+  had_config=0
   if [ -f /etc/caddy/Caddyfile ]; then
     cp -p /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak
+    had_config=1
+  fi
+  # umask 077 left this root-only, and Debian's Caddy runs as its own user: the reload then
+  # failed reading it, with the new file already in place (the first install on the
+  # maintainer's box, 1.16.26). It holds both keys, so not world-readable either.
+  if grep -q '^caddy:' /etc/group; then
+    chgrp caddy /etc/caddy/Caddyfile.new
+    chmod 640 /etc/caddy/Caddyfile.new
+  else
+    chmod 644 /etc/caddy/Caddyfile.new
   fi
   mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
-  systemctl reload caddy
+  if ! systemctl reload caddy; then
+    # Caddy keeps serving what it had loaded, but the next restart would read this file.
+    if [ "$had_config" = 1 ]; then
+      cp -p /etc/caddy/Caddyfile.bak /etc/caddy/Caddyfile
+      echo "caddy refused the reload; restored the previous /etc/caddy/Caddyfile." >&2
+    else
+      rm -f /etc/caddy/Caddyfile
+      echo "caddy refused the reload; removed the new /etc/caddy/Caddyfile." >&2
+    fi
+    exit 1
+  fi
   echo "Installed /etc/caddy/Caddyfile and reloaded caddy."
   echo "Previous config saved as /etc/caddy/Caddyfile.bak"
 else

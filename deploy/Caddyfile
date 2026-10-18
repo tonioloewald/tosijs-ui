@@ -84,9 +84,11 @@
 		redir * / 302
 	}
 
+	# Anchored at both ends: unanchored, `tosi_edit=<key>x` matched too. That needed the key
+	# anyway, but the dev servers compare exactly, and the gate should agree with them.
 	@unauthed {
-		not header_regexp Cookie "tosi_preview=__PREVIEW_TOKEN__"
-		not header_regexp Cookie "tosi_edit=__PREVIEW_EDIT_TOKEN__"
+		not header_regexp Cookie "(^|; *)tosi_preview=__PREVIEW_TOKEN__(;|$)"
+		not header_regexp Cookie "(^|; *)tosi_edit=__PREVIEW_EDIT_TOKEN__(;|$)"
 	}
 	handle @unauthed {
 		header Content-Type "text/html; charset=utf-8"
