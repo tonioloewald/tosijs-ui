@@ -769,3 +769,12 @@ gap, recorded rather than hidden.
   was 39021382154.
 - **Lanes:** unit 1916; Playwright 821 passed and 31 skipped; consumer 58; haltija 87 over
   20 pages.
+
+## 1.16.26 (2026-10-18)
+
+- **A feature found two older holes.** Designing a domain-wide key cookie showed that tunnel writes leaned on `SameSite=Lax`, and "site" is the registrable domain: any `*.tosijs.net` page could POST into a workspace with its session (since 1.9.0). The same pass found a read-only share session could attach the haltija bridge (since 1.15.0). Both fixed, with affected versions named. When a credential's scope widens, re-read every gate it reaches.
+- **The maintainer's mid-turn steer shaped the design.** They wanted the root list to hand out links that just work. That became a key cookie each workspace trades for a session on page load, which also covers bookmarks and reloads after a restart. Caddy can compare a fixed value but cannot sign one, so the cookie holds the raw key: long keys only, rotation documented.
+- **The review's catches:** the edit key opened less than the view key on `globalKeys: 'view'`; a docstring claimed sessions were re-checked against the key (false, so the rotation advice overstated itself); a `//` path made the post-redemption redirect protocol-relative (link redemption had it too). All fixed with tests that fail without them.
+- **Box-side work tested off the box:** the Caddy template ran under a scratchpad Caddy 2.11.7 with curl, and `build-index.sh` ran against a fake `/srv/preview` plus a Playwright check of its script. The real box (Debian Caddy 2.6) and the full round trip are untested until the maintainer's next `tosijs-caddy-install --go` (board #3377).
+- **A test that would start a shared haltija was refused.** The bridge gate became a pure function (`haltijaBridgeAdmission`) and is unit-tested instead.
+- **Lanes:** unit 1934; Playwright 826 passed, 41 skipped; consumer 58; haltija 87 over 20 pages. Approval came inside the window, so the publish run's own verify passed.
