@@ -1,4 +1,4 @@
-import { test, expect, beforeEach, afterEach } from 'bun:test'
+import { test, expect, beforeEach, afterEach, describe } from 'bun:test'
 import {
   mkdtempSync,
   writeFileSync,
@@ -201,6 +201,7 @@ test('the shipped template still carries the placeholders the guard looks for', 
   expect(shipped).toContain('{{ACME_EMAIL}}')
   expect(shipped).toContain('{{PREVIEW_DOMAIN}}')
   expect(shipped).toContain('__PREVIEW_TOKEN__')
+  expect(shipped).toContain('__PREVIEW_EDIT_TOKEN__')
 })
 
 test(
@@ -241,3 +242,60 @@ test(
   },
   SPAWN_TIMEOUT
 )
+
+describe('the global edit key', () => {
+  const EDIT = 'edit-key-long-enough-to-use-1'
+  const install = async (env: string) => {
+    writeEnv(env)
+    const tpl = join(sandbox, 'Edit')
+    writeFileSync(tpl, 'gate __PREVIEW_TOKEN__ __PREVIEW_EDIT_TOKEN__\n')
+    return run(['--go'], tpl)
+  }
+
+  test(
+    'unset, it is filled with a value nobody knows',
+    async () => {
+      const { code } = await install(FULL_ENV)
+      expect(code).toBe(0)
+      const installed = readFileSync(etc('Caddyfile'), 'utf8')
+      expect(installed).toMatch(/^gate s3cret-invite unset-[0-9a-f]{48}$/m)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'set, it is substituted and redacted from the dry-run diff',
+    async () => {
+      const { code } = await install(FULL_ENV + `PREVIEW_EDIT_TOKEN=${EDIT}\n`)
+      expect(code).toBe(0)
+      expect(readFileSync(etc('Caddyfile'), 'utf8')).toContain(EDIT)
+      writeFileSync(etc('Caddyfile'), 'old config\n')
+      const dry = await run([], join(sandbox, 'Edit'))
+      expect(dry.code).toBe(0)
+      expect(dry.out).not.toContain(EDIT)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a short or malformed key, or the invite secret again, is refused',
+    async () => {
+      for (const bad of [
+        'ABCDEFGH',
+        'has spaces in it but is long enough',
+        's3cret-invite',
+      ]) {
+        rmSync(etc('Caddyfile'), { force: true })
+        const env =
+          bad === 's3cret-invite'
+            ? 'PREVIEW_TOKEN=s3cret-invite-long-enough-key\nACME_EMAIL=me@example.com\nPREVIEW_DOMAIN=dev.example.com\nPREVIEW_EDIT_TOKEN=s3cret-invite-long-enough-key\n'
+            : FULL_ENV + `PREVIEW_EDIT_TOKEN="${bad}"\n`
+        const { code, out } = await install(env)
+        expect(code, bad).toBe(1)
+        expect(out).toContain('PREVIEW_EDIT_TOKEN')
+        expect(existsSync(etc('Caddyfile'))).toBe(false)
+      }
+    },
+    SPAWN_TIMEOUT
+  )
+})

@@ -15,21 +15,30 @@
   dev-server restart a reload is all it takes. Keys must be at least 24 letters, digits, `-` or
   `_`, because the box compares them with no rate limit; the installer refuses a short edit
   key, and a dev server ignores one and says so. A workspace can refuse them with
-  `tunnel.globalKeys: false`, or accept only the view key with `'view'`. The eight-letter
-  `--link` codes are unchanged.
+  `tunnel.globalKeys: false`, or with `'view'` let either key browse and neither edit; any other
+  value refuses both and says so. The eight-letter `--link` codes are unchanged.
+- **The view key is your preview invite.** Everyone you have given a static-preview link can,
+  by default, also read every workspace that accepts the view key while it is up, even with
+  `requireToken`. Set `tunnel.globalKeys: false` on a project that should stay yours, or rotate
+  the invite secret.
+- **Rotating a key** means editing both files, re-running the installer and restarting the dev
+  servers: a session a key already opened lasts up to 24 hours and is not re-checked against
+  the key until its server restarts.
 - **`tosijs-tunnel` refreshes the box's root page** when it registers a workspace, so a newly
   tunnelled project appears in the list straight away.
 
 ### Security
 
-- **Source and data writes over the tunnel must come from the workspace's own origin.** They
-  relied on the session cookie's `SameSite=Lax`, but every host under the preview domain is the
-  same *site*, so a page on another project's preview (its live examples included) could POST
-  to your workspace with your session attached. The haltija bridge over the tunnel checks the
-  same.
-- **A read-only session can no longer attach the haltija agent bridge.** A share link's session
-  (and now a view-key session) passed the bridge's gate, which asked only whether the session
-  was valid.
+- **Source and data writes over the tunnel must come from the workspace's own origin**
+  (affected: 1.9.0 to 1.16.25). They relied on the session cookie's `SameSite=Lax`, but every
+  host under the preview domain is the same *site*, so a page on another project's preview (its
+  live examples included) could POST to your workspace with your session attached. The haltija
+  bridge's component and socket over the tunnel check the same (affected: 1.12.2 to 1.16.25).
+- **A read-only session can no longer attach the haltija agent bridge** (affected: 1.15.0 to
+  1.16.25, with `haltijaDev: 'tunnel'`). A share link's session passed the bridge's gate, which
+  asked only whether the session was valid.
+- **A redirect after redeeming a link stays on the workspace.** A link at a path starting `//`
+  redirected to another host.
 
 ## 1.16.25
 

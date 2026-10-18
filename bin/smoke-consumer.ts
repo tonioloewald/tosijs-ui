@@ -364,9 +364,12 @@ try {
   )
   check(
     'the shipped Caddy template still has its placeholders',
-    ['{{ACME_EMAIL}}', '{{PREVIEW_DOMAIN}}', '__PREVIEW_TOKEN__'].every((p) =>
-      templateText.includes(p)
-    ),
+    [
+      '{{ACME_EMAIL}}',
+      '{{PREVIEW_DOMAIN}}',
+      '__PREVIEW_TOKEN__',
+      '__PREVIEW_EDIT_TOKEN__',
+    ].every((p) => templateText.includes(p)),
     'a placeholder was baked out — the install-time refusal guard would go quiet'
   )
 

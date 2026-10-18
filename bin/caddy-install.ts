@@ -24,9 +24,11 @@ Three deliberate properties:
   anything else through Caddy, that is destructive — so the dry run prints a diff against
   the live file and you get to look at it before `--go`.
 
-  THE SECRET NEVER LEAVES THE BOX. Substitution happens remotely, reading
-  `/etc/caddy/preview.env`. `PREVIEW_TOKEN` is never transmitted, never appears in argv on
-  this machine, and is redacted out of the diff before it is printed.
+  THIS COMMAND NEVER CARRIES THE SECRETS. Substitution happens remotely, reading
+  `/etc/caddy/preview.env`. `PREVIEW_TOKEN` and `PREVIEW_EDIT_TOKEN` are never transmitted by
+  it, never appear in argv on this machine, and are redacted out of the diff before it is
+  printed. (Global keys are a separate choice: to use them, you copy the same values into
+  ~/local-secrets on the machines that run dev servers.)
 
   VALIDATE BEFORE SWAP. `caddy fmt` then `caddy validate` run against a scratch file; the
   live config is replaced by an atomic `mv` only once it is known to parse. A rejected

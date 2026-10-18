@@ -1545,6 +1545,9 @@ import {
   isNavigation,
   liveProbeOrigin,
   issueSession,
+  sameOriginPath,
+  haltijaBridgeAdmission,
+  MAX_SESSIONS,
   GLOBAL_KEY_SESSION_TTL_MS,
 } from './dev-auth.js'
 
@@ -1552,7 +1555,7 @@ describe('global keys', () => {
   const EDIT = 'e'.repeat(12) + 'EDITKEY_edit-key'
   const VIEW = 'v'.repeat(12) + 'VIEWKEY_view-key'
   const secrets = { PREVIEW_EDIT_TOKEN: EDIT, PREVIEW_TOKEN: VIEW }
-  const keys = { edit: EDIT, view: VIEW }
+  const keys = { edit: EDIT, view: VIEW, editGrants: 'edit' as const }
   const page = (cookie?: string, extra: Record<string, string> = {}) =>
     new Request('https://ui.edit.dev.example.com/guide/', {
       headers: {
@@ -1567,8 +1570,25 @@ describe('global keys', () => {
       keys,
       problems: [],
     })
-    expect(resolveGlobalKeys('view', secrets).keys).toEqual({ view: VIEW })
+    expect(resolveGlobalKeys('view', secrets).keys).toEqual({
+      ...keys,
+      editGrants: 'view',
+    })
     expect(resolveGlobalKeys(false, secrets).keys).toEqual({})
+  })
+
+  test('a setting that is none of true, false or view accepts neither key', () => {
+    for (const bad of ['off', 'false', 'none', 0, null]) {
+      const r = resolveGlobalKeys(bad, secrets)
+      expect(r.keys).toEqual({})
+      expect(r.problems[0]).toContain('tunnel.globalKeys')
+    }
+  })
+
+  test('the edit key opens at least what the view key does', () => {
+    const viewOnly = resolveGlobalKeys('view', secrets).keys
+    expect(globalKeyAccess(`tosi_edit=${EDIT}`, viewOnly)).toBe('view')
+    expect(globalKeyAccess(`tosi_preview=${VIEW}`, viewOnly)).toBe('view')
   })
 
   test('a short or unmatchable key is not used, and says why', () => {
@@ -1576,7 +1596,11 @@ describe('global keys', () => {
       PREVIEW_EDIT_TOKEN: 'ABCDEFGH',
       PREVIEW_TOKEN: VIEW,
     })
-    expect(short.keys).toEqual({ view: VIEW, edit: undefined })
+    expect(short.keys).toEqual({
+      view: VIEW,
+      edit: undefined,
+      editGrants: 'edit',
+    })
     expect(short.problems[0]).toContain('PREVIEW_EDIT_TOKEN')
     const odd = resolveGlobalKeys(undefined, {
       PREVIEW_TOKEN: 'a+b/c='.repeat(6),
@@ -1603,6 +1627,7 @@ describe('global keys', () => {
     expect(globalKeyAccess(`tosi_preview=${EDIT}`, keys)).toBe(null)
     expect(globalKeyAccess(`tosi_edit=${EDIT}x`, keys)).toBe(null)
     expect(globalKeyAccess(`tosi_edit=${EDIT}`, { view: VIEW })).toBe(null)
+    expect(globalKeyAccess(`tosi_edit=${VIEW}`, keys)).toBe(null)
   })
 
   test('a key becomes a session only over the tunnel, on a page load, when it adds something', () => {
@@ -1700,5 +1725,62 @@ describe('global keys', () => {
         tunnel
       )
     ).toBe(null)
+  })
+})
+
+describe('redirects and session bounds', () => {
+  test('a Location built from a request never leaves the origin', () => {
+    expect(sameOriginPath('https://h.example//evil.example/x?a=1#b')).toBe(
+      '/evil.example/x?a=1#b'
+    )
+    expect(sameOriginPath('https://h.example/guide/')).toBe('/guide/')
+    expect(
+      urlWithoutToken('https://h.example///evil.example/?t=X&k=1', 't')
+    ).toBe('/evil.example/?k=1')
+  })
+
+  test('sessions are bounded, oldest first', () => {
+    const auth = createAuthState()
+    const first = issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, true)
+    for (let i = 1; i < MAX_SESSIONS + 5; i++)
+      issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    expect(auth.sessions.size).toBe(MAX_SESSIONS)
+    expect(auth.sessions.has(first)).toBe(false)
+    expect(auth.readOnly.has(first)).toBe(false)
+  })
+})
+
+describe('the haltija bridge over the tunnel', () => {
+  const auth = createAuthState()
+  const full = sessionCookie(
+    issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+  ).split(';')[0]
+  const readOnly = sessionCookie(
+    issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, true)
+  ).split(';')[0]
+  const ask = (
+    cookie: string,
+    origin: string | null,
+    sameOriginRequired: boolean
+  ) =>
+    haltijaBridgeAdmission(
+      new Request('https://ui.edit.dev.example.com/__haltija/component.js', {
+        headers: { cookie, ...(origin ? { origin } : {}) },
+      }),
+      { viaTunnel: true, peer: '127.0.0.1', auth, now: NOW, sameOriginRequired }
+    )
+
+  test('an editing session from the workspace itself may attach it', () => {
+    expect(ask(full, 'https://ui.edit.dev.example.com', true)).toBe(true)
+  })
+
+  test('a read-only session never may', () => {
+    expect(ask(readOnly, 'https://ui.edit.dev.example.com', true)).toBe(false)
+    expect(ask(readOnly, null, false)).toBe(false)
+  })
+
+  test('a sibling host may not reach the component or socket, though the page load may come from the list', () => {
+    expect(ask(full, 'https://other.dev.example.com', true)).toBe(false)
+    expect(ask(full, 'https://dev.example.com', false)).toBe(true)
   })
 })

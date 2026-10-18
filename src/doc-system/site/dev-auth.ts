@@ -381,6 +381,12 @@ export function issueSession(
   readOnly: boolean
 ): string {
   prune(state, now)
+  // A Map iterates in insertion order, so the first key is the oldest session.
+  while (state.sessions.size >= MAX_SESSIONS) {
+    const oldest = state.sessions.keys().next().value!
+    state.sessions.delete(oldest)
+    state.readOnly.delete(oldest)
+  }
   const session = mintToken()
   state.sessions.set(session, now + ttlMs)
   if (readOnly) state.readOnly.add(session)
@@ -664,8 +670,20 @@ export function sessionCookie(
 export function urlWithoutToken(rawUrl: string, param: string): string {
   const url = new URL(rawUrl)
   url.searchParams.delete(param)
-  const qs = url.searchParams.toString()
-  return url.pathname + (qs ? `?${qs}` : '') + url.hash
+  return sameOriginPath(url.href)
+}
+
+/**
+ * A request's path, query and hash, for a `Location` that cannot leave this origin.
+ *
+ * A path is not always same-origin as a Location: `GET //evil.example/x` has the pathname
+ * `//evil.example/x`, which a browser reads as a protocol-relative URL to another host. Runs of
+ * leading slashes collapse to one.
+ */
+export function sameOriginPath(rawUrl: string): string {
+  const url = new URL(rawUrl)
+  const pathname = '/' + url.pathname.replace(/^\/+/, '')
+  return pathname + url.search + url.hash
 }
 
 /*
@@ -981,27 +999,57 @@ export const GLOBAL_VIEW_COOKIE = 'tosi_preview'
 export const GLOBAL_EDIT_COOKIE = 'tosi_edit'
 /** Shorter keys are refused: Caddy compares them with no rate limit in front. */
 export const GLOBAL_KEY_MIN_LENGTH = 24
-/** A session minted from a global key: the cookie behind it is re-checked every page load. */
+/**
+ * A session minted from a global key lasts a day, or until this dev server stops (sessions
+ * live in memory). The key is NOT re-checked while the session lives, so rotating a key ends
+ * the sessions it already opened only when each workspace restarts.
+ */
 export const GLOBAL_KEY_SESSION_TTL_MS = 24 * 60 * 60 * 1000
+
+/**
+ * The most live sessions one server holds; past it the oldest goes. Only a key holder can mint
+ * one per page load, so this bounds a browser stuck reloading, not an attacker.
+ */
+export const MAX_SESSIONS = 1000
 
 export interface GlobalKeys {
   edit?: string
   view?: string
+  /**
+   * What the edit key grants here: `'edit'`, or `'view'` on a workspace that refuses edit
+   * (`globalKeys: 'view'`). The edit key always opens at least what the view key does, as it
+   * does on the box.
+   */
+  editGrants?: 'edit' | 'view'
 }
 
 /**
  * The keys this workspace accepts, from `tunnel.globalKeys` and the two secrets.
  *
- * `false` accepts neither; `'view'` only the view key, so this workspace can be browsed from
- * the box's list and never edited through it. A key that is too short or has characters Caddy's
- * cookie match cannot hold is not used, and `problems` says why, so the server can say so at
- * launch rather than leave a key that silently opens nothing.
+ * `false` accepts neither; `'view'` lets either key browse and neither edit, so this workspace
+ * can be opened from the box's list and never edited through it. A key that is too short or has
+ * characters Caddy's cookie match cannot hold is not used, and `problems` says why, so the server
+ * can say so at launch rather than leave a key that silently opens nothing. So does a setting
+ * that is none of these, which accepts neither key: a misspelt `'off'` must not mean "both".
  */
 export function resolveGlobalKeys(
-  setting: boolean | 'view' | undefined,
+  setting: unknown,
   secrets: { PREVIEW_TOKEN?: string; PREVIEW_EDIT_TOKEN?: string }
 ): { keys: GlobalKeys; problems: string[] } {
   const problems: string[] = []
+  if (
+    setting !== undefined &&
+    setting !== true &&
+    setting !== false &&
+    setting !== 'view'
+  ) {
+    problems.push(
+      `tunnel.globalKeys is ${JSON.stringify(
+        setting
+      )}, which is not true, false or 'view': neither global key is accepted`
+    )
+    return { keys: {}, problems }
+  }
   const usable = (name: string, value: string | undefined) => {
     if (!value) return undefined
     if (value.length < GLOBAL_KEY_MIN_LENGTH || !/^[\w-]+$/.test(value)) {
@@ -1015,15 +1063,14 @@ export function resolveGlobalKeys(
   if (setting === false) return { keys: {}, problems }
   const keys: GlobalKeys = {
     view: usable('PREVIEW_TOKEN', secrets.PREVIEW_TOKEN),
+    edit: usable('PREVIEW_EDIT_TOKEN', secrets.PREVIEW_EDIT_TOKEN),
+    editGrants: setting === 'view' ? 'view' : 'edit',
   }
-  if (setting !== 'view') {
-    keys.edit = usable('PREVIEW_EDIT_TOKEN', secrets.PREVIEW_EDIT_TOKEN)
-    if (keys.edit && keys.edit === keys.view) {
-      problems.push(
-        'PREVIEW_EDIT_TOKEN equals PREVIEW_TOKEN, so anyone with a preview link could edit: neither is used as a global key'
-      )
-      return { keys: {}, problems }
-    }
+  if (keys.edit && keys.edit === keys.view) {
+    problems.push(
+      'PREVIEW_EDIT_TOKEN equals PREVIEW_TOKEN, so anyone with a preview link could edit: neither is used as a global key'
+    )
+    return { keys: {}, problems }
   }
   return { keys, problems }
 }
@@ -1034,7 +1081,8 @@ export function globalKeyAccess(
   keys: GlobalKeys
 ): 'edit' | 'view' | null {
   const edit = readCookie(cookieHeader, GLOBAL_EDIT_COOKIE)
-  if (keys.edit && edit && safeEqual(edit, keys.edit)) return 'edit'
+  if (keys.edit && edit && safeEqual(edit, keys.edit))
+    return keys.editGrants ?? 'edit'
   const view = readCookie(cookieHeader, GLOBAL_VIEW_COOKIE)
   if (keys.view && view && safeEqual(view, keys.view)) return 'view'
   return null
@@ -1119,6 +1167,40 @@ export function mayDriveWithAgent(opts: {
   // page with an agent stays this machine and authorized tunnel sessions only.
   const { viaTunnel, peer, hasValidSession, sessionMayWrite } = opts
   return mayWriteSource({ viaTunnel, peer, hasValidSession, sessionMayWrite })
+}
+
+/**
+ * The whole haltija-bridge gate for one request, as the dev server applies it.
+ *
+ * `mayDriveWithAgent` on the request's session (a read-only one may not drive), and, for the
+ * component and the socket (`sameOriginRequired`), a same-origin request over the tunnel: a
+ * sibling host under the preview domain is the same SITE, so its pages carry the cookie. The
+ * page load that injects the loader is a navigation, often from the box's list, so it is not
+ * held to same-origin.
+ */
+export function haltijaBridgeAdmission(
+  request: { url?: string; headers: { get(name: string): string | null } },
+  opts: {
+    viaTunnel: boolean
+    peer?: string | null
+    auth: AuthState
+    now: number
+    sameOriginRequired: boolean
+  }
+): boolean {
+  const held = readCookie(request.headers.get('cookie'), SESSION_COOKIE)
+  return (
+    mayDriveWithAgent({
+      viaTunnel: opts.viaTunnel,
+      peer: opts.peer,
+      hasValidSession: validSessionCookie(opts.auth, held, opts.now),
+      // Asked after validity, the call order cookieMayWrite documents.
+      sessionMayWrite: cookieMayWrite(opts.auth, held),
+    }) &&
+    (!opts.viaTunnel ||
+      !opts.sameOriginRequired ||
+      isSameOriginRequest(request))
+  )
 }
 
 /**

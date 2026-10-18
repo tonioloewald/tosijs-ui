@@ -564,8 +564,13 @@ export interface SiteConfig {
              * dev-server restarts, for 24 hours. This server reads the same two values from the
              * environment or `~/local-secrets/tosijs-preview.env`; without them, nothing changes.
              *
-             * `'view'` accepts only the view key (browse from the list, never edit through it);
-             * `false` accepts neither, so only this project's own links open it.
+             * `'view'` lets either key browse and neither edit, so the workspace opens from the list
+             * but is never edited through it; `false` accepts neither, so only this project's own
+             * links open it. Any other value accepts neither and says so at launch.
+             *
+             * The view key is the static previews' invite secret, so by default everyone you have
+             * invited to the previews can also read this workspace while it is up, even with
+             * `requireToken`. Set `false` (or rotate the invite secret) if that is not what you want.
              */
             globalKeys?: boolean | 'view';
             /**
@@ -704,7 +709,8 @@ export interface SiteConfig {
      * upgrading must never hand anyone an agent-drivable page on the internet.
      *
      * Over the tunnel every piece of it — the loader, the component, and the socket — requires a
-     * **live dev session cookie**, the same credential that gates source writes, decided by the
+     * **live dev session that may write** (not a share link's or the view key's), the same
+     * credential that gates source writes, decided by the
      * same predicate (`mayDriveWithAgent`, which delegates to `mayWriteSource`). Driving a page
      * with an agent is at least as powerful as writing source, so it gets no weaker a gate.
      * Redeem a link (`tosijs-tunnel --link`) on the device first, exactly as you do to edit.

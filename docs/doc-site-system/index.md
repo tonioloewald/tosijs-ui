@@ -741,8 +741,10 @@ reachable". `HALTIJA_DEV=1` deliberately does **not** enable it either — that 
 convenience toggle, and this is not a convenience.
 
 **What authorizes it.** Every piece — the loader, the component, and the socket — requires
-a **live dev session cookie**, the same credential that gates source writes, decided by the
-same predicate (`mayDriveWithAgent`, which delegates to `mayWriteSource`). Driving a page
+a **live dev session that may write** (a share link's or the view key's read-only session
+does not count), the same credential that gates source writes, decided by the same predicate
+(`mayDriveWithAgent`, which delegates to `mayWriteSource`). The component and the socket must
+also come from the workspace's own origin. Driving a page
 with an agent is at least as powerful as writing source, so it gets no weaker a gate. As
 everywhere else in this server, what authorizes is the **listener**, not the peer address —
 a reverse tunnel counterfeits "local" by construction. Unauthorized requests get a **404**,
@@ -907,8 +909,9 @@ nothing routes.
 
 The package ships a template at `node_modules/tosijs-ui/deploy/Caddyfile`. It is a
 _template_, not a drop-in: `{{ACME_EMAIL}}` (your Let's Encrypt account),
-`{{PREVIEW_DOMAIN}}` (the domain your preview hosts live under) and `__PREVIEW_TOKEN__` (the
-shared invite secret) have to be filled in.
+`{{PREVIEW_DOMAIN}}` (the domain your preview hosts live under), `__PREVIEW_TOKEN__` (the
+shared invite secret) and `__PREVIEW_EDIT_TOKEN__` (the optional [global edit
+key](#global-keys--one-link-for-every-workspace)) have to be filled in.
 
 Installing it with the placeholders intact would give you a preview host whose invite gate
 is a literal string published in a public repo, issuing certificates under someone else's
@@ -934,9 +937,14 @@ tosijs-caddy-install --go
 
 It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW_HOST`), and:
 
-- **substitutes on the box**, reading `/etc/caddy/preview.env` — so `PREVIEW_TOKEN` never
-  travels to your laptop, never appears in your shell history, and is redacted out of the
-  diff before it is printed;
+- **substitutes on the box**, reading `/etc/caddy/preview.env` — so the installer never
+  carries `PREVIEW_TOKEN` or `PREVIEW_EDIT_TOKEN` to your laptop, they never appear in your
+  shell history, and they are redacted out of the diff before it is printed (the [global
+  keys](#global-keys--one-link-for-every-workspace) are the one case where you copy them to a
+  machine yourself);
+- **fills in an unknown value** for `__PREVIEW_EDIT_TOKEN__` when `PREVIEW_EDIT_TOKEN` is unset,
+  so the edit key opens nothing, and refuses one shorter than 24 letters, digits, `-` or `_`,
+  or one equal to `PREVIEW_TOKEN`;
 - **refuses to install** if any placeholder survived substitution, naming the line — the
   guard that a hand-rolled `sed` pipeline does not have;
 - **validates before swapping**: `caddy fmt` then `caddy validate` against a scratch file,
@@ -1102,14 +1110,27 @@ code still works.
 
 **What it costs.** The cookie holds the key itself: Caddy can compare a fixed value and cannot
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
-you rotate it, which means editing both files and re-running the installer. The cookie is
+you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
+matters, because a session a key already opened lasts 24 hours and is not re-checked against
+the key; sessions live in memory, so a restart ends them all.
+
+**The view key is your preview invite.** Everyone you have given a static-preview link (or its
+30-day cookie) can also read every workspace that accepts the view key while it is up,
+`requireToken` or not. That is what "global view" means here; if some of those people should
+not see live work, set `tunnel.globalKeys: false` on that project, or rotate the invite
+secret. The cookie is
 `HttpOnly` and `Secure`, it goes only to hosts under your preview domain, and a page on one of
 them cannot use it to write to another: source and data writes over the tunnel are refused
 unless they come from the workspace's own origin (sibling hosts are the same *site*, so
 `SameSite` alone would not stop them).
 
-**Per project.** `tunnel.globalKeys: 'view'` lets a workspace be browsed from the list but
-never edited through it; `false` makes it ignore both keys, so only its own `--link` opens it.
+**Per project.** `tunnel.globalKeys: 'view'` lets either key browse a workspace from the list
+and neither edit it; `false` makes it ignore both keys, so only its own `--link` opens it. Any
+other value accepts neither key and says so at launch.
+
+**Not logged, ideally.** Visiting `?t=<key>` puts the key in the request line, which Caddy's
+access log records (`/var/log/caddy/preview.log`). Keep that log readable by root only, or
+rotate the key after a log has left the box.
 
 #### The token is eight letters, and you can type it
 

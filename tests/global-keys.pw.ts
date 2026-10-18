@@ -80,8 +80,8 @@ const viaTunnel = (
     req.end(opts.body)
   })
 
-const navigate = (cookie: string) =>
-  viaTunnel('/', {
+const navigate = (cookie: string, pathname = '/') =>
+  viaTunnel(pathname, {
     headers: { cookie, 'sec-fetch-mode': 'navigate', accept: 'text/html' },
   })
 
@@ -213,6 +213,12 @@ test('the view key opens the workspace read-only', async () => {
   expect((await save(session, `https://${HOST}`)).status).toBe(403)
   // The edit key on top of a read-only session upgrades it.
   expect((await navigate(`tosi_edit=${EDIT}; ${session}`)).status).toBe(302)
+})
+
+test('the exchange never redirects off this origin', async () => {
+  const reply = await navigate(`tosi_edit=${EDIT}`, '//evil.example/x')
+  expect(reply.status).toBe(302)
+  expect(reply.headers.location).toBe('/evil.example/x')
 })
 
 test('a wrong key, or a key in the wrong cookie, is no key', async () => {

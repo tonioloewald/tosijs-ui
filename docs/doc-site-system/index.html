@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=0b4f619cd75e" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=3f88eac7bdf0" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -949,8 +949,10 @@ Upgrading must never silently turn that into &quot;an agent may drive the page w
 reachable&quot;. <code>HALTIJA_DEV=1</code> deliberately does <strong>not</strong> enable it either — that variable is a
 convenience toggle, and this is not a convenience.</p>
 <p><strong>What authorizes it.</strong> Every piece — the loader, the component, and the socket — requires
-a <strong>live dev session cookie</strong>, the same credential that gates source writes, decided by the
-same predicate (<code>mayDriveWithAgent</code>, which delegates to <code>mayWriteSource</code>). Driving a page
+a <strong>live dev session that may write</strong> (a share link&#39;s or the view key&#39;s read-only session
+does not count), the same credential that gates source writes, decided by the same predicate
+(<code>mayDriveWithAgent</code>, which delegates to <code>mayWriteSource</code>). The component and the socket must
+also come from the workspace&#39;s own origin. Driving a page
 with an agent is at least as powerful as writing source, so it gets no weaker a gate. As
 everywhere else in this server, what authorizes is the <strong>listener</strong>, not the peer address —
 a reverse tunnel counterfeits &quot;local&quot; by construction. Unauthorized requests get a <strong>404</strong>,
@@ -1095,8 +1097,9 @@ here because every lane ran under bun; the consumer lane now imports through Nod
 nothing routes.</p>
 <p>The package ships a template at <code>node_modules/tosijs-ui/deploy/Caddyfile</code>. It is a
 <em>template</em>, not a drop-in: <code>{{ACME_EMAIL}}</code> (your Let&#39;s Encrypt account),
-<code>{{PREVIEW_DOMAIN}}</code> (the domain your preview hosts live under) and <code>__PREVIEW_TOKEN__</code> (the
-shared invite secret) have to be filled in.</p>
+<code>{{PREVIEW_DOMAIN}}</code> (the domain your preview hosts live under), <code>__PREVIEW_TOKEN__</code> (the
+shared invite secret) and <code>__PREVIEW_EDIT_TOKEN__</code> (the optional <a href="#global-keys--one-link-for-every-workspace">global edit
+key</a>) have to be filled in.</p>
 <p>Installing it with the placeholders intact would give you a preview host whose invite gate
 is a literal string published in a public repo, issuing certificates under someone else&#39;s
 account. So don&#39;t do it by hand — <strong><code>tosijs-caddy-install</code> does it and refuses when it would
@@ -1118,9 +1121,14 @@ tosijs-caddy-install <span class="token parameter variable">--go</span>
 </code></pre>
 <p>It reads <code>preview.host</code> from your site config (or <code>--host=user@box</code>, or <code>PREVIEW_HOST</code>), and:</p>
 <ul>
-<li><strong>substitutes on the box</strong>, reading <code>/etc/caddy/preview.env</code> — so <code>PREVIEW_TOKEN</code> never
-travels to your laptop, never appears in your shell history, and is redacted out of the
-diff before it is printed;</li>
+<li><strong>substitutes on the box</strong>, reading <code>/etc/caddy/preview.env</code> — so the installer never
+carries <code>PREVIEW_TOKEN</code> or <code>PREVIEW_EDIT_TOKEN</code> to your laptop, they never appear in your
+shell history, and they are redacted out of the diff before it is printed (the <a href="#global-keys--one-link-for-every-workspace">global
+keys</a> are the one case where you copy them to a
+machine yourself);</li>
+<li><strong>fills in an unknown value</strong> for <code>__PREVIEW_EDIT_TOKEN__</code> when <code>PREVIEW_EDIT_TOKEN</code> is unset,
+so the edit key opens nothing, and refuses one shorter than 24 letters, digits, <code>-</code> or <code>_</code>,
+or one equal to <code>PREVIEW_TOKEN</code>;</li>
 <li><strong>refuses to install</strong> if any placeholder survived substitution, naming the line — the
 guard that a hand-rolled <code>sed</code> pipeline does not have;</li>
 <li><strong>validates before swapping</strong>: <code>caddy fmt</code> then <code>caddy validate</code> against a scratch file,
@@ -1316,13 +1324,24 @@ differ. For a headset, where typing 24 characters is the problem, the eight-lett
 code still works.</p>
 <p><strong>What it costs.</strong> The cookie holds the key itself: Caddy can compare a fixed value and cannot
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
-you rotate it, which means editing both files and re-running the installer. The cookie is
+you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
+matters, because a session a key already opened lasts 24 hours and is not re-checked against
+the key; sessions live in memory, so a restart ends them all.</p>
+<p><strong>The view key is your preview invite.</strong> Everyone you have given a static-preview link (or its
+30-day cookie) can also read every workspace that accepts the view key while it is up,
+<code>requireToken</code> or not. That is what &quot;global view&quot; means here; if some of those people should
+not see live work, set <code>tunnel.globalKeys: false</code> on that project, or rotate the invite
+secret. The cookie is
 <code>HttpOnly</code> and <code>Secure</code>, it goes only to hosts under your preview domain, and a page on one of
 them cannot use it to write to another: source and data writes over the tunnel are refused
 unless they come from the workspace&#39;s own origin (sibling hosts are the same <em>site</em>, so
 <code>SameSite</code> alone would not stop them).</p>
-<p><strong>Per project.</strong> <code>tunnel.globalKeys: &#39;view&#39;</code> lets a workspace be browsed from the list but
-never edited through it; <code>false</code> makes it ignore both keys, so only its own <code>--link</code> opens it.</p>
+<p><strong>Per project.</strong> <code>tunnel.globalKeys: &#39;view&#39;</code> lets either key browse a workspace from the list
+and neither edit it; <code>false</code> makes it ignore both keys, so only its own <code>--link</code> opens it. Any
+other value accepts neither key and says so at launch.</p>
+<p><strong>Not logged, ideally.</strong> Visiting <code>?t=&lt;key&gt;</code> puts the key in the request line, which Caddy&#39;s
+access log records (<code>/var/log/caddy/preview.log</code>). Keep that log readable by root only, or
+rotate the key after a log has left the box.</p>
 <h4 id="the-token-is-eight-letters-and-you-can-type-it">The token is eight letters, and you can type it</h4>
 <p><code>--link</code> prints the URL <strong>and the code on its own line</strong>, because on the device this exists
 for you are not pasting anything — you are reading characters off one screen and entering

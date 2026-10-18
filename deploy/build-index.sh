@@ -21,6 +21,9 @@
 set -euo pipefail
 
 ROOT=/srv/preview
+
+# Names come from config and file names; nothing reaches the page unescaped.
+html() { printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g'; }
 OUT="$ROOT/_index"
 mkdir -p "$OUT"
 
@@ -39,6 +42,7 @@ for dir in "$ROOT"/*/; do
 	gen=$(sed -n 's/.*"generator": *"\([^"]*\)".*/\1/p' "$vj" | head -1)
 	site=$(sed -n 's/.*"site": *"\([^"]*\)".*/\1/p' "$vj" | head -1)
 	[ -n "$site" ] || site="$name"
+	site=$(html "$site")
 
 	# The hostname comes from the project's OWN Caddy fragment — the same file the
 	# router reads — so this listing cannot disagree with what actually serves. An
@@ -77,7 +81,7 @@ done
 live=""
 for frag in "$ROOT"/_sites/*-tunnel.caddy; do
 	[ -f "$frag" ] || continue
-	name="$(basename "$frag" -tunnel.caddy)"
+	name="$(html "$(basename "$frag" -tunnel.caddy)")"
 	host=$(sed -n 's/^\([A-Za-z0-9.-]*\) *{.*/\1/p' "$frag" | head -1)
 	[ -n "$host" ] || continue
 	live="$live

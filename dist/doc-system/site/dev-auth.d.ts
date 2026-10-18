@@ -270,6 +270,14 @@ export declare function sessionCookie(token: string, maxAgeMs?: number): string;
  * defeat the entire design.
  */
 export declare function urlWithoutToken(rawUrl: string, param: string): string;
+/**
+ * A request's path, query and hash, for a `Location` that cannot leave this origin.
+ *
+ * A path is not always same-origin as a Location: `GET //evil.example/x` has the pathname
+ * `//evil.example/x`, which a browser reads as a protocol-relative URL to another host. Runs of
+ * leading slashes collapse to one.
+ */
+export declare function sameOriginPath(rawUrl: string): string;
 export declare function isSameOriginRequest(request: {
     url?: string;
     headers: {
@@ -369,21 +377,37 @@ export declare const GLOBAL_VIEW_COOKIE = "tosi_preview";
 export declare const GLOBAL_EDIT_COOKIE = "tosi_edit";
 /** Shorter keys are refused: Caddy compares them with no rate limit in front. */
 export declare const GLOBAL_KEY_MIN_LENGTH = 24;
-/** A session minted from a global key: the cookie behind it is re-checked every page load. */
+/**
+ * A session minted from a global key lasts a day, or until this dev server stops (sessions
+ * live in memory). The key is NOT re-checked while the session lives, so rotating a key ends
+ * the sessions it already opened only when each workspace restarts.
+ */
 export declare const GLOBAL_KEY_SESSION_TTL_MS: number;
+/**
+ * The most live sessions one server holds; past it the oldest goes. Only a key holder can mint
+ * one per page load, so this bounds a browser stuck reloading, not an attacker.
+ */
+export declare const MAX_SESSIONS = 1000;
 export interface GlobalKeys {
     edit?: string;
     view?: string;
+    /**
+     * What the edit key grants here: `'edit'`, or `'view'` on a workspace that refuses edit
+     * (`globalKeys: 'view'`). The edit key always opens at least what the view key does, as it
+     * does on the box.
+     */
+    editGrants?: 'edit' | 'view';
 }
 /**
  * The keys this workspace accepts, from `tunnel.globalKeys` and the two secrets.
  *
- * `false` accepts neither; `'view'` only the view key, so this workspace can be browsed from
- * the box's list and never edited through it. A key that is too short or has characters Caddy's
- * cookie match cannot hold is not used, and `problems` says why, so the server can say so at
- * launch rather than leave a key that silently opens nothing.
+ * `false` accepts neither; `'view'` lets either key browse and neither edit, so this workspace
+ * can be opened from the box's list and never edited through it. A key that is too short or has
+ * characters Caddy's cookie match cannot hold is not used, and `problems` says why, so the server
+ * can say so at launch rather than leave a key that silently opens nothing. So does a setting
+ * that is none of these, which accepts neither key: a misspelt `'off'` must not mean "both".
  */
-export declare function resolveGlobalKeys(setting: boolean | 'view' | undefined, secrets: {
+export declare function resolveGlobalKeys(setting: unknown, secrets: {
     PREVIEW_TOKEN?: string;
     PREVIEW_EDIT_TOKEN?: string;
 }): {
@@ -441,6 +465,27 @@ export declare function mayDriveWithAgent(opts: {
     hasValidSession: boolean;
     /** a read-only session (a share link, the view key) may look, never drive */
     sessionMayWrite?: boolean;
+}): boolean;
+/**
+ * The whole haltija-bridge gate for one request, as the dev server applies it.
+ *
+ * `mayDriveWithAgent` on the request's session (a read-only one may not drive), and, for the
+ * component and the socket (`sameOriginRequired`), a same-origin request over the tunnel: a
+ * sibling host under the preview domain is the same SITE, so its pages carry the cookie. The
+ * page load that injects the loader is a navigation, often from the box's list, so it is not
+ * held to same-origin.
+ */
+export declare function haltijaBridgeAdmission(request: {
+    url?: string;
+    headers: {
+        get(name: string): string | null;
+    };
+}, opts: {
+    viaTunnel: boolean;
+    peer?: string | null;
+    auth: AuthState;
+    now: number;
+    sameOriginRequired: boolean;
 }): boolean;
 /**
  * THE loopback test. dev-server re-exports this as `isLoopbackAddress`; it used to
