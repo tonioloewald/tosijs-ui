@@ -19,7 +19,8 @@ silently picking up a parent directory's config would mean publishing the wrong 
 and "it found something" is not the same as "it found yours".
 */
 
-import { existsSync, readFileSync } from 'fs'
+import { $ } from 'bun'
+import { existsSync } from 'fs'
 import * as path from 'path'
 
 export interface PreviewConfig {
@@ -151,47 +152,11 @@ export {
 } from '../dist/doc-system/site/site-config.js'
 
 /*
-Where the preview host comes from — ONE implementation, and a fallback that works for
-things that are not a human at an interactive prompt.
-
-`PREVIEW_HOST` lives in `~/local-secrets/tosijs-preview.env`: mode 700, a sibling of the
-repos rather than inside one, so it is structurally impossible to commit. That is a stronger
-guarantee than a rule saying "don't commit the host", which this project wrote, believed, and
-then violated in its own `tosijs-site.config.ts` for months.
-
-The fallback exists because the previous advice — "export it from your shell profile" — is
-present for a human and ABSENT for every tool: non-interactive shells inherit no interactive
-profile, so an agent or a CI step sees nothing and reports a missing credential rather than a
-missing `export`. Reading the file directly makes the resolution order true for both.
-
-Parses only `KEY=value` / `export KEY=value`, strips one layer of quotes, ignores the rest.
-Not a shell — a credentials file that needs evaluating is a credentials file that can run
-code.
+`readLocalSecret` lives in the package (`src/doc-system/site/local-secrets.ts`) because the dev
+server reads the global tunnel keys from the same file; it is re-exported here for the bins.
 */
-export function readLocalSecret(
-  name: string,
-  file = path.join(
-    process.env.HOME ?? '',
-    'local-secrets',
-    'tosijs-preview.env'
-  )
-): string | undefined {
-  if (!process.env.HOME || !existsSync(file)) return undefined
-  let text: string
-  try {
-    text = readFileSync(file, 'utf8')
-  } catch {
-    return undefined
-  }
-  for (const line of text.split('\n')) {
-    const m = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(
-      line
-    )
-    if (!m || m[1] !== name) continue
-    return m[2].trim().replace(/^(['"])(.*)\1$/, '$2')
-  }
-  return undefined
-}
+export { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
+import { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
 
 /**
  * `--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` (legacy) > **site config** > `~/local-secrets`.
@@ -433,4 +398,48 @@ export function parseArgv(argv: string[], spec: ArgvSpec): Argv {
     },
     rest: argv.filter((a) => !a.startsWith('--')),
   }
+}
+
+/**
+ * Refresh the host's index so a deploy, or a newly registered tunnel, shows up immediately.
+ * Shared by `tosijs-deploy` and `tosijs-tunnel`.
+ */
+export async function refreshHostIndex(host: string): Promise<void> {
+  const remote = `/tmp/tosi-build-index-${process.pid}.sh`
+  /*
+  Resolve the script against THIS PACKAGE, not the adopter's cwd.
+
+  `deploy/` is in `files`, so the asset ships at node_modules/tosijs-ui/deploy/ — only
+  the resolution was wrong, which meant every adopter's scp failed, the failure was
+  swallowed by a bare `return`, and the deploy still printed "✅ Deployed". Exactly the
+  #37 class of bug, one cycle later: a package asset located relative to whoever called us.
+  */
+  const script = `${import.meta.dir}/../deploy/build-index.sh`
+  const put = await $`scp -q ${script} ${`${host}:${remote}`}`.nothrow().quiet()
+  if (put.exitCode !== 0) {
+    // Loudly: the deploy or tunnel itself succeeded, so this must not read as total
+    // failure — but a silently stale index is how you conclude it did not land.
+    console.warn(
+      `⚠️  Could not refresh the host index (scp of ${script} failed).\n` +
+        `   The listing at the root will be stale until the next refresh.\n` +
+        `   ${put.stderr.toString().trim().slice(0, 200)}`
+    )
+    return
+  }
+  const run = await $`ssh ${host} bash ${remote}`.nothrow().quiet()
+  await $`ssh ${host} rm -f ${remote}`.nothrow().quiet()
+  // build-index.sh is `set -euo pipefail`; a non-root user on a root-owned tree dies at
+  // mkdir. Discarding this exit code meant the deploy printed ✅ over a failed index.
+  if (run.exitCode !== 0) {
+    console.warn(
+      `⚠️  the host index was not refreshed (exit ${run.exitCode}). The listing at\n` +
+        `   the root will be stale until the next successful refresh.\n` +
+        `   ${(run.stderr.toString() || run.stdout.toString())
+          .trim()
+          .slice(0, 200)}`
+    )
+    return
+  }
+  const out = run.stdout.toString().trim()
+  if (out) console.log(`   ${out}`)
 }

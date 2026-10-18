@@ -31,6 +31,7 @@ import { existsSync } from 'fs'
 import {
   previewRootFor,
   registerCaddyFragment,
+  refreshHostIndex,
   resolvePreviewHost,
   parseArgv,
 } from './resolve-site-config.ts'
@@ -205,51 +206,10 @@ async function registerSite(): Promise<boolean> {
   return ok
 }
 
-/** Refresh the host's index so this deploy shows up immediately. */
-async function refreshIndex(): Promise<void> {
-  const remote = `/tmp/tosi-build-index-${process.pid}.sh`
-  /*
-  Resolve the script against THIS PACKAGE, not the adopter's cwd.
-
-  `deploy/` is in `files`, so the asset ships at node_modules/tosijs-ui/deploy/ — only
-  the resolution was wrong, which meant every adopter's scp failed, the failure was
-  swallowed by a bare `return`, and the deploy still printed "✅ Deployed". Exactly the
-  #37 class of bug, one cycle later: a package asset located relative to whoever called us.
-  */
-  const script = `${import.meta.dir}/../deploy/build-index.sh`
-  const put = await $`scp -q ${script} ${`${host}:${remote}`}`.nothrow().quiet()
-  if (put.exitCode !== 0) {
-    // Loudly: the deploy itself succeeded, so this must not read as total failure —
-    // but a silently stale index is how you conclude a deploy did not land.
-    console.warn(
-      `⚠️  Could not refresh the host index (scp of ${script} failed).\n` +
-        `   The deploy landed; the listing at the root will be stale until the next one.\n` +
-        `   ${put.stderr.toString().trim().slice(0, 200)}`
-    )
-    return
-  }
-  const run = await $`ssh ${host} bash ${remote}`.nothrow().quiet()
-  await $`ssh ${host} rm -f ${remote}`.nothrow().quiet()
-  // build-index.sh is `set -euo pipefail`; a non-root user on a root-owned tree dies at
-  // mkdir. Discarding this exit code meant the deploy printed ✅ over a failed index.
-  if (run.exitCode !== 0) {
-    console.warn(
-      `⚠️  the host index was not refreshed (exit ${run.exitCode}). The deploy landed;\n` +
-        `   the listing at the root will be stale until the next successful one.\n` +
-        `   ${(run.stderr.toString() || run.stdout.toString())
-          .trim()
-          .slice(0, 200)}`
-    )
-    return
-  }
-  const out = run.stdout.toString().trim()
-  if (out) console.log(`   ${out}`)
-}
-
 let routed = true
 if (go) {
   routed = await registerSite()
-  await refreshIndex()
+  await refreshHostIndex(host!)
 }
 
 /*

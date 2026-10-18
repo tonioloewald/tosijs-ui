@@ -121,14 +121,28 @@ set -a; . /etc/caddy/preview.env; set +a
 : "\${ACME_EMAIL:?set ACME_EMAIL in /etc/caddy/preview.env}"
 : "\${PREVIEW_DOMAIN:?set PREVIEW_DOMAIN in /etc/caddy/preview.env}"
 
+# The global EDIT key is optional. Unset, the template still needs a value, so it gets one
+# nobody knows and the edit cookie opens nothing. Set, it is compared by Caddy with no rate
+# limit in front, so it must be long, and the cookie match needs a plain alphabet.
+if [ -z "\${PREVIEW_EDIT_TOKEN:-}" ]; then
+  PREVIEW_EDIT_TOKEN="unset-$(od -An -tx1 -N24 /dev/urandom | tr -d ' \\n')"
+elif ! printf '%s' "$PREVIEW_EDIT_TOKEN" | grep -qE '^[A-Za-z0-9_-]{24,}$'; then
+  echo "PREVIEW_EDIT_TOKEN must be at least 24 letters, digits, - or _ — refusing to install." >&2
+  exit 1
+elif [ "$PREVIEW_EDIT_TOKEN" = "$PREVIEW_TOKEN" ]; then
+  echo "PREVIEW_EDIT_TOKEN equals PREVIEW_TOKEN, so every preview link could edit — refusing to install." >&2
+  exit 1
+fi
+
 sed -e "s|__PREVIEW_TOKEN__|$PREVIEW_TOKEN|g" \\
+    -e "s|__PREVIEW_EDIT_TOKEN__|$PREVIEW_EDIT_TOKEN|g" \\
     -e "s|{{ACME_EMAIL}}|$ACME_EMAIL|g" \\
     -e "s|{{PREVIEW_DOMAIN}}|$PREVIEW_DOMAIN|g" \\
     /etc/caddy/Caddyfile.tpl > /etc/caddy/Caddyfile.new
 
-if grep -qE '\\{\\{|__PREVIEW_TOKEN__' /etc/caddy/Caddyfile.new; then
+if grep -qE '\\{\\{|__PREVIEW_(EDIT_)?TOKEN__' /etc/caddy/Caddyfile.new; then
   echo "Unsubstituted placeholders remain — refusing to install:" >&2
-  grep -nE '\\{\\{|__PREVIEW_TOKEN__' /etc/caddy/Caddyfile.new >&2
+  grep -nE '\\{\\{|__PREVIEW_(EDIT_)?TOKEN__' /etc/caddy/Caddyfile.new >&2
   rm -f /etc/caddy/Caddyfile.new
   exit 1
 fi
@@ -150,7 +164,8 @@ else
   echo "--- would change /etc/caddy/Caddyfile (token redacted) ---"
   if [ -f /etc/caddy/Caddyfile ]; then
     diff -u /etc/caddy/Caddyfile /etc/caddy/Caddyfile.new \\
-      | sed "s|$PREVIEW_TOKEN|***REDACTED***|g" || true
+      | sed -e "s|$PREVIEW_TOKEN|***REDACTED***|g" \\
+            -e "s|$PREVIEW_EDIT_TOKEN|***REDACTED***|g" || true
   else
     echo "(no existing /etc/caddy/Caddyfile — this would create it)"
   fi

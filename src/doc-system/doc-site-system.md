@@ -920,6 +920,7 @@ go wrong**:
 #    (a secret you invent; never in the Caddyfile, never in git)
 cat > /etc/caddy/preview.env <<'EOF'
 PREVIEW_TOKEN=<a long random string>
+PREVIEW_EDIT_TOKEN=<another, only if you want the global edit key>
 ACME_EMAIL=you@example.com
 PREVIEW_DOMAIN=dev.example.com
 EOF
@@ -1057,11 +1058,58 @@ omits them.
 | ----------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `tunnel.url`            | —                             | the authenticated public URL fronting the workspace                                                        |
 | `tunnel.requireToken`   | `true`                        | require a session even to VIEW; set `false` for a live read-only audience                                  |
+| `tunnel.globalKeys`     | `true`                        | accept the preview host's [global keys](#global-keys--one-link-for-every-workspace): `'view'` for the view key only, `false` for neither |
 | `tunnel.linkPolicy`     | `'window'`                    | `'window'` — a link is redeemable repeatedly until it ages out; `'single-use'` — spent on first redemption |
 | `tunnel.linkTtlMinutes` | `5`                           | how long an EDIT link stays redeemable (write-capable, so keep it short)                                    |
 | `tunnel.shareTtlMinutes`| `1440`                        | how long a `--share` link stays redeemable; read-only, capped at 7 days                                     |
 | `tunnel.remotePort`     | derived from the project name | loopback port on the box; derived (FNV-1a into 9000-9899) so two projects can't collide                    |
 | `tunnel.localPort`      | `port + 1`                    | the loopback port the tunnel forwards to                                                                   |
+
+#### Global keys — one link for every workspace
+
+The links above hand one workspace to one device, and sessions live in the dev server's
+memory, so every restart, and every extra project, means another redemption. With several
+projects tunnelled through one box, that is the recurring cost. The box can instead hold two
+machine-wide keys:
+
+| key                  | opens                                                          |
+| -------------------- | -------------------------------------------------------------- |
+| `PREVIEW_EDIT_TOKEN` | every static preview, and every workspace **for editing**      |
+| `PREVIEW_TOKEN`      | every static preview, and every workspace **read-only**        |
+
+`PREVIEW_TOKEN` is the static previews' invite secret you already have; the edit key is new
+and optional. Put both in `/etc/caddy/preview.env` on the box (and re-run
+`tosijs-caddy-install`), and the same values in `~/local-secrets/tosijs-preview.env` on each
+machine that runs a dev server (or in its environment):
+
+```bash
+PREVIEW_TOKEN=<the view key>
+PREVIEW_EDIT_TOKEN=<the edit key>
+```
+
+Then visit the box's root once with a key, `https://dev.example.com/?t=<key>`. Caddy sets a
+cookie across the whole preview domain (the edit key's lasts 24 hours) and the root page lists
+every workspace that is up and what that key lets you do there. Open one: the workspace sees
+the cookie, starts a session of the matching kind, and you are in. After a dev-server restart
+you simply reload; the cookie is still there and a fresh session is issued. A session started
+from the view key can browse and never save, never drive the page with an agent.
+
+**Use long keys.** The box compares them with no rate limit in front, unlike the eight-letter
+codes above, so both must be at least 24 letters, digits, `-` or `_`; the installer refuses a
+shorter edit key, and the dev server ignores a short key and says so at launch. The two must
+differ. For a headset, where typing 24 characters is the problem, the eight-letter `--link`
+code still works.
+
+**What it costs.** The cookie holds the key itself: Caddy can compare a fixed value and cannot
+sign one. A leaked edit cookie is write access to every workspace that accepts the key until
+you rotate it, which means editing both files and re-running the installer. The cookie is
+`HttpOnly` and `Secure`, it goes only to hosts under your preview domain, and a page on one of
+them cannot use it to write to another: source and data writes over the tunnel are refused
+unless they come from the workspace's own origin (sibling hosts are the same *site*, so
+`SameSite` alone would not stop them).
+
+**Per project.** `tunnel.globalKeys: 'view'` lets a workspace be browsed from the list but
+never edited through it; `false` makes it ignore both keys, so only its own `--link` opens it.
 
 #### The token is eight letters, and you can type it
 

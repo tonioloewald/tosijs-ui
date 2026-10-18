@@ -40,9 +40,10 @@ Cookie flags, and why each:
   HttpOnly          — script cannot read it, so an XSS in a rendered doc cannot exfil it
   Secure            — never sent over plaintext
   SameSite=Lax      — sent on top-level GET navigation (so clicking your link works),
-                      NOT on cross-site POST. That last part is free CSRF protection for
-                      the write endpoint: another origin cannot make your browser POST
-                      to /__docstore/source with your cookie attached.
+                      NOT on cross-SITE POST. It is not the CSRF defence, though: "site"
+                      is the registrable domain, so a sibling host under the same preview
+                      domain is the same site and its POSTs carry the cookie. Writes are
+                      refused unless same-ORIGIN (`sourceRequestAdmission`).
   Path=/            — the whole workspace, since editing spans the site
 
 Build-time only. Never import this from browser code.
@@ -287,14 +288,19 @@ export function redeemLink(state, token, now, policy = 'window') {
         state.links.delete(matched);
         state.readOnly.delete(matched);
     }
-    const session = mintToken();
     /*
     The capability rides from the link to the session it mints, and so does the shorter horizon.
     Minting a full 30-day session from a read-only link would make the capability true and the
     LIFETIME a lie — the link said "for the next day"; the session it handed over would outlive
     that by a month.
     */
-    state.sessions.set(session, now + (readOnly ? READONLY_SESSION_TTL_MS : SESSION_TTL_MS));
+    return issueSession(state, now, readOnly ? READONLY_SESSION_TTL_MS : SESSION_TTL_MS, readOnly);
+}
+/** Mint a session token directly: what a redeemed link or a global key turns into. */
+export function issueSession(state, now, ttlMs, readOnly) {
+    prune(state, now);
+    const session = mintToken();
+    state.sessions.set(session, now + ttlMs);
     if (readOnly)
         state.readOnly.add(session);
     return session;
@@ -571,9 +577,10 @@ the developer happens to visit could therefore write any file under the repo roo
 `.git/hooks/*`, i.e. code execution at the next git operation. `POST /__build` then turns that
 into "and run it now".
 
-The file already claimed CSRF protection from `SameSite=Lax`, and that is true only of the
-TUNNEL path, which needs a cookie. The default loopback path needs nothing, so the stated
-defence never covered the primary case.
+The file already claimed CSRF protection from `SameSite=Lax`. The default loopback path needs
+no cookie, so that defence never covered the primary case, and on the tunnel it was weaker than
+it looked: "site" is the registrable domain, so every sibling host under the preview domain
+could POST with the cookie (fixed in `sourceRequestAdmission`, which now checks both paths).
 
 Fetch metadata is the fix, and it is cheap: browsers send `Sec-Fetch-Site` on every request and
 scripts cannot forge it. A same-origin page sends `same-origin`; a page on evil.example sends
@@ -582,9 +589,10 @@ accept ABSENCE, or it breaks every legitimate tool. That is not a hole: the atta
 is specifically "a browser the developer is using is induced to make the request", and a
 browser always tells us.
 
-Applied ONLY on the non-tunnel branch. UPSTREAM.md records that rejecting cross-site outright
-breaks the tunnel case, where the widget legitimately calls :8700 from a page on :3000 — that
-path is gated by a session cookie instead.
+UPSTREAM.md records that rejecting cross-site outright breaks haltija's widget, which
+legitimately calls :8700 from a page on :3000 on THIS machine; that is why `/report` and
+`/__build` (loopback only) use it through `csrfOk`. Source and data writes, and the haltija
+bridge over the tunnel, come from the workspace's own origin and require it on both paths.
 */
 export function isSameOriginRequest(request) {
     /*
@@ -678,9 +686,13 @@ export function sourceRequestAdmission(request, opts) {
         trustLan: opts.trustLan,
         proxied: isProxiedRequest(request.headers),
     }) &&
-        // CSRF (#90): the direct path is peer-address-only. The tunnel path is legitimately
-        // cross-site and is gated by the session cookie instead.
-        (opts.viaTunnel || isSameOriginRequest(request));
+        /*
+        CSRF (#90), on BOTH paths. The tunnel path used to skip this and lean on `SameSite=Lax`, but
+        "site" is the registrable domain: every sibling host under the preview domain (another
+        project's static preview, its live examples) is the same site, so its pages could POST here
+        with the session cookie attached. The editor that calls this is served from this origin.
+        */
+        isSameOriginRequest(request);
     if (!allowed)
         return null;
     if (opts.viaTunnel)
@@ -744,6 +756,133 @@ export function cookieMayWrite(state, cookieValue) {
     const parsed = parseSessionCookie(cookieValue);
     return sessionMayWrite(state, parsed?.token);
 }
+/*
+GLOBAL KEYS: one visit to the preview host's root, and every workspace on it opens.
+
+The per-workspace link is tuned for handing ONE workspace to ONE device, and it costs a
+redemption per project per server run: sessions live in memory, so every restart walls every
+device again. With several projects tunnelled through one box that was the recurring pain.
+
+So the box can hold two machine-wide keys, the same pair on the box and on this machine:
+
+  PREVIEW_TOKEN       the VIEW key. Already the static previews' invite secret.
+  PREVIEW_EDIT_TOKEN  the EDIT key. New, and only ever a credential you keep.
+
+Visiting the box with `?t=<key>` makes Caddy set a cookie on the whole preview domain
+(`tosi_preview` or `tosi_edit`). A workspace that sees a matching cookie on a page load mints
+an ordinary session of the matching kind (read-only for the view key) and carries on, so the
+write gates below are unchanged: a key only ever becomes a session, at a navigation.
+
+The cookie holds the key itself, because Caddy can compare a fixed value and cannot sign
+anything. A leaked edit cookie is therefore write access to every workspace that accepts the
+key until the key is rotated, and that is why the key must be long (it is compared online,
+with no throttle in front of Caddy) and why a project can refuse it (`tunnel.globalKeys`).
+The domain-wide cookie is also why writes over the tunnel now need a same-origin request:
+`SameSite=Lax` treats every sibling host as the same site.
+*/
+/** Caddy's cookie for the view key; the static previews' invite gate already sets it. */
+export const GLOBAL_VIEW_COOKIE = 'tosi_preview';
+/** Caddy's cookie for the edit key. */
+export const GLOBAL_EDIT_COOKIE = 'tosi_edit';
+/** Shorter keys are refused: Caddy compares them with no rate limit in front. */
+export const GLOBAL_KEY_MIN_LENGTH = 24;
+/** A session minted from a global key: the cookie behind it is re-checked every page load. */
+export const GLOBAL_KEY_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+/**
+ * The keys this workspace accepts, from `tunnel.globalKeys` and the two secrets.
+ *
+ * `false` accepts neither; `'view'` only the view key, so this workspace can be browsed from
+ * the box's list and never edited through it. A key that is too short or has characters Caddy's
+ * cookie match cannot hold is not used, and `problems` says why, so the server can say so at
+ * launch rather than leave a key that silently opens nothing.
+ */
+export function resolveGlobalKeys(setting, secrets) {
+    const problems = [];
+    const usable = (name, value) => {
+        if (!value)
+            return undefined;
+        if (value.length < GLOBAL_KEY_MIN_LENGTH || !/^[\w-]+$/.test(value)) {
+            problems.push(`${name} is not used as a global key: it must be at least ${GLOBAL_KEY_MIN_LENGTH} letters, digits, - or _`);
+            return undefined;
+        }
+        return value;
+    };
+    if (setting === false)
+        return { keys: {}, problems };
+    const keys = {
+        view: usable('PREVIEW_TOKEN', secrets.PREVIEW_TOKEN),
+    };
+    if (setting !== 'view') {
+        keys.edit = usable('PREVIEW_EDIT_TOKEN', secrets.PREVIEW_EDIT_TOKEN);
+        if (keys.edit && keys.edit === keys.view) {
+            problems.push('PREVIEW_EDIT_TOKEN equals PREVIEW_TOKEN, so anyone with a preview link could edit: neither is used as a global key');
+            return { keys: {}, problems };
+        }
+    }
+    return { keys, problems };
+}
+/** What the global-key cookies on a request grant: the edit key wins over the view key. */
+export function globalKeyAccess(cookieHeader, keys) {
+    const edit = readCookie(cookieHeader, GLOBAL_EDIT_COOKIE);
+    if (keys.edit && edit && safeEqual(edit, keys.edit))
+        return 'edit';
+    const view = readCookie(cookieHeader, GLOBAL_VIEW_COOKIE);
+    if (keys.view && view && safeEqual(view, keys.view))
+        return 'view';
+    return null;
+}
+/** Is this a browser loading a page (not a fetch, a script or a socket)? */
+export function isNavigation(request) {
+    if (request.method !== 'GET')
+        return false;
+    const mode = request.headers.get('sec-fetch-mode');
+    if (mode !== null)
+        return mode === 'navigate';
+    return (request.headers.get('accept') ?? '').includes('text/html');
+}
+/**
+ * Should this request trade a global key for a session, and of which kind?
+ *
+ * Only over the tunnel, only on a page load, and only when it would add something: no valid
+ * session yet, or a read-only one when the edit key is held.
+ */
+export function globalKeyExchange(request, opts) {
+    if (!opts.viaTunnel || !isNavigation(request))
+        return null;
+    const header = request.headers.get('cookie');
+    const access = globalKeyAccess(header, opts.keys);
+    if (!access)
+        return null;
+    const held = readCookie(header, SESSION_COOKIE);
+    if (validSessionCookie(opts.auth, held, opts.now)) {
+        if (access === 'view' || cookieMayWrite(opts.auth, held))
+            return null;
+    }
+    return access;
+}
+/**
+ * The origin allowed to read this workspace's liveness answer: the box's own list.
+ *
+ * Only an https origin whose host is a parent domain of this host, so `dev.example.com` may ask
+ * `ui.edit.dev.example.com` and nothing else may.
+ */
+export function liveProbeOrigin(origin, host) {
+    if (!origin || !host)
+        return null;
+    let parsed;
+    try {
+        parsed = new URL(origin);
+    }
+    catch {
+        return null;
+    }
+    if (parsed.protocol !== 'https:' || parsed.port)
+        return null;
+    const bare = host.replace(/:\d+$/, '').toLowerCase();
+    return bare.endsWith(`.${parsed.hostname.toLowerCase()}`)
+        ? parsed.origin
+        : null;
+}
 /**
  * Who may attach the haltija dev channel — i.e. let an agent DRIVE this page.
  *
@@ -759,8 +898,8 @@ export function cookieMayWrite(state, cookieValue) {
 export function mayDriveWithAgent(opts) {
     // LAN trust (#227) is for reading and editing source, and is never passed here: driving a
     // page with an agent stays this machine and authorized tunnel sessions only.
-    const { viaTunnel, peer, hasValidSession } = opts;
-    return mayWriteSource({ viaTunnel, peer, hasValidSession });
+    const { viaTunnel, peer, hasValidSession, sessionMayWrite } = opts;
+    return mayWriteSource({ viaTunnel, peer, hasValidSession, sessionMayWrite });
 }
 /**
  * THE loopback test. dev-server re-exports this as `isLoopbackAddress`; it used to

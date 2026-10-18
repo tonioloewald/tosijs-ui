@@ -556,6 +556,19 @@ export interface SiteConfig {
              */
             requireToken?: boolean;
             /**
+             * Which of the preview host's GLOBAL keys open this workspace. Default `true`: both.
+             *
+             * The box can hold two machine-wide keys, `PREVIEW_EDIT_TOKEN` (edit) and
+             * `PREVIEW_TOKEN` (view, the static previews' invite secret). Visit the box's root with
+             * `?t=<key>` once and every workspace that accepts the key opens from its list, across
+             * dev-server restarts, for 24 hours. This server reads the same two values from the
+             * environment or `~/local-secrets/tosijs-preview.env`; without them, nothing changes.
+             *
+             * `'view'` accepts only the view key (browse from the list, never edit through it);
+             * `false` accepts neither, so only this project's own links open it.
+             */
+            globalKeys?: boolean | 'view';
+            /**
              * How a magic link may be redeemed. Default `'window'`.
              *
              * - `'window'` — redeemable repeatedly until `linkTtlMinutes` elapses, so the same

@@ -71,6 +71,24 @@ for dir in "$ROOT"/*/; do
 	</li>"
 done
 
+# Tunnelled workspaces: every registered `-tunnel` fragment. Whether one is UP, and what
+# the reader may do there, changes by the minute, so the page asks each one when it loads
+# (see the script below); this only lists where to ask.
+live=""
+for frag in "$ROOT"/_sites/*-tunnel.caddy; do
+	[ -f "$frag" ] || continue
+	name="$(basename "$frag" -tunnel.caddy)"
+	host=$(sed -n 's/^\([A-Za-z0-9.-]*\) *{.*/\1/p' "$frag" | head -1)
+	[ -n "$host" ] || continue
+	live="$live
+	<li data-workspace=\"$host\" hidden>
+		<a href=\"https://$host/\">
+			<span class=\"name\">$name</span>
+			<span class=\"meta\"><span class=\"access\"></span><code>$host</code></span>
+		</a>
+	</li>"
+done
+
 # The REAL tosiPlatform icon, lifted verbatim from src/icons/data/tosiPlatform.ts.
 # (The first version of this file hand-drew a rough approximation — a blue box with a
 # stroke in it — which is exactly the sort of thing nobody notices in review and
@@ -108,6 +126,9 @@ cat > "$OUT/index.html" <<HTML
 	code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 	.gen { display:block; color:var(--dim); font-size:.75rem; margin-top:.3rem; }
 	.empty { color:var(--dim); }
+	h2 { font-size:1rem; margin:2rem 0 .75rem; font-weight:600; }
+	.access { font-weight:600; }
+	.access.edit { color:#2a8a3e; }
 	footer { color:var(--dim); font-size:.8rem; margin-top:2.5rem; }
 </style>
 <main>
@@ -116,6 +137,8 @@ cat > "$OUT/index.html" <<HTML
 	$(if [ "$count" -eq 0 ]; then echo '<p class="empty">Nothing deployed yet.</p>'; else echo "<ul>$rows
 	</ul>"; fi)
 	$(if [ -n "$unlinked" ]; then echo "<p class=\"empty\">Deployed but not routed:$unlinked</p>"; fi)
+	$(if [ -n "$live" ]; then echo "<section id=\"live\" hidden><h2>Live workspaces</h2><ul>$live
+	</ul></section>"; fi)
 	<footer>Previews only — not production. Each entry updates when that project deploys (<code>bun run deploy --go</code>), not when it builds.</footer>
 </main>
 <script>
@@ -132,6 +155,24 @@ cat > "$OUT/index.html" <<HTML
 			: Math.round(mins / 1440) + 'd ago'
 		t.textContent = rel
 		t.title = d.toLocaleString()
+	}
+
+	// Ask each tunnelled workspace whether it is up and what this reader may do there. Only
+	// this origin may read the answer, and it reflects the key cookie this page set; a
+	// workspace that is down (or older than this probe) shows nothing. Opening one trades the
+	// key for a session there, so these are plain links.
+	for (const li of document.querySelectorAll('[data-workspace]')) {
+		fetch('https://' + li.dataset.workspace + '/__alive', { credentials: 'include' })
+			.then((r) => (r.ok && r.status === 200 ? r.json() : null))
+			.then((info) => {
+				if (!info || !info.access) return
+				const label = li.querySelector('.access')
+				label.textContent = info.access === 'edit' ? 'edit' : 'view'
+				label.classList.add(info.access)
+				li.hidden = false
+				document.getElementById('live').hidden = false
+			})
+			.catch(() => {})
 	}
 </script>
 HTML

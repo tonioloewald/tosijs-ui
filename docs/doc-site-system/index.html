@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=9568c43db266" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=902eec8e19f7" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=fb6c24a3f18b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=0b4f619cd75e" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1105,6 +1105,7 @@ go wrong</strong>:</p>
 <span class="token comment">#    (a secret you invent; never in the Caddyfile, never in git)</span>
 <span class="token function">cat</span> <span class="token operator">></span> /etc/caddy/preview.env <span class="token operator">&lt;&lt;</span><span class="token string">'EOF'
 PREVIEW_TOKEN=&lt;a long random string>
+PREVIEW_EDIT_TOKEN=&lt;another, only if you want the global edit key>
 ACME_EMAIL=you@example.com
 PREVIEW_DOMAIN=dev.example.com
 EOF</span>
@@ -1244,6 +1245,11 @@ omits them.</p>
 <td>require a session even to VIEW; set <code>false</code> for a live read-only audience</td>
 </tr>
 <tr>
+<td><code>tunnel.globalKeys</code></td>
+<td><code>true</code></td>
+<td>accept the preview host&#39;s <a href="#global-keys--one-link-for-every-workspace">global keys</a>: <code>&#39;view&#39;</code> for the view key only, <code>false</code> for neither</td>
+</tr>
+<tr>
 <td><code>tunnel.linkPolicy</code></td>
 <td><code>&#39;window&#39;</code></td>
 <td><code>&#39;window&#39;</code> — a link is redeemable repeatedly until it ages out; <code>&#39;single-use&#39;</code> — spent on first redemption</td>
@@ -1269,6 +1275,54 @@ omits them.</p>
 <td>the loopback port the tunnel forwards to</td>
 </tr>
 </tbody></table>
+<h4 id="global-keys--one-link-for-every-workspace">Global keys — one link for every workspace</h4>
+<p>The links above hand one workspace to one device, and sessions live in the dev server&#39;s
+memory, so every restart, and every extra project, means another redemption. With several
+projects tunnelled through one box, that is the recurring cost. The box can instead hold two
+machine-wide keys:</p>
+<table>
+<thead>
+<tr>
+<th>key</th>
+<th>opens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PREVIEW_EDIT_TOKEN</code></td>
+<td>every static preview, and every workspace <strong>for editing</strong></td>
+</tr>
+<tr>
+<td><code>PREVIEW_TOKEN</code></td>
+<td>every static preview, and every workspace <strong>read-only</strong></td>
+</tr>
+</tbody></table>
+<p><code>PREVIEW_TOKEN</code> is the static previews&#39; invite secret you already have; the edit key is new
+and optional. Put both in <code>/etc/caddy/preview.env</code> on the box (and re-run
+<code>tosijs-caddy-install</code>), and the same values in <code>~/local-secrets/tosijs-preview.env</code> on each
+machine that runs a dev server (or in its environment):</p>
+<pre><code class="language-bash" data-highlighted><span class="token assign-left variable">PREVIEW_TOKEN</span><span class="token operator">=</span><span class="token operator">&lt;</span>the view key<span class="token operator">></span>
+<span class="token assign-left variable">PREVIEW_EDIT_TOKEN</span><span class="token operator">=</span><span class="token operator">&lt;</span>the edit key<span class="token operator">></span>
+</code></pre>
+<p>Then visit the box&#39;s root once with a key, <code>https://dev.example.com/?t=&lt;key&gt;</code>. Caddy sets a
+cookie across the whole preview domain (the edit key&#39;s lasts 24 hours) and the root page lists
+every workspace that is up and what that key lets you do there. Open one: the workspace sees
+the cookie, starts a session of the matching kind, and you are in. After a dev-server restart
+you simply reload; the cookie is still there and a fresh session is issued. A session started
+from the view key can browse and never save, never drive the page with an agent.</p>
+<p><strong>Use long keys.</strong> The box compares them with no rate limit in front, unlike the eight-letter
+codes above, so both must be at least 24 letters, digits, <code>-</code> or <code>_</code>; the installer refuses a
+shorter edit key, and the dev server ignores a short key and says so at launch. The two must
+differ. For a headset, where typing 24 characters is the problem, the eight-letter <code>--link</code>
+code still works.</p>
+<p><strong>What it costs.</strong> The cookie holds the key itself: Caddy can compare a fixed value and cannot
+sign one. A leaked edit cookie is write access to every workspace that accepts the key until
+you rotate it, which means editing both files and re-running the installer. The cookie is
+<code>HttpOnly</code> and <code>Secure</code>, it goes only to hosts under your preview domain, and a page on one of
+them cannot use it to write to another: source and data writes over the tunnel are refused
+unless they come from the workspace&#39;s own origin (sibling hosts are the same <em>site</em>, so
+<code>SameSite</code> alone would not stop them).</p>
+<p><strong>Per project.</strong> <code>tunnel.globalKeys: &#39;view&#39;</code> lets a workspace be browsed from the list but
+never edited through it; <code>false</code> makes it ignore both keys, so only its own <code>--link</code> opens it.</p>
 <h4 id="the-token-is-eight-letters-and-you-can-type-it">The token is eight letters, and you can type it</h4>
 <p><code>--link</code> prints the URL <strong>and the code on its own line</strong>, because on the device this exists
 for you are not pasting anything — you are reading characters off one screen and entering
@@ -2137,6 +2191,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-8tmxcvt7.js"></script>
+  <script type="module" src="../hydrate-jkw61wby.js"></script>
 </body>
 </html>

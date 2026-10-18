@@ -917,6 +917,14 @@ test('mayDriveWithAgent: over the tunnel a session is required, and sufficient',
   expect(
     mayDriveWithAgent({ viaTunnel: true, peer: '::1', hasValidSession: true })
   ).toBe(true)
+  // A read-only session (a share link, the view key) may look, never drive.
+  expect(
+    mayDriveWithAgent({
+      viaTunnel: true,
+      hasValidSession: true,
+      sessionMayWrite: false,
+    })
+  ).toBe(false)
 })
 
 test('mayDriveWithAgent: a loopback peer address does NOT authorize over the tunnel', () => {
@@ -1527,5 +1535,170 @@ describe('trustLan networks', () => {
     expect(describeLanTrust(['192.168.1.0/24'])).toBe(
       'devices on 192.168.1.0/24 (private addresses only)'
     )
+  })
+})
+
+import {
+  resolveGlobalKeys,
+  globalKeyAccess,
+  globalKeyExchange,
+  isNavigation,
+  liveProbeOrigin,
+  issueSession,
+  GLOBAL_KEY_SESSION_TTL_MS,
+} from './dev-auth.js'
+
+describe('global keys', () => {
+  const EDIT = 'e'.repeat(12) + 'EDITKEY_edit-key'
+  const VIEW = 'v'.repeat(12) + 'VIEWKEY_view-key'
+  const secrets = { PREVIEW_EDIT_TOKEN: EDIT, PREVIEW_TOKEN: VIEW }
+  const keys = { edit: EDIT, view: VIEW }
+  const page = (cookie?: string, extra: Record<string, string> = {}) =>
+    new Request('https://ui.edit.dev.example.com/guide/', {
+      headers: {
+        'sec-fetch-mode': 'navigate',
+        ...(cookie ? { cookie } : {}),
+        ...extra,
+      },
+    })
+
+  test('a project takes both keys, the view key only, or neither', () => {
+    expect(resolveGlobalKeys(undefined, secrets)).toEqual({
+      keys,
+      problems: [],
+    })
+    expect(resolveGlobalKeys('view', secrets).keys).toEqual({ view: VIEW })
+    expect(resolveGlobalKeys(false, secrets).keys).toEqual({})
+  })
+
+  test('a short or unmatchable key is not used, and says why', () => {
+    const short = resolveGlobalKeys(undefined, {
+      PREVIEW_EDIT_TOKEN: 'ABCDEFGH',
+      PREVIEW_TOKEN: VIEW,
+    })
+    expect(short.keys).toEqual({ view: VIEW, edit: undefined })
+    expect(short.problems[0]).toContain('PREVIEW_EDIT_TOKEN')
+    const odd = resolveGlobalKeys(undefined, {
+      PREVIEW_TOKEN: 'a+b/c='.repeat(6),
+    })
+    expect(odd.keys.view).toBeUndefined()
+  })
+
+  test('one key in both roles is refused outright', () => {
+    const same = resolveGlobalKeys(undefined, {
+      PREVIEW_EDIT_TOKEN: VIEW,
+      PREVIEW_TOKEN: VIEW,
+    })
+    expect(same.keys).toEqual({})
+    expect(same.problems[0]).toContain('equals')
+  })
+
+  test('the cookies grant edit, view or nothing', () => {
+    expect(globalKeyAccess(`tosi_edit=${EDIT}`, keys)).toBe('edit')
+    expect(globalKeyAccess(`tosi_preview=${VIEW}`, keys)).toBe('view')
+    expect(
+      globalKeyAccess(`tosi_preview=${VIEW}; tosi_edit=${EDIT}`, keys)
+    ).toBe('edit')
+    // The edit key in the view cookie is not an edit grant, nor a view one.
+    expect(globalKeyAccess(`tosi_preview=${EDIT}`, keys)).toBe(null)
+    expect(globalKeyAccess(`tosi_edit=${EDIT}x`, keys)).toBe(null)
+    expect(globalKeyAccess(`tosi_edit=${EDIT}`, { view: VIEW })).toBe(null)
+  })
+
+  test('a key becomes a session only over the tunnel, on a page load, when it adds something', () => {
+    const auth = createAuthState()
+    const opts = { viaTunnel: true, auth, keys, now: NOW }
+    expect(globalKeyExchange(page(`tosi_edit=${EDIT}`), opts)).toBe('edit')
+    expect(globalKeyExchange(page(`tosi_preview=${VIEW}`), opts)).toBe('view')
+    expect(
+      globalKeyExchange(page(`tosi_edit=${EDIT}`), {
+        ...opts,
+        viaTunnel: false,
+      })
+    ).toBe(null)
+    // A fetch or a socket is not a page load.
+    expect(
+      globalKeyExchange(
+        page(`tosi_edit=${EDIT}`, { 'sec-fetch-mode': 'cors' }),
+        opts
+      )
+    ).toBe(null)
+    // Already holding a writing session: nothing to add.
+    const full = sessionCookie(
+      issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    ).split(';')[0]
+    expect(globalKeyExchange(page(`tosi_edit=${EDIT}; ${full}`), opts)).toBe(
+      null
+    )
+    // A read-only session plus the edit key upgrades.
+    const ro = sessionCookie(
+      issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, true)
+    ).split(';')[0]
+    expect(globalKeyExchange(page(`tosi_edit=${EDIT}; ${ro}`), opts)).toBe(
+      'edit'
+    )
+    expect(globalKeyExchange(page(`tosi_preview=${VIEW}; ${ro}`), opts)).toBe(
+      null
+    )
+  })
+
+  test('without fetch metadata, a page load is a GET asking for HTML', () => {
+    const get = (accept: string, method = 'GET') =>
+      new Request('https://x.example/', { method, headers: { accept } })
+    expect(isNavigation(get('text/html,*/*'))).toBe(true)
+    expect(isNavigation(get('application/json'))).toBe(false)
+    expect(isNavigation(get('text/html', 'POST'))).toBe(false)
+  })
+
+  test('only the box root may read the liveness answer', () => {
+    const host = 'ui.edit.dev.example.com'
+    expect(liveProbeOrigin('https://dev.example.com', host)).toBe(
+      'https://dev.example.com'
+    )
+    expect(liveProbeOrigin('https://edit.dev.example.com', host)).toBe(
+      'https://edit.dev.example.com'
+    )
+    expect(liveProbeOrigin('https://other.dev.example.com', host)).toBe(null)
+    expect(liveProbeOrigin('http://dev.example.com', host)).toBe(null)
+    expect(liveProbeOrigin('https://ample.com', host)).toBe(null)
+    expect(liveProbeOrigin('https://example.com.evil', host)).toBe(null)
+    expect(liveProbeOrigin(null, host)).toBe(null)
+  })
+
+  test('a sibling host cannot write through the tunnel, even holding the session cookie', () => {
+    const auth = createAuthState()
+    const cookie = sessionCookie(
+      issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    ).split(';')[0]
+    const tunnel = { viaTunnel: true, peer: '127.0.0.1', auth, now: NOW }
+    const write = (headers: Record<string, string>) =>
+      new Request('https://ui.edit.dev.example.com/__docstore/source', {
+        method: 'POST',
+        headers: { cookie, ...headers },
+      })
+    expect(
+      sourceRequestAdmission(
+        write({
+          origin: 'https://ui.edit.dev.example.com',
+          'sec-fetch-site': 'same-origin',
+        }),
+        tunnel
+      )
+    ).toBe('session')
+    expect(
+      sourceRequestAdmission(
+        write({
+          origin: 'https://other.dev.example.com',
+          'sec-fetch-site': 'same-site',
+        }),
+        tunnel
+      )
+    ).toBe(null)
+    expect(
+      sourceRequestAdmission(
+        write({ origin: 'https://other.dev.example.com' }),
+        tunnel
+      )
+    ).toBe(null)
   })
 })

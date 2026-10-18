@@ -156,6 +156,8 @@ export declare function resolveShareTtlMs(tunnel?: {
  * the set before the lookup. Widening reuse must not widen lifetime.
  */
 export declare function redeemLink(state: AuthState, token: string, now: number, policy?: LinkPolicy): string | null;
+/** Mint a session token directly: what a redeemed link or a global key turns into. */
+export declare function issueSession(state: AuthState, now: number, ttlMs: number, readOnly: boolean): string;
 export declare const REDEEM_MIN_MS = 100;
 /** Consecutive failures after which the slot widens. A human never reaches this. */
 export declare const SLOW_AFTER_FAILURES = 10;
@@ -361,6 +363,66 @@ export declare function sessionMayWrite(state: AuthState, token: string | null |
  * runs — but that is a property of the CALL ORDER, so keep the two together at every call site.
  */
 export declare function cookieMayWrite(state: AuthState, cookieValue: string | undefined | null): boolean;
+/** Caddy's cookie for the view key; the static previews' invite gate already sets it. */
+export declare const GLOBAL_VIEW_COOKIE = "tosi_preview";
+/** Caddy's cookie for the edit key. */
+export declare const GLOBAL_EDIT_COOKIE = "tosi_edit";
+/** Shorter keys are refused: Caddy compares them with no rate limit in front. */
+export declare const GLOBAL_KEY_MIN_LENGTH = 24;
+/** A session minted from a global key: the cookie behind it is re-checked every page load. */
+export declare const GLOBAL_KEY_SESSION_TTL_MS: number;
+export interface GlobalKeys {
+    edit?: string;
+    view?: string;
+}
+/**
+ * The keys this workspace accepts, from `tunnel.globalKeys` and the two secrets.
+ *
+ * `false` accepts neither; `'view'` only the view key, so this workspace can be browsed from
+ * the box's list and never edited through it. A key that is too short or has characters Caddy's
+ * cookie match cannot hold is not used, and `problems` says why, so the server can say so at
+ * launch rather than leave a key that silently opens nothing.
+ */
+export declare function resolveGlobalKeys(setting: boolean | 'view' | undefined, secrets: {
+    PREVIEW_TOKEN?: string;
+    PREVIEW_EDIT_TOKEN?: string;
+}): {
+    keys: GlobalKeys;
+    problems: string[];
+};
+/** What the global-key cookies on a request grant: the edit key wins over the view key. */
+export declare function globalKeyAccess(cookieHeader: string | null | undefined, keys: GlobalKeys): 'edit' | 'view' | null;
+/** Is this a browser loading a page (not a fetch, a script or a socket)? */
+export declare function isNavigation(request: {
+    method: string;
+    headers: {
+        get(name: string): string | null;
+    };
+}): boolean;
+/**
+ * Should this request trade a global key for a session, and of which kind?
+ *
+ * Only over the tunnel, only on a page load, and only when it would add something: no valid
+ * session yet, or a read-only one when the edit key is held.
+ */
+export declare function globalKeyExchange(request: {
+    method: string;
+    headers: {
+        get(name: string): string | null;
+    };
+}, opts: {
+    viaTunnel: boolean;
+    auth: AuthState;
+    keys: GlobalKeys;
+    now: number;
+}): 'edit' | 'view' | null;
+/**
+ * The origin allowed to read this workspace's liveness answer: the box's own list.
+ *
+ * Only an https origin whose host is a parent domain of this host, so `dev.example.com` may ask
+ * `ui.edit.dev.example.com` and nothing else may.
+ */
+export declare function liveProbeOrigin(origin: string | null, host: string | null): string | null;
 /**
  * Who may attach the haltija dev channel — i.e. let an agent DRIVE this page.
  *
@@ -377,6 +439,8 @@ export declare function mayDriveWithAgent(opts: {
     viaTunnel: boolean;
     peer?: string | null;
     hasValidSession: boolean;
+    /** a read-only session (a share link, the view key) may look, never drive */
+    sessionMayWrite?: boolean;
 }): boolean;
 /**
  * THE loopback test. dev-server re-exports this as `isLoopbackAddress`; it used to

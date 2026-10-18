@@ -34,6 +34,7 @@ import { $ } from 'bun'
 import {
   previewRootFor,
   registerCaddyFragment,
+  refreshHostIndex,
   resolveDevPort,
   resolvePreviewHost,
   resolveSiteConfig,
@@ -418,6 +419,8 @@ if (publicUrl) {
       describe: `${hostname} → this workspace`,
       body: fragment,
     })
+    // The root's list of live workspaces is read from these fragments.
+    if (routed) await refreshHostIndex(host!)
   }
 }
 

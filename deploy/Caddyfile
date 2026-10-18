@@ -2,8 +2,10 @@
 #
 #   {{ACME_EMAIL}}      your Let's Encrypt account email
 #   {{PREVIEW_DOMAIN}}  the domain your preview hosts live under (e.g. dev.example.com)
-#   __PREVIEW_TOKEN__   the shared invite secret, substituted at install time from
-#                       /etc/caddy/preview.env — NEVER commit a real value here
+#   __PREVIEW_TOKEN__   the shared invite secret (the global VIEW key), substituted at
+#                       install time from /etc/caddy/preview.env — NEVER commit a real value
+#   __PREVIEW_EDIT_TOKEN__  the global EDIT key, from the same file; optional (unset, the
+#                       installer fills in a value nobody knows)
 #
 # Installing this file with the placeholders intact gives you a preview host whose entire
 # invite gate is a literal string published in a public repo and in every npm tarball, and
@@ -64,7 +66,28 @@
 		redir * / 302
 	}
 
-	@unauthed not header_regexp Cookie "tosi_preview=__PREVIEW_TOKEN__"
+	# THE GLOBAL EDIT KEY: `?t=<edit key>` on any preview host sets `tosi_edit` across the
+	# whole preview domain for 24 hours. Every tunnelled workspace that holds the same key
+	# (PREVIEW_EDIT_TOKEN in ~/local-secrets/tosijs-preview.env on the machine running it)
+	# trades it for an editing session on the first page load, so the root's list opens them
+	# all, across dev-server restarts. It also opens these static previews. The view key above
+	# opens workspaces read-only the same way. See `globalKeys` in doc-site-system.md.
+	#
+	# The cookie is the key itself: Caddy can compare a fixed value and cannot sign one. A
+	# leaked edit cookie is write access to every workspace that accepts the key until it is
+	# rotated (edit preview.env here and on each machine, re-run the installer).
+	@editlink query t=__PREVIEW_EDIT_TOKEN__
+	handle @editlink {
+		header Set-Cookie "tosi_edit=__PREVIEW_EDIT_TOKEN__; Domain=.{{PREVIEW_DOMAIN}}; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Lax"
+		header Referrer-Policy "no-referrer"
+		header Cache-Control "no-store"
+		redir * / 302
+	}
+
+	@unauthed {
+		not header_regexp Cookie "tosi_preview=__PREVIEW_TOKEN__"
+		not header_regexp Cookie "tosi_edit=__PREVIEW_EDIT_TOKEN__"
+	}
 	handle @unauthed {
 		header Content-Type "text/html; charset=utf-8"
 		header Cache-Control "no-store"

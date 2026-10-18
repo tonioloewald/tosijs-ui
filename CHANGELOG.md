@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.16.26
+
+### Tunnel
+
+- **Global keys: one link opens every workspace, and survives restarts.** The preview host can
+  hold two machine-wide keys: `PREVIEW_EDIT_TOKEN` (new, optional) opens every workspace for
+  editing, and `PREVIEW_TOKEN` (the static previews' invite secret) opens them read-only.
+  Put them in `/etc/caddy/preview.env` on the box (re-run `tosijs-caddy-install`) and in
+  `~/local-secrets/tosijs-preview.env` on each machine running a dev server. Visit the box's
+  root once with `?t=<key>`: Caddy sets a cookie across the preview domain (24 hours for the
+  edit key), and the root page lists every workspace that is up and whether you can edit or
+  only view it. Opening one starts a session there on the first page load, and after a
+  dev-server restart a reload is all it takes. Keys must be at least 24 letters, digits, `-` or
+  `_`, because the box compares them with no rate limit; the installer refuses a short edit
+  key, and a dev server ignores one and says so. A workspace can refuse them with
+  `tunnel.globalKeys: false`, or accept only the view key with `'view'`. The eight-letter
+  `--link` codes are unchanged.
+- **`tosijs-tunnel` refreshes the box's root page** when it registers a workspace, so a newly
+  tunnelled project appears in the list straight away.
+
+### Security
+
+- **Source and data writes over the tunnel must come from the workspace's own origin.** They
+  relied on the session cookie's `SameSite=Lax`, but every host under the preview domain is the
+  same *site*, so a page on another project's preview (its live examples included) could POST
+  to your workspace with your session attached. The haltija bridge over the tunnel checks the
+  same.
+- **A read-only session can no longer attach the haltija agent bridge.** A share link's session
+  (and now a view-key session) passed the bridge's gate, which asked only whether the session
+  was valid.
+
 ## 1.16.25
 
 ### Dev server

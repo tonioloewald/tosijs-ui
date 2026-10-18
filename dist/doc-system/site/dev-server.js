@@ -22,7 +22,8 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, isSameOriginRequest, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, isSameOriginRequest, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
+import { readLocalSecret } from './local-secrets.js';
 import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
 /**
@@ -831,6 +832,17 @@ export async function devServer(config, opts = {}) {
     const PROJECT_ROOT = path.resolve('./');
     // Resolved once, at launch: a network it cannot parse stops the server here (#3346).
     const lanTrust = resolveLanTrust(config.trustLan, process.env.TOSIJS_TRUST_LAN);
+    /*
+    The preview host's global keys (see dev-auth.ts). Only a tunnelled workspace can be reached
+    through the box, so without a tunnel there is nothing to read.
+    */
+    const globalKeys = config.preview?.tunnel
+        ? resolveGlobalKeys(config.preview.tunnel.globalKeys, {
+            PREVIEW_TOKEN: process.env.PREVIEW_TOKEN ?? readLocalSecret('PREVIEW_TOKEN'),
+            PREVIEW_EDIT_TOKEN: process.env.PREVIEW_EDIT_TOKEN ??
+                readLocalSecret('PREVIEW_EDIT_TOKEN'),
+        })
+        : { keys: {}, problems: [] };
     // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
     const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT, config.outputDir ?? 'docs');
     if (dataStore?.commit && !isGitWorkTree(dataStore.root)) {
@@ -1152,10 +1164,13 @@ export async function devServer(config, opts = {}) {
         // one (the build's own reads). Refusing is the only safe reading of "cannot tell".
         if (!haltijaTunnel || !request)
             return false;
+        const held = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
         return mayDriveWithAgent({
             viaTunnel,
             peer: srv?.requestIP?.(request)?.address,
-            hasValidSession: validSessionCookie(auth, readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now()),
+            hasValidSession: validSessionCookie(auth, held, Date.now()),
+            // Asked after validity, the call order cookieMayWrite documents.
+            sessionMayWrite: cookieMayWrite(auth, held),
         });
     }
     // disk, and non-HTML assets are streamed untouched.
@@ -1682,8 +1697,8 @@ export async function devServer(config, opts = {}) {
     `POST /report` entirely — and the next endpoint added would inherit nothing, because there
     was nothing to inherit. A named predicate is the thing a new handler can be pointed at.
   
-    Non-tunnel only: the tunnel path is legitimately cross-site (a page on :3000 calling :8700)
-    and is gated by a session cookie instead.
+    Non-tunnel only, because the endpoints using it (`/report`, `/__build`) refuse the tunnel
+    outright. Source and data writes check same-origin on both paths (sourceRequestAdmission).
     */
     const csrfOk = (request, viaTunnel) => viaTunnel || isSameOriginRequest(request);
     const handleRequest = async (request, srv, viaTunnel) => {
@@ -1703,7 +1718,34 @@ export async function devServer(config, opts = {}) {
         answer to be wrong.
         */
         if (new URL(request.url).pathname === '/__alive') {
-            return new Response(null, { status: 204, headers: { ...NO_CACHE } });
+            /*
+            The box's list asks each workspace whether it is up and what the reader may do there.
+            Only that origin may read the answer, and only over the tunnel; everyone else gets the
+            bare 204 the tunnel bin probes for.
+            */
+            const listOrigin = viaTunnel
+                ? liveProbeOrigin(request.headers.get('origin'), new URL(request.url).host)
+                : null;
+            if (!listOrigin) {
+                return new Response(null, { status: 204, headers: { ...NO_CACHE } });
+            }
+            const header = request.headers.get('cookie');
+            const held = readCookie(header, SESSION_COOKIE);
+            const access = globalKeyAccess(header, globalKeys.keys) ??
+                (validSessionCookie(auth, held, Date.now())
+                    ? cookieMayWrite(auth, held)
+                        ? 'edit'
+                        : 'view'
+                    : null);
+            return new Response(JSON.stringify({ name: config.name ?? null, access }), {
+                headers: {
+                    ...NO_CACHE,
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': listOrigin,
+                    'Access-Control-Allow-Credentials': 'true',
+                    Vary: 'Origin',
+                },
+            });
         }
         touch();
         /*
@@ -1790,6 +1832,32 @@ export async function devServer(config, opts = {}) {
         401's own advice was unrunnable. Two gates, two different predicates for the same
         question. One predicate now.
         */
+        /*
+        A global key becomes a session on a page load (dev-auth.ts): issue it and reload the same
+        URL with the cookie, exactly like a redeemed link, so every gate below sees a session and
+        none of them has to know about keys. A link in the URL is left to the link exchange.
+        */
+        if (!linkToken) {
+            const grant = globalKeyExchange(request, {
+                viaTunnel,
+                auth,
+                keys: globalKeys.keys,
+                now: Date.now(),
+            });
+            if (grant) {
+                const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
+                console.log(`🔓 global ${grant} key — session issued`);
+                return new Response(null, {
+                    status: 302,
+                    headers: {
+                        Location: reqUrl.pathname + reqUrl.search + reqUrl.hash,
+                        'Set-Cookie': sessionCookie(session, GLOBAL_KEY_SESSION_TTL_MS),
+                        'Referrer-Policy': 'no-referrer',
+                        'Cache-Control': 'no-store',
+                    },
+                });
+            }
+        }
         const lockedDown = isLockedDown(config);
         {
             const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
@@ -1964,7 +2032,10 @@ export async function devServer(config, opts = {}) {
         here" — the paths are guessable and the answer is nobody's business but the session holder's.
         */
         if (reqPath.startsWith(HALTIJA_BRIDGE_PREFIX)) {
-            if (!haltijaBridgeAllowed(request, srv, viaTunnel)) {
+            // Same-origin over the tunnel too: a sibling host under the preview domain is the same
+            // SITE, so its pages carry the session cookie (see sourceRequestAdmission).
+            if (!haltijaBridgeAllowed(request, srv, viaTunnel) ||
+                (viaTunnel && !isSameOriginRequest(request))) {
                 return new Response('not found', { status: 404 });
             }
             if (reqPath === HALTIJA_BRIDGE_COMPONENT) {
@@ -2394,6 +2465,11 @@ export async function devServer(config, opts = {}) {
     }
     else if (lanTrust.trust) {
         console.warn(`⚠️  trustLan does nothing without editableSources or editableData (there is nothing to trust it with).`);
+    }
+    for (const problem of globalKeys.problems)
+        console.warn(`⚠️  ${problem}.`);
+    if (globalKeys.keys.edit) {
+        console.log(`Global edit key accepted: the preview host's list opens this workspace for editing.`);
     }
     if (SINK_PATH) {
         console.log(`Debug sink: POST /__debug-sink  ->  tail -f ${SINK_PATH}`);
