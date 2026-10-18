@@ -25,7 +25,9 @@
   servers: a session a key already opened lasts up to 24 hours and is not re-checked against
   the key until its server restarts.
 - **`tosijs-tunnel` refreshes the box's root page** when it registers a workspace, so a newly
-  tunnelled project appears in the list straight away.
+  tunnelled project appears in the list straight away. The box's root page escapes project
+  names, which it inserted into the page as they were.
+- The edit key opens a `globalKeys: 'view'` workspace read-only, as the view key does.
 
 ### Security
 
