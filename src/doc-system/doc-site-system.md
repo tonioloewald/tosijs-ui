@@ -945,11 +945,20 @@ It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW
 - **fills in an unknown value** for `__PREVIEW_EDIT_TOKEN__` when `PREVIEW_EDIT_TOKEN` is unset,
   so the edit key opens nothing, and refuses one shorter than 24 letters, digits, `-` or `_`,
   or one equal to `PREVIEW_TOKEN`;
+- **refuses a `PREVIEW_TOKEN`** with anything but letters, digits, `-` and `_`: it goes into
+  the gate's cookie regex, where a `.` would loosen the match;
 - **refuses to install** if any placeholder survived substitution, naming the line — the
   guard that a hand-rolled `sed` pipeline does not have;
 - **validates before swapping**: `caddy fmt` then `caddy validate` against a scratch file,
   and the live config is replaced by an atomic `mv` only once it parses, so a bad template
   leaves the running site untouched;
+- **installs the file readable by Caddy and nobody else**, because it holds both keys: mode
+  `640` with the group systemd runs Caddy as (`Group=` in the unit, or `User=`'s own group), or
+  `600` when Caddy runs as root;
+- **reloads Caddy, or starts it if it is stopped**, and if Caddy refuses the new config puts
+  the previous one back (it stays in `/etc/caddy/Caddyfile.bak` either way) and exits non-zero.
+  Versions 1.10.0 to 1.16.26 installed the file readable by root only, which a Caddy running as
+  its own user cannot read: if you ran `--go` with one of those, re-run it;
 - is **dry-run by default**, because it replaces `/etc/caddy/Caddyfile` wholesale — if the
   box serves anything else through Caddy, read that diff before `--go`.
 

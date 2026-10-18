@@ -8,14 +8,17 @@
   1.16.26). It installed the file readable by root only, so a Caddy running as its own user
   (Debian's package does) refused the reload. Caddy kept serving the old config, the new file
   stayed on disk, and the bin said "Nothing was installed", so the next restart would have
-  taken down every site on the box. The file is now `root:caddy`, mode `640` (`644` where there
-  is no `caddy` group), and if Caddy refuses a reload the installer puts the previous config
-  back. **If you ran `--go` on an affected version, check that `/etc/caddy/Caddyfile` is
-  readable by the Caddy user** (`systemctl reload caddy` says so if it is not), or re-run the
-  installer.
-- **The preview gate matches a key cookie exactly.** It matched by prefix, so
-  `tosi_edit=<key>x` passed. That still required the whole key, but the dev servers compare
-  exactly and the gate now agrees with them. Re-run the installer to pick it up.
+  taken down every site on the box. The file is now mode `640` with the group systemd runs
+  Caddy as, or `600` when Caddy runs as root; it holds both keys, so never world-readable.
+  **If you ran `--go` with an affected version, re-run it.**
+- **The installer starts a stopped Caddy** instead of failing to reload it, and if Caddy
+  refuses the new config it puts the previous one back and exits non-zero.
+- **The installer refuses a `PREVIEW_TOKEN`** containing anything but letters, digits, `-` and
+  `_`. It goes into the gate's cookie regex, where a `.` loosened the match.
+- **The preview gate matches a key cookie exactly** (affected: 1.9.0 to 1.16.26; the edit
+  cookie since 1.16.26). It matched by prefix, so `tosi_edit=<key>x` passed. That still
+  required the whole key, but the dev servers compare exactly and the gate now agrees with
+  them. Re-run the installer to pick it up.
 
 ## 1.16.26
 

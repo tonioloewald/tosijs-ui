@@ -120,6 +120,12 @@ if [ ! -f /etc/caddy/preview.env ]; then
 fi
 set -a; . /etc/caddy/preview.env; set +a
 : "\${PREVIEW_TOKEN:?set PREVIEW_TOKEN in /etc/caddy/preview.env}"
+# It goes into a sed replacement and into the gate's cookie regex, where \`.\` would loosen the
+# match and \`|\` would break the substitution.
+if ! printf '%s' "$PREVIEW_TOKEN" | grep -qE '^[A-Za-z0-9_-]+$'; then
+  echo "PREVIEW_TOKEN may contain only letters, digits, - and _ — refusing to install." >&2
+  exit 1
+fi
 : "\${ACME_EMAIL:?set ACME_EMAIL in /etc/caddy/preview.env}"
 : "\${PREVIEW_DOMAIN:?set PREVIEW_DOMAIN in /etc/caddy/preview.env}"
 
@@ -160,28 +166,48 @@ if [ "${go ? '1' : '0'}" = "1" ]; then
     cp -p /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak
     had_config=1
   fi
-  # umask 077 left this root-only, and Debian's Caddy runs as its own user: the reload then
-  # failed reading it, with the new file already in place (the first install on the
-  # maintainer's box, 1.16.26). It holds both keys, so not world-readable either.
-  if grep -q '^caddy:' /etc/group; then
-    chgrp caddy /etc/caddy/Caddyfile.new
+  # Readable by the group Caddy runs as, and by nobody else: the file holds both keys.
+  # umask 077 left it root-only, and Debian's Caddy runs as its own user, so the reload failed
+  # reading it with the new file already in place (the maintainer's box, 1.16.26). Ask systemd
+  # who that is rather than guess; a Caddy run as root needs no group.
+  caddy_group=$(systemctl show -p Group --value caddy)
+  if [ -z "$caddy_group" ]; then
+    caddy_user=$(systemctl show -p User --value caddy)
+    if [ -n "$caddy_user" ] && [ "$caddy_user" != root ]; then
+      caddy_group=$(id -gn "$caddy_user")
+    fi
+  fi
+  if [ -n "$caddy_group" ]; then
+    chgrp "$caddy_group" /etc/caddy/Caddyfile.new
     chmod 640 /etc/caddy/Caddyfile.new
   else
-    chmod 644 /etc/caddy/Caddyfile.new
+    chmod 600 /etc/caddy/Caddyfile.new
   fi
   mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
-  if ! systemctl reload caddy; then
-    # Caddy keeps serving what it had loaded, but the next restart would read this file.
+  # A stopped Caddy cannot reload. Start it instead, or a box left down by the bug above could
+  # never be repaired by re-running this.
+  if systemctl is-active --quiet caddy; then
+    verb=reload
+  else
+    verb=start
+  fi
+  if ! systemctl "$verb" caddy; then
+    # A refused reload leaves Caddy serving what it had, but its next restart reads this file.
     if [ "$had_config" = 1 ]; then
-      cp -p /etc/caddy/Caddyfile.bak /etc/caddy/Caddyfile
-      echo "caddy refused the reload; restored the previous /etc/caddy/Caddyfile." >&2
+      # Not \`cp -p\`: copying ONTO the installed file keeps its mode and group, and the
+      # previous file may be one an affected version left root-only.
+      cp /etc/caddy/Caddyfile.bak /etc/caddy/Caddyfile
+      echo "caddy refused to $verb with the new config; restored the previous /etc/caddy/Caddyfile." >&2
     else
       rm -f /etc/caddy/Caddyfile
-      echo "caddy refused the reload; removed the new /etc/caddy/Caddyfile." >&2
+      echo "caddy refused to $verb with the new config; removed it." >&2
+    fi
+    if [ "$verb" = start ]; then
+      echo "caddy is not running. \`systemctl status caddy\` says why." >&2
     fi
     exit 1
   fi
-  echo "Installed /etc/caddy/Caddyfile and reloaded caddy."
+  echo "Installed /etc/caddy/Caddyfile (caddy: $verb)."
   echo "Previous config saved as /etc/caddy/Caddyfile.bak"
 else
   echo "--- would change /etc/caddy/Caddyfile (token redacted) ---"

@@ -41,13 +41,46 @@ beforeEach(() => {
   )
   // `caddy fmt --overwrite F` / `caddy validate --config F` — accept anything.
   writeFileSync(join(bin, 'caddy'), '#!/bin/sh\nexit 0\n')
-  writeFileSync(join(bin, 'systemctl'), '#!/bin/sh\nexit 0\n')
+  fakeSystemctl()
   for (const f of ['ssh', 'caddy', 'systemctl']) chmodSync(join(bin, f), 0o755)
 })
 
 afterEach(() => rmSync(sandbox, { recursive: true, force: true }))
 
 const etc = (name: string) => join(sandbox, 'etc-caddy', name)
+
+/**
+ * `systemctl` as the installer sees it: who Caddy runs as (`show -p User|Group --value`),
+ * whether it is up (`is-active`), and which of `reload`/`start` fails. By default Caddy runs as
+ * root (no group) and is up.
+ */
+function fakeSystemctl(
+  opts: {
+    user?: string
+    group?: string
+    active?: boolean
+    fail?: 'reload' | 'start'
+  } = {}
+) {
+  writeFileSync(
+    join(bin, 'systemctl'),
+    `#!/bin/sh
+case "$1" in
+  show) [ "$3" = User ] && echo '${
+    opts.user ?? ''
+  }'; [ "$3" = Group ] && echo '${opts.group ?? ''}'; exit 0 ;;
+  is-active) exit ${opts.active === false ? 3 : 0} ;;
+  ${opts.fail ?? 'never'}) exit 1 ;;
+esac
+exit 0
+`
+  )
+  chmodSync(join(bin, 'systemctl'), 0o755)
+}
+
+// A group and user this process may chgrp to, standing in for `caddy`.
+const MY_GROUP = Bun.spawnSync(['id', '-gn']).stdout.toString().trim()
+const MY_USER = Bun.spawnSync(['id', '-un']).stdout.toString().trim()
 
 function writeEnv(contents: string) {
   writeFileSync(etc('preview.env'), contents)
@@ -246,38 +279,133 @@ test(
   SPAWN_TIMEOUT
 )
 
-test(
-  'REGRESSION: the installed config is readable by a Caddy that does not run as root',
-  async () => {
-    // `umask 077` installed it root-only; Debian's Caddy runs as `caddy` and the reload
-    // failed reading it (the maintainer's box, 1.16.26).
-    writeEnv(FULL_ENV)
-    const tpl = join(sandbox, 'Ok')
-    writeFileSync(tpl, 'x.{{PREVIEW_DOMAIN}} {\n  respond "hi"\n}\n')
-    const { code } = await run(['--go'], tpl)
-    expect(code).toBe(0)
-    expect(statSync(etc('Caddyfile')).mode & 0o040).toBe(0o040)
-  },
-  SPAWN_TIMEOUT
-)
+const OK_TEMPLATE = 'x.{{PREVIEW_DOMAIN}} {\n  respond "hi"\n}\n'
+
+async function installOver(previous?: { text: string; mode: number }) {
+  writeEnv(FULL_ENV)
+  const tpl = join(sandbox, 'Ok')
+  writeFileSync(tpl, OK_TEMPLATE)
+  if (previous) {
+    writeFileSync(etc('Caddyfile'), previous.text)
+    chmodSync(etc('Caddyfile'), previous.mode)
+  }
+  return run(['--go'], tpl)
+}
+
+const modeOf = (name: string) => statSync(etc(name)).mode & 0o777
+
+describe('who can read the installed config', () => {
+  /*
+  It holds both keys, so nobody but Caddy. \`umask 077\` installed it root-only, Debian's Caddy
+  runs as \`caddy\`, and the reload failed reading it (the maintainer's box, 1.16.26).
+  */
+  test(
+    'REGRESSION: the group Caddy runs as, and nobody else',
+    async () => {
+      fakeSystemctl({ user: 'caddy', group: MY_GROUP })
+      const { code } = await installOver()
+      expect(code).toBe(0)
+      expect(modeOf('Caddyfile')).toBe(0o640)
+      expect(statSync(etc('Caddyfile')).gid).toBe(process.getgid!())
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    "with no Group= in the unit, the Caddy user's own group",
+    async () => {
+      fakeSystemctl({ user: MY_USER })
+      const { code } = await installOver()
+      expect(code).toBe(0)
+      expect(modeOf('Caddyfile')).toBe(0o640)
+      expect(statSync(etc('Caddyfile')).gid).toBe(process.getgid!())
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a Caddy run as root gets a root-only file, never a world-readable one',
+    async () => {
+      fakeSystemctl()
+      const { code } = await installOver()
+      expect(code).toBe(0)
+      expect(modeOf('Caddyfile')).toBe(0o600)
+    },
+    SPAWN_TIMEOUT
+  )
+})
+
+describe('when Caddy will not take the new config', () => {
+  test(
+    'REGRESSION: a refused reload puts the previous config back, readable by Caddy',
+    async () => {
+      // Caddy keeps serving what it loaded, so a new file it refused would only bite at the
+      // next restart, taking down every site on the box long after anyone was looking. The
+      // previous file may be one 1.16.26 left root-only: restore its CONTENT, not its mode.
+      fakeSystemctl({ group: MY_GROUP, fail: 'reload' })
+      const { code, out } = await installOver({
+        text: 'the previous config\n',
+        mode: 0o600,
+      })
+      expect(code).not.toBe(0)
+      expect(out).toContain('refused to reload')
+      expect(out).toContain('restored the previous')
+      expect(readFileSync(etc('Caddyfile'), 'utf8')).toBe(
+        'the previous config\n'
+      )
+      expect(modeOf('Caddyfile')).toBe(0o640)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'REGRESSION: a stopped Caddy is started with the new config, not rolled back',
+    async () => {
+      // A stopped unit cannot reload. Treating that as a refusal restored the broken
+      // root-only file on exactly the boxes this release exists to repair.
+      fakeSystemctl({ group: MY_GROUP, active: false, fail: 'reload' })
+      const { code, out } = await installOver({
+        text: 'the previous config\n',
+        mode: 0o600,
+      })
+      expect(code).toBe(0)
+      expect(out).toContain('caddy: start')
+      expect(readFileSync(etc('Caddyfile'), 'utf8')).toContain('respond "hi"')
+      expect(modeOf('Caddyfile')).toBe(0o640)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a stopped Caddy that will not start says it is not running',
+    async () => {
+      fakeSystemctl({ group: MY_GROUP, active: false, fail: 'start' })
+      const { code, out } = await installOver({
+        text: 'the previous config\n',
+        mode: 0o644,
+      })
+      expect(code).not.toBe(0)
+      expect(out).toContain('caddy is not running')
+      expect(readFileSync(etc('Caddyfile'), 'utf8')).toBe(
+        'the previous config\n'
+      )
+    },
+    SPAWN_TIMEOUT
+  )
+})
 
 test(
-  'REGRESSION: a refused reload puts the previous config back',
+  'refuses an invite secret the gate regex or sed would misread',
   async () => {
-    // Caddy keeps serving what it loaded, so a new file it refused would only bite at the
-    // next restart — taking down every site on the box, long after anyone was looking.
-    writeFileSync(
-      join(bin, 'systemctl'),
-      '#!/bin/sh\n[ "$1" = reload ] && exit 1\nexit 0\n'
+    writeEnv(
+      'PREVIEW_TOKEN=a.b+c-long-enough-to-be-a-key\nACME_EMAIL=me@example.com\nPREVIEW_DOMAIN=dev.example.com\n'
     )
-    writeEnv(FULL_ENV)
     const tpl = join(sandbox, 'Ok')
-    writeFileSync(tpl, 'x.{{PREVIEW_DOMAIN}} {\n  respond "hi"\n}\n')
-    writeFileSync(etc('Caddyfile'), 'the previous config\n')
+    writeFileSync(tpl, OK_TEMPLATE)
     const { code, out } = await run(['--go'], tpl)
     expect(code).not.toBe(0)
-    expect(out).toContain('restored the previous')
-    expect(readFileSync(etc('Caddyfile'), 'utf8')).toBe('the previous config\n')
+    expect(out).toContain('PREVIEW_TOKEN may contain only')
+    expect(existsSync(etc('Caddyfile'))).toBe(false)
   },
   SPAWN_TIMEOUT
 )
