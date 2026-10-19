@@ -76,7 +76,9 @@
 	}
 
 	# THE GLOBAL EDIT KEY: `?t=<edit key>` on any preview host sets `tosi_edit` across the
-	# whole preview domain for 24 hours. Every tunnelled workspace that holds the same key
+	# whole preview domain for 30 days, the same cookie a workspace's single-use link from
+	# `tosijs-tunnel` sets (that link is the usual way in: it never puts the key in a URL).
+	# Every tunnelled workspace that holds the same key
 	# (PREVIEW_EDIT_TOKEN in ~/local-secrets/tosijs-preview.env on the machine running it)
 	# trades it for an editing session on the first page load, so the root's list opens them
 	# all, across dev-server restarts. It also opens these static previews. The view key above
@@ -87,7 +89,7 @@
 	# rotated (edit preview.env here and on each machine, re-run the installer).
 	@editlink query t=__PREVIEW_EDIT_TOKEN__
 	handle @editlink {
-		header Set-Cookie "tosi_edit=__PREVIEW_EDIT_TOKEN__; Domain=.{{PREVIEW_DOMAIN}}; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Lax"
+		header Set-Cookie "tosi_edit=__PREVIEW_EDIT_TOKEN__; Domain=.{{PREVIEW_DOMAIN}}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"
 		header Referrer-Policy "no-referrer"
 		header Cache-Control "no-store"
 		redir * {tosi_link_target} 302
@@ -160,6 +162,17 @@
 			roll_size 10MiB
 			roll_keep 3
 		}
+		# Links carry credentials in the query: `t` (a global key, or a single-use code) and
+		# `token`. Caddy already keeps cookies out of this log; this keeps those out too.
+		format filter {
+			wrap json
+			fields {
+				request>uri query {
+					replace t REDACTED
+					replace token REDACTED
+				}
+			}
+		}
 	}
 }
 
@@ -206,6 +219,17 @@
 		output file /var/log/caddy/preview.log {
 			roll_size 10MiB
 			roll_keep 3
+		}
+		# Links carry credentials in the query: `t` (a global key, or a single-use code) and
+		# `token`. Caddy already keeps cookies out of this log; this keeps those out too.
+		format filter {
+			wrap json
+			fields {
+				request>uri query {
+					replace t REDACTED
+					replace token REDACTED
+				}
+			}
 		}
 	}
 }

@@ -248,10 +248,35 @@ export interface AuthState {
    * asked of it is the same either way: "may whoever holds this write?"
    */
   readOnly: Set<string>
+  /**
+   * Link tokens that also hand over a global key (see {@link GlobalGrant}). Such a link is
+   * spent on first use, whatever `linkPolicy` says: it gives the browser a key that outlives
+   * this server.
+   */
+  grants: Map<string, GlobalGrant>
+  /** Sessions minted from a granting link, until the redirect that sets the key takes them. */
+  sessionGrants: Map<string, GlobalGrant>
+}
+
+/**
+ * What a single-use link hands over besides a session here: the box's global `key`, as a
+ * cookie across `domain`, so this browser opens every workspace (and the box's root list)
+ * without another link. The link carries a one-use code; the key itself never appears in a
+ * URL, a terminal or a log.
+ */
+export interface GlobalGrant {
+  key: 'edit' | 'view'
+  domain: string
 }
 
 export function createAuthState(): AuthState {
-  return { links: new Map(), sessions: new Map(), readOnly: new Set() }
+  return {
+    links: new Map(),
+    sessions: new Map(),
+    readOnly: new Set(),
+    grants: new Map(),
+    sessionGrants: new Map(),
+  }
 }
 
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
@@ -260,11 +285,13 @@ export function prune(state: AuthState, now: number): void {
     if (exp <= now) {
       state.links.delete(t)
       state.readOnly.delete(t)
+      state.grants.delete(t)
     }
   for (const [t, exp] of state.sessions)
     if (exp <= now) {
       state.sessions.delete(t)
       state.readOnly.delete(t)
+      state.sessionGrants.delete(t)
     }
 }
 
@@ -281,12 +308,13 @@ export function issueLink(
   state: AuthState,
   now: number,
   ttlMs: number = LINK_TOKEN_TTL_MS,
-  opts: { readOnly?: boolean } = {}
+  opts: { readOnly?: boolean; grant?: GlobalGrant } = {}
 ): string {
   prune(state, now)
   const token = mintLinkToken()
   state.links.set(token, now + ttlMs)
   if (opts.readOnly) state.readOnly.add(token)
+  if (opts.grant) state.grants.set(token, opts.grant)
   return token
 }
 
@@ -355,9 +383,11 @@ export function redeemLink(
   }
   if (matched === null) return null
   const readOnly = state.readOnly.has(matched)
-  if (policy === 'single-use') {
+  const grant = state.grants.get(matched)
+  if (policy === 'single-use' || grant) {
     state.links.delete(matched)
     state.readOnly.delete(matched)
+    state.grants.delete(matched)
   }
   /*
   The capability rides from the link to the session it mints, and so does the shorter horizon.
@@ -365,12 +395,62 @@ export function redeemLink(
   LIFETIME a lie — the link said "for the next day"; the session it handed over would outlive
   that by a month.
   */
-  return issueSession(
+  const session = issueSession(
     state,
     now,
     readOnly ? READONLY_SESSION_TTL_MS : SESSION_TTL_MS,
     readOnly
   )
+  if (grant) state.sessionGrants.set(session, grant)
+  return session
+}
+
+/** The global key a just-redeemed link hands over with `session`, once. */
+export function takeSessionGrant(
+  state: AuthState,
+  session: string
+): GlobalGrant | undefined {
+  const grant = state.sessionGrants.get(session)
+  state.sessionGrants.delete(session)
+  return grant
+}
+
+/** How long a browser keeps a global key it was given by a link: 30 days. */
+export const GLOBAL_KEY_COOKIE_MAX_AGE_S = 30 * 24 * 60 * 60
+
+/**
+ * The cookie that gives this browser the box's global key across the preview domain, the same
+ * one Caddy sets for `?t=<key>`, so the box's root and every workspace holding the key accept
+ * it. `null` when this server does not hold that key, or would not honour it: a link must not
+ * hand over a key that opens less than it claims.
+ */
+export function globalKeyCookie(
+  grant: GlobalGrant,
+  keys: GlobalKeys
+): string | null {
+  const value =
+    grant.key === 'edit'
+      ? (keys.editGrants ?? 'edit') === 'edit'
+        ? keys.edit
+        : undefined
+      : keys.view
+  if (!value) return null
+  const name = grant.key === 'edit' ? GLOBAL_EDIT_COOKIE : GLOBAL_VIEW_COOKIE
+  return `${name}=${value}; Domain=.${grant.domain}; Path=/; Max-Age=${GLOBAL_KEY_COOKIE_MAX_AGE_S}; HttpOnly; Secure; SameSite=Lax`
+}
+
+/**
+ * The preview domain a granting link may set its cookie on: a plain hostname that the
+ * workspace's own host sits under. Anything else would set a cookie this browser drops (a
+ * domain the host is not under), or one far wider than the preview host (`net`).
+ */
+export function grantDomainFor(
+  domain: string | null | undefined,
+  workspaceHost: string
+): string | null {
+  const d = (domain ?? '').toLowerCase().replace(/\.$/, '')
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d)) return null
+  return workspaceHost.toLowerCase().endsWith(`.${d}`) ? d : null
 }
 
 /** Mint a session token directly: what a redeemed link or a global key turns into. */
@@ -980,8 +1060,9 @@ So the box can hold two machine-wide keys, the same pair on the box and on this 
   PREVIEW_TOKEN       the VIEW key. Already the static previews' invite secret.
   PREVIEW_EDIT_TOKEN  the EDIT key. New, and only ever a credential you keep.
 
-Visiting the box with `?t=<key>` makes Caddy set a cookie on the whole preview domain
-(`tosi_preview` or `tosi_edit`). A workspace that sees a matching cookie on a page load mints
+The cookie (`tosi_preview` or `tosi_edit`, across the whole preview domain) arrives one of two
+ways: a workspace's single-use link sets it on redemption (see GlobalGrant, the usual way in,
+which never puts the key in a URL), or Caddy sets it for `?t=<key>` on any preview host. A workspace that sees a matching cookie on a page load mints
 an ordinary session of the matching kind (read-only for the view key) and carries on, so the
 write gates below are unchanged: a key only ever becomes a session, at a navigation.
 
@@ -1073,35 +1154,6 @@ export function resolveGlobalKeys(
     return { keys: {}, problems }
   }
   return { keys, problems }
-}
-
-/**
- * The links `tosijs-tunnel` prints for this workspace: each sets its key's cookie across the
- * preview domain at the domain's root (`https://<domain>/?t=<key>`), and `&to=<label>` sends
- * the browser on to `<label>.<domain>`, where the key becomes a session. One link, passed to a
- * person or another device, opens this workspace and every other one the key opens.
- *
- * Only links that do something here: none for a host outside `domain`, no edit link where
- * the edit key opens read-only (`globalKeys: 'view'`), and only the keys `keys` accepted.
- */
-export function globalKeyLinks(
-  hostname: string,
-  domain: string,
-  keys: GlobalKeys
-): { edit?: string; view?: string } {
-  const host = hostname.toLowerCase()
-  const root = domain.toLowerCase().replace(/\.$/, '')
-  if (!root || !host.endsWith(`.${root}`)) return {}
-  const label = host.slice(0, -root.length - 1)
-  const link = (key: string) =>
-    `https://${root}/?t=${encodeURIComponent(key)}&to=${label}`
-  return {
-    edit:
-      keys.edit && (keys.editGrants ?? 'edit') === 'edit'
-        ? link(keys.edit)
-        : undefined,
-    view: keys.view ? link(keys.view) : undefined,
-  }
 }
 
 /** What the global-key cookies on a request grant: the edit key wins over the view key. */

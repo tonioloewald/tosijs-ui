@@ -32,8 +32,8 @@ always requires a session.
 
 import { $ } from 'bun'
 import {
-  globalKeyLinks,
-  previewDomainOn,
+  planGlobalLinks,
+  previewBoxKeys,
   previewRootFor,
   readLocalSecret,
   registerCaddyFragment,
@@ -116,38 +116,60 @@ const tunnelLocalPort = Number(
 const publicUrl = flag('url') ?? preview?.tunnel?.url
 // Set by the registration step below; no public URL means there is no route to fail.
 let routed = true
-// The links to pass on, set once the route is registered (see shareLinksFor).
-let shareLinks: { edit?: string; view?: string } = {}
-let shareProblem = ''
+
+/** Ask the dev server (loopback only) for a link; `query` selects the kind. */
+async function askForLink(
+  query: string
+): Promise<{ url?: string; error?: string }> {
+  const res =
+    await $`curl -sk --max-time 5 https://localhost:${localPort}/__devlink${query}`
+      .nothrow()
+      .quiet()
+  try {
+    return JSON.parse(res.stdout.toString())
+  } catch {
+    return {}
+  }
+}
 
 /*
-One link per global key that opens THIS workspace from anywhere: it sets the key's cookie at
-the preview domain's root, and Caddy sends the browser on here, where the dev server trades it
-for a session. The keys are the ones the dev server reads (env, then ~/local-secrets), filtered
-by the same `tunnel.globalKeys`; the domain is the box's, since only the box knows it.
+Single-use links that also give the browser the box's global key (see GlobalGrant in
+dev-auth.ts): one click opens this workspace, and from then on that browser opens every
+workspace holding the key, and the box's root list, for 30 days, across restarts. The link
+carries a one-use code, never the key. Offered only for keys this workspace accepts and the box
+holds too; `notes` says why any other is missing.
 */
-async function shareLinksFor(hostname: string): Promise<void> {
-  const { keys } = resolveGlobalKeys(preview?.tunnel?.globalKeys, {
+async function globalLinks(
+  kinds: ('edit' | 'view')[] = ['edit', 'view'],
+  extraQuery = ''
+): Promise<{
+  links: { kind: 'edit' | 'view'; url: string }[]
+  notes: string[]
+}> {
+  const local = resolveGlobalKeys(preview?.tunnel?.globalKeys, {
     PREVIEW_TOKEN:
       process.env.PREVIEW_TOKEN ?? readLocalSecret('PREVIEW_TOKEN'),
     PREVIEW_EDIT_TOKEN:
       process.env.PREVIEW_EDIT_TOKEN ?? readLocalSecret('PREVIEW_EDIT_TOKEN'),
   })
-  if (!keys.edit && !keys.view) {
-    shareProblem =
-      'No global key here (PREVIEW_EDIT_TOKEN / PREVIEW_TOKEN in ~/local-secrets/tosijs-preview.env), so no link to pass on: `tosijs-tunnel --link` makes a one-off.'
-    return
+  const box =
+    local.keys.edit || local.keys.view ? await previewBoxKeys(host!) : {}
+  const plan = planGlobalLinks(local, box)
+  const links: { kind: 'edit' | 'view'; url: string }[] = []
+  for (const kind of plan.kinds.filter((k) => kinds.includes(k))) {
+    const answer = await askForLink(
+      `?global=${kind}&domain=${encodeURIComponent(plan.domain!)}${extraQuery}`
+    )
+    if (answer.url) links.push({ kind, url: answer.url })
+    else
+      plan.notes.push(
+        answer.error ??
+          `the dev server on :${localPort} did not answer, so no ${kind} link: start it (\`bun start\`), then \`tosijs-tunnel --link\``
+      )
   }
-  const { domain, problem } = await previewDomainOn(host!)
-  if (!domain) {
-    shareProblem = `No link to pass on: ${problem}.`
-    return
-  }
-  shareLinks = globalKeyLinks(hostname, domain, keys)
-  if (!shareLinks.edit && !shareLinks.view) {
-    shareProblem = `No link to pass on: ${hostname} is not under the box's preview domain, ${domain}.`
-  }
+  return { links, notes: plan.notes }
 }
+let startLinks: Awaited<ReturnType<typeof globalLinks>> | undefined
 
 /*
 Say where this is going, and where the address came from, BEFORE acting on it.
@@ -212,18 +234,17 @@ if (has('link')) {
   */
   const share = has('share')
   const shareTtl = flag('share-ttl')
-  const query = share
-    ? `?share=1${shareTtl ? `&ttl=${encodeURIComponent(shareTtl)}` : ''}`
-    : ''
-  const res =
-    await $`curl -sk --max-time 5 https://localhost:${localPort}/__devlink${query}`
-      .nothrow()
-      .quiet()
-  let url = ''
-  try {
-    url = JSON.parse(res.stdout.toString()).url
-  } catch {
-    /* fall through to the error below */
+  const ttl = shareTtl ? `&ttl=${encodeURIComponent(shareTtl)}` : ''
+  /*
+  A link that also hands over the global key when it can (see globalLinks), so the browser
+  that opens it stays signed in across restarts and workspaces; this workspace's own link
+  otherwise, saying why.
+  */
+  const global = await globalLinks([share ? 'view' : 'edit'], ttl)
+  for (const note of global.notes) console.log(`note: ${note}`)
+  let url = global.links[0]?.url ?? ''
+  if (!url) {
+    url = (await askForLink(share ? `?share=1${ttl}` : '')).url ?? ''
   }
   if (!url) {
     console.error(
@@ -458,7 +479,7 @@ if (publicUrl) {
     if (routed) {
       // The root's list of live workspaces is read from these fragments.
       await refreshHostIndex(host!)
-      await shareLinksFor(hostname)
+      startLinks = await globalLinks()
     }
   }
 }
@@ -477,16 +498,15 @@ if (publicUrl) {
       ? `   ${publicUrl}`
       : `   ${publicUrl}  ⚠️  NOT routed — registration failed above; this URL will not reach here`
   )
-  if (shareLinks.edit || shareLinks.view) {
+  if (startLinks?.links.length) {
     console.log(
-      `\n   Pass on (sets the key across the preview domain, then opens this workspace;` +
-        `\n   the root page lists every workspace the key opens):`
+      `\n   Single-use links: each opens this workspace, then keeps that browser in every` +
+        `\n   workspace on the box (and its root list) for 30 days:`
     )
-    if (shareLinks.edit) console.log(`   edit: ${shareLinks.edit}`)
-    if (shareLinks.view) console.log(`   view: ${shareLinks.view}  (read-only)`)
-  } else if (shareProblem) {
-    console.log(`\n   ${shareProblem}`)
+    for (const { kind, url } of startLinks.links)
+      console.log(`   ${kind}: ${url}${kind === 'view' ? '  (read-only)' : ''}`)
   }
+  for (const note of startLinks?.notes ?? []) console.log(`   note: ${note}`)
 }
 console.log(`   Ctrl-C to close.\n`)
 

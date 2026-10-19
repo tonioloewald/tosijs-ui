@@ -1540,7 +1540,10 @@ describe('trustLan networks', () => {
 
 import {
   resolveGlobalKeys,
-  globalKeyLinks,
+  globalKeyCookie,
+  grantDomainFor,
+  takeSessionGrant,
+  GLOBAL_KEY_COOKIE_MAX_AGE_S,
   globalKeyAccess,
   globalKeyExchange,
   isNavigation,
@@ -1558,30 +1561,88 @@ describe('global keys', () => {
   const secrets = { PREVIEW_EDIT_TOKEN: EDIT, PREVIEW_TOKEN: VIEW }
   const keys = { edit: EDIT, view: VIEW, editGrants: 'edit' as const }
 
-  test('the tunnel links set the key at the domain root, then open this workspace', () => {
-    expect(
-      globalKeyLinks('ui.edit.dev.example.com', 'dev.example.com', keys)
-    ).toEqual({
-      edit: `https://dev.example.com/?t=${EDIT}&to=ui.edit`,
-      view: `https://dev.example.com/?t=${VIEW}&to=ui.edit`,
+  describe('a single-use link that hands over a global key', () => {
+    /*
+    The link carries a one-use code, never the key; redeeming it gives the browser the key as
+    a cookie across the preview domain, so it stays in every workspace (and the box's root
+    list) without another link. The maintainer's design: "short duration one use … a durable
+    cookie on the machine so you don't need to constantly refresh links".
+    */
+    const grant = { key: 'edit' as const, domain: 'dev.example.com' }
+
+    test('is spent on first use even where links are reusable', () => {
+      const state = createAuthState()
+      const token = issueLink(state, 0, 60_000, { grant })
+      const session = redeemLink(state, token, 1, 'window')
+      expect(session).toBeTruthy()
+      expect(redeemLink(state, token, 2, 'window')).toBeNull()
+      // An ordinary link under the same policy is not.
+      const plain = issueLink(state, 0, 60_000)
+      expect(redeemLink(state, plain, 1, 'window')).toBeTruthy()
+      expect(redeemLink(state, plain, 2, 'window')).toBeTruthy()
     })
-    // A workspace that refuses edit offers no edit link: it would open read-only.
-    expect(
-      globalKeyLinks('ui.edit.dev.example.com', 'dev.example.com', {
-        ...keys,
-        editGrants: 'view',
-      }).edit
-    ).toBeUndefined()
-    // Only keys this workspace accepted, and only under the preview domain.
-    expect(
-      globalKeyLinks('ui.edit.dev.example.com', 'dev.example.com', {})
-    ).toEqual({ edit: undefined, view: undefined })
-    expect(
-      globalKeyLinks('ui.edit.elsewhere.test', 'dev.example.com', keys)
-    ).toEqual({})
-    expect(globalKeyLinks('xdev.example.com', 'dev.example.com', keys)).toEqual(
-      {}
-    )
+
+    test('hands its grant to the session it mints, once', () => {
+      const state = createAuthState()
+      const session = redeemLink(
+        state,
+        issueLink(state, 0, 60_000, { grant }),
+        1
+      )!
+      expect(takeSessionGrant(state, session)).toEqual(grant)
+      expect(takeSessionGrant(state, session)).toBeUndefined()
+      const plain = redeemLink(state, issueLink(state, 0, 60_000), 1)!
+      expect(takeSessionGrant(state, plain)).toBeUndefined()
+    })
+
+    test('a view grant mints a read-only session', () => {
+      const state = createAuthState()
+      const session = redeemLink(
+        state,
+        issueLink(state, 0, 60_000, {
+          readOnly: true,
+          grant: { key: 'view', domain: 'dev.example.com' },
+        }),
+        1
+      )!
+      expect(state.readOnly.has(session)).toBe(true)
+    })
+
+    test('an expired grant is pruned with its link', () => {
+      const state = createAuthState()
+      const token = issueLink(state, 0, 10, { grant })
+      expect(redeemLink(state, token, 20)).toBeNull()
+      expect(state.grants.size).toBe(0)
+    })
+
+    test('the cookie it sets is the box key, across the domain, for 30 days', () => {
+      expect(globalKeyCookie(grant, keys)).toBe(
+        `tosi_edit=${EDIT}; Domain=.dev.example.com; Path=/; Max-Age=${GLOBAL_KEY_COOKIE_MAX_AGE_S}; HttpOnly; Secure; SameSite=Lax`
+      )
+      expect(GLOBAL_KEY_COOKIE_MAX_AGE_S).toBe(2592000)
+      expect(
+        globalKeyCookie({ key: 'view', domain: 'dev.example.com' }, keys)
+      ).toStartWith(`tosi_preview=${VIEW}; Domain=.dev.example.com;`)
+      // Never a key this workspace would not honour.
+      expect(globalKeyCookie(grant, { ...keys, editGrants: 'view' })).toBeNull()
+      expect(globalKeyCookie(grant, { view: VIEW })).toBeNull()
+    })
+
+    test('only on a domain the workspace sits under', () => {
+      const host = 'ui.edit.dev.example.com'
+      expect(grantDomainFor('dev.example.com', host)).toBe('dev.example.com')
+      expect(grantDomainFor('DEV.example.com.', host)).toBe('dev.example.com')
+      expect(grantDomainFor('example.com', host)).toBe('example.com')
+      for (const bad of [
+        'com',
+        'elsewhere.test',
+        'xample.com',
+        'dev.example.com; Domain=evil',
+        '',
+        null,
+      ])
+        expect(grantDomainFor(bad, host)).toBeNull()
+    })
   })
   const page = (cookie?: string, extra: Record<string, string> = {}) =>
     new Request('https://ui.edit.dev.example.com/guide/', {

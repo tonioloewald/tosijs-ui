@@ -158,10 +158,8 @@ export {
 server reads the global tunnel keys from the same file; it is re-exported here for the bins.
 */
 export { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
-export {
-  resolveGlobalKeys,
-  globalKeyLinks,
-} from '../dist/doc-system/site/dev-auth.js'
+export { resolveGlobalKeys } from '../dist/doc-system/site/dev-auth.js'
+import type { GlobalKeys } from '../dist/doc-system/site/dev-auth.js'
 import { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
 
 /**
@@ -450,31 +448,92 @@ export async function refreshHostIndex(host: string): Promise<void> {
   if (out) console.log(`   ${out}`)
 }
 
+/** What the box says about its global keys: its domain, and a fingerprint of each key. */
+export interface BoxKeys {
+  domain?: string
+  /** sha256 hex of the box's PREVIEW_EDIT_TOKEN / PREVIEW_TOKEN, '' when it has none */
+  editSha?: string
+  viewSha?: string
+  problem?: string
+}
+
 /**
- * The preview domain the box's Caddy serves (`PREVIEW_DOMAIN` in `/etc/caddy/preview.env`),
- * or why it could not be read. Only the box knows it: the template's root block and its key
- * cookies are scoped to it, so a link built from a guess could set a cookie nothing reads.
+ * Read the box's preview domain, and fingerprints of its two keys, in one ssh call.
+ *
+ * The file is SOURCED, as the installer and Caddy's own install read it, so all three agree on
+ * quoting, `export` and comments. The keys never leave the box: only their sha256 does, which is
+ * enough to say "this machine's key is not the box's", the one mismatch that makes a link
+ * open this workspace and nothing else.
  */
-export async function previewDomainOn(
-  host: string
-): Promise<{ domain?: string; problem?: string }> {
-  const read =
-    await $`ssh ${host} sed -n 's/^PREVIEW_DOMAIN=//p' /etc/caddy/preview.env`
-      .nothrow()
-      .quiet()
-  const domain = read.stdout
-    .toString()
-    .trim()
-    .split('\n')[0]
-    .replace(/^(['"])(.*)\1$/, '$2')
-  if (read.exitCode === 0 && /^[a-z0-9.-]+$/i.test(domain)) return { domain }
-  return {
-    problem:
-      read.exitCode !== 0
-        ? `could not read /etc/caddy/preview.env on ${host}: ${read.stderr
-            .toString()
-            .trim()
-            .slice(0, 160)}`
-        : `/etc/caddy/preview.env on ${host} sets no PREVIEW_DOMAIN`,
+export async function previewBoxKeys(host: string): Promise<BoxKeys> {
+  const script =
+    'set -a; . /etc/caddy/preview.env; set +a; ' +
+    'printf "%s\\n" "${PREVIEW_DOMAIN:-}"; ' +
+    'for k in "${PREVIEW_EDIT_TOKEN:-}" "${PREVIEW_TOKEN:-}"; do ' +
+    'if [ -n "$k" ]; then printf %s "$k" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d" " -f1; else echo; fi; done'
+  const read = await $`ssh ${host} ${script}`.nothrow().quiet()
+  if (read.exitCode !== 0) {
+    return {
+      problem: `could not read /etc/caddy/preview.env on ${host}: ${read.stderr
+        .toString()
+        .trim()
+        .slice(0, 160)}`,
+    }
   }
+  const [domain = '', editSha = '', viewSha = ''] = read.stdout
+    .toString()
+    .split('\n')
+    .map((line) => line.trim())
+  if (!/^[a-z0-9.-]+$/i.test(domain)) {
+    return {
+      problem: `/etc/caddy/preview.env on ${host} sets no PREVIEW_DOMAIN`,
+    }
+  }
+  return { domain, editSha, viewSha }
+}
+
+const sha256 = (text: string) =>
+  new Bun.CryptoHasher('sha256').update(text).digest('hex')
+
+/**
+ * Which single-use links `tosijs-tunnel` can honestly offer, and why not the rest.
+ *
+ * A link hands the browser this machine's key as a cookie across the box's domain, so it is
+ * only worth printing when this workspace accepts the key AND the box holds the same one; with a
+ * different key on the box, the cookie would open this workspace and not the box's root or any
+ * other workspace, which is not what the link says.
+ */
+export function planGlobalLinks(
+  local: { keys: GlobalKeys; problems: string[] },
+  box: BoxKeys
+): { kinds: ('edit' | 'view')[]; domain?: string; notes: string[] } {
+  const notes = [...local.problems]
+  const { keys } = local
+  const wanted: ('edit' | 'view')[] = []
+  if (keys.edit && (keys.editGrants ?? 'edit') === 'edit') wanted.push('edit')
+  if (keys.view) wanted.push('view')
+  if (wanted.length === 0) {
+    if (notes.length === 0)
+      notes.push(
+        'no global key on this machine (PREVIEW_EDIT_TOKEN / PREVIEW_TOKEN in ~/local-secrets/tosijs-preview.env), or tunnel.globalKeys turns them off'
+      )
+    return { kinds: [], notes }
+  }
+  if (!box.domain) {
+    notes.push(box.problem ?? 'the box did not say what its preview domain is')
+    return { kinds: [], notes }
+  }
+  const kinds = wanted.filter((kind) => {
+    const mine = kind === 'edit' ? keys.edit! : keys.view!
+    const theirs = kind === 'edit' ? box.editSha : box.viewSha
+    if (theirs === sha256(mine)) return true
+    const name = kind === 'edit' ? 'PREVIEW_EDIT_TOKEN' : 'PREVIEW_TOKEN'
+    notes.push(
+      theirs
+        ? `${name} here is not the box's, so no ${kind} link: put the same value in both files`
+        : `the box has no ${name}, so no ${kind} link: add it to /etc/caddy/preview.env and re-run tosijs-caddy-install`
+    )
+    return false
+  })
+  return { kinds, domain: box.domain, notes }
 }

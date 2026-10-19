@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from 'fs'
 import { request as httpRequest } from 'http'
+import { request as httpsRequest } from 'https'
 import { createServer } from 'net'
 import { tmpdir } from 'os'
 import * as path from 'path'
@@ -32,6 +33,7 @@ const EDIT = 'edit_key_for_the_global_keys_spec'
 const VIEW = 'view_key_for_the_global_keys_spec'
 let dir = ''
 let tunnelPort = 0
+let port = 0
 let server: ChildProcess | undefined
 
 const freePort = () =>
@@ -119,7 +121,7 @@ test.beforeAll(async ({ browserName }) => {
   writeFileSync(path.join(dir, 'package.json'), '{"name":"keys-test"}\n')
   symlinkSync(path.join(REPO, 'tls'), path.join(dir, 'tls'))
 
-  const port = await freePort()
+  port = await freePort()
   tunnelPort = await freePort()
   const config = {
     name: 'Keys Test',
@@ -252,4 +254,74 @@ test('the box root may ask what the reader can do here, and no one else may', as
   expect(elsewhere.headers['access-control-allow-origin']).toBeUndefined()
   // The tunnel bin's own liveness check is unchanged.
   expect((await probe(undefined, '')).status).toBe(204)
+})
+
+/** Ask the dev server for a link, as `tosijs-tunnel` does: loopback, the main listener. */
+const devlink = (query: string) =>
+  new Promise<{ status: number; body: any }>((resolve, reject) => {
+    const req = httpsRequest(
+      {
+        host: '127.0.0.1',
+        port,
+        path: `/__devlink${query}`,
+        rejectUnauthorized: false,
+      },
+      (res) => {
+        let body = ''
+        res.on('data', (c) => (body += c))
+        res.on('end', () =>
+          resolve({ status: res.statusCode!, body: JSON.parse(body) })
+        )
+      }
+    )
+    req.once('error', reject)
+    req.end()
+  })
+
+test('a single-use link opens the workspace and hands this browser the global key', async () => {
+  // The link carries a one-use code, never the key; the key arrives as a domain cookie.
+  const { status, body } = await devlink('?global=edit&domain=dev.example.test')
+  expect(status).toBe(200)
+  expect(body.url).not.toContain(EDIT)
+  const code = new URL(body.url).searchParams.get('t')!
+  const redeemed = await navigate('', `/?t=${code}`)
+  expect(redeemed.status).toBe(302)
+  const cookies = [redeemed.headers['set-cookie'] ?? []].flat()
+  expect(cookies.some((c) => c.startsWith('tosi_dev_session='))).toBe(true)
+  expect(cookies).toContain(
+    `tosi_edit=${EDIT}; Domain=.dev.example.test; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax`
+  )
+  // Spent: a second browser gets nothing from it.
+  const again = await navigate('', `/?t=${code}`)
+  expect([again.headers['set-cookie'] ?? []].flat().join()).not.toContain(
+    'tosi_edit='
+  )
+})
+
+test('a view link hands over the view key, and opens read-only', async () => {
+  const { body } = await devlink('?global=view&domain=dev.example.test')
+  const code = new URL(body.url).searchParams.get('t')!
+  const redeemed = await navigate('', `/?t=${code}`)
+  const cookies = [redeemed.headers['set-cookie'] ?? []].flat()
+  expect(
+    cookies.some((c) =>
+      c.startsWith(`tosi_preview=${VIEW}; Domain=.dev.example.test;`)
+    )
+  ).toBe(true)
+  expect(cookies.join()).not.toContain('tosi_edit=')
+  const session = cookies
+    .find((c) => c.startsWith('tosi_dev_session='))!
+    .split(';')[0]
+  expect((await save(session, `https://${HOST}`)).status).toBe(403)
+})
+
+test('no granting link for a domain the workspace is not under', async () => {
+  for (const domain of ['elsewhere.test', 'test', 'xample.test']) {
+    const { status, body } = await devlink(`?global=edit&domain=${domain}`)
+    expect(status).toBe(400)
+    expect(body.error).toContain('is not a domain')
+  }
+  expect((await devlink('?global=admin&domain=dev.example.test')).status).toBe(
+    400
+  )
 })

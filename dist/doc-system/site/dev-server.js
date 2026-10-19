@@ -22,7 +22,7 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
 import { readLocalSecret } from './local-secrets.js';
 import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
@@ -775,6 +775,8 @@ export async function devServer(config, opts = {}) {
      * which is the worst possible place to be wrong about a credential.
      */
     const printLink = (opts = {}) => {
+        if (opts.grant)
+            return printGrantLink(opts.grant, opts.ttlMinutes);
         const settings = resolveLinkSettings(config.preview?.tunnel);
         const policy = opts.share ? 'window' : settings.policy;
         /*
@@ -811,6 +813,29 @@ export async function devServer(config, opts = {}) {
         console.log(policy === 'single-use'
             ? `\n🔗 Single-use edit link (valid ${minutes} min, and spent once redeemed):\n   ${url}\n\n   code:  ${token}\n`
             : `\n🔗 Edit link — usable on more than one device for ${minutes} min, then it expires:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`);
+        return url;
+    };
+    /*
+    A link that also hands this browser the box's global key (see GlobalGrant in dev-auth.ts).
+  
+    Always single-use, whatever `linkPolicy` says: the key it gives outlives this server, so the
+    code that carries it is worth exactly one browser. An edit grant lives as long as an edit
+    link; a view grant as long as a share link, because a person opens it when they get to it.
+    The key never appears here, only the code.
+    */
+    const printGrantLink = (grant, ttlMinutes) => {
+        const ttlMs = grant.key === 'view'
+            ? resolveShareTtlMs(config.preview?.tunnel, ttlMinutes)
+            : resolveLinkSettings(config.preview?.tunnel).ttlMs;
+        const token = issueLink(auth, Date.now(), ttlMs, {
+            readOnly: grant.key === 'view',
+            grant,
+        });
+        const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`;
+        const url = `${base}/?${LINK_PARAM}=${token}`;
+        const minutes = Math.round(ttlMs / 60000);
+        const span = minutes >= 120 ? `${Math.round(minutes / 60)} hours` : `${minutes} min`;
+        console.log(`\n🔗 Single-use ${grant.key === 'edit' ? 'edit' : 'READ-ONLY'} link (valid ${span}): opens this workspace, and keeps that browser in every workspace on ${grant.domain} for 30 days:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`);
         return url;
     };
     /*
@@ -1941,9 +1966,17 @@ export async function devServer(config, opts = {}) {
                 hasValidSession: validSessionCookie(auth, heldCookie, Date.now()),
             });
             if (arrival === 'issue-session') {
-                headers['Set-Cookie'] = sessionCookie(session);
-                console.log('🔓 edit link redeemed — session issued');
-                return new Response(null, { status: 302, headers });
+                const reply = new Headers(headers);
+                reply.append('Set-Cookie', sessionCookie(session));
+                // A granting link also gives this browser the global key (see printGrantLink).
+                const grant = takeSessionGrant(auth, session);
+                const keyCookie = grant && globalKeyCookie(grant, globalKeys.keys);
+                if (keyCookie)
+                    reply.append('Set-Cookie', keyCookie);
+                console.log(keyCookie
+                    ? `🔓 link redeemed — session issued, and the global ${grant.key} key set for ${grant.domain}`
+                    : '🔓 edit link redeemed — session issued');
+                return new Response(null, { status: 302, headers: reply });
             }
             /*
             A VALID SESSION TRUMPS A STALE LINK.
@@ -2223,7 +2256,43 @@ export async function devServer(config, opts = {}) {
             const share = params.get('share') === '1';
             const rawTtl = Number(params.get('ttl'));
             const ttlMinutes = Number.isFinite(rawTtl) && rawTtl > 0 ? rawTtl : undefined;
-            return new Response(JSON.stringify({ url: printLink({ share, ttlMinutes }) }), {
+            /*
+            `global=edit|view&domain=<preview domain>`: a link that also hands over that global key.
+            Refused, saying why, when this server would not honour the key or the domain is not one
+            the workspace sits under, so the bin never prints a link that opens less than it says.
+            */
+            const global = params.get('global');
+            let grant;
+            if (global !== null) {
+                const workspaceHost = (() => {
+                    try {
+                        return new URL(config.preview?.tunnel?.url ?? '').hostname;
+                    }
+                    catch {
+                        return '';
+                    }
+                })();
+                const domain = grantDomainFor(params.get('domain'), workspaceHost);
+                const key = global === 'edit' || global === 'view' ? global : null;
+                const problem = !key
+                    ? `global must be edit or view`
+                    : !domain
+                        ? `${params.get('domain')} is not a domain ${workspaceHost || 'this workspace'} is under`
+                        : !globalKeyCookie({ key, domain }, globalKeys.keys)
+                            ? `this server does not accept the global ${key} key (see its launch warnings, or tunnel.globalKeys)`
+                            : null;
+                if (problem) {
+                    return new Response(JSON.stringify({ error: problem }), {
+                        status: 400,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-store',
+                        },
+                    });
+                }
+                grant = { key: key, domain: domain };
+            }
+            return new Response(JSON.stringify({ url: printLink({ share, ttlMinutes, grant }) }), {
                 headers: {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-store',

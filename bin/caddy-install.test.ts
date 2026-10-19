@@ -519,3 +519,17 @@ test('a key link redirects only to a host under the preview domain', () => {
   expect(shipped.match(/redir \* \{tosi_link_target\} 302/g)?.length).toBe(2)
   expect(shipped).not.toContain('redir * / 302')
 })
+
+test('the access logs never record a link credential', () => {
+  // `t` carries a global key or a single-use code, `token` a link code. Caddy keeps cookies
+  // out of its log already; the box's log held keys from every `?t=` visit until 1.16.28.
+  const shipped = readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
+  const logs = shipped.match(/\n\tlog \{[\s\S]*?\n\t\}/g) ?? []
+  expect(logs.length).toBe(2)
+  for (const log of logs) {
+    expect(log).toContain('format filter {')
+    expect(log).toMatch(
+      /request>uri query \{\s*replace t REDACTED\s*replace token REDACTED\s*\}/
+    )
+  }
+})

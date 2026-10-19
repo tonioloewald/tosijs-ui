@@ -104,6 +104,24 @@ export interface AuthState {
      * asked of it is the same either way: "may whoever holds this write?"
      */
     readOnly: Set<string>;
+    /**
+     * Link tokens that also hand over a global key (see {@link GlobalGrant}). Such a link is
+     * spent on first use, whatever `linkPolicy` says: it gives the browser a key that outlives
+     * this server.
+     */
+    grants: Map<string, GlobalGrant>;
+    /** Sessions minted from a granting link, until the redirect that sets the key takes them. */
+    sessionGrants: Map<string, GlobalGrant>;
+}
+/**
+ * What a single-use link hands over besides a session here: the box's global `key`, as a
+ * cookie across `domain`, so this browser opens every workspace (and the box's root list)
+ * without another link. The link carries a one-use code; the key itself never appears in a
+ * URL, a terminal or a log.
+ */
+export interface GlobalGrant {
+    key: 'edit' | 'view';
+    domain: string;
 }
 export declare function createAuthState(): AuthState;
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
@@ -119,6 +137,7 @@ export declare function prune(state: AuthState, now: number): void;
  */
 export declare function issueLink(state: AuthState, now: number, ttlMs?: number, opts?: {
     readOnly?: boolean;
+    grant?: GlobalGrant;
 }): string;
 /**
  * Read the link settings off a site config, with the defaults applied.
@@ -156,6 +175,23 @@ export declare function resolveShareTtlMs(tunnel?: {
  * the set before the lookup. Widening reuse must not widen lifetime.
  */
 export declare function redeemLink(state: AuthState, token: string, now: number, policy?: LinkPolicy): string | null;
+/** The global key a just-redeemed link hands over with `session`, once. */
+export declare function takeSessionGrant(state: AuthState, session: string): GlobalGrant | undefined;
+/** How long a browser keeps a global key it was given by a link: 30 days. */
+export declare const GLOBAL_KEY_COOKIE_MAX_AGE_S: number;
+/**
+ * The cookie that gives this browser the box's global key across the preview domain, the same
+ * one Caddy sets for `?t=<key>`, so the box's root and every workspace holding the key accept
+ * it. `null` when this server does not hold that key, or would not honour it: a link must not
+ * hand over a key that opens less than it claims.
+ */
+export declare function globalKeyCookie(grant: GlobalGrant, keys: GlobalKeys): string | null;
+/**
+ * The preview domain a granting link may set its cookie on: a plain hostname that the
+ * workspace's own host sits under. Anything else would set a cookie this browser drops (a
+ * domain the host is not under), or one far wider than the preview host (`net`).
+ */
+export declare function grantDomainFor(domain: string | null | undefined, workspaceHost: string): string | null;
 /** Mint a session token directly: what a redeemed link or a global key turns into. */
 export declare function issueSession(state: AuthState, now: number, ttlMs: number, readOnly: boolean): string;
 export declare const REDEEM_MIN_MS = 100;
@@ -413,19 +449,6 @@ export declare function resolveGlobalKeys(setting: unknown, secrets: {
 }): {
     keys: GlobalKeys;
     problems: string[];
-};
-/**
- * The links `tosijs-tunnel` prints for this workspace: each sets its key's cookie across the
- * preview domain at the domain's root (`https://<domain>/?t=<key>`), and `&to=<label>` sends
- * the browser on to `<label>.<domain>`, where the key becomes a session. One link, passed to a
- * person or another device, opens this workspace and every other one the key opens.
- *
- * Only links that do something here: none for a host outside `domain`, no edit link where
- * the edit key opens read-only (`globalKeys: 'view'`), and only the keys `keys` accepted.
- */
-export declare function globalKeyLinks(hostname: string, domain: string, keys: GlobalKeys): {
-    edit?: string;
-    view?: string;
 };
 /** What the global-key cookies on a request grant: the edit key wins over the view key. */
 export declare function globalKeyAccess(cookieHeader: string | null | undefined, keys: GlobalKeys): 'edit' | 'view' | null;

@@ -1096,7 +1096,7 @@ machine-wide keys:
 
 `PREVIEW_TOKEN` is the static previews' invite secret you already have; the edit key is new
 and optional. Put both in `/etc/caddy/preview.env` on the box (and re-run
-`tosijs-caddy-install`), and the same values in `~/local-secrets/tosijs-preview.env` on each
+`tosijs-caddy-install`, as after every tosijs-ui upgrade, so the box runs the current template), and the same values in `~/local-secrets/tosijs-preview.env` on each
 machine that runs a dev server (or in its environment):
 
 ```bash
@@ -1104,21 +1104,32 @@ PREVIEW_TOKEN=<the view key>
 PREVIEW_EDIT_TOKEN=<the edit key>
 ```
 
-`tosijs-tunnel` then prints the links to pass on, one per key this workspace accepts:
+`tosijs-tunnel` then prints a **single-use link** for each key, which carries a one-use code,
+never the key:
 
 ```
-   Pass on (sets the key across the preview domain, then opens this workspace;
-   the root page lists every workspace the key opens):
-   edit: https://dev.example.com/?t=<edit key>&to=ui.edit
-   view: https://dev.example.com/?t=<view key>&to=ui.edit  (read-only)
+   Single-use links: each opens this workspace, then keeps that browser in every
+   workspace on the box (and its root list) for 30 days:
+   edit: https://ui.edit.dev.example.com/?t=kfmrpwq
+   view: https://ui.edit.dev.example.com/?t=hdtxbne  (read-only)
 ```
 
-Opening one sets the key's cookie across the whole preview domain (the edit key's lasts 24
-hours, the view key's 30 days) and sends the browser on to the workspace, which sees the cookie,
-starts a session of the matching kind, and you are in. `to` takes DNS labels only and always
-lands under the preview domain, so the link cannot redirect anywhere else. The tunnel reads the
-domain from `PREVIEW_DOMAIN` in the box's `/etc/caddy/preview.env`; when it cannot, it says why
-instead of printing a link.
+Opening one starts a session in this workspace and gives that browser the key, as an
+`HttpOnly`, `Secure` cookie across the preview domain that lasts 30 days. From then on that
+browser opens every workspace holding the key, and the box's root list, without another link,
+across dev-server restarts. The code is spent by the first browser that uses it; the edit link
+expires with the usual link window, the view link after a day (`--share-ttl` changes it), since
+a person opens it when they get to it. `tosijs-tunnel --link` prints a fresh edit one, and
+`--link --share` a fresh view one.
+
+The tunnel offers a link only when it means what it says: the workspace accepts that key, and
+the box holds the same one. It reads the box's `PREVIEW_DOMAIN` and a sha256 of each key over
+ssh (the keys stay on the box), and when it cannot offer a link it prints why, such as a key
+that differs between this machine and the box.
+
+You can also set the cookie by hand at any preview host with `?t=<key>`; add `&to=<label>` to
+be sent on to `<label>.<preview domain>`. `to` takes DNS labels only, so it cannot redirect
+anywhere else. The single-use link is the better habit: it never puts the key in a URL.
 
 With the cookie set, the box's root, `https://dev.example.com/`, is where you pick a workspace:
 it lists every registered one and asks each what your key opens there (`edit`, `view`, or
@@ -1127,17 +1138,16 @@ it is not answering. After a dev-server restart you simply reload; the cookie is
 a fresh session is issued. A session started from the view key can browse and never save, never
 drive the page with an agent.
 
-**Use long keys.** The box compares them with no rate limit in front, unlike the eight-letter
-codes above, so both must be at least 24 letters, digits, `-` or `_`; the installer refuses a
-shorter edit key, and the dev server ignores a short key and says so at launch. The two must
-differ. For a headset, where typing 24 characters is the problem, the eight-letter `--link`
-code still works.
+**Use long keys.** The box compares them with no rate limit in front, unlike the link codes,
+so both must be at least 24 letters, digits, `-` or `_`; the installer refuses a shorter edit
+key, and the dev server ignores a short key and says so at launch. The two must differ.
 
 **What it costs.** The cookie holds the key itself: Caddy can compare a fixed value and cannot
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
-you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
-matters, because a session a key already opened lasts 24 hours and is not re-checked against
-the key; sessions live in memory, so a restart ends them all.
+you rotate it: edit both files, re-run the installer, and restart the dev servers. A browser
+that already holds the old key loses access the moment the box stops accepting it; a session a
+key already opened lasts up to 24 hours and is not re-checked against the key, and sessions
+live in memory, so the restart ends them all.
 
 **The view key is your preview invite.** Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,
@@ -1153,9 +1163,10 @@ unless they come from the workspace's own origin (sibling hosts are the same *si
 and neither edit it; `false` makes it ignore both keys, so only its own `--link` opens it. Any
 other value accepts neither key and says so at launch.
 
-**Not logged, ideally.** Visiting `?t=<key>` puts the key in the request line, which Caddy's
-access log records (`/var/log/caddy/preview.log`). Keep that log readable by root only, or
-rotate the key after a log has left the box.
+**Not logged.** The shipped Caddyfile redacts `t` and `token` from the URIs in its access log
+(`/var/log/caddy/preview.log`), and Caddy keeps cookies out of it. Versions before 1.16.28
+logged them: if you ever visited `?t=<key>` on such a box, scrub or delete the old logs
+(`preview*.log*`), or rotate the key.
 
 #### The token is eight letters, and you can type it
 

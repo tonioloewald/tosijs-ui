@@ -1,10 +1,18 @@
-import { test, expect, beforeEach, afterEach, describe } from 'bun:test'
 import {
-  previewDomainOn,
+  test,
+  expect,
+  beforeEach,
+  afterEach,
+  afterAll,
+  describe,
+} from 'bun:test'
+import {
+  planGlobalLinks,
+  previewBoxKeys,
   readLocalSecret,
   resolvePreviewHost,
 } from './resolve-site-config'
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'fs'
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 
@@ -142,19 +150,20 @@ test('surrounding whitespace is trimmed, not preserved into an ssh target', () =
   expect(resolvePreviewHost('  deploy@box  ', undefined)).toBe('deploy@box')
 })
 
-describe('previewDomainOn', () => {
+describe('what the box says about its keys', () => {
   /*
-  The tunnel's pass-on links are built on the box's own PREVIEW_DOMAIN, which only the box
-  knows; a guessed domain would set a cookie nothing reads. A fake `ssh` runs the command
-  against a sandboxed preview.env.
+  The tunnel's single-use links hand the browser this machine's key as a cookie across the
+  box's domain, so the box's PREVIEW_DOMAIN and the keys it holds decide whether a link means
+  what it says. A fake `ssh` runs the real remote script against a sandboxed preview.env.
   */
-  const sandbox = mkdtempSync(path.join(tmpdir(), 'preview-domain-'))
+  const sandbox = mkdtempSync(path.join(tmpdir(), 'preview-box-'))
   const bin = path.join(sandbox, 'bin')
   mkdirSync(bin)
   writeFileSync(
     path.join(bin, 'ssh'),
-    // As real ssh does: join the words with spaces and hand them to a shell.
-    `#!/bin/sh\nshift\nexec sh -c "$(echo "$*" | sed "s|/etc/caddy|${sandbox}|g")"\n`
+    // As real ssh does: join the words with spaces and hand them to a shell, in a fresh
+    // environment (the caller's exported keys must not stand in for the box's).
+    `#!/bin/sh\nshift\nexec env -i PATH="$PATH" sh -c "$(printf '%s' "$*" | sed "s|/etc/caddy|${sandbox}|g")"\n`
   )
   chmodSync(path.join(bin, 'ssh'), 0o755)
   const PATH = process.env.PATH
@@ -164,22 +173,100 @@ describe('previewDomainOn', () => {
   afterEach(() => {
     process.env.PATH = PATH
   })
+  afterAll(() => rmSync(sandbox, { recursive: true, force: true }))
   const env = (text: string) =>
     writeFileSync(path.join(sandbox, 'preview.env'), text)
+  const sha = (text: string) =>
+    new Bun.CryptoHasher('sha256').update(text).digest('hex')
 
-  test('reads the domain, quoted or not', async () => {
-    env('PREVIEW_TOKEN=x\nPREVIEW_DOMAIN=dev.example.test\n')
-    expect(await previewDomainOn('me@box')).toEqual({
+  const EDIT = 'edit_key_edit_key_edit_key_1'
+  const VIEW = 'view_key_view_key_view_key_1'
+
+  test('reads the domain and fingerprints the keys, never the keys', async () => {
+    // Sourced, as the installer reads it: quotes, `export` and comments all agree.
+    env(
+      `# box\nexport PREVIEW_DOMAIN='dev.example.test'\nPREVIEW_EDIT_TOKEN=${EDIT}\nPREVIEW_TOKEN="${VIEW}"\n`
+    )
+    const box = await previewBoxKeys('me@box')
+    expect(box).toEqual({
       domain: 'dev.example.test',
+      editSha: sha(EDIT),
+      viewSha: sha(VIEW),
     })
-    env("PREVIEW_DOMAIN='dev.example.test'\n")
-    expect((await previewDomainOn('me@box')).domain).toBe('dev.example.test')
+    expect(JSON.stringify(box)).not.toContain(EDIT)
   })
 
-  test('says why when there is none', async () => {
-    env('PREVIEW_TOKEN=x\n')
-    expect(await previewDomainOn('me@box')).toEqual({
+  test('a key the box does not hold reads as empty', async () => {
+    env(`PREVIEW_DOMAIN=dev.example.test\nPREVIEW_TOKEN=${VIEW}\n`)
+    expect(await previewBoxKeys('me@box')).toEqual({
+      domain: 'dev.example.test',
+      editSha: '',
+      viewSha: sha(VIEW),
+    })
+  })
+
+  test('says why when there is no domain', async () => {
+    env(`PREVIEW_TOKEN=${VIEW}\n`)
+    expect(await previewBoxKeys('me@box')).toEqual({
       problem: '/etc/caddy/preview.env on me@box sets no PREVIEW_DOMAIN',
+    })
+  })
+
+  describe('planGlobalLinks', () => {
+    const keys = { edit: EDIT, view: VIEW, editGrants: 'edit' as const }
+    const box = {
+      domain: 'dev.example.test',
+      editSha: sha(EDIT),
+      viewSha: sha(VIEW),
+    }
+
+    test('offers a link for each key this workspace and the box share', () => {
+      expect(planGlobalLinks({ keys, problems: [] }, box)).toEqual({
+        kinds: ['edit', 'view'],
+        domain: 'dev.example.test',
+        notes: [],
+      })
+    })
+
+    test('no edit link where the edit key opens read-only', () => {
+      expect(
+        planGlobalLinks(
+          { keys: { ...keys, editGrants: 'view' }, problems: [] },
+          box
+        ).kinds
+      ).toEqual(['view'])
+    })
+
+    test("a key that is not the box's gets no link, and says so", () => {
+      // Its cookie would open this workspace and not the box's root or any other one.
+      const plan = planGlobalLinks(
+        { keys, problems: [] },
+        { ...box, editSha: sha('rotated') }
+      )
+      expect(plan.kinds).toEqual(['view'])
+      expect(plan.notes).toEqual([
+        "PREVIEW_EDIT_TOKEN here is not the box's, so no edit link: put the same value in both files",
+      ])
+      expect(
+        planGlobalLinks({ keys, problems: [] }, { ...box, viewSha: '' }).notes
+      ).toEqual([
+        'the box has no PREVIEW_TOKEN, so no view link: add it to /etc/caddy/preview.env and re-run tosijs-caddy-install',
+      ])
+    })
+
+    test("passes on the dev server's own reasons, and the box's", () => {
+      expect(
+        planGlobalLinks(
+          { keys: {}, problems: ['PREVIEW_TOKEN is too short'] },
+          box
+        )
+      ).toEqual({ kinds: [], notes: ['PREVIEW_TOKEN is too short'] })
+      expect(
+        planGlobalLinks({ keys: {}, problems: [] }, box).notes[0]
+      ).toContain('no global key on this machine')
+      expect(
+        planGlobalLinks({ keys, problems: [] }, { problem: 'no domain' })
+      ).toEqual({ kinds: [], notes: ['no domain'] })
     })
   })
 })

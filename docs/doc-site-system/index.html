@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b325b199ba93" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=3ccf038442f7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1315,39 +1315,47 @@ machine-wide keys:</p>
 </tbody></table>
 <p><code>PREVIEW_TOKEN</code> is the static previews&#39; invite secret you already have; the edit key is new
 and optional. Put both in <code>/etc/caddy/preview.env</code> on the box (and re-run
-<code>tosijs-caddy-install</code>), and the same values in <code>~/local-secrets/tosijs-preview.env</code> on each
+<code>tosijs-caddy-install</code>, as after every tosijs-ui upgrade, so the box runs the current template), and the same values in <code>~/local-secrets/tosijs-preview.env</code> on each
 machine that runs a dev server (or in its environment):</p>
 <pre><code class="language-bash" data-highlighted><span class="token assign-left variable">PREVIEW_TOKEN</span><span class="token operator">=</span><span class="token operator">&lt;</span>the view key<span class="token operator">></span>
 <span class="token assign-left variable">PREVIEW_EDIT_TOKEN</span><span class="token operator">=</span><span class="token operator">&lt;</span>the edit key<span class="token operator">></span>
 </code></pre>
-<p><code>tosijs-tunnel</code> then prints the links to pass on, one per key this workspace accepts:</p>
-<pre><code>   Pass on (sets the key across the preview domain, then opens this workspace;
-   the root page lists every workspace the key opens):
-   edit: https://dev.example.com/?t=&lt;edit key&gt;&amp;to=ui.edit
-   view: https://dev.example.com/?t=&lt;view key&gt;&amp;to=ui.edit  (read-only)
+<p><code>tosijs-tunnel</code> then prints a <strong>single-use link</strong> for each key, which carries a one-use code,
+never the key:</p>
+<pre><code>   Single-use links: each opens this workspace, then keeps that browser in every
+   workspace on the box (and its root list) for 30 days:
+   edit: https://ui.edit.dev.example.com/?t=kfmrpwq
+   view: https://ui.edit.dev.example.com/?t=hdtxbne  (read-only)
 </code></pre>
-<p>Opening one sets the key&#39;s cookie across the whole preview domain (the edit key&#39;s lasts 24
-hours, the view key&#39;s 30 days) and sends the browser on to the workspace, which sees the cookie,
-starts a session of the matching kind, and you are in. <code>to</code> takes DNS labels only and always
-lands under the preview domain, so the link cannot redirect anywhere else. The tunnel reads the
-domain from <code>PREVIEW_DOMAIN</code> in the box&#39;s <code>/etc/caddy/preview.env</code>; when it cannot, it says why
-instead of printing a link.</p>
+<p>Opening one starts a session in this workspace and gives that browser the key, as an
+<code>HttpOnly</code>, <code>Secure</code> cookie across the preview domain that lasts 30 days. From then on that
+browser opens every workspace holding the key, and the box&#39;s root list, without another link,
+across dev-server restarts. The code is spent by the first browser that uses it; the edit link
+expires with the usual link window, the view link after a day (<code>--share-ttl</code> changes it), since
+a person opens it when they get to it. <code>tosijs-tunnel --link</code> prints a fresh edit one, and
+<code>--link --share</code> a fresh view one.</p>
+<p>The tunnel offers a link only when it means what it says: the workspace accepts that key, and
+the box holds the same one. It reads the box&#39;s <code>PREVIEW_DOMAIN</code> and a sha256 of each key over
+ssh (the keys stay on the box), and when it cannot offer a link it prints why, such as a key
+that differs between this machine and the box.</p>
+<p>You can also set the cookie by hand at any preview host with <code>?t=&lt;key&gt;</code>; add <code>&amp;to=&lt;label&gt;</code> to
+be sent on to <code>&lt;label&gt;.&lt;preview domain&gt;</code>. <code>to</code> takes DNS labels only, so it cannot redirect
+anywhere else. The single-use link is the better habit: it never puts the key in a URL.</p>
 <p>With the cookie set, the box&#39;s root, <code>https://dev.example.com/</code>, is where you pick a workspace:
 it lists every registered one and asks each what your key opens there (<code>edit</code>, <code>view</code>, or
 nothing), and a workspace that is offline, or whose dev server predates tosijs-ui 1.16.26, says
 it is not answering. After a dev-server restart you simply reload; the cookie is still there and
 a fresh session is issued. A session started from the view key can browse and never save, never
 drive the page with an agent.</p>
-<p><strong>Use long keys.</strong> The box compares them with no rate limit in front, unlike the eight-letter
-codes above, so both must be at least 24 letters, digits, <code>-</code> or <code>_</code>; the installer refuses a
-shorter edit key, and the dev server ignores a short key and says so at launch. The two must
-differ. For a headset, where typing 24 characters is the problem, the eight-letter <code>--link</code>
-code still works.</p>
+<p><strong>Use long keys.</strong> The box compares them with no rate limit in front, unlike the link codes,
+so both must be at least 24 letters, digits, <code>-</code> or <code>_</code>; the installer refuses a shorter edit
+key, and the dev server ignores a short key and says so at launch. The two must differ.</p>
 <p><strong>What it costs.</strong> The cookie holds the key itself: Caddy can compare a fixed value and cannot
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
-you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
-matters, because a session a key already opened lasts 24 hours and is not re-checked against
-the key; sessions live in memory, so a restart ends them all.</p>
+you rotate it: edit both files, re-run the installer, and restart the dev servers. A browser
+that already holds the old key loses access the moment the box stops accepting it; a session a
+key already opened lasts up to 24 hours and is not re-checked against the key, and sessions
+live in memory, so the restart ends them all.</p>
 <p><strong>The view key is your preview invite.</strong> Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,
 <code>requireToken</code> or not. That is what &quot;global view&quot; means here; if some of those people should
@@ -1360,9 +1368,10 @@ unless they come from the workspace&#39;s own origin (sibling hosts are the same
 <p><strong>Per project.</strong> <code>tunnel.globalKeys: &#39;view&#39;</code> lets either key browse a workspace from the list
 and neither edit it; <code>false</code> makes it ignore both keys, so only its own <code>--link</code> opens it. Any
 other value accepts neither key and says so at launch.</p>
-<p><strong>Not logged, ideally.</strong> Visiting <code>?t=&lt;key&gt;</code> puts the key in the request line, which Caddy&#39;s
-access log records (<code>/var/log/caddy/preview.log</code>). Keep that log readable by root only, or
-rotate the key after a log has left the box.</p>
+<p><strong>Not logged.</strong> The shipped Caddyfile redacts <code>t</code> and <code>token</code> from the URIs in its access log
+(<code>/var/log/caddy/preview.log</code>), and Caddy keeps cookies out of it. Versions before 1.16.28
+logged them: if you ever visited <code>?t=&lt;key&gt;</code> on such a box, scrub or delete the old logs
+(<code>preview*.log*</code>), or rotate the key.</p>
 <h4 id="the-token-is-eight-letters-and-you-can-type-it">The token is eight letters, and you can type it</h4>
 <p><code>--link</code> prints the URL <strong>and the code on its own line</strong>, because on the device this exists
 for you are not pasting anything — you are reading characters off one screen and entering

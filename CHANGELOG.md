@@ -4,27 +4,36 @@
 
 ### Tunnel
 
-- **`tosijs-tunnel` prints the link to pass on.** Once the route is registered, it prints one
-  link per global key the workspace accepts, such as
-  `https://dev.tosijs.net/?t=<key>&to=ui.edit`. Opening it sets the key's cookie across the
-  preview domain and lands straight in the workspace, so one link from the terminal opens this
-  workspace on another device, and every other workspace the key opens. The view link is
-  read-only. The domain comes from `PREVIEW_DOMAIN` on the box; when the tunnel cannot read it,
-  or holds no key, it says so. **Re-run `tosijs-caddy-install`**: the redirect is in the Caddy
-  template.
+- **`tosijs-tunnel` prints a single-use link that keeps you signed in.** Once the route is
+  registered, it prints one link per global key, such as
+  `https://ui.edit.dev.tosijs.net/?t=kfmrpwq`. The link carries a one-use code, never the key.
+  Opening it starts a session in that workspace and gives the browser the box's key as a
+  cookie across the preview domain for 30 days. From then on that browser opens every
+  workspace holding the key, and the box's root list, without another link, across dev-server
+  restarts. The edit link expires with the usual link window; the view link is read-only and
+  lasts a day (`--share-ttl`). `--link` and `--link --share` print fresh ones.
+- **It only offers a link that means what it says.** It reads the box's `PREVIEW_DOMAIN` and a
+  sha256 of each key over ssh (the keys stay on the box). It prints no link for a key this
+  workspace refuses or the box does not share, and says why instead.
 - **The box's root page lists every workspace** and says what your key opens in each: `edit`,
   `view`, or nothing. A workspace that is offline, or whose dev server is on a tosijs-ui before
   1.16.26, shows as not answering. In 1.16.26 those rows were hidden, so a workspace on an
   older tosijs-ui vanished from the page meant for picking one. Workspaces are now listed above
   the deployed builds.
+- **`?t=<key>` on any preview host takes `&to=<label>`** and sends you on to
+  `<label>.<preview domain>`, and the edit key's cookie lasts 30 days there too, as the view
+  key's always has.
 
 ### Security
 
-- **The key links redirect, but only under the preview domain.** The Caddy template's key links
-  take `&to=<label>` and redirect to `<label>.<preview domain>`. The label must be DNS labels
-  (lowercase letters, digits, `-`, separated by `.`); anything else, including a path, a second
-  `to`, or encoded line breaks, falls back to `/`. So a key link cannot be used to send someone
-  off-site. Checked against Caddy 2.6.2 and 2.11.7.
+- **The box's access log recorded every link credential** (affected: 1.9.0 to 1.16.27). Caddy
+  logs the request URI, so each `?t=<key>` visit wrote that key, and each link redemption its
+  code, to `/var/log/caddy/preview.log`. The template now redacts `t` and `token` there.
+  **Re-run `tosijs-caddy-install`, then scrub the old logs** (`/var/log/caddy/preview*.log*`) **or
+  rotate your keys.** Caddy already kept cookies out of the log.
+- **The `to` redirect stays under the preview domain.** `to` must be DNS labels (lowercase
+  letters, digits, `-`, separated by `.`); anything else, including a path, a second `to` or
+  encoded line breaks, falls back to `/`. Checked against Caddy 2.6.2 and 2.11.7.
 
 ## 1.16.27
 
