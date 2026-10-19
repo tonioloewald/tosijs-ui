@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3ccf038442f7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=007b012d7132" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1324,16 +1324,18 @@ machine that runs a dev server (or in its environment):</p>
 never the key:</p>
 <pre><code>   Single-use links: each opens this workspace, then keeps that browser in every
    workspace on the box (and its root list) for 30 days:
-   edit: https://ui.edit.dev.example.com/?t=kfmrpwq
-   view: https://ui.edit.dev.example.com/?t=hdtxbne  (read-only)
+   edit: https://ui.edit.dev.example.com/?t=KFMRPWQT
+   view: https://ui.edit.dev.example.com/?t=HDTXBNEJ  (read-only)
 </code></pre>
 <p>Opening one starts a session in this workspace and gives that browser the key, as an
 <code>HttpOnly</code>, <code>Secure</code> cookie across the preview domain that lasts 30 days. From then on that
 browser opens every workspace holding the key, and the box&#39;s root list, without another link,
 across dev-server restarts. The code is spent by the first browser that uses it; the edit link
-expires with the usual link window, the view link after a day (<code>--share-ttl</code> changes it), since
-a person opens it when they get to it. <code>tosijs-tunnel --link</code> prints a fresh edit one, and
-<code>--link --share</code> a fresh view one.</p>
+expires with the usual link window (5 minutes, <code>tunnel.linkTtlMinutes</code>), the view link after a
+day (<code>--share-ttl</code> changes it), since a person opens it when they get to it.
+<code>tosijs-tunnel --link --global</code> prints a fresh edit one, and <code>--link --global --share</code> a fresh
+view one. Plain <code>--link</code> and <code>--link --share</code> are unchanged: reusable for their window, and
+they open this workspace only.</p>
 <p>The tunnel offers a link only when it means what it says: the workspace accepts that key, and
 the box holds the same one. It reads the box&#39;s <code>PREVIEW_DOMAIN</code> and a sha256 of each key over
 ssh (the keys stay on the box), and when it cannot offer a link it prints why, such as a key
@@ -1352,10 +1354,10 @@ so both must be at least 24 letters, digits, <code>-</code> or <code>_</code>; t
 key, and the dev server ignores a short key and says so at launch. The two must differ.</p>
 <p><strong>What it costs.</strong> The cookie holds the key itself: Caddy can compare a fixed value and cannot
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
-you rotate it: edit both files, re-run the installer, and restart the dev servers. A browser
-that already holds the old key loses access the moment the box stops accepting it; a session a
-key already opened lasts up to 24 hours and is not re-checked against the key, and sessions
-live in memory, so the restart ends them all.</p>
+you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
+is what revokes: a running dev server keeps honouring the key it read at launch, and a session
+a key or a single-use link already opened is not re-checked against the key (an edit session
+lasts up to 30 days, a read-only one 7). Sessions live in memory, so the restart ends them all.</p>
 <p><strong>The view key is your preview invite.</strong> Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,
 <code>requireToken</code> or not. That is what &quot;global view&quot; means here; if some of those people should

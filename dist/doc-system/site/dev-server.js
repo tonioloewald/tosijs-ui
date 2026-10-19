@@ -22,7 +22,7 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
 import { readLocalSecret } from './local-secrets.js';
 import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
@@ -2243,7 +2243,14 @@ export async function devServer(config, opts = {}) {
         }
         if (reqPath === '/__devlink') {
             const peer = srv?.requestIP?.(request)?.address;
-            if (viaTunnel || !isLoopbackAddress(peer)) {
+            /*
+            Cross-site callers refused, as for /__build: every code minted here is a live credential
+            (a `global=` one carries the box's key), so a page in the developer's browser must not
+            be able to mint them in bulk with GETs. The bin uses curl, which sends no Origin.
+            */
+            if (viaTunnel ||
+                !isLoopbackAddress(peer) ||
+                !csrfOk(request, viaTunnel)) {
                 return new Response('not available', { status: 404 });
             }
             /*
@@ -2276,11 +2283,13 @@ export async function devServer(config, opts = {}) {
                 const key = global === 'edit' || global === 'view' ? global : null;
                 const problem = !key
                     ? `global must be edit or view`
-                    : !domain
-                        ? `${params.get('domain')} is not a domain ${workspaceHost || 'this workspace'} is under`
-                        : !globalKeyCookie({ key, domain }, globalKeys.keys)
-                            ? `this server does not accept the global ${key} key (see its launch warnings, or tunnel.globalKeys)`
-                            : null;
+                    : outstandingGrants(auth, Date.now()) >= MAX_OUTSTANDING_GRANTS
+                        ? `${MAX_OUTSTANDING_GRANTS} single-use global links are already outstanding; use one, or wait for them to expire`
+                        : !domain
+                            ? `${params.get('domain')} is not a domain ${workspaceHost || 'this workspace'} is under`
+                            : !globalKeyCookie({ key, domain }, globalKeys.keys)
+                                ? `this server does not accept the global ${key} key (see its launch warnings, or tunnel.globalKeys)`
+                                : null;
                 if (problem) {
                     return new Response(JSON.stringify({ error: problem }), {
                         status: 400,

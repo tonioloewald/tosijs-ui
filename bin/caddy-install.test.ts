@@ -533,3 +533,24 @@ test('the access logs never record a link credential', () => {
     )
   }
 })
+
+test("Caddy's key cookies are the ones a workspace's single-use link sets", async () => {
+  // Two writers of one cookie: `?t=<key>` here, and a redeemed granting link in the dev
+  // server. If they drift, a browser holds two cookies with one name and different scopes.
+  const { globalKeyCookie } = await import(
+    '../dist/doc-system/site/dev-auth.js'
+  )
+  const shipped = readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
+  const fromCaddy = (name: string, placeholder: string) =>
+    shipped
+      .match(new RegExp(`Set-Cookie "(${name}=[^"]*)"`))![1]
+      .replace(placeholder, 'KEY')
+      .replace('{{PREVIEW_DOMAIN}}', 'dev.example.com')
+  const keys = { edit: 'KEY', view: 'KEY', editGrants: 'edit' as const }
+  expect(
+    globalKeyCookie({ key: 'edit', domain: 'dev.example.com' }, keys)
+  ).toBe(fromCaddy('tosi_edit', '__PREVIEW_EDIT_TOKEN__'))
+  expect(
+    globalKeyCookie({ key: 'view', domain: 'dev.example.com' }, keys)
+  ).toBe(fromCaddy('tosi_preview', '__PREVIEW_TOKEN__'))
+})

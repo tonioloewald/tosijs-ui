@@ -257,20 +257,24 @@ test('the box root may ask what the reader can do here, and no one else may', as
 })
 
 /** Ask the dev server for a link, as `tosijs-tunnel` does: loopback, the main listener. */
-const devlink = (query: string) =>
+const devlink = (query: string, headers: Record<string, string> = {}) =>
   new Promise<{ status: number; body: any }>((resolve, reject) => {
     const req = httpsRequest(
       {
         host: '127.0.0.1',
         port,
         path: `/__devlink${query}`,
+        headers,
         rejectUnauthorized: false,
       },
       (res) => {
         let body = ''
         res.on('data', (c) => (body += c))
         res.on('end', () =>
-          resolve({ status: res.statusCode!, body: JSON.parse(body) })
+          resolve({
+            status: res.statusCode!,
+            body: body.startsWith('{') ? JSON.parse(body) : body,
+          })
         )
       }
     )
@@ -324,4 +328,33 @@ test('no granting link for a domain the workspace is not under', async () => {
   expect((await devlink('?global=admin&domain=dev.example.test')).status).toBe(
     400
   )
+})
+
+test('a page in the browser cannot mint links', async () => {
+  // Every code is a live credential, and a granting one carries the box's key.
+  for (const headers of [
+    { 'sec-fetch-site': 'cross-site' },
+    { origin: 'https://evil.example' },
+  ]) {
+    expect(
+      (await devlink('?global=view&domain=dev.example.test', headers)).status
+    ).toBe(404)
+    expect((await devlink('', headers)).status).toBe(404)
+  }
+})
+
+test('outstanding single-use global links are capped', async () => {
+  let minted = 0
+  for (; minted < 40; minted++) {
+    const { status, body } = await devlink(
+      '?global=view&domain=dev.example.test'
+    )
+    if (status !== 200) {
+      expect(status).toBe(400)
+      expect(body.error).toContain('already outstanding')
+      break
+    }
+  }
+  expect(minted).toBeLessThanOrEqual(32)
+  expect(minted).toBeGreaterThan(25)
 })

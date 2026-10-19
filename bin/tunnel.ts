@@ -49,7 +49,7 @@ import {
 const { has, flag } = parseArgv(process.argv.slice(2), {
   bin: 'tosijs-tunnel',
   summary: 'expose the local dev server through the preview host',
-  flags: ['close', 'link', 'status', 'share'],
+  flags: ['close', 'link', 'status', 'share', 'global'],
   values: ['host', 'port', 'local-port', 'remote-port', 'url', 'share-ttl'],
   usage:
     `  tosijs-tunnel                        open the tunnel (foreground)\n` +
@@ -57,6 +57,8 @@ const { has, flag } = parseArgv(process.argv.slice(2), {
     `  --close                              close a running tunnel\n` +
     `  --link                               print a magic edit link\n` +
     `  --link --share                       print a READ-ONLY link to send to a person\n` +
+    `  --link --global [--share]            a SINGLE-USE link that also gives that browser the\n` +
+    `                                       box's key for 30 days (every workspace, the root list)\n` +
     `  --share-ttl=<minutes>                how long that share link lives (default 1440)\n` +
     `  --host=user@box                      override the configured preview host\n` +
     `  --port= --local-port= --remote-port= override the resolved ports`,
@@ -236,14 +238,22 @@ if (has('link')) {
   const shareTtl = flag('share-ttl')
   const ttl = shareTtl ? `&ttl=${encodeURIComponent(shareTtl)}` : ''
   /*
-  A link that also hands over the global key when it can (see globalLinks), so the browser
-  that opens it stays signed in across restarts and workspaces; this workspace's own link
-  otherwise, saying why.
+  `--global` asks for a link that also hands over the box's key (see globalLinks): single-use,
+  and the browser keeps every workspace for 30 days. Opt-in, because it is a different promise
+  from the two links above, which are reusable for their window and open this workspace only.
+  A share link spent by a chat app's link preview, or one that opens every workspace, would
+  break the promise `--share` makes to the person you send it to.
   */
-  const global = await globalLinks([share ? 'view' : 'edit'], ttl)
-  for (const note of global.notes) console.log(`note: ${note}`)
-  let url = global.links[0]?.url ?? ''
-  if (!url) {
+  let url: string
+  if (has('global')) {
+    const global = await globalLinks([share ? 'view' : 'edit'], ttl)
+    for (const note of global.notes) console.log(`note: ${note}`)
+    url = global.links[0]?.url ?? ''
+    if (!url) {
+      console.error('\nNo single-use global link (see the note above).\n')
+      process.exit(1)
+    }
+  } else {
     url = (await askForLink(share ? `?share=1${ttl}` : '')).url ?? ''
   }
   if (!url) {
@@ -267,7 +277,15 @@ if (has('link')) {
   */
   const code = new URL(url).searchParams.get('t')
   console.log(
-    `\n🔗 ${share ? 'Share link (READ ONLY)' : 'Edit link'}:\n   ${url}\n` +
+    `\n🔗 ${
+      has('global')
+        ? `Single-use ${
+            share ? 'READ-ONLY ' : ''
+          }link (that browser keeps every workspace for 30 days)`
+        : share
+        ? 'Share link (READ ONLY)'
+        : 'Edit link'
+    }:\n   ${url}\n` +
       (code ? `\n   code:  ${code}   (case-insensitive)\n` : '')
   )
 

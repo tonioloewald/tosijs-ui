@@ -175,6 +175,13 @@ export declare function resolveShareTtlMs(tunnel?: {
  * the set before the lookup. Widening reuse must not widen lifetime.
  */
 export declare function redeemLink(state: AuthState, token: string, now: number, policy?: LinkPolicy): string | null;
+/**
+ * How many unspent granting links may exist at once. Each is a live code that, guessed, hands
+ * over the box's key; a bound keeps the guessing odds where a handful of real links put them.
+ */
+export declare const MAX_OUTSTANDING_GRANTS = 32;
+/** Unspent, unexpired granting links. */
+export declare function outstandingGrants(state: AuthState, now: number): number;
 /** The global key a just-redeemed link hands over with `session`, once. */
 export declare function takeSessionGrant(state: AuthState, session: string): GlobalGrant | undefined;
 /** How long a browser keeps a global key it was given by a link: 30 days. */

@@ -1110,17 +1110,19 @@ never the key:
 ```
    Single-use links: each opens this workspace, then keeps that browser in every
    workspace on the box (and its root list) for 30 days:
-   edit: https://ui.edit.dev.example.com/?t=kfmrpwq
-   view: https://ui.edit.dev.example.com/?t=hdtxbne  (read-only)
+   edit: https://ui.edit.dev.example.com/?t=KFMRPWQT
+   view: https://ui.edit.dev.example.com/?t=HDTXBNEJ  (read-only)
 ```
 
 Opening one starts a session in this workspace and gives that browser the key, as an
 `HttpOnly`, `Secure` cookie across the preview domain that lasts 30 days. From then on that
 browser opens every workspace holding the key, and the box's root list, without another link,
 across dev-server restarts. The code is spent by the first browser that uses it; the edit link
-expires with the usual link window, the view link after a day (`--share-ttl` changes it), since
-a person opens it when they get to it. `tosijs-tunnel --link` prints a fresh edit one, and
-`--link --share` a fresh view one.
+expires with the usual link window (5 minutes, `tunnel.linkTtlMinutes`), the view link after a
+day (`--share-ttl` changes it), since a person opens it when they get to it.
+`tosijs-tunnel --link --global` prints a fresh edit one, and `--link --global --share` a fresh
+view one. Plain `--link` and `--link --share` are unchanged: reusable for their window, and
+they open this workspace only.
 
 The tunnel offers a link only when it means what it says: the workspace accepts that key, and
 the box holds the same one. It reads the box's `PREVIEW_DOMAIN` and a sha256 of each key over
@@ -1144,10 +1146,10 @@ key, and the dev server ignores a short key and says so at launch. The two must 
 
 **What it costs.** The cookie holds the key itself: Caddy can compare a fixed value and cannot
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
-you rotate it: edit both files, re-run the installer, and restart the dev servers. A browser
-that already holds the old key loses access the moment the box stops accepting it; a session a
-key already opened lasts up to 24 hours and is not re-checked against the key, and sessions
-live in memory, so the restart ends them all.
+you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
+is what revokes: a running dev server keeps honouring the key it read at launch, and a session
+a key or a single-use link already opened is not re-checked against the key (an edit session
+lasts up to 30 days, a read-only one 7). Sessions live in memory, so the restart ends them all.
 
 **The view key is your preview invite.** Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,

@@ -6,12 +6,14 @@
 
 - **`tosijs-tunnel` prints a single-use link that keeps you signed in.** Once the route is
   registered, it prints one link per global key, such as
-  `https://ui.edit.dev.tosijs.net/?t=kfmrpwq`. The link carries a one-use code, never the key.
+  `https://ui.edit.dev.tosijs.net/?t=KFMRPWQT`. The link carries a one-use code, never the key.
   Opening it starts a session in that workspace and gives the browser the box's key as a
   cookie across the preview domain for 30 days. From then on that browser opens every
   workspace holding the key, and the box's root list, without another link, across dev-server
-  restarts. The edit link expires with the usual link window; the view link is read-only and
-  lasts a day (`--share-ttl`). `--link` and `--link --share` print fresh ones.
+  restarts. The edit link expires after the usual link window (5 minutes,
+  `tunnel.linkTtlMinutes`); the view link is read-only and lasts a day (`--share-ttl`).
+  `--link --global` and `--link --global --share` print fresh ones. Plain `--link` and
+  `--link --share` are unchanged.
 - **It only offers a link that means what it says.** It reads the box's `PREVIEW_DOMAIN` and a
   sha256 of each key over ssh (the keys stay on the box). It prints no link for a key this
   workspace refuses or the box does not share, and says why instead.

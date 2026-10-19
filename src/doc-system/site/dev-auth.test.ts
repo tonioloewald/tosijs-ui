@@ -1543,6 +1543,8 @@ import {
   globalKeyCookie,
   grantDomainFor,
   takeSessionGrant,
+  outstandingGrants,
+  MAX_OUTSTANDING_GRANTS,
   GLOBAL_KEY_COOKIE_MAX_AGE_S,
   globalKeyAccess,
   globalKeyExchange,
@@ -1606,6 +1608,17 @@ describe('global keys', () => {
         1
       )!
       expect(state.readOnly.has(session)).toBe(true)
+    })
+
+    test('outstanding grants are counted, and spent or expired ones are not', () => {
+      const state = createAuthState()
+      const spent = issueLink(state, 0, 60_000, { grant })
+      issueLink(state, 0, 10, { grant })
+      issueLink(state, 0, 60_000, { grant })
+      expect(outstandingGrants(state, 1)).toBe(3)
+      redeemLink(state, spent, 1)
+      expect(outstandingGrants(state, 20)).toBe(1)
+      expect(MAX_OUTSTANDING_GRANTS).toBe(32)
     })
 
     test('an expired grant is pruned with its link', () => {

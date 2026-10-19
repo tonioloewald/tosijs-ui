@@ -163,7 +163,7 @@ describe('what the box says about its keys', () => {
     path.join(bin, 'ssh'),
     // As real ssh does: join the words with spaces and hand them to a shell, in a fresh
     // environment (the caller's exported keys must not stand in for the box's).
-    `#!/bin/sh\nshift\nexec env -i PATH="$PATH" sh -c "$(printf '%s' "$*" | sed "s|/etc/caddy|${sandbox}|g")"\n`
+    `#!/bin/sh\nwhile [ "$1" = -o ]; do shift 2; done\nshift\nexec env -i PATH="$PATH" sh -c "$(printf '%s' "$*" | sed "s|/etc/caddy|${sandbox}|g")"\n`
   )
   chmodSync(path.join(bin, 'ssh'), 0o755)
   const PATH = process.env.PATH
@@ -203,6 +203,12 @@ describe('what the box says about its keys', () => {
       editSha: '',
       viewSha: sha(VIEW),
     })
+  })
+
+  test('a missing preview.env is named, not read as an empty one', async () => {
+    rmSync(path.join(sandbox, 'preview.env'), { force: true })
+    const box = await previewBoxKeys('me@box')
+    expect(box.problem).toContain('missing or unreadable')
   })
 
   test('says why when there is no domain', async () => {

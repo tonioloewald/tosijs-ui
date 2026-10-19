@@ -37,6 +37,8 @@ import {
   globalKeyCookie,
   grantDomainFor,
   takeSessionGrant,
+  outstandingGrants,
+  MAX_OUTSTANDING_GRANTS,
   type GlobalGrant,
   resolveShareTtlMs,
   readCookie,
@@ -2636,7 +2638,16 @@ export async function devServer(
 
     if (reqPath === '/__devlink') {
       const peer = srv?.requestIP?.(request)?.address
-      if (viaTunnel || !isLoopbackAddress(peer)) {
+      /*
+      Cross-site callers refused, as for /__build: every code minted here is a live credential
+      (a `global=` one carries the box's key), so a page in the developer's browser must not
+      be able to mint them in bulk with GETs. The bin uses curl, which sends no Origin.
+      */
+      if (
+        viaTunnel ||
+        !isLoopbackAddress(peer) ||
+        !csrfOk(request, viaTunnel)
+      ) {
         return new Response('not available', { status: 404 })
       }
       /*
@@ -2669,6 +2680,8 @@ export async function devServer(
         const key = global === 'edit' || global === 'view' ? global : null
         const problem = !key
           ? `global must be edit or view`
+          : outstandingGrants(auth, Date.now()) >= MAX_OUTSTANDING_GRANTS
+          ? `${MAX_OUTSTANDING_GRANTS} single-use global links are already outstanding; use one, or wait for them to expire`
           : !domain
           ? `${params.get('domain')} is not a domain ${
               workspaceHost || 'this workspace'

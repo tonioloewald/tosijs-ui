@@ -405,6 +405,18 @@ export function redeemLink(
   return session
 }
 
+/**
+ * How many unspent granting links may exist at once. Each is a live code that, guessed, hands
+ * over the box's key; a bound keeps the guessing odds where a handful of real links put them.
+ */
+export const MAX_OUTSTANDING_GRANTS = 32
+
+/** Unspent, unexpired granting links. */
+export function outstandingGrants(state: AuthState, now: number): number {
+  prune(state, now)
+  return state.grants.size
+}
+
 /** The global key a just-redeemed link hands over with `session`, once. */
 export function takeSessionGrant(
   state: AuthState,

@@ -467,11 +467,18 @@ export interface BoxKeys {
  */
 export async function previewBoxKeys(host: string): Promise<BoxKeys> {
   const script =
+    // Checked first: bash as a login shell carries on past a failed `.`, which read as "sets
+    // no PREVIEW_DOMAIN" when the file was missing or unreadable.
+    '[ -r /etc/caddy/preview.env ] || { echo "/etc/caddy/preview.env is missing or unreadable" >&2; exit 1; }; ' +
     'set -a; . /etc/caddy/preview.env; set +a; ' +
     'printf "%s\\n" "${PREVIEW_DOMAIN:-}"; ' +
     'for k in "${PREVIEW_EDIT_TOKEN:-}" "${PREVIEW_TOKEN:-}"; do ' +
     'if [ -n "$k" ]; then printf %s "$k" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d" " -f1; else echo; fi; done'
-  const read = await $`ssh ${host} ${script}`.nothrow().quiet()
+  // Never prompt or hang: `--link --global` waits on this.
+  const read =
+    await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host} ${script}`
+      .nothrow()
+      .quiet()
   if (read.exitCode !== 0) {
     return {
       problem: `could not read /etc/caddy/preview.env on ${host}: ${read.stderr
