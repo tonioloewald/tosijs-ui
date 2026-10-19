@@ -18,6 +18,14 @@
   older tosijs-ui vanished from the page meant for picking one. Workspaces are now listed above
   the deployed builds.
 
+### Security
+
+- **The key links redirect, but only under the preview domain.** The Caddy template's key links
+  take `&to=<label>` and redirect to `<label>.<preview domain>`. The label must be DNS labels
+  (lowercase letters, digits, `-`, separated by `.`); anything else, including a path, a second
+  `to`, or encoded line breaks, falls back to `/`. So a key link cannot be used to send someone
+  off-site. Checked against Caddy 2.6.2 and 2.11.7.
+
 ## 1.16.27
 
 ### Deploy
