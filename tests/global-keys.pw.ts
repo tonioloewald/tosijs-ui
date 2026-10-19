@@ -335,7 +335,7 @@ test('a page in the browser cannot mint links', async () => {
   for (const headers of [
     { 'sec-fetch-site': 'cross-site' },
     { origin: 'https://evil.example' },
-  ]) {
+  ] as Record<string, string>[]) {
     expect(
       (await devlink('?global=view&domain=dev.example.test', headers)).status
     ).toBe(404)
