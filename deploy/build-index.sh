@@ -75,9 +75,10 @@ for dir in "$ROOT"/*/; do
 	</li>"
 done
 
-# Tunnelled workspaces: every registered `-tunnel` fragment. Whether one is UP, and what
-# the reader may do there, changes by the minute, so the page asks each one when it loads
-# (see the script below); this only lists where to ask.
+# Tunnelled workspaces: every registered `-tunnel` fragment, ALWAYS listed, so this page is
+# where you pick one. Whether it is up, and what the reader may do there, changes by the
+# minute, so the page asks each one when it loads (see the script below). Hiding the rows
+# that did not answer made a workspace on an older tosijs-ui simply vanish.
 live=""
 for frag in "$ROOT"/_sites/*-tunnel.caddy; do
 	[ -f "$frag" ] || continue
@@ -85,10 +86,10 @@ for frag in "$ROOT"/_sites/*-tunnel.caddy; do
 	host=$(sed -n 's/^\([A-Za-z0-9.-]*\) *{.*/\1/p' "$frag" | head -1)
 	[ -n "$host" ] || continue
 	live="$live
-	<li data-workspace=\"$host\" hidden>
+	<li data-workspace=\"$host\">
 		<a href=\"https://$host/\">
 			<span class=\"name\">$name</span>
-			<span class=\"meta\"><span class=\"access\"></span><code>$host</code></span>
+			<span class=\"meta\"><span class=\"access\">checking…</span><code>$host</code></span>
 		</a>
 	</li>"
 done
@@ -133,16 +134,18 @@ cat > "$OUT/index.html" <<HTML
 	h2 { font-size:1rem; margin:2rem 0 .75rem; font-weight:600; }
 	.access { font-weight:600; }
 	.access.edit { color:#2a8a3e; }
+	.access.none { font-weight:400; }
 	footer { color:var(--dim); font-size:.8rem; margin-top:2.5rem; }
 </style>
 <main>
 	<header>$ICON<h1>tosijs previews</h1></header>
-	<p class="sub">Deployed builds. Each shows the commit it was built from.</p>
+	<p class="sub">Live workspaces, and the builds deployed here.</p>
+	$(if [ -n "$live" ]; then echo "<section id=\"live\"><h2>Live workspaces</h2><ul>$live
+	</ul></section>"; fi)
+	<h2>Deployed builds</h2>
 	$(if [ "$count" -eq 0 ]; then echo '<p class="empty">Nothing deployed yet.</p>'; else echo "<ul>$rows
 	</ul>"; fi)
 	$(if [ -n "$unlinked" ]; then echo "<p class=\"empty\">Deployed but not routed:$unlinked</p>"; fi)
-	$(if [ -n "$live" ]; then echo "<section id=\"live\" hidden><h2>Live workspaces</h2><ul>$live
-	</ul></section>"; fi)
 	<footer>Previews only — not production. Each entry updates when that project deploys (<code>bun run deploy --go</code>), not when it builds.</footer>
 </main>
 <script>
@@ -162,21 +165,26 @@ cat > "$OUT/index.html" <<HTML
 	}
 
 	// Ask each tunnelled workspace whether it is up and what this reader may do there. Only
-	// this origin may read the answer, and it reflects the key cookie this page set; a
-	// workspace that is down (or older than this probe) shows nothing. Opening one trades the
-	// key for a session there, so these are plain links.
+	// this origin may read the answer, and it reflects the key cookie this page set. Opening
+	// one trades the key for a session there, so these are plain links. A workspace that is
+	// down and one whose dev server predates this probe (tosijs-ui 1.16.26) look the same
+	// from here: neither gives an answer this page may read.
+	const silent = 'not answering (offline, or tosijs-ui before 1.16.26)'
+	const say = (li, text, kind) => {
+		const label = li.querySelector('.access')
+		label.textContent = text
+		label.className = 'access ' + kind
+	}
 	for (const li of document.querySelectorAll('[data-workspace]')) {
 		fetch('https://' + li.dataset.workspace + '/__alive', { credentials: 'include' })
-			.then((r) => (r.ok && r.status === 200 ? r.json() : null))
+			.then((r) => (r.status === 200 ? r.json() : null))
 			.then((info) => {
-				if (!info || !info.access) return
-				const label = li.querySelector('.access')
-				label.textContent = info.access === 'edit' ? 'edit' : 'view'
-				label.classList.add(info.access)
-				li.hidden = false
-				document.getElementById('live').hidden = false
+				if (!info) say(li, silent, 'none')
+				else if (info.access === 'edit') say(li, 'edit', 'edit')
+				else if (info.access === 'view') say(li, 'view', 'view')
+				else say(li, 'up, but your key does not open it', 'none')
 			})
-			.catch(() => {})
+			.catch(() => say(li, silent, 'none'))
 	}
 </script>
 HTML

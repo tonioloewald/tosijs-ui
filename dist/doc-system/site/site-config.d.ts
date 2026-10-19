@@ -559,9 +559,10 @@ export interface SiteConfig {
              * Which of the preview host's GLOBAL keys open this workspace. Default `true`: both.
              *
              * The box can hold two machine-wide keys, `PREVIEW_EDIT_TOKEN` (edit) and
-             * `PREVIEW_TOKEN` (view, the static previews' invite secret). Visit the box's root with
-             * `?t=<key>` once and every workspace that accepts the key opens from its list, across
-             * dev-server restarts, for 24 hours. This server reads the same two values from the
+             * `PREVIEW_TOKEN` (view, the static previews' invite secret). `tosijs-tunnel` prints a
+             * link per key that sets it across the preview domain and opens this workspace; after
+             * that, every workspace that accepts the key opens from the box's root page, across
+             * dev-server restarts, for 24 hours (the edit key) or 30 days (the view key). This server reads the same two values from the
              * environment or `~/local-secrets/tosijs-preview.env`; without them, nothing changes.
              *
              * `'view'` lets either key browse and neither edit, so the workspace opens from the list

@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=9f026067a702" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=b325b199ba93" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1320,12 +1320,24 @@ machine that runs a dev server (or in its environment):</p>
 <pre><code class="language-bash" data-highlighted><span class="token assign-left variable">PREVIEW_TOKEN</span><span class="token operator">=</span><span class="token operator">&lt;</span>the view key<span class="token operator">></span>
 <span class="token assign-left variable">PREVIEW_EDIT_TOKEN</span><span class="token operator">=</span><span class="token operator">&lt;</span>the edit key<span class="token operator">></span>
 </code></pre>
-<p>Then visit the box&#39;s root once with a key, <code>https://dev.example.com/?t=&lt;key&gt;</code>. Caddy sets a
-cookie across the whole preview domain (the edit key&#39;s lasts 24 hours) and the root page lists
-every workspace that is up and what that key lets you do there. Open one: the workspace sees
-the cookie, starts a session of the matching kind, and you are in. After a dev-server restart
-you simply reload; the cookie is still there and a fresh session is issued. A session started
-from the view key can browse and never save, never drive the page with an agent.</p>
+<p><code>tosijs-tunnel</code> then prints the links to pass on, one per key this workspace accepts:</p>
+<pre><code>   Pass on (sets the key across the preview domain, then opens this workspace;
+   the root page lists every workspace the key opens):
+   edit: https://dev.example.com/?t=&lt;edit key&gt;&amp;to=ui.edit
+   view: https://dev.example.com/?t=&lt;view key&gt;&amp;to=ui.edit  (read-only)
+</code></pre>
+<p>Opening one sets the key&#39;s cookie across the whole preview domain (the edit key&#39;s lasts 24
+hours, the view key&#39;s 30 days) and sends the browser on to the workspace, which sees the cookie,
+starts a session of the matching kind, and you are in. <code>to</code> takes DNS labels only and always
+lands under the preview domain, so the link cannot redirect anywhere else. The tunnel reads the
+domain from <code>PREVIEW_DOMAIN</code> in the box&#39;s <code>/etc/caddy/preview.env</code>; when it cannot, it says why
+instead of printing a link.</p>
+<p>With the cookie set, the box&#39;s root, <code>https://dev.example.com/</code>, is where you pick a workspace:
+it lists every registered one and asks each what your key opens there (<code>edit</code>, <code>view</code>, or
+nothing), and a workspace that is offline, or whose dev server predates tosijs-ui 1.16.26, says
+it is not answering. After a dev-server restart you simply reload; the cookie is still there and
+a fresh session is issued. A session started from the view key can browse and never save, never
+drive the page with an agent.</p>
 <p><strong>Use long keys.</strong> The box compares them with no rate limit in front, unlike the eight-letter
 codes above, so both must be at least 24 letters, digits, <code>-</code> or <code>_</code>; the installer refuses a
 shorter edit key, and the dev server ignores a short key and says so at launch. The two must

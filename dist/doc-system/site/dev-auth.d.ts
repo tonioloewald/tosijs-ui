@@ -414,6 +414,19 @@ export declare function resolveGlobalKeys(setting: unknown, secrets: {
     keys: GlobalKeys;
     problems: string[];
 };
+/**
+ * The links `tosijs-tunnel` prints for this workspace: each sets its key's cookie across the
+ * preview domain at the domain's root (`https://<domain>/?t=<key>`), and `&to=<label>` sends
+ * the browser on to `<label>.<domain>`, where the key becomes a session. One link, passed to a
+ * person or another device, opens this workspace and every other one the key opens.
+ *
+ * Only links that do something here: none for a host outside `domain`, no edit link where
+ * the edit key opens read-only (`globalKeys: 'view'`), and only the keys `keys` accepted.
+ */
+export declare function globalKeyLinks(hostname: string, domain: string, keys: GlobalKeys): {
+    edit?: string;
+    view?: string;
+};
 /** What the global-key cookies on a request grant: the edit key wins over the view key. */
 export declare function globalKeyAccess(cookieHeader: string | null | undefined, keys: GlobalKeys): 'edit' | 'view' | null;
 /** Is this a browser loading a page (not a fetch, a script or a socket)? */

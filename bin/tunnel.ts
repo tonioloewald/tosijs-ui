@@ -32,9 +32,13 @@ always requires a session.
 
 import { $ } from 'bun'
 import {
+  globalKeyLinks,
+  previewDomainOn,
   previewRootFor,
+  readLocalSecret,
   registerCaddyFragment,
   refreshHostIndex,
+  resolveGlobalKeys,
   resolveDevPort,
   resolvePreviewHost,
   resolveSiteConfig,
@@ -112,6 +116,38 @@ const tunnelLocalPort = Number(
 const publicUrl = flag('url') ?? preview?.tunnel?.url
 // Set by the registration step below; no public URL means there is no route to fail.
 let routed = true
+// The links to pass on, set once the route is registered (see shareLinksFor).
+let shareLinks: { edit?: string; view?: string } = {}
+let shareProblem = ''
+
+/*
+One link per global key that opens THIS workspace from anywhere: it sets the key's cookie at
+the preview domain's root, and Caddy sends the browser on here, where the dev server trades it
+for a session. The keys are the ones the dev server reads (env, then ~/local-secrets), filtered
+by the same `tunnel.globalKeys`; the domain is the box's, since only the box knows it.
+*/
+async function shareLinksFor(hostname: string): Promise<void> {
+  const { keys } = resolveGlobalKeys(preview?.tunnel?.globalKeys, {
+    PREVIEW_TOKEN:
+      process.env.PREVIEW_TOKEN ?? readLocalSecret('PREVIEW_TOKEN'),
+    PREVIEW_EDIT_TOKEN:
+      process.env.PREVIEW_EDIT_TOKEN ?? readLocalSecret('PREVIEW_EDIT_TOKEN'),
+  })
+  if (!keys.edit && !keys.view) {
+    shareProblem =
+      'No global key here (PREVIEW_EDIT_TOKEN / PREVIEW_TOKEN in ~/local-secrets/tosijs-preview.env), so no link to pass on: `tosijs-tunnel --link` makes a one-off.'
+    return
+  }
+  const { domain, problem } = await previewDomainOn(host!)
+  if (!domain) {
+    shareProblem = `No link to pass on: ${problem}.`
+    return
+  }
+  shareLinks = globalKeyLinks(hostname, domain, keys)
+  if (!shareLinks.edit && !shareLinks.view) {
+    shareProblem = `No link to pass on: ${hostname} is not under the box's preview domain, ${domain}.`
+  }
+}
 
 /*
 Say where this is going, and where the address came from, BEFORE acting on it.
@@ -419,8 +455,11 @@ if (publicUrl) {
       describe: `${hostname} → this workspace`,
       body: fragment,
     })
-    // The root's list of live workspaces is read from these fragments.
-    if (routed) await refreshHostIndex(host!)
+    if (routed) {
+      // The root's list of live workspaces is read from these fragments.
+      await refreshHostIndex(host!)
+      await shareLinksFor(hostname)
+    }
   }
 }
 
@@ -438,6 +477,16 @@ if (publicUrl) {
       ? `   ${publicUrl}`
       : `   ${publicUrl}  ⚠️  NOT routed — registration failed above; this URL will not reach here`
   )
+  if (shareLinks.edit || shareLinks.view) {
+    console.log(
+      `\n   Pass on (sets the key across the preview domain, then opens this workspace;` +
+        `\n   the root page lists every workspace the key opens):`
+    )
+    if (shareLinks.edit) console.log(`   edit: ${shareLinks.edit}`)
+    if (shareLinks.view) console.log(`   view: ${shareLinks.view}  (read-only)`)
+  } else if (shareProblem) {
+    console.log(`\n   ${shareProblem}`)
+  }
 }
 console.log(`   Ctrl-C to close.\n`)
 

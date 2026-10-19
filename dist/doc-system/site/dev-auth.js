@@ -854,6 +854,29 @@ export function resolveGlobalKeys(setting, secrets) {
     }
     return { keys, problems };
 }
+/**
+ * The links `tosijs-tunnel` prints for this workspace: each sets its key's cookie across the
+ * preview domain at the domain's root (`https://<domain>/?t=<key>`), and `&to=<label>` sends
+ * the browser on to `<label>.<domain>`, where the key becomes a session. One link, passed to a
+ * person or another device, opens this workspace and every other one the key opens.
+ *
+ * Only links that do something here: none for a host outside `domain`, no edit link where
+ * the edit key opens read-only (`globalKeys: 'view'`), and only the keys `keys` accepted.
+ */
+export function globalKeyLinks(hostname, domain, keys) {
+    const host = hostname.toLowerCase();
+    const root = domain.toLowerCase().replace(/\.$/, '');
+    if (!root || !host.endsWith(`.${root}`))
+        return {};
+    const label = host.slice(0, -root.length - 1);
+    const link = (key) => `https://${root}/?t=${encodeURIComponent(key)}&to=${label}`;
+    return {
+        edit: keys.edit && (keys.editGrants ?? 'edit') === 'edit'
+            ? link(keys.edit)
+            : undefined,
+        view: keys.view ? link(keys.view) : undefined,
+    };
+}
 /** What the global-key cookies on a request grant: the edit key wins over the view key. */
 export function globalKeyAccess(cookieHeader, keys) {
     const edit = readCookie(cookieHeader, GLOBAL_EDIT_COOKIE);

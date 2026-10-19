@@ -1,6 +1,10 @@
-import { test, expect, beforeEach } from 'bun:test'
-import { readLocalSecret, resolvePreviewHost } from './resolve-site-config'
-import { mkdtempSync, writeFileSync } from 'fs'
+import { test, expect, beforeEach, afterEach, describe } from 'bun:test'
+import {
+  previewDomainOn,
+  readLocalSecret,
+  resolvePreviewHost,
+} from './resolve-site-config'
+import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 
@@ -136,4 +140,46 @@ test('REGRESSION: an EMPTY value falls through instead of swallowing the chain',
 
 test('surrounding whitespace is trimmed, not preserved into an ssh target', () => {
   expect(resolvePreviewHost('  deploy@box  ', undefined)).toBe('deploy@box')
+})
+
+describe('previewDomainOn', () => {
+  /*
+  The tunnel's pass-on links are built on the box's own PREVIEW_DOMAIN, which only the box
+  knows; a guessed domain would set a cookie nothing reads. A fake `ssh` runs the command
+  against a sandboxed preview.env.
+  */
+  const sandbox = mkdtempSync(path.join(tmpdir(), 'preview-domain-'))
+  const bin = path.join(sandbox, 'bin')
+  mkdirSync(bin)
+  writeFileSync(
+    path.join(bin, 'ssh'),
+    // As real ssh does: join the words with spaces and hand them to a shell.
+    `#!/bin/sh\nshift\nexec sh -c "$(echo "$*" | sed "s|/etc/caddy|${sandbox}|g")"\n`
+  )
+  chmodSync(path.join(bin, 'ssh'), 0o755)
+  const PATH = process.env.PATH
+  beforeEach(() => {
+    process.env.PATH = `${bin}:${PATH}`
+  })
+  afterEach(() => {
+    process.env.PATH = PATH
+  })
+  const env = (text: string) =>
+    writeFileSync(path.join(sandbox, 'preview.env'), text)
+
+  test('reads the domain, quoted or not', async () => {
+    env('PREVIEW_TOKEN=x\nPREVIEW_DOMAIN=dev.example.test\n')
+    expect(await previewDomainOn('me@box')).toEqual({
+      domain: 'dev.example.test',
+    })
+    env("PREVIEW_DOMAIN='dev.example.test'\n")
+    expect((await previewDomainOn('me@box')).domain).toBe('dev.example.test')
+  })
+
+  test('says why when there is none', async () => {
+    env('PREVIEW_TOKEN=x\n')
+    expect(await previewDomainOn('me@box')).toEqual({
+      problem: '/etc/caddy/preview.env on me@box sets no PREVIEW_DOMAIN',
+    })
+  })
 })

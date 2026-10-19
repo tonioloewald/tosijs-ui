@@ -34,6 +34,8 @@ export interface PreviewConfig {
     localPort?: number
     url?: string
     requireToken?: boolean
+    /** see `tunnel.globalKeys` in site-config.ts */
+    globalKeys?: boolean | 'view'
   }
 }
 
@@ -156,6 +158,10 @@ export {
 server reads the global tunnel keys from the same file; it is re-exported here for the bins.
 */
 export { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
+export {
+  resolveGlobalKeys,
+  globalKeyLinks,
+} from '../dist/doc-system/site/dev-auth.js'
 import { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
 
 /**
@@ -442,4 +448,33 @@ export async function refreshHostIndex(host: string): Promise<void> {
   }
   const out = run.stdout.toString().trim()
   if (out) console.log(`   ${out}`)
+}
+
+/**
+ * The preview domain the box's Caddy serves (`PREVIEW_DOMAIN` in `/etc/caddy/preview.env`),
+ * or why it could not be read. Only the box knows it: the template's root block and its key
+ * cookies are scoped to it, so a link built from a guess could set a cookie nothing reads.
+ */
+export async function previewDomainOn(
+  host: string
+): Promise<{ domain?: string; problem?: string }> {
+  const read =
+    await $`ssh ${host} sed -n 's/^PREVIEW_DOMAIN=//p' /etc/caddy/preview.env`
+      .nothrow()
+      .quiet()
+  const domain = read.stdout
+    .toString()
+    .trim()
+    .split('\n')[0]
+    .replace(/^(['"])(.*)\1$/, '$2')
+  if (read.exitCode === 0 && /^[a-z0-9.-]+$/i.test(domain)) return { domain }
+  return {
+    problem:
+      read.exitCode !== 0
+        ? `could not read /etc/caddy/preview.env on ${host}: ${read.stderr
+            .toString()
+            .trim()
+            .slice(0, 160)}`
+        : `/etc/caddy/preview.env on ${host} sets no PREVIEW_DOMAIN`,
+  }
 }

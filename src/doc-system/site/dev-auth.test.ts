@@ -1540,6 +1540,7 @@ describe('trustLan networks', () => {
 
 import {
   resolveGlobalKeys,
+  globalKeyLinks,
   globalKeyAccess,
   globalKeyExchange,
   isNavigation,
@@ -1556,6 +1557,32 @@ describe('global keys', () => {
   const VIEW = 'v'.repeat(12) + 'VIEWKEY_view-key'
   const secrets = { PREVIEW_EDIT_TOKEN: EDIT, PREVIEW_TOKEN: VIEW }
   const keys = { edit: EDIT, view: VIEW, editGrants: 'edit' as const }
+
+  test('the tunnel links set the key at the domain root, then open this workspace', () => {
+    expect(
+      globalKeyLinks('ui.edit.dev.example.com', 'dev.example.com', keys)
+    ).toEqual({
+      edit: `https://dev.example.com/?t=${EDIT}&to=ui.edit`,
+      view: `https://dev.example.com/?t=${VIEW}&to=ui.edit`,
+    })
+    // A workspace that refuses edit offers no edit link: it would open read-only.
+    expect(
+      globalKeyLinks('ui.edit.dev.example.com', 'dev.example.com', {
+        ...keys,
+        editGrants: 'view',
+      }).edit
+    ).toBeUndefined()
+    // Only keys this workspace accepted, and only under the preview domain.
+    expect(
+      globalKeyLinks('ui.edit.dev.example.com', 'dev.example.com', {})
+    ).toEqual({ edit: undefined, view: undefined })
+    expect(
+      globalKeyLinks('ui.edit.elsewhere.test', 'dev.example.com', keys)
+    ).toEqual({})
+    expect(globalKeyLinks('xdev.example.com', 'dev.example.com', keys)).toEqual(
+      {}
+    )
+  })
   const page = (cookie?: string, extra: Record<string, string> = {}) =>
     new Request('https://ui.edit.dev.example.com/guide/', {
       headers: {

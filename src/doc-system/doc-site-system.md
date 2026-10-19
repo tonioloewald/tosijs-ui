@@ -1104,12 +1104,28 @@ PREVIEW_TOKEN=<the view key>
 PREVIEW_EDIT_TOKEN=<the edit key>
 ```
 
-Then visit the box's root once with a key, `https://dev.example.com/?t=<key>`. Caddy sets a
-cookie across the whole preview domain (the edit key's lasts 24 hours) and the root page lists
-every workspace that is up and what that key lets you do there. Open one: the workspace sees
-the cookie, starts a session of the matching kind, and you are in. After a dev-server restart
-you simply reload; the cookie is still there and a fresh session is issued. A session started
-from the view key can browse and never save, never drive the page with an agent.
+`tosijs-tunnel` then prints the links to pass on, one per key this workspace accepts:
+
+```
+   Pass on (sets the key across the preview domain, then opens this workspace;
+   the root page lists every workspace the key opens):
+   edit: https://dev.example.com/?t=<edit key>&to=ui.edit
+   view: https://dev.example.com/?t=<view key>&to=ui.edit  (read-only)
+```
+
+Opening one sets the key's cookie across the whole preview domain (the edit key's lasts 24
+hours, the view key's 30 days) and sends the browser on to the workspace, which sees the cookie,
+starts a session of the matching kind, and you are in. `to` takes DNS labels only and always
+lands under the preview domain, so the link cannot redirect anywhere else. The tunnel reads the
+domain from `PREVIEW_DOMAIN` in the box's `/etc/caddy/preview.env`; when it cannot, it says why
+instead of printing a link.
+
+With the cookie set, the box's root, `https://dev.example.com/`, is where you pick a workspace:
+it lists every registered one and asks each what your key opens there (`edit`, `view`, or
+nothing), and a workspace that is offline, or whose dev server predates tosijs-ui 1.16.26, says
+it is not answering. After a dev-server restart you simply reload; the cookie is still there and
+a fresh session is issued. A session started from the view key can browse and never save, never
+drive the page with an agent.
 
 **Use long keys.** The box compares them with no rate limit in front, unlike the eight-letter
 codes above, so both must be at least 24 letters, digits, `-` or `_`; the installer refuses a

@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.16.28
+
+### Tunnel
+
+- **`tosijs-tunnel` prints the link to pass on.** Once the route is registered, it prints one
+  link per global key the workspace accepts, such as
+  `https://dev.tosijs.net/?t=<key>&to=ui.edit`. Opening it sets the key's cookie across the
+  preview domain and lands straight in the workspace, so one link from the terminal opens this
+  workspace on another device, and every other workspace the key opens. The view link is
+  read-only. The domain comes from `PREVIEW_DOMAIN` on the box; when the tunnel cannot read it,
+  or holds no key, it says so. **Re-run `tosijs-caddy-install`**: the redirect is in the Caddy
+  template.
+- **The box's root page lists every workspace** and says what your key opens in each: `edit`,
+  `view`, or nothing. A workspace that is offline, or whose dev server is on a tosijs-ui before
+  1.16.26, shows as not answering. In 1.16.26 those rows were hidden, so a workspace on an
+  older tosijs-ui vanished from the page meant for picking one. Workspaces are now listed above
+  the deployed builds.
+
 ## 1.16.27
 
 ### Deploy

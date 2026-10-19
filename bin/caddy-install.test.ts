@@ -486,3 +486,36 @@ describe('the global edit key', () => {
     SPAWN_TIMEOUT
   )
 })
+
+test('a key link redirects only to a host under the preview domain', () => {
+  // `&to=<label>` lets `tosijs-tunnel` hand out one link that sets the key at the domain's
+  // root and opens its workspace. The target is built from DNS labels and always ends in
+  // the preview domain, so the link cannot be turned into an off-site redirect. Checked
+  // against real Caddy (2.6.2 on the box, 2.11.7 locally): `evil.com/x`, CR/LF, `a..b`, a
+  // repeated `to` all fall back to `/`.
+  const shipped = readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
+  const map = shipped.match(
+    /map \{query\.to\} \{tosi_link_target\} \{\n([\s\S]*?)\n\t\}/
+  )
+  expect(map).not.toBeNull()
+  const [pattern, target] = map![1].trim().split(/\s+/)
+  expect(target).toBe('"https://${1}.{{PREVIEW_DOMAIN}}/"')
+  const labels = new RegExp(pattern.slice(1))
+  for (const ok of ['ui', 'ui.edit', 'a-1.b'])
+    expect(labels.test(ok)).toBe(true)
+  for (const bad of [
+    'evil.com/x',
+    'a..b',
+    '.ui',
+    'ui.',
+    '-a',
+    'UI',
+    'a\r\nb',
+    'a,b',
+  ])
+    expect(labels.test(bad)).toBe(false)
+  expect(map![1]).toContain('default "/"')
+  // Both key links land through it, and nothing else redirects to a fixed root.
+  expect(shipped.match(/redir \* \{tosi_link_target\} 302/g)?.length).toBe(2)
+  expect(shipped).not.toContain('redir * / 302')
+})

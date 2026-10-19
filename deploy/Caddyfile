@@ -36,6 +36,15 @@
 # `root` is the only thing that varies, keeping it in the caller costs one line per
 # project and makes this file work on any Caddy 2.x.
 (preview_site) {
+	# Where a key link lands: `&to=<label>` sends it to `<label>.{{PREVIEW_DOMAIN}}` (so
+	# `tosijs-tunnel` can hand out ONE link that sets the cookie here and opens its workspace),
+	# anything else to this host's root. Only DNS labels match, and the target is always under
+	# the preview domain, so this cannot redirect off-site.
+	map {query.to} {tosi_link_target} {
+		~^([a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*)$ "https://${1}.{{PREVIEW_DOMAIN}}/"
+		default "/"
+	}
+
 	# THE PREVIEW HOST IS PRIVATE — but gated by a LINK, not a password dialog.
 	#
 	# basicauth used to guard these hosts, and it worked, but it makes the browser throw
@@ -63,7 +72,7 @@
 		header Set-Cookie "tosi_preview=__PREVIEW_TOKEN__; Domain=.{{PREVIEW_DOMAIN}}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"
 		header Referrer-Policy "no-referrer"
 		header Cache-Control "no-store"
-		redir * / 302
+		redir * {tosi_link_target} 302
 	}
 
 	# THE GLOBAL EDIT KEY: `?t=<edit key>` on any preview host sets `tosi_edit` across the
@@ -81,7 +90,7 @@
 		header Set-Cookie "tosi_edit=__PREVIEW_EDIT_TOKEN__; Domain=.{{PREVIEW_DOMAIN}}; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Lax"
 		header Referrer-Policy "no-referrer"
 		header Cache-Control "no-store"
-		redir * / 302
+		redir * {tosi_link_target} 302
 	}
 
 	# Anchored at both ends: unanchored, `tosi_edit=<key>x` matched too. That needed the key
