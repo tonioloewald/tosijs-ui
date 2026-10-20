@@ -803,3 +803,12 @@ gap, recorded rather than hidden.
 - **One owner per rule, again:** the new `wikilinkKey` was a fifth copy of `slugify`. Folded into `routing.ts` with render.ts's copy; book-html and epub-volumes still carry copies (#3435).
 - **The publish watch exited early** (`gh run watch` returned while the stage job sat at approval); an until-loop on `status` is the reliable wait.
 - **Lanes:** unit 1968; Playwright 834 passed, 51 skipped; consumer 58; haltija 87 over 20 pages. Publish run 39457705677 green including verify; published dist identical to the tag.
+
+## 1.16.30 (2026-10-20)
+
+- **The maintainer's complaint, not a bug report:** "everything reset on a given dev server restart, which might be triggered by a simple change to an example." `bun --watch` restarts on any of 73 imported files, and save-to-source writes one, so a save restarted the server it had just saved through. A reload already recovered; a page left open did not. The fix is renewing the session in place from the key cookie, for same-origin requests only.
+- **The review (pre-minor/full, auth surface) caught one real finding:** the haltija bridge's websocket upgrade bypassed renewal, so the agent bridge stayed dead after a restart. Fixed before tagging (`upgraderSettingCookie`); unit-tested only, because an e2e would start a channel on the shared port 8701.
+- **What the review surfaced for the owner:** renewal means a key holder's access is bounded by the 30-day key cookie, not the 24h session. The owner's ruling on approval: the 30-day key is fine as long as the token that delivers it expires quickly (the edit `--global` link: single-use, 5 minutes). Plain `--link` sessions still die on restart (board #3416).
+- **One unexplained Playwright run:** 833 passed, 2 failed, exit 1, and a re-run overwrote the report before the failing tests were read. Four later runs were clean (835 passed). An ensemble Playwright run was on the machine at the time; that is a candidate, not a cause. Read `playwright-report` BEFORE re-running.
+- **A review agent saw 25 unit failures** from a concurrent `dist/` rebuild; alone, 1970 pass. Agents running lanes in parallel with a build is the same race as a live `bun start`.
+- **Lanes:** unit 1970; Playwright 835 passed, 53 skipped; haltija 87 over 20 pages; consumer 58. Approval landed after the 60-minute wait, so verify ran as `verify_only` (run 39483970420), green; published dist identical to the tag.
