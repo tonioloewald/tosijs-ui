@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.16.29
+
+### Doc system
+
+- **A wikilink can name a page by its title.** `[[The feature registry]]` now reaches the page
+  at `/registry/`. Before, a target was only ever slugified, so it went to
+  `/the-feature-registry/` and 404'd. The slug (file name) still wins when a page has one, so
+  no link that worked changes target. A title two pages share reaches neither.
+  Reported by tosijs-3d-ensemble (#234).
+- **The build reports a wikilink that reaches no page**, naming the file and the target, and
+  fails under `strict`. One site had nine of these, live 404s from as far back as its 0.3, and
+  no build had said a word.
+- **The test-status widget sits in the header bar.** It was fixed at the bottom left over the
+  page, so a full-page component's last list row lost clicks to it (#233). A page with
+  `{"header": false}` still floats it there, having nowhere else to put it.
+
+### Tunnel
+
+- **The "needs an invite link" page offers the lasting link too.** When the dev server takes
+  the preview box's global keys, it now names `tosijs-tunnel --link --global` beside the
+  per-visit `--link`. That link keeps the browser in for 30 days across restarts (#232).
+
 ## 1.16.28
 
 ### Tunnel

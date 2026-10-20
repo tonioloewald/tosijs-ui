@@ -12,10 +12,10 @@ component (src/doc-system/*) so static and hydrated output agree.
 */
 import { pageTitle } from '../doc-title.js';
 import { highlightHtml } from '../highlight.js';
-import { buildSlugMap, pathForSlug, rewriteDocLinks, withBase, } from '../routing.js';
+import { buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, docDescription, } from '../render.js';
-import { bareNameLinks, deadInPageAnchors, misconfigured, } from './build-warnings.js';
+import { bareNameLinks, deadInPageAnchors, missingWikilinks, misconfigured, } from './build-warnings.js';
 const escapeAttr = (s) => s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -111,7 +111,7 @@ export function relativeUrl(depth, p) {
     const rel = '../'.repeat(depth) + p.slice(1);
     return rel === '' ? './' : rel;
 }
-async function pageHtml(doc, config, slugMap, configAttr) {
+async function pageHtml(doc, config, slugMap, configAttr, wikilinks) {
     const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', assetStamp, docsStamp, localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
     // Functional URLs are emitted relative to THIS page's depth so the build is
     // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
@@ -142,7 +142,10 @@ async function pageHtml(doc, config, slugMap, configAttr) {
     // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
     // static HTML is correct for no-JS readers and crawlers (the doc-browser also
     // does this client-side after hydration).
-    const body = rewriteDocLinks(await highlightHtml(renderDocMarkdown(doc.text, { bakes: bakes?.get(doc.filename) }), 
+    const body = rewriteDocLinks(await highlightHtml(renderDocMarkdown(doc.text, {
+        bakes: bakes?.get(doc.filename),
+        wikilinks,
+    }), 
     // The SAME policy the client will apply, so the build and the browser agree about
     // which blocks are live examples and which are static code to highlight.
     config.liveExamples ?? 'auto'), (filename) => slugMap[filename] !== undefined
@@ -289,6 +292,7 @@ export function withStamp(url, stamp) {
 export async function generateSite(config) {
     const { docs, outputDir } = config;
     const slugMap = buildSlugMap(docs);
+    const wikilinks = wikilinkTargets(docs);
     // Surface any slug collisions (the slug map disambiguates them, but a warning
     // tells the maintainer two docs share a base name).
     const seen = new Map();
@@ -311,25 +315,36 @@ export async function generateSite(config) {
     let count = 0;
     const deadAnchors = [];
     const bareLinks = [];
+    const danglingWikilinks = [];
     for (const doc of docs) {
         const slug = slugMap[doc.filename];
         const dir = slug === '' ? outputDir : `${outputDir}/${slug}`;
-        const rendered = renderDocMarkdown(doc.text);
+        const rendered = renderDocMarkdown(doc.text, { wikilinks });
         const dead = deadInPageAnchors(rendered);
         // On the root page (`/`) a bare name resolves to `/name`, which works; elsewhere it does not.
         const bare = slug === '' ? [] : bareNameLinks(rendered);
+        const dangling = missingWikilinks(rendered);
+        if (dangling.length)
+            danglingWikilinks.push(`    ${doc.path || doc.filename}: ${dangling
+                .map((t) => `[[${t}]]`)
+                .join(', ')}`);
         if (bare.length)
             bareLinks.push(`    ${doc.path || doc.filename}: ${bare.join(', ')}`);
         if (dead.length)
             deadAnchors.push(`    ${doc.path || doc.filename}: ${dead
                 .map((d) => `#${d}`)
                 .join(', ')}`);
-        await Bun.write(`${dir}/index.html`, await pageHtml(doc, config, slugMap, configAttr));
+        await Bun.write(`${dir}/index.html`, await pageHtml(doc, config, slugMap, configAttr, wikilinks));
         // The page's own source, for readers that want text rather than a page.
         if (hasMarkdownPage(doc, config)) {
             await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n');
         }
         count += 1;
+    }
+    if (danglingWikilinks.length) {
+        misconfigured(config.strict, `\n⚠️  Wikilinks that reach no page. A target matches a page's slug (its file name)\n` +
+            `    or its title; write [[slug|label]] to link one by file name:\n` +
+            `${danglingWikilinks.join('\n')}\n`);
     }
     if (bareLinks.length) {
         misconfigured(config.strict, `\n⚠️  Links written as a bare page name. Every page is served at /slug/, so these\n` +

@@ -1,5 +1,6 @@
 import { test, expect } from 'bun:test'
 import { renderDocMarkdown, unwrapLoneCustomElements } from './render.js'
+import { wikilinkTargets } from './routing.js'
 
 test('a ```lang#id fence stamps data-example-id and keeps the language clean', () => {
   const html = renderDocMarkdown('```js#my-demo\nconst x = 1\n```')
@@ -23,6 +24,39 @@ test('wikilinks: [[slug]] and [[slug|label]] resolve to /slug/', () => {
   const html = renderDocMarkdown('See [[the-coast]] and [[note-42|the map]].')
   expect(html).toContain('<a href="/the-coast/" class="wikilink">the-coast</a>')
   expect(html).toContain('<a href="/note-42/" class="wikilink">the map</a>')
+})
+
+test('wikilinks: given the corpus, a TITLE reaches its page and an unknown target is marked (#234)', () => {
+  const wikilinks = wikilinkTargets([
+    { filename: 'README.md', title: 'Home' },
+    { filename: 'registry.md', title: 'The feature registry' },
+    { filename: 'combat.md', title: 'Presets' },
+    { filename: 'presets.md', title: 'Presets' },
+  ])
+  const html = renderDocMarkdown(
+    '[[The feature registry]], [[registry|reg]], [[Presets]], [[Home]], [[presets-combat]]',
+    { wikilinks }
+  )
+  expect(html).toContain(
+    '<a href="/registry/" class="wikilink">The feature registry</a>'
+  )
+  expect(html).toContain('<a href="/registry/" class="wikilink">reg</a>')
+  // A slug beats a title: `presets.md` is /presets/, though another page is titled Presets.
+  expect(html).toContain('<a href="/presets/" class="wikilink">Presets</a>')
+  // The home page is reached by its title, at the root.
+  expect(html).toContain('<a href="/" class="wikilink">Home</a>')
+  expect(html).toContain(
+    '<a href="/presets-combat/" class="wikilink -missing" data-target="presets-combat">presets-combat</a>'
+  )
+})
+
+test('wikilinkTargets: two pages sharing a title reach neither by it', () => {
+  const targets = wikilinkTargets([
+    { filename: 'a.md', title: 'Setup' },
+    { filename: 'b.md', title: 'Setup' },
+  ])
+  expect(targets.has('setup')).toBe(false)
+  expect(targets.get('a')).toBe('a')
 })
 
 test('wikilinks are NOT resolved inside code spans', () => {

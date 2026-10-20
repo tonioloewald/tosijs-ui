@@ -58,3 +58,11 @@ test('#75: the code box is offered in both cases', () => {
     expect(invitePageHtml(r, CMD), r).toContain('name="t"')
   }
 })
+
+test('#232: with global keys, the page names the lasting link as well as the per-visit one', () => {
+  expect(invitePageHtml('none', CMD)).not.toContain('--global')
+  const html = invitePageHtml('stale', CMD, `${CMD} --global`)
+  expect(html).toContain(`<code>${CMD}</code>`)
+  expect(html).toContain(`<code>${CMD} --global</code>`)
+  expect(html).toContain('30 days')
+})

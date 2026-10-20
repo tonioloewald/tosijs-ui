@@ -3,6 +3,7 @@ import {
   bareNameLinks,
   liveFenceLanguages,
   misconfigured,
+  missingWikilinks,
   SiteMisconfiguredError,
 } from './build-warnings.js'
 
@@ -125,4 +126,12 @@ test('a link written as a bare page name is reported; assets and real routes are
     '<img src="value-renderer">',
   ].join('')
   expect(bareNameLinks(html).sort()).toEqual(['popFloat/', 'value-renderer'])
+})
+
+test('missingWikilinks reads the targets the renderer marked, and nothing else', () => {
+  const html =
+    '<a href="/x/" class="wikilink -missing" data-target="The X &amp; Y">X</a>' +
+    '<a href="/ok/" class="wikilink">ok</a>' +
+    '<a href="/z/" class="-missing">not a wikilink target</a>'
+  expect(missingWikilinks(html)).toEqual(['The X & Y'])
 })

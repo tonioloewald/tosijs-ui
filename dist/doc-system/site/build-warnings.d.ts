@@ -32,3 +32,11 @@ export declare function deadInPageAnchors(html: string): string[];
  * (`diagram.svg`, `img/x.png`) is left alone. The fix is the root-relative `/value-renderer/`.
  */
 export declare function bareNameLinks(html: string): string[];
+/**
+ * The `[[wikilinks]]` in a RENDERED page that reach no page, as their authors wrote them.
+ *
+ * The renderer marks one `-missing` (with its target in `data-target`) when it was given the
+ * corpus's `wikilinkTargets` and neither a slug nor a title matched. Nine of these sat in one
+ * site for five releases, every one a live 404, because nothing said so (GitHub #234).
+ */
+export declare function missingWikilinks(html: string): string[];

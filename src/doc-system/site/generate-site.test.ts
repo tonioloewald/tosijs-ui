@@ -279,6 +279,22 @@ describe('bare-name links under strict', () => {
     ])
   })
 
+  test('a wikilink that reaches no page fails a strict build; one by title does not (#234)', async () => {
+    await build([
+      doc('README.md', '# Home\n\nSee [[The feature registry]].'),
+      {
+        ...doc('registry.md', '# The feature registry\n\ntext'),
+        title: 'The feature registry',
+      },
+    ])
+    await expect(
+      build([
+        doc('README.md', '# Home\n\nSee [[presets-combat]].'),
+        doc('registry.md', '# Registry\n\ntext'),
+      ])
+    ).rejects.toThrow('[[presets-combat]]')
+  })
+
   test('on any other page it fails a strict build', async () => {
     await expect(
       build([

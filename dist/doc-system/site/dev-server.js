@@ -1904,7 +1904,7 @@ export async function devServer(config, opts = {}) {
                 sentence differs, and that sentence was the entire report.
                 */
                 const rejection = sessionRejection(readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now());
-                return new Response(invitePageHtml(rejection, TUNNEL_LINK_CMD), {
+                return new Response(invitePageHtml(rejection, TUNNEL_LINK_CMD, globalKeys.keys.edit ? `${TUNNEL_LINK_CMD} --global` : undefined), {
                     status: 401,
                     headers: {
                         'Content-Type': 'text/html; charset=utf-8',

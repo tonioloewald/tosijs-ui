@@ -787,3 +787,11 @@ gap, recorded rather than hidden.
 - **A running `bun start` faked a red unit lane twice:** it rebuilt `dist/` while the installer tests imported from it (every test failed in ~10ms). Stop the dev server before running lanes, as CLAUDE.md already says for git surgery.
 - **Exporting the keys in `~/.zshenv` leaked into the fake-ssh tests,** which filled in values preview.env left out. They now scrub `PREVIEW_*`.
 - **Lanes:** unit 1942; Playwright 826 passed, 41 skipped; consumer 58; haltija 87 over 20 pages. Publish run 39147334158 green including verify; the published dist and installer are identical to the tag.
+
+## 1.16.28 (2026-10-20)
+
+- **The design came from the maintainer, not the first cut.** I proposed printing the permanent edit key in the tunnel banner. The maintainer asked for short-lived single-use links that leave a durable cookie instead. The key now never appears in a URL, a terminal or a log.
+- **The re-review caught two regressions the first cut introduced.** Plain `--link` had silently become a single-use global grant, changing its documented meaning; global links are now opt-in with `--global`. `/__devlink` lacked the cross-site check `/__build` has, so any page in the browser could mint grants; it now refuses cross-site requests and caps outstanding grants at 32.
+- **Found while testing on the box:** Caddy's access log had recorded `?t=` keys and tokens since 1.9.0. The template now redacts them; the box's logs were scrubbed by hand.
+- **Approval came after the 60-minute wait,** so the run ended with verify skipped. `verify_only` run 39453492098 was green, and the published dist is identical to the tag.
+- **Lanes:** unit 1963; Playwright 831 passed, 51 skipped; consumer 58; haltija 87 over 20 pages.

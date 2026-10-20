@@ -128,3 +128,30 @@ export function bareNameLinks(html) {
     }
     return [...found];
 }
+/**
+ * The `[[wikilinks]]` in a RENDERED page that reach no page, as their authors wrote them.
+ *
+ * The renderer marks one `-missing` (with its target in `data-target`) when it was given the
+ * corpus's `wikilinkTargets` and neither a slug nor a title matched. Nine of these sat in one
+ * site for five releases, every one a live 404, because nothing said so (GitHub #234).
+ */
+export function missingWikilinks(html) {
+    const found = new Set();
+    for (const tag of html.matchAll(START_TAG)) {
+        if (tag[1].toLowerCase() !== 'a')
+            continue;
+        let missing = false;
+        let target = '';
+        for (const attr of tag[2].matchAll(ATTRIBUTE)) {
+            const key = attr[1].toLowerCase();
+            const value = unescapeAttr(attr[2] ?? attr[3] ?? attr[4] ?? '');
+            if (key === 'class')
+                missing = value.split(/\s+/).includes('-missing');
+            else if (key === 'data-target')
+                target = value;
+        }
+        if (missing && target)
+            found.add(target);
+    }
+    return [...found];
+}

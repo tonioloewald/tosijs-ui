@@ -7,7 +7,7 @@ Node-only APIs — so it bundles into the iife. Live examples are pretty-printed
 force-wrapped code listings, not executed.
 */
 import { renderDocMarkdown } from './render.js';
-import { buildSlugMap } from './routing.js';
+import { buildSlugMap, wikilinkTargets } from './routing.js';
 import { buildNavTree } from './nav-tree.js';
 import { bookTextOf } from './book-target.js';
 // Clean book typography; force-wraps code so listings never overflow a page.
@@ -149,10 +149,13 @@ function tocHtml(nodes) {
 export function buildBookHtml(docs, opts) {
     const visible = docs.filter((d) => !d.hidden);
     const slugMap = buildSlugMap(visible);
+    const wikilinks = wikilinkTargets(visible);
     const roots = buildNavTree(visible, slugMap);
     const css = opts.css ?? `${DEFAULT_BOOK_CSS}\n${PRINT_CSS}`;
     const chapters = flatten(roots)
-        .map((node) => `<section class="chapter" id="${slugify(node.doc.filename)}">\n${renderDocMarkdown(stripDocMeta(bookTextOf(node.doc)))}\n</section>`)
+        .map((node) => `<section class="chapter" id="${slugify(node.doc.filename)}">\n${renderDocMarkdown(stripDocMeta(bookTextOf(node.doc)), {
+        wikilinks,
+    })}\n</section>`)
         .join('\n');
     return `<!DOCTYPE html>
 <html lang="${opts.lang ?? 'en'}">

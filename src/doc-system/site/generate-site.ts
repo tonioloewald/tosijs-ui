@@ -25,6 +25,7 @@ import {
   pathForSlug,
   rewriteDocLinks,
   withBase,
+  wikilinkTargets,
 } from '../routing.js'
 import { buildNavTree, navOpenPath, NavNode } from '../nav-tree.js'
 import {
@@ -35,6 +36,7 @@ import {
 import {
   bareNameLinks,
   deadInPageAnchors,
+  missingWikilinks,
   misconfigured,
 } from './build-warnings.js'
 
@@ -267,7 +269,8 @@ async function pageHtml(
   doc: Doc,
   config: GenerateSiteConfig,
   slugMap: Record<string, string>,
-  configAttr: string
+  configAttr: string,
+  wikilinks: Map<string, string>
 ): Promise<string> {
   const {
     projectName = '',
@@ -323,7 +326,10 @@ async function pageHtml(
   // does this client-side after hydration).
   const body = rewriteDocLinks(
     await highlightHtml(
-      renderDocMarkdown(doc.text, { bakes: bakes?.get(doc.filename) }),
+      renderDocMarkdown(doc.text, {
+        bakes: bakes?.get(doc.filename),
+        wikilinks,
+      }),
       // The SAME policy the client will apply, so the build and the browser agree about
       // which blocks are live examples and which are static code to highlight.
       config.liveExamples ?? 'auto'
@@ -499,6 +505,7 @@ export async function generateSite(
 ): Promise<number> {
   const { docs, outputDir } = config
   const slugMap = buildSlugMap(docs)
+  const wikilinks = wikilinkTargets(docs)
 
   // Surface any slug collisions (the slug map disambiguates them, but a warning
   // tells the maintainer two docs share a base name).
@@ -531,13 +538,21 @@ export async function generateSite(
   let count = 0
   const deadAnchors: string[] = []
   const bareLinks: string[] = []
+  const danglingWikilinks: string[] = []
   for (const doc of docs) {
     const slug = slugMap[doc.filename]
     const dir = slug === '' ? outputDir : `${outputDir}/${slug}`
-    const rendered = renderDocMarkdown(doc.text)
+    const rendered = renderDocMarkdown(doc.text, { wikilinks })
     const dead = deadInPageAnchors(rendered)
     // On the root page (`/`) a bare name resolves to `/name`, which works; elsewhere it does not.
     const bare = slug === '' ? [] : bareNameLinks(rendered)
+    const dangling = missingWikilinks(rendered)
+    if (dangling.length)
+      danglingWikilinks.push(
+        `    ${doc.path || doc.filename}: ${dangling
+          .map((t) => `[[${t}]]`)
+          .join(', ')}`
+      )
     if (bare.length)
       bareLinks.push(`    ${doc.path || doc.filename}: ${bare.join(', ')}`)
     if (dead.length)
@@ -548,13 +563,21 @@ export async function generateSite(
       )
     await Bun.write(
       `${dir}/index.html`,
-      await pageHtml(doc, config, slugMap, configAttr)
+      await pageHtml(doc, config, slugMap, configAttr, wikilinks)
     )
     // The page's own source, for readers that want text rather than a page.
     if (hasMarkdownPage(doc, config)) {
       await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n')
     }
     count += 1
+  }
+  if (danglingWikilinks.length) {
+    misconfigured(
+      config.strict,
+      `\n⚠️  Wikilinks that reach no page. A target matches a page's slug (its file name)\n` +
+        `    or its title; write [[slug|label]] to link one by file name:\n` +
+        `${danglingWikilinks.join('\n')}\n`
+    )
   }
   if (bareLinks.length) {
     misconfigured(

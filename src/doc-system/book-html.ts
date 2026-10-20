@@ -8,7 +8,7 @@ force-wrapped code listings, not executed.
 */
 
 import { renderDocMarkdown } from './render.js'
-import { buildSlugMap } from './routing.js'
+import { buildSlugMap, wikilinkTargets } from './routing.js'
 import { buildNavTree, NavNode, NavDoc } from './nav-tree.js'
 import { bookTextOf } from './book-target.js'
 
@@ -191,6 +191,7 @@ export interface BookHtmlOptions {
 export function buildBookHtml(docs: BookDoc[], opts: BookHtmlOptions): string {
   const visible = docs.filter((d) => !d.hidden)
   const slugMap = buildSlugMap(visible)
+  const wikilinks = wikilinkTargets(visible)
   const roots = buildNavTree(visible, slugMap)
   const css = opts.css ?? `${DEFAULT_BOOK_CSS}\n${PRINT_CSS}`
 
@@ -199,9 +200,9 @@ export function buildBookHtml(docs: BookDoc[], opts: BookHtmlOptions): string {
       (node) =>
         `<section class="chapter" id="${slugify(
           node.doc.filename
-        )}">\n${renderDocMarkdown(
-          stripDocMeta(bookTextOf(node.doc))
-        )}\n</section>`
+        )}">\n${renderDocMarkdown(stripDocMeta(bookTextOf(node.doc)), {
+          wikilinks,
+        })}\n</section>`
     )
     .join('\n')
 

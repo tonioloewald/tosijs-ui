@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { renderDocMarkdown } from '../render.js';
 import { highlightHtml } from '../highlight.js';
-import { buildSlugMap, pathForSlug, resolveParent, slugForPath, withBase, } from '../routing.js';
+import { buildSlugMap, pathForSlug, resolveParent, slugForPath, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree } from '../nav-tree.js';
 import { partitionByBook, placeInBook, bookTextOf, DEFAULT_BOOK, } from '../book-target.js';
 import { COVER_MEDIA_TYPES, coverStem, epubVolumeIdentity, } from './epub-volumes.js';
@@ -621,6 +621,7 @@ export async function buildEpub(config, opts = {}) {
     into the default one just by not naming a book.
     */
     const siteSlugs = buildSlugMap(corpus);
+    const wikilinks = wikilinkTargets(corpus);
     const volumes = partitionByBook(corpus, siteSlugs);
     const visible = volumes.get(opts.bookTarget ?? DEFAULT_BOOK) ?? [];
     /*
@@ -750,7 +751,7 @@ export async function buildEpub(config, opts = {}) {
         `injectExampleLinks` matches on the `language-*` class, never on the code text, so
         highlighting cannot break the "Run this example live" links.
         */
-        await highlightHtml(renderDocMarkdown(stripDocMeta(bookTextOf(doc))), 'none'), bookFiles, slugMap, config.basePath);
+        await highlightHtml(renderDocMarkdown(stripDocMeta(bookTextOf(doc)), { wikilinks }), 'none'), bookFiles, slugMap, config.basePath);
         // happy-dom occasionally throws on exotic content (e.g. an internal selector
         // bug); fall back to the regex pass for that doc rather than aborting.
         let bodyHtml;

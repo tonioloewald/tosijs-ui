@@ -973,3 +973,46 @@ test('a page with its header keeps it (the control)', async ({ page }) => {
     .poll(async () => (await headerShape(page)).header)
     .toBeGreaterThan(0)
 })
+
+/*
+The test-status widget sits in the header bar, not over the page (GitHub #233): fixed at the
+bottom left, it took the clicks meant for a full-page component's last list row. A page with
+no header floats it, since there is nowhere else; the next page puts it back.
+*/
+const widgetPlace = (page: any) =>
+  page.evaluate(() => {
+    const widget = document.querySelector('.test-widget') as HTMLElement
+    document.body.classList.add('tests-enabled')
+    widget.hidden = false
+    const header = document.querySelector('tosi-doc-system header')!
+    const w = widget.getBoundingClientRect()
+    const h = header.getBoundingClientRect()
+    return {
+      inHeader: widget.parentElement === header,
+      withinBar: w.top >= h.top && w.bottom <= h.bottom && w.height > 0,
+      position: getComputedStyle(widget).position,
+    }
+  })
+
+test('the test widget lives in the header, and floats only on a page without one', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/documentation-system/')
+  await page.waitForFunction(() => !!document.querySelector('.test-widget'))
+  expect(await widgetPlace(page)).toEqual({
+    inHeader: true,
+    withinBar: true,
+    position: 'static',
+  })
+
+  await page.goto('/no-header-demo/')
+  await page.waitForFunction(() => !!document.querySelector('.test-widget'))
+  expect(await widgetPlace(page)).toMatchObject({
+    inHeader: false,
+    position: 'fixed',
+  })
+
+  await page.click('.nh-demo a')
+  await expect.poll(async () => (await widgetPlace(page)).inHeader).toBe(true)
+})

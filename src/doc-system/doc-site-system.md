@@ -1721,6 +1721,11 @@ case is fully covered.
   to it reaches whichever comes first. The build does not check for this; title such
   headings differently if you link to them. The build warns about an
   in-page link that matches no id on its page (it fails under `strict`).
+- **Wikilinks**: `[[target]]` links to another page, `[[target|label]]` with your own text.
+  The target is a page's slug (its file name, `[[registry]]` → `/registry/`) or, when no page
+  has that slug, its title (`[[The feature registry]]` → `/registry/`). A slug always wins, and
+  a title two pages share reaches neither. The build warns about a wikilink that reaches no
+  page, naming the file and the target (it fails under `strict`).
 
 ### Which fence languages EXECUTE
 

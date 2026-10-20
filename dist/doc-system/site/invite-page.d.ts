@@ -17,4 +17,10 @@ export type SessionRejection = 'none' | 'stale' | 'unknown';
  * installed app captures it would bake a credential into a home-screen icon that works once and
  * then fails forever, with no address bar to correct it. Eight characters is the better trade.
  */
-export declare function invitePageHtml(rejection: SessionRejection, linkCommand: string): string;
+export declare function invitePageHtml(rejection: SessionRejection, linkCommand: string, 
+/**
+ * The command for a link that keeps the browser in for good, when this server takes the
+ * preview box's global keys. Without it the page offered only per-visit links, and a reader
+ * whose key cookie had lapsed read that as the daily-link problem coming back (#232).
+ */
+lastingCommand?: string): string;

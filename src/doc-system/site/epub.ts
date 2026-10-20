@@ -25,6 +25,7 @@ import {
   resolveParent,
   slugForPath,
   withBase,
+  wikilinkTargets,
 } from '../routing.js'
 import { buildNavTree, NavNode } from '../nav-tree.js'
 import type { Doc } from './docs.js'
@@ -837,6 +838,7 @@ export async function buildEpub(
   into the default one just by not naming a book.
   */
   const siteSlugs = buildSlugMap(corpus)
+  const wikilinks = wikilinkTargets(corpus)
   const volumes = partitionByBook(corpus, siteSlugs)
   const visible: Doc[] = volumes.get(opts.bookTarget ?? DEFAULT_BOOK) ?? []
   /*
@@ -990,7 +992,7 @@ export async function buildEpub(
       highlighting cannot break the "Run this example live" links.
       */
       await highlightHtml(
-        renderDocMarkdown(stripDocMeta(bookTextOf(doc))),
+        renderDocMarkdown(stripDocMeta(bookTextOf(doc)), { wikilinks }),
         'none'
       ),
       bookFiles,

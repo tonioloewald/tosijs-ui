@@ -112,6 +112,7 @@ import {
   pathForSlug,
   filenameForPath,
   homeDoc,
+  wikilinkTargets,
 } from './doc-system/routing.js'
 import { buildNavTree, NavNode } from './doc-system/nav-tree.js'
 import { renderDocMarkdown } from './doc-system/render.js'
@@ -292,20 +293,27 @@ const testIndicatorStyleSpec: XinStyleSheet = {
     animation: 'test-pulse 2s ease-in-out infinite',
   },
 
-  // Floating widget - position and colors only, inherits button structure.
-  // Bottom-LEFT: bottom-right is where the injected haltija dev widget sits, and it
-  // was overlaying this.
+  /*
+  The widget sits in the header bar, not over the page (GitHub #233).
+
+  It used to be `position: fixed` at the bottom left, on top of whatever the page drew there:
+  a full-page component's list ran under it and a click on its last row landed on the widget
+  instead. Only a page with no header (`{"header": false}`) still floats it, because there is
+  nowhere else to put it. Bottom-LEFT, because the haltija dev widget takes bottom-right.
+  */
   '.test-widget': {
     _testBg: testColor.running,
     _testFg: testTextColor.running,
-    position: 'fixed',
-    bottom: vars.spacing,
-    left: vars.spacing,
-    zIndex: '1000',
     background: vars.testBg,
     // Paired with the background, not fixed to white — see testTextColor above.
     color: vars.testFg,
     gap: vars.spacing50,
+  },
+  '.test-widget.-floating': {
+    position: 'fixed',
+    bottom: vars.spacing,
+    left: vars.spacing,
+    zIndex: '1000',
   },
   '.test-widget[hidden]': { display: 'none' },
   '.test-widget.-running': {
@@ -580,6 +588,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // while letting <tosi-doc-system> drive clean `/slug/` URLs off the same docs.
   // Both path and memory routing key off slugs; only legacy query routing doesn't.
   const slugMap = routing === 'query' ? {} : buildSlugMap(docs)
+  const wikilinks = wikilinkTargets(docs)
   const slugFor = (filename: string): string => slugMap[filename] ?? filename
   const filenameForSlug = (slug: string): string => {
     for (const d of docs) if (slugFor(d.filename) === slug) return d.filename
@@ -1238,6 +1247,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       // without loading the tjs transpiler. See self-contained-examples-plan.md.
       docContent.innerHTML = renderDocMarkdown(doc.text, {
         bakes: doc.bakes ? new Map(doc.bakes) : undefined,
+        wikilinks,
       })
     }
     /*
@@ -1291,6 +1301,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       // to follow the doc, so this does not ride on that path succeeding.
       refreshNavToggle()
     }
+    placeTestWidget(doc)
     rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path
     // is the extracted file (.md, or a source file with doc comments).
@@ -1547,7 +1558,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     editUI.view = view
     if (view === 'preview') {
       docContent.innerHTML = renderDocMarkdown(
-        docMarkdownFromSource(editUI.editor.value, editUI.doc.path)
+        docMarkdownFromSource(editUI.editor.value, editUI.doc.path),
+        { wikilinks }
       )
       rewriteContentLinks()
       LiveExample.insertExamples(
@@ -1972,17 +1984,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     )
   )
 
-  // Render the landing doc (adopts pre-rendered HTML when hydrating).
-  showDoc(currentDoc)
-
-  // Inject test indicator styles
-  StyleSheet('test-indicators', testIndicatorStyleSpec)
-
-  // Header brand-mark sizing (icon / <img> / inline-<svg>), one CSS var each.
-  StyleSheet('doc-logo-mark', logoMarkStyleSpec)
-  StyleSheet('doc-nav-search', navSearchStyleSpec)
-
-  // Floating widget for test status
+  // Test status widget
   const testWidget = button(
     {
       class: 'test-widget',
@@ -1992,7 +1994,24 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     span({ part: 'label' }, 'Tests'),
     span({ class: 'count', part: 'count' }, '0')
   )
-  container.appendChild(testWidget)
+  const headerBar = container.querySelector('header')!
+  // In the header unless this doc hides the header; see `.test-widget` in the styles.
+  const placeTestWidget = (doc: Doc) => {
+    const floating = doc.header === false
+    testWidget.classList.toggle('-floating', floating)
+    const home = floating ? container : headerBar
+    if (testWidget.parentElement !== home) home.appendChild(testWidget)
+  }
+
+  // Render the landing doc (adopts pre-rendered HTML when hydrating).
+  showDoc(currentDoc)
+
+  // Inject test indicator styles
+  StyleSheet('test-indicators', testIndicatorStyleSpec)
+
+  // Header brand-mark sizing (icon / <img> / inline-<svg>), one CSS var each.
+  StyleSheet('doc-logo-mark', logoMarkStyleSpec)
+  StyleSheet('doc-nav-search', navSearchStyleSpec)
 
   /*
   The far end has something to tell you.

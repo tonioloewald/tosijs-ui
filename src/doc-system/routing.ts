@@ -65,6 +65,43 @@ export function buildSlugMap(docs: DocLike[]): Record<string, string> {
   return map
 }
 
+/** A wikilink target as written, reduced to the form it is looked up by. */
+export function wikilinkKey(target: string): string {
+  return target
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/**
+ * What each `[[target]]` in a corpus can reach: { wikilinkKey -> slug }.
+ *
+ * A page is reached by its slug, and also by its title when no page has that slug and no
+ * other page has the same title (GitHub #234). Authors write a page's TITLE —
+ * `[[The feature registry]]` — while the page lives at its file name, `/registry/`; before
+ * this, every such link went to `/the-feature-registry/` and 404'd without a word. A slug
+ * always wins over a title, so no link that already worked changes target.
+ */
+export function wikilinkTargets(
+  docs: Array<DocLike & { title?: string }>
+): Map<string, string> {
+  const slugs = buildSlugMap(docs)
+  const targets = new Map<string, string>()
+  for (const doc of docs) {
+    const slug = slugs[doc.filename]
+    if (slug !== '') targets.set(wikilinkKey(slug), slug)
+  }
+  const byTitle = new Map<string, string | null>()
+  for (const doc of docs) {
+    const key = doc.title ? wikilinkKey(doc.title) : ''
+    if (!key || targets.has(key)) continue
+    // Two pages with one title: neither is reachable by it, so the link is reported.
+    byTitle.set(key, byTitle.has(key) ? null : slugs[doc.filename])
+  }
+  for (const [key, slug] of byTitle) if (slug !== null) targets.set(key, slug)
+  return targets
+}
+
 /** site-root-relative path for a slug: '' -> '/', 'button' -> '/button/' */
 export function pathForSlug(slug: string): string {
   return slug === '' ? '/' : `/${slug}/`

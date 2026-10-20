@@ -6,6 +6,8 @@ export type ExampleBakes = Map<string, ExampleBake>;
 export declare function unwrapLoneCustomElements(html: string): string;
 export declare function renderDocMarkdown(text: string, opts?: {
     bakes?: ExampleBakes;
+    /** the corpus's `wikilinkTargets`; without it a `[[target]]` is slugified as written */
+    wikilinks?: Map<string, string>;
 }): string;
 /**
  * Derive a clean <meta name="description"> from a doc's first prose paragraph.

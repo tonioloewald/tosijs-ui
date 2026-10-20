@@ -12,6 +12,7 @@ give that example a stable anchor — see the docMarked renderer below.
 import { Marked, Renderer } from 'marked'
 import { parseFenceInfo } from './example-policy.js'
 import { HeadingIds, headingSlug } from './heading-id.js'
+import { pathForSlug, wikilinkKey } from './routing.js'
 
 const baseRenderer = new Renderer()
 
@@ -33,6 +34,7 @@ export interface ExampleBake {
 }
 export type ExampleBakes = Map<string, ExampleBake>
 let currentBakes: ExampleBakes | undefined
+let currentWikilinks: Map<string, string> | undefined
 
 // Per-parse, reset in `preprocess` below (same pattern as the footnote state).
 let headingIds = new HeadingIds()
@@ -141,7 +143,9 @@ docMarked.use({
   extensions: [
     {
       // [[slug]] / [[slug|label]] → link to /slug/. Not matched inside code spans
-      // (Marked tokenizes those first). Resolves by slugifying the target.
+      // (Marked tokenizes those first). Given the corpus's `wikilinkTargets`, a target is
+      // looked up there (by slug, then title) and one that reaches no page is marked
+      // `-missing` for the build to report; without them it is slugified as written.
       name: 'wikilink',
       level: 'inline',
       start(src: string) {
@@ -158,9 +162,15 @@ docMarked.use({
         }
       },
       renderer(token: any) {
-        return `<a href="/${slugify(
-          token.target
-        )}/" class="wikilink">${escapeHtml(token.label)}</a>`
+        const key = wikilinkKey(token.target)
+        const slug = currentWikilinks ? currentWikilinks.get(key) : key
+        const missing =
+          slug === undefined
+            ? ` -missing" data-target="${escapeAttr(token.target)}`
+            : ''
+        return `<a href="${pathForSlug(
+          slug ?? key
+        )}" class="wikilink${missing}">${escapeHtml(token.label)}</a>`
       },
     },
     {
@@ -236,13 +246,19 @@ export function unwrapLoneCustomElements(html: string): string {
 
 export function renderDocMarkdown(
   text: string,
-  opts: { bakes?: ExampleBakes } = {}
+  opts: {
+    bakes?: ExampleBakes
+    /** the corpus's `wikilinkTargets`; without it a `[[target]]` is slugified as written */
+    wikilinks?: Map<string, string>
+  } = {}
 ): string {
   currentBakes = opts.bakes
+  currentWikilinks = opts.wikilinks
   try {
     return unwrapLoneCustomElements(docMarked.parse(text) as string)
   } finally {
     currentBakes = undefined
+    currentWikilinks = undefined
   }
 }
 

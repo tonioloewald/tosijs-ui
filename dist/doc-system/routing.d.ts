@@ -19,6 +19,20 @@ export declare function homeDoc(docs: DocLike[]): string | null;
  * on array order.
  */
 export declare function buildSlugMap(docs: DocLike[]): Record<string, string>;
+/** A wikilink target as written, reduced to the form it is looked up by. */
+export declare function wikilinkKey(target: string): string;
+/**
+ * What each `[[target]]` in a corpus can reach: { wikilinkKey -> slug }.
+ *
+ * A page is reached by its slug, and also by its title when no page has that slug and no
+ * other page has the same title (GitHub #234). Authors write a page's TITLE —
+ * `[[The feature registry]]` — while the page lives at its file name, `/registry/`; before
+ * this, every such link went to `/the-feature-registry/` and 404'd without a word. A slug
+ * always wins over a title, so no link that already worked changes target.
+ */
+export declare function wikilinkTargets(docs: Array<DocLike & {
+    title?: string;
+}>): Map<string, string>;
 /** site-root-relative path for a slug: '' -> '/', 'button' -> '/button/' */
 export declare function pathForSlug(slug: string): string;
 /**

@@ -42,7 +42,13 @@ function explain(rejection: SessionRejection): string {
  */
 export function invitePageHtml(
   rejection: SessionRejection,
-  linkCommand: string
+  linkCommand: string,
+  /**
+   * The command for a link that keeps the browser in for good, when this server takes the
+   * preview box's global keys. Without it the page offered only per-visit links, and a reader
+   * whose key cookie had lapsed read that as the daily-link problem coming back (#232).
+   */
+  lastingCommand?: string
 ): string {
   return (
     `<!doctype html><meta charset=utf-8>` +
@@ -70,6 +76,11 @@ export function invitePageHtml(
     `border:0;border-radius:6px;background:#0064d2;color:#fff">Open</button>` +
     `</form>` +
     `<p style="opacity:.7">Or, at the machine running the server:</p>` +
-    `<p><code>${linkCommand}</code></p>`
+    `<p><code>${linkCommand}</code></p>` +
+    (lastingCommand
+      ? `<p style="opacity:.7">For a link that keeps this browser in every workspace on the ` +
+        `preview box, across restarts, for 30 days:</p>` +
+        `<p><code>${lastingCommand}</code></p>`
+      : '')
   )
 }

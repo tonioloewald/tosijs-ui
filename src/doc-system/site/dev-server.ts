@@ -2252,14 +2252,21 @@ export async function devServer(
           readCookie(request.headers.get('cookie'), SESSION_COOKIE),
           Date.now()
         )
-        return new Response(invitePageHtml(rejection, TUNNEL_LINK_CMD), {
-          status: 401,
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-store',
-            'Referrer-Policy': 'no-referrer',
-          },
-        })
+        return new Response(
+          invitePageHtml(
+            rejection,
+            TUNNEL_LINK_CMD,
+            globalKeys.keys.edit ? `${TUNNEL_LINK_CMD} --global` : undefined
+          ),
+          {
+            status: 401,
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'no-store',
+              'Referrer-Policy': 'no-referrer',
+            },
+          }
+        )
       }
     }
     if (linkToken) {

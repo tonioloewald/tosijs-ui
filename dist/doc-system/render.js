@@ -11,8 +11,10 @@ give that example a stable anchor — see the docMarked renderer below.
 import { Marked, Renderer } from 'marked';
 import { parseFenceInfo } from './example-policy.js';
 import { HeadingIds, headingSlug } from './heading-id.js';
+import { pathForSlug, wikilinkKey } from './routing.js';
 const baseRenderer = new Renderer();
 let currentBakes;
+let currentWikilinks;
 // Per-parse, reset in `preprocess` below (same pattern as the footnote state).
 let headingIds = new HeadingIds();
 const docMarked = new Marked();
@@ -112,7 +114,9 @@ docMarked.use({
     extensions: [
         {
             // [[slug]] / [[slug|label]] → link to /slug/. Not matched inside code spans
-            // (Marked tokenizes those first). Resolves by slugifying the target.
+            // (Marked tokenizes those first). Given the corpus's `wikilinkTargets`, a target is
+            // looked up there (by slug, then title) and one that reaches no page is marked
+            // `-missing` for the build to report; without them it is slugified as written.
             name: 'wikilink',
             level: 'inline',
             start(src) {
@@ -130,7 +134,12 @@ docMarked.use({
                 };
             },
             renderer(token) {
-                return `<a href="/${slugify(token.target)}/" class="wikilink">${escapeHtml(token.label)}</a>`;
+                const key = wikilinkKey(token.target);
+                const slug = currentWikilinks ? currentWikilinks.get(key) : key;
+                const missing = slug === undefined
+                    ? ` -missing" data-target="${escapeAttr(token.target)}`
+                    : '';
+                return `<a href="${pathForSlug(slug ?? key)}" class="wikilink${missing}">${escapeHtml(token.label)}</a>`;
             },
         },
         {
@@ -205,11 +214,13 @@ export function unwrapLoneCustomElements(html) {
 }
 export function renderDocMarkdown(text, opts = {}) {
     currentBakes = opts.bakes;
+    currentWikilinks = opts.wikilinks;
     try {
         return unwrapLoneCustomElements(docMarked.parse(text));
     }
     finally {
         currentBakes = undefined;
+        currentWikilinks = undefined;
     }
 }
 /**
