@@ -795,3 +795,11 @@ gap, recorded rather than hidden.
 - **Found while testing on the box:** Caddy's access log had recorded `?t=` keys and tokens since 1.9.0. The template now redacts them; the box's logs were scrubbed by hand.
 - **Approval came after the 60-minute wait,** so the run ended with verify skipped. `verify_only` run 39453492098 was green, and the published dist is identical to the tag.
 - **Lanes:** unit 1963; Playwright 831 passed, 51 skipped; consumer 58; haltija 87 over 20 pages.
+
+## 1.16.29 (2026-10-20)
+
+- **Two adopter reports from tosijs-3d-ensemble, fixed same day.** The test widget (fixed over page content) took a full-page component's clicks 3 runs in 4; nine dangling wikilinks had been live 404s since their 0.3 with no build warning. Both were invisible to our lanes because this corpus uses no wikilinks and no full-page component sits under the widget.
+- **The review (v2 skill, always-on/fast for an additive patch) caught one real catch:** under `strict`, a wikilink to a static page now fails the build though the link works. Documented rather than exempted; the exemption is board #3435.
+- **One owner per rule, again:** the new `wikilinkKey` was a fifth copy of `slugify`. Folded into `routing.ts` with render.ts's copy; book-html and epub-volumes still carry copies (#3435).
+- **The publish watch exited early** (`gh run watch` returned while the stage job sat at approval); an until-loop on `status` is the reliable wait.
+- **Lanes:** unit 1968; Playwright 834 passed, 51 skipped; consumer 58; haltija 87 over 20 pages. Publish run 39457705677 green including verify; published dist identical to the tag.
