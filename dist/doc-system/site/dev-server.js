@@ -22,7 +22,7 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
 import { readLocalSecret } from './local-secrets.js';
 import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
@@ -1725,6 +1725,37 @@ export async function devServer(config, opts = {}) {
     outright. Source and data writes check same-origin on both paths (sourceRequestAdmission).
     */
     const csrfOk = (request, viaTunnel) => viaTunnel || isSameOriginRequest(request);
+    /*
+    A request from this workspace's own page that holds a global key but a dead session (the
+    server restarted under it) is served with a fresh session, which its response hands back.
+    See `globalKeyRefresh`. The session goes into the request's cookie header, so every gate in
+    handleRequest sees a session and none of them has to know about keys.
+    */
+    const withKeySession = async (request, handle) => {
+        const grant = globalKeyRefresh(request, {
+            viaTunnel: true,
+            host: request.headers.get('host') ?? '',
+            auth,
+            keys: globalKeys.keys,
+            now: Date.now(),
+        });
+        if (!grant)
+            return handle(request);
+        const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
+        const setCookie = sessionCookie(session, GLOBAL_KEY_SESSION_TTL_MS);
+        const headers = new Headers(request.headers);
+        const others = (headers.get('cookie') ?? '')
+            .split(';')
+            .map((c) => c.trim())
+            .filter((c) => c && !c.startsWith(`${SESSION_COOKIE}=`));
+        // The `name=value` pair the browser will send from now on.
+        headers.set('cookie', [...others, setCookie.split(';')[0]].join('; '));
+        const response = await handle(new Request(request, { headers }));
+        const refreshed = new Response(response.body, response);
+        refreshed.headers.append('Set-Cookie', setCookie);
+        console.log(`🔓 global ${grant} key — session renewed for ${request.method}`);
+        return refreshed;
+    };
     const handleRequest = async (request, srv, viaTunnel) => {
         /*
         A REQUEST is activity. This was lost in the two-listener refactor, leaving the only
@@ -2490,7 +2521,7 @@ export async function devServer(config, opts = {}) {
                 // Same reasoning as the main listener — a tunnelled load is slower, not faster.
                 idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
                 hostname: '127.0.0.1',
-                fetch: (request, srv) => handleRequest(request, srv, true),
+                fetch: (request, srv) => withKeySession(request, (r) => handleRequest(r, srv, true)),
                 websocket: haltijaWebSocketHandlers,
             });
             console.log(`Tunnel listener on http://127.0.0.1:${tunnelPort} (loopback only; writes require a session)`);

@@ -1136,8 +1136,12 @@ anywhere else. The single-use link is the better habit: it never puts the key in
 With the cookie set, the box's root, `https://dev.example.com/`, is where you pick a workspace:
 it lists every registered one and asks each what your key opens there (`edit`, `view`, or
 nothing), and a workspace that is offline, or whose dev server predates tosijs-ui 1.16.26, says
-it is not answering. After a dev-server restart you simply reload; the cookie is still there and
-a fresh session is issued. A session started from the view key can browse and never save, never
+it is not answering. A dev-server restart costs you nothing, which matters because `bun start`
+restarts on any edit to a file in its import graph, examples in component sources included. The
+next page load trades the cookie for a fresh session, and so does the next save from a page that
+was open across the restart: a request from the workspace's own page renews the session in
+place, so an unsaved edit is never lost to a reload. A request from another workspace's page
+gets nothing, though it carries the same cookie. A session started from the view key can browse and never save, never
 drive the page with an agent.
 
 **Use long keys.** The box compares them with no rate limit in front, unlike the link codes,

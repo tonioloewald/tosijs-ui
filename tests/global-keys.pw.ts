@@ -123,6 +123,11 @@ test.beforeAll(async ({ browserName }) => {
 
   port = await freePort()
   tunnelPort = await freePort()
+  await startServer()
+})
+
+/** Start the dev server on the spec's ports; called again to restart it. */
+async function startServer() {
   const config = {
     name: 'Keys Test',
     outputDir: 'docs',
@@ -181,7 +186,14 @@ test.beforeAll(async ({ browserName }) => {
       reject(new Error(`dev server exited ${code}:\n${output}`))
     })
   })
-})
+}
+
+/** Stop the dev server and wait for it to go, as `bun --watch` does on a source edit. */
+async function stopServer() {
+  const exited = new Promise((resolve) => server!.once('exit', resolve))
+  server!.kill('SIGTERM')
+  await exited
+}
 
 test.afterAll(() => {
   server?.kill('SIGTERM')
@@ -231,6 +243,15 @@ test('a wrong key, or a key in the wrong cookie, is no key', async () => {
     headers: { cookie: `tosi_edit=${EDIT}`, 'sec-fetch-mode': 'cors' },
   })
   expect(fetched.status).toBe(401)
+  // Nor is one from a sibling workspace, which receives the same domain cookie.
+  const sibling = await viaTunnel('/', {
+    headers: {
+      cookie: `tosi_edit=${EDIT}`,
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-site': 'same-site',
+    },
+  })
+  expect(sibling.status).toBe(401)
 })
 
 test('the box root may ask what the reader can do here, and no one else may', async () => {
@@ -357,4 +378,51 @@ test('outstanding single-use global links are capped', async () => {
   }
   expect(minted).toBeLessThanOrEqual(32)
   expect(minted).toBeGreaterThan(25)
+})
+
+/*
+A restart must not cost a key holder their session (the maintainer, 2026-10-20). `bun start`
+runs under `bun --watch`, whose graph holds the component sources, so editing an example in a
+doc comment restarts the whole process. Sessions live in memory and die with it; the key cookie
+is what brings the reader back.
+*/
+test('a restart costs a key holder nothing', async () => {
+  const before = sessionFrom(await navigate(`tosi_edit=${EDIT}`))
+  expect((await save(before, `https://${HOST}`)).status).toBe(200)
+
+  await stopServer()
+  await startServer()
+
+  // A save from the page that was open across the restart: renewed in place, no reload.
+  const key = `tosi_edit=${EDIT}`
+  const stale = `${key}; ${before}`
+  const saved = await save(stale, `https://${HOST}`)
+  expect(saved.status).toBe(200)
+  const renewed = [saved.headers['set-cookie'] ?? []]
+    .flat()
+    .find((c) => c.startsWith('tosi_dev_session='))
+  expect(renewed, 'the save hands back a fresh session').toBeTruthy()
+  expect((await save(renewed!.split(';')[0], `https://${HOST}`)).status).toBe(
+    200
+  )
+  // A sibling workspace's page shares the key cookie, and must not spend it here.
+  const sibling = await save(stale, 'https://other.dev.example.test')
+  expect(sibling.status).not.toBe(200)
+  expect(sibling.headers['set-cookie']).toBeUndefined()
+  // Nor may a request with no evidence of where it came from.
+  const bare = await viaTunnel('/__docstore/data', {
+    method: 'POST',
+    headers: { cookie: stale, 'content-type': 'application/json' },
+    body: '{}',
+  })
+  expect(bare.status).toBe(401)
+  expect(bare.headers['set-cookie']).toBeUndefined()
+
+  // The reload: the stale session plus the key cookie is exchanged for a fresh session.
+  const reloaded = await navigate(`tosi_edit=${EDIT}; ${before}`)
+  expect(reloaded.status).toBe(302)
+  const after = sessionFrom(reloaded)
+  expect(after).not.toBe(before)
+  expect((await navigate(`tosi_edit=${EDIT}; ${after}`)).status).toBe(200)
+  expect((await save(after, `https://${HOST}`)).status).toBe(200)
 })

@@ -1548,6 +1548,7 @@ import {
   GLOBAL_KEY_COOKIE_MAX_AGE_S,
   globalKeyAccess,
   globalKeyExchange,
+  globalKeyRefresh,
   isNavigation,
   liveProbeOrigin,
   issueSession,
@@ -1729,6 +1730,63 @@ describe('global keys', () => {
     expect(globalKeyAccess(`tosi_edit=${EDIT}x`, keys)).toBe(null)
     expect(globalKeyAccess(`tosi_edit=${EDIT}`, { view: VIEW })).toBe(null)
     expect(globalKeyAccess(`tosi_edit=${VIEW}`, keys)).toBe(null)
+  })
+
+  test('a request from this page that is not a page load renews a dead session, given evidence of its origin', () => {
+    // The server restarted under an open page (an example edit restarts `bun start`); the next
+    // save must not be told it needs an invite link.
+    const HOST = 'ui.edit.dev.example.com'
+    const opts = {
+      viaTunnel: true,
+      host: HOST,
+      auth: createAuthState(),
+      keys,
+      now: NOW,
+    }
+    const post = (headers: Record<string, string>) =>
+      new Request(`https://${HOST}/__docstore/source`, {
+        method: 'POST',
+        headers: { cookie: `tosi_edit=${EDIT}`, ...headers },
+      })
+    expect(
+      globalKeyRefresh(post({ 'sec-fetch-site': 'same-origin' }), opts)
+    ).toBe('edit')
+    // A browser with no fetch metadata still sends Origin on a POST.
+    expect(globalKeyRefresh(post({ origin: `https://${HOST}` }), opts)).toBe(
+      'edit'
+    )
+    // A sibling workspace holds the same domain cookie; it may not spend it here.
+    expect(
+      globalKeyRefresh(post({ 'sec-fetch-site': 'same-site' }), opts)
+    ).toBe(null)
+    expect(
+      globalKeyRefresh(
+        post({ origin: 'https://other.edit.dev.example.com' }),
+        opts
+      )
+    ).toBe(null)
+    // No evidence either way is not evidence.
+    expect(globalKeyRefresh(post({}), opts)).toBe(null)
+    // A page load is the redirecting exchange's job; a socket has no response to carry it.
+    expect(
+      globalKeyRefresh(
+        page(`tosi_edit=${EDIT}`, { 'sec-fetch-site': 'same-origin' }),
+        opts
+      )
+    ).toBe(null)
+    expect(
+      globalKeyRefresh(
+        post({ 'sec-fetch-site': 'same-origin', upgrade: 'websocket' }),
+        opts
+      )
+    ).toBe(null)
+    // The main listener is loopback and needs no key.
+    expect(
+      globalKeyRefresh(post({ 'sec-fetch-site': 'same-origin' }), {
+        ...opts,
+        viaTunnel: false,
+      })
+    ).toBe(null)
   })
 
   test('a key becomes a session only over the tunnel, on a page load, when it adds something', () => {

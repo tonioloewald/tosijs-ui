@@ -61,6 +61,7 @@ import {
   resolveGlobalKeys,
   globalKeyAccess,
   globalKeyExchange,
+  globalKeyRefresh,
   liveProbeOrigin,
   issueSession,
   cookieMayWrite,
@@ -2039,6 +2040,47 @@ export async function devServer(
   const csrfOk = (request: Request, viaTunnel: boolean): boolean =>
     viaTunnel || isSameOriginRequest(request)
 
+  /*
+  A request from this workspace's own page that holds a global key but a dead session (the
+  server restarted under it) is served with a fresh session, which its response hands back.
+  See `globalKeyRefresh`. The session goes into the request's cookie header, so every gate in
+  handleRequest sees a session and none of them has to know about keys.
+  */
+  const withKeySession = async (
+    request: Request,
+    handle: (request: Request) => Promise<Response>
+  ): Promise<Response> => {
+    const grant = globalKeyRefresh(request, {
+      viaTunnel: true,
+      host: request.headers.get('host') ?? '',
+      auth,
+      keys: globalKeys.keys,
+      now: Date.now(),
+    })
+    if (!grant) return handle(request)
+    const session = issueSession(
+      auth,
+      Date.now(),
+      GLOBAL_KEY_SESSION_TTL_MS,
+      grant === 'view'
+    )
+    const setCookie = sessionCookie(session, GLOBAL_KEY_SESSION_TTL_MS)
+    const headers = new Headers(request.headers)
+    const others = (headers.get('cookie') ?? '')
+      .split(';')
+      .map((c) => c.trim())
+      .filter((c) => c && !c.startsWith(`${SESSION_COOKIE}=`))
+    // The `name=value` pair the browser will send from now on.
+    headers.set('cookie', [...others, setCookie.split(';')[0]].join('; '))
+    const response = await handle(new Request(request, { headers }))
+    const refreshed = new Response(response.body, response)
+    refreshed.headers.append('Set-Cookie', setCookie)
+    console.log(
+      `🔓 global ${grant} key — session renewed for ${request.method}`
+    )
+    return refreshed
+  }
+
   const handleRequest = async (
     request: Request,
     srv:
@@ -2904,7 +2946,7 @@ export async function devServer(
         idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
         hostname: '127.0.0.1',
         fetch: (request: Request, srv: any) =>
-          handleRequest(request, srv, true),
+          withKeySession(request, (r) => handleRequest(r, srv, true)),
         websocket: haltijaWebSocketHandlers,
       })
       console.log(

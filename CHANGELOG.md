@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.16.30
+
+### Tunnel
+
+- **A dev-server restart no longer costs a key holder their next save.** `bun start` restarts
+  the server whenever a file in its import graph changes, and that includes every component
+  source, so editing an example restarts it. Save to source writes such a file, so the save
+  itself restarted the server, and the NEXT save from the same page was told "This workspace
+  needs an invite link". Reloading recovered the session but lost the unsaved edit. Now a
+  request from the workspace's own page that holds the global key cookie is given a fresh
+  session in place. A sibling workspace's page, which receives the same cookie, gets nothing.
+
 ## 1.16.29
 
 ### Doc system

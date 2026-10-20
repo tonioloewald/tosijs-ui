@@ -944,7 +944,10 @@ export function isNavigation(request) {
 export function globalKeyExchange(request, opts) {
     if (!opts.viaTunnel || !isNavigation(request))
         return null;
-    const header = request.headers.get('cookie');
+    return keyAddsAccess(request.headers.get('cookie'), opts);
+}
+/** What a global key would add to this request's session: nothing, or a session of a kind. */
+function keyAddsAccess(header, opts) {
     const access = globalKeyAccess(header, opts.keys);
     if (!access)
         return null;
@@ -954,6 +957,40 @@ export function globalKeyExchange(request, opts) {
             return null;
     }
     return access;
+}
+/**
+ * Should a request from this workspace's OWN page, that is not a page load, trade a global key
+ * for a session in place?
+ *
+ * Sessions live in memory, and `bun start` restarts the process whenever a file in its import
+ * graph changes, which includes every component source and so every doc-comment example. Save
+ * to source writes exactly such a file. So the save restarts the server, and the next save from
+ * the same page arrived holding a dead session and was told "This workspace needs an invite
+ * link". A reload would have exchanged the key, and lost the unsaved edit (the maintainer,
+ * 2026-10-20: a restart must not reset a key holder).
+ *
+ * The answer is the page-load exchange's, with two extra conditions, because no redirect is
+ * involved: the session is issued and used on this same request.
+ * - Positive evidence that the request comes from this origin: `Sec-Fetch-Site: same-origin`,
+ *   or, from a browser that sends no fetch metadata, an `Origin` that is this host. Absence of
+ *   both is NOT enough here (unlike `isSameOriginRequest`): every host under the preview domain
+ *   is the same site and receives the key cookie, so a sibling workspace's page must not be
+ *   able to spend it here.
+ * - Not a WebSocket upgrade, which has no response to carry the cookie.
+ */
+export function globalKeyRefresh(request, opts) {
+    if (!opts.viaTunnel || isNavigation(request))
+        return null;
+    if (request.headers.get('upgrade'))
+        return null;
+    const site = request.headers.get('sec-fetch-site');
+    const origin = request.headers.get('origin');
+    const ours = site !== null
+        ? site === 'same-origin'
+        : origin !== null && origin === `https://${opts.host.toLowerCase()}`;
+    if (!ours)
+        return null;
+    return keyAddsAccess(request.headers.get('cookie'), opts);
 }
 /**
  * The origin allowed to read this workspace's liveness answer: the box's own list.

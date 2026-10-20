@@ -484,6 +484,38 @@ export declare function globalKeyExchange(request: {
     now: number;
 }): 'edit' | 'view' | null;
 /**
+ * Should a request from this workspace's OWN page, that is not a page load, trade a global key
+ * for a session in place?
+ *
+ * Sessions live in memory, and `bun start` restarts the process whenever a file in its import
+ * graph changes, which includes every component source and so every doc-comment example. Save
+ * to source writes exactly such a file. So the save restarts the server, and the next save from
+ * the same page arrived holding a dead session and was told "This workspace needs an invite
+ * link". A reload would have exchanged the key, and lost the unsaved edit (the maintainer,
+ * 2026-10-20: a restart must not reset a key holder).
+ *
+ * The answer is the page-load exchange's, with two extra conditions, because no redirect is
+ * involved: the session is issued and used on this same request.
+ * - Positive evidence that the request comes from this origin: `Sec-Fetch-Site: same-origin`,
+ *   or, from a browser that sends no fetch metadata, an `Origin` that is this host. Absence of
+ *   both is NOT enough here (unlike `isSameOriginRequest`): every host under the preview domain
+ *   is the same site and receives the key cookie, so a sibling workspace's page must not be
+ *   able to spend it here.
+ * - Not a WebSocket upgrade, which has no response to carry the cookie.
+ */
+export declare function globalKeyRefresh(request: {
+    method: string;
+    headers: {
+        get(name: string): string | null;
+    };
+}, opts: {
+    viaTunnel: boolean;
+    host: string;
+    auth: AuthState;
+    keys: GlobalKeys;
+    now: number;
+}): 'edit' | 'view' | null;
+/**
  * The origin allowed to read this workspace's liveness answer: the box's own list.
  *
  * Only an https origin whose host is a parent domain of this host, so `dev.example.com` may ask
