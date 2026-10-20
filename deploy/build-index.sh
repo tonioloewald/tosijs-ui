@@ -27,6 +27,9 @@ html() { printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;
 OUT="$ROOT/_index"
 mkdir -p "$OUT"
 
+# Every link opens in its own tab, so this page stays open as the place you pick the next one.
+# target=_blank implies noopener, so a workspace gets no handle on this page.
+
 # Collect deployed projects. A directory only counts if it has a version.json — a
 # half-finished rsync or a stray folder should not appear as a live preview.
 rows=""
@@ -64,7 +67,7 @@ for dir in "$ROOT"/*/; do
 	count=$((count + 1))
 	rows="$rows
 	<li>
-		<a href=\"//$host\">
+		<a href=\"//$host\" target=\"_blank\">
 			<span class=\"name\">$site</span>
 			<span class=\"meta\">
 				<code>${commit:-unknown}</code>
@@ -87,7 +90,7 @@ for frag in "$ROOT"/_sites/*-tunnel.caddy; do
 	[ -n "$host" ] || continue
 	live="$live
 	<li data-workspace=\"$host\">
-		<a href=\"https://$host/\">
+		<a href=\"https://$host/\" target=\"_blank\">
 			<span class=\"name\">$name</span>
 			<span class=\"meta\"><span class=\"access\">checking…</span><code>$host</code></span>
 		</a>

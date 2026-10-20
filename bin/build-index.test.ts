@@ -78,6 +78,22 @@ test('every registered workspace is listed, ahead of the deployed builds', () =>
   expect(headings).toEqual(['Live workspaces', 'Deployed builds'])
 })
 
+test('every link opens in a new tab, so the list stays open', () => {
+  tunnel('alpha', 'alpha.edit.dev.example.test')
+  mkdirSync(join(root, 'site'))
+  writeFileSync(join(root, 'site/version.json'), '{"commit": "abc123"}')
+  writeFileSync(
+    join(root, '_sites/site.caddy'),
+    'site.dev.example.test {\n\troot * /srv/preview/site\n}\n'
+  )
+  const links = [...buildIndex().querySelectorAll('li a')]
+  expect(links.map((a) => a.getAttribute('href'))).toEqual([
+    'https://alpha.edit.dev.example.test/',
+    '//site.dev.example.test',
+  ])
+  for (const a of links) expect(a.getAttribute('target')).toBe('_blank')
+})
+
 test('each row says what the reader may do there, or why it cannot tell', async () => {
   tunnel('edits', 'edits.edit.dev.example.test')
   tunnel('views', 'views.edit.dev.example.test')
