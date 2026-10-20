@@ -57,9 +57,10 @@ const { has, flag } = parseArgv(process.argv.slice(2), {
     `  --close                              close a running tunnel\n` +
     `  --link                               print a magic edit link\n` +
     `  --link --share                       print a READ-ONLY link to send to a person\n` +
-    `  --link --global [--share]            a SINGLE-USE link that also gives that browser the\n` +
-    `                                       box's key for 30 days (every workspace, the root list)\n` +
-    `  --share-ttl=<minutes>                how long that share link lives (default 1440)\n` +
+    `  --link --global [--share]            a SINGLE-USE 5-minute link that also gives that\n` +
+    `                                       browser the box's key for 30 days (every workspace,\n` +
+    `                                       the root list)\n` +
+    `  --share-ttl=<minutes>                how long a plain share link lives (default 1440)\n` +
     `  --host=user@box                      override the configured preview host\n` +
     `  --port= --local-port= --remote-port= override the resolved ports`,
 })
@@ -142,8 +143,7 @@ carries a one-use code, never the key. Offered only for keys this workspace acce
 holds too; `notes` says why any other is missing.
 */
 async function globalLinks(
-  kinds: ('edit' | 'view')[] = ['edit', 'view'],
-  extraQuery = ''
+  kinds: ('edit' | 'view')[] = ['edit', 'view']
 ): Promise<{
   links: { kind: 'edit' | 'view'; url: string }[]
   notes: string[]
@@ -160,7 +160,7 @@ async function globalLinks(
   const links: { kind: 'edit' | 'view'; url: string }[] = []
   for (const kind of plan.kinds.filter((k) => kinds.includes(k))) {
     const answer = await askForLink(
-      `?global=${kind}&domain=${encodeURIComponent(plan.domain!)}${extraQuery}`
+      `?global=${kind}&domain=${encodeURIComponent(plan.domain!)}`
     )
     if (answer.url) links.push({ kind, url: answer.url })
     else
@@ -239,14 +239,15 @@ if (has('link')) {
   const ttl = shareTtl ? `&ttl=${encodeURIComponent(shareTtl)}` : ''
   /*
   `--global` asks for a link that also hands over the box's key (see globalLinks): single-use,
-  and the browser keeps every workspace for 30 days. Opt-in, because it is a different promise
+  valid five minutes whatever `--share-ttl` says, and the browser keeps every workspace for 30
+  days. Opt-in, because it is a different promise
   from the two links above, which are reusable for their window and open this workspace only.
   A share link spent by a chat app's link preview, or one that opens every workspace, would
   break the promise `--share` makes to the person you send it to.
   */
   let url: string
   if (has('global')) {
-    const global = await globalLinks([share ? 'view' : 'edit'], ttl)
+    const global = await globalLinks([share ? 'view' : 'edit'])
     for (const note of global.notes) console.log(`note: ${note}`)
     url = global.links[0]?.url ?? ''
     if (!url) {

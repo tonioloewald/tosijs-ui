@@ -41,6 +41,7 @@ import {
   MAX_OUTSTANDING_GRANTS,
   type GlobalGrant,
   resolveShareTtlMs,
+  resolveGrantTtlMs,
   readCookie,
   redeemThroughGate,
   createRedemptionGate,
@@ -972,7 +973,7 @@ export async function devServer(
   const printLink = (
     opts: { share?: boolean; ttlMinutes?: number; grant?: GlobalGrant } = {}
   ): string => {
-    if (opts.grant) return printGrantLink(opts.grant, opts.ttlMinutes)
+    if (opts.grant) return printGrantLink(opts.grant)
     const settings = resolveLinkSettings(config.preview?.tunnel)
     const policy = opts.share ? 'window' : settings.policy
     /*
@@ -1019,15 +1020,12 @@ export async function devServer(
   A link that also hands this browser the box's global key (see GlobalGrant in dev-auth.ts).
 
   Always single-use, whatever `linkPolicy` says: the key it gives outlives this server, so the
-  code that carries it is worth exactly one browser. An edit grant lives as long as an edit
-  link; a view grant as long as a share link, because a person opens it when they get to it.
-  The key never appears here, only the code.
+  code that carries it is worth exactly one browser. Edit or view, it lives five minutes at most
+  (resolveGrantTtlMs): the cookie is what lasts, not the code. The key never appears here, only
+  the code.
   */
-  const printGrantLink = (grant: GlobalGrant, ttlMinutes?: number): string => {
-    const ttlMs =
-      grant.key === 'view'
-        ? resolveShareTtlMs(config.preview?.tunnel, ttlMinutes)
-        : resolveLinkSettings(config.preview?.tunnel).ttlMs
+  const printGrantLink = (grant: GlobalGrant): string => {
+    const ttlMs = resolveGrantTtlMs(config.preview?.tunnel)
     const token = issueLink(auth, Date.now(), ttlMs, {
       readOnly: grant.key === 'view',
       grant,
@@ -1035,12 +1033,10 @@ export async function devServer(
     const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`
     const url = `${base}/?${LINK_PARAM}=${token}`
     const minutes = Math.round(ttlMs / 60000)
-    const span =
-      minutes >= 120 ? `${Math.round(minutes / 60)} hours` : `${minutes} min`
     console.log(
       `\n🔗 Single-use ${
         grant.key === 'edit' ? 'edit' : 'READ-ONLY'
-      } link (valid ${span}): opens this workspace, and keeps that browser in every workspace on ${
+      } link (valid ${minutes} min): opens this workspace, and keeps that browser in every workspace on ${
         grant.domain
       } for 30 days:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`
     )

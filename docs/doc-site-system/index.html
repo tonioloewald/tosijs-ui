@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3e72f4dd39c6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=589eb2e3c501" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1330,9 +1330,10 @@ never the key:</p>
 <p>Opening one starts a session in this workspace and gives that browser the key, as an
 <code>HttpOnly</code>, <code>Secure</code> cookie across the preview domain that lasts 30 days. From then on that
 browser opens every workspace holding the key, and the box&#39;s root list, without another link,
-across dev-server restarts. The code is spent by the first browser that uses it; the edit link
-expires with the usual link window (5 minutes, <code>tunnel.linkTtlMinutes</code>), the view link after a
-day (<code>--share-ttl</code> changes it), since a person opens it when they get to it.
+across dev-server restarts. The code is spent by the first browser that uses it, and both kinds
+expire after 5 minutes: the cookie is what lasts, not the code that delivers it.
+<code>tunnel.linkTtlMinutes</code> can shorten that window but not lengthen it, and <code>--share-ttl</code> does not
+apply. To give someone view access later, send them a plain <code>--link --share</code> link instead.
 <code>tosijs-tunnel --link --global</code> prints a fresh edit one, and <code>--link --global --share</code> a fresh
 view one. Plain <code>--link</code> and <code>--link --share</code> are unchanged: reusable for their window, and
 they open this workspace only.</p>
@@ -1340,9 +1341,11 @@ they open this workspace only.</p>
 the box holds the same one. It reads the box&#39;s <code>PREVIEW_DOMAIN</code> and a sha256 of each key over
 ssh (the keys stay on the box), and when it cannot offer a link it prints why, such as a key
 that differs between this machine and the box.</p>
-<p>You can also set the cookie by hand at any preview host with <code>?t=&lt;key&gt;</code>; add <code>&amp;to=&lt;label&gt;</code> to
-be sent on to <code>&lt;label&gt;.&lt;preview domain&gt;</code>. <code>to</code> takes DNS labels only, so it cannot redirect
-anywhere else. The single-use link is the better habit: it never puts the key in a URL.</p>
+<p>The <strong>view</strong> key can also be given by hand at any preview host with <code>?t=&lt;view key&gt;</code>; add
+<code>&amp;to=&lt;label&gt;</code> to be sent on to <code>&lt;label&gt;.&lt;preview domain&gt;</code>. <code>to</code> takes DNS labels only, so it
+cannot redirect anywhere else. The <strong>edit</strong> key has no URL form (since 1.16.31): a URL holding
+it would be a permanent bearer token for writing source on every workspace, sitting in browser
+history and anywhere it was pasted. Use <code>tosijs-tunnel --link --global</code>.</p>
 <p>With the cookie set, the box&#39;s root, <code>https://dev.example.com/</code>, is where you pick a workspace:
 it lists every registered one and asks each what your key opens there (<code>edit</code>, <code>view</code>, or
 nothing), and a workspace that is offline, or whose dev server predates tosijs-ui 1.16.26, says

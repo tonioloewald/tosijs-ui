@@ -165,6 +165,18 @@ export declare function resolveShareTtlMs(tunnel?: {
     shareTtlMinutes?: number;
 }, override?: number): number;
 /**
+ * How long a link that hands over a global key (edit or view) is redeemable: the edit-link
+ * window, and never more than five minutes.
+ *
+ * The maintainer's rule: the cookie is what lasts, the code that delivers it does not. A view
+ * grant used to live as long as a share link (a day), on the grounds that a person opens it
+ * when they get to it; but what it hands over is a 30-day key to every workspace, so the code
+ * gets the short window whatever it opens. `linkTtlMinutes` may shorten it, never lengthen it.
+ */
+export declare function resolveGrantTtlMs(tunnel?: {
+    linkTtlMinutes?: number;
+}): number;
+/**
  * Redeem a link token for a session token, or return null.
  *
  * Under `'single-use'` the token is deleted BEFORE returning — and deleted whether or not it
@@ -188,7 +200,7 @@ export declare function takeSessionGrant(state: AuthState, session: string): Glo
 export declare const GLOBAL_KEY_COOKIE_MAX_AGE_S: number;
 /**
  * The cookie that gives this browser the box's global key across the preview domain, the same
- * one Caddy sets for `?t=<key>`, so the box's root and every workspace holding the key accept
+ * one Caddy sets for `?t=<view key>` and checks for both keys, so the box's root and every workspace holding the key accept
  * it. `null` when this server does not hold that key, or would not honour it: a link must not
  * hand over a key that opens less than it claims.
  */

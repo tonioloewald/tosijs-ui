@@ -75,25 +75,19 @@
 		redir * {tosi_link_target} 302
 	}
 
-	# THE GLOBAL EDIT KEY: `?t=<edit key>` on any preview host sets `tosi_edit` across the
-	# whole preview domain for 30 days, the same cookie a workspace's single-use link from
-	# `tosijs-tunnel` sets (that link is the usual way in: it never puts the key in a URL).
-	# Every tunnelled workspace that holds the same key
-	# (PREVIEW_EDIT_TOKEN in ~/local-secrets/tosijs-preview.env on the machine running it)
-	# trades it for an editing session on the first page load, so the root's list opens them
-	# all, across dev-server restarts. It also opens these static previews. The view key above
-	# opens workspaces read-only the same way. See `globalKeys` in doc-site-system.md.
+	# THE GLOBAL EDIT KEY has NO URL form. A browser gets the `tosi_edit` cookie only from a
+	# workspace's single-use link (`tosijs-tunnel --link --global`), which carries a one-use code
+	# valid five minutes, never the key. The cookie lasts 30 days; the thing that delivers it
+	# does not (the maintainer's rule, 2026-10-20). Through 1.16.30 `?t=<edit key>` here set it
+	# too, which made the edit key a permanent bearer token in browser history and anywhere
+	# the URL was pasted, and the edit key is code execution on every workspace's machine
+	# (a source write lands in files the dev server imports).
 	#
-	# The cookie is the key itself: Caddy can compare a fixed value and cannot sign one. A
-	# leaked edit cookie is write access to every workspace that accepts the key until it is
-	# rotated (edit preview.env here and on each machine, re-run the installer).
-	@editlink query t=__PREVIEW_EDIT_TOKEN__
-	handle @editlink {
-		header Set-Cookie "tosi_edit=__PREVIEW_EDIT_TOKEN__; Domain=.{{PREVIEW_DOMAIN}}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"
-		header Referrer-Policy "no-referrer"
-		header Cache-Control "no-store"
-		redir * {tosi_link_target} 302
-	}
+	# This block still CHECKS the cookie below, so a browser that holds it opens these static
+	# previews and the root list. The cookie is the key itself: Caddy can compare a fixed value
+	# and cannot sign one. A leaked edit cookie is write access to every workspace that accepts
+	# the key until it is rotated (edit preview.env here and on each machine, re-run the
+	# installer).
 
 	# Anchored at both ends: unanchored, `tosi_edit=<key>x` matched too. That needed the key
 	# anyway, but the dev servers compare exactly, and the gate should agree with them.

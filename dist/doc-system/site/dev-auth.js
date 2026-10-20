@@ -272,6 +272,18 @@ export function resolveShareTtlMs(tunnel, override) {
     return Math.min(wanted, READONLY_SESSION_TTL_MS);
 }
 /**
+ * How long a link that hands over a global key (edit or view) is redeemable: the edit-link
+ * window, and never more than five minutes.
+ *
+ * The maintainer's rule: the cookie is what lasts, the code that delivers it does not. A view
+ * grant used to live as long as a share link (a day), on the grounds that a person opens it
+ * when they get to it; but what it hands over is a 30-day key to every workspace, so the code
+ * gets the short window whatever it opens. `linkTtlMinutes` may shorten it, never lengthen it.
+ */
+export function resolveGrantTtlMs(tunnel) {
+    return Math.min(resolveLinkSettings(tunnel).ttlMs, LINK_TOKEN_TTL_MS);
+}
+/**
  * Redeem a link token for a session token, or return null.
  *
  * Under `'single-use'` the token is deleted BEFORE returning — and deleted whether or not it
@@ -331,7 +343,7 @@ export function takeSessionGrant(state, session) {
 export const GLOBAL_KEY_COOKIE_MAX_AGE_S = 30 * 24 * 60 * 60;
 /**
  * The cookie that gives this browser the box's global key across the preview domain, the same
- * one Caddy sets for `?t=<key>`, so the box's root and every workspace holding the key accept
+ * one Caddy sets for `?t=<view key>` and checks for both keys, so the box's root and every workspace holding the key accept
  * it. `null` when this server does not hold that key, or would not honour it: a link must not
  * hand over a key that opens less than it claims.
  */
@@ -848,7 +860,8 @@ So the box can hold two machine-wide keys, the same pair on the box and on this 
 
 The cookie (`tosi_preview` or `tosi_edit`, across the whole preview domain) arrives one of two
 ways: a workspace's single-use link sets it on redemption (see GlobalGrant, the usual way in,
-which never puts the key in a URL), or Caddy sets it for `?t=<key>` on any preview host. A workspace that sees a matching cookie on a page load mints
+which never puts the key in a URL). Caddy also sets the VIEW cookie for `?t=<view key>` on any
+preview host; the edit key has no URL form since 1.16.31. A workspace that sees a matching cookie on a page load mints
 an ordinary session of the matching kind (read-only for the view key) and carries on, so the
 write gates below are unchanged: a key only ever becomes a session, at a navigation.
 

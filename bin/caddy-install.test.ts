@@ -515,8 +515,9 @@ test('a key link redirects only to a host under the preview domain', () => {
   ])
     expect(labels.test(bad)).toBe(false)
   expect(map![1]).toContain('default "/"')
-  // Both key links land through it, and nothing else redirects to a fixed root.
-  expect(shipped.match(/redir \* \{tosi_link_target\} 302/g)?.length).toBe(2)
+  // The view-key link lands through it (the edit key has no URL form), and nothing else
+  // redirects to a fixed root.
+  expect(shipped.match(/redir \* \{tosi_link_target\} 302/g)?.length).toBe(1)
   expect(shipped).not.toContain('redir * / 302')
 })
 
@@ -534,7 +535,17 @@ test('the access logs never record a link credential', () => {
   }
 })
 
-test("Caddy's key cookies are the ones a workspace's single-use link sets", async () => {
+test('the edit key has no URL form: only a single-use link sets its cookie', () => {
+  // `?t=<edit key>` made the key a permanent bearer token in browser history. The cookie
+  // lasts; what delivers it is a one-use code that expires in five minutes.
+  const shipped = readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
+  expect(shipped).not.toMatch(/query t=__PREVIEW_EDIT_TOKEN__/)
+  expect(shipped).not.toMatch(/Set-Cookie "tosi_edit=/)
+  // …while the gate still lets a browser holding it through.
+  expect(shipped).toContain('tosi_edit=__PREVIEW_EDIT_TOKEN__(;|$)')
+})
+
+test("Caddy's view cookie is the one a workspace's single-use link sets", async () => {
   // Two writers of one cookie: `?t=<key>` here, and a redeemed granting link in the dev
   // server. If they drift, a browser holds two cookies with one name and different scopes.
   const { globalKeyCookie } = await import(
@@ -547,9 +558,6 @@ test("Caddy's key cookies are the ones a workspace's single-use link sets", asyn
       .replace(placeholder, 'KEY')
       .replace('{{PREVIEW_DOMAIN}}', 'dev.example.com')
   const keys = { edit: 'KEY', view: 'KEY', editGrants: 'edit' as const }
-  expect(
-    globalKeyCookie({ key: 'edit', domain: 'dev.example.com' }, keys)
-  ).toBe(fromCaddy('tosi_edit', '__PREVIEW_EDIT_TOKEN__'))
   expect(
     globalKeyCookie({ key: 'view', domain: 'dev.example.com' }, keys)
   ).toBe(fromCaddy('tosi_preview', '__PREVIEW_TOKEN__'))

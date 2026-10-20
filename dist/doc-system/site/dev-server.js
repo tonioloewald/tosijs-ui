@@ -22,7 +22,7 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, resolveGrantTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
 import { readLocalSecret } from './local-secrets.js';
 import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
@@ -790,7 +790,7 @@ export async function devServer(config, opts = {}) {
      */
     const printLink = (opts = {}) => {
         if (opts.grant)
-            return printGrantLink(opts.grant, opts.ttlMinutes);
+            return printGrantLink(opts.grant);
         const settings = resolveLinkSettings(config.preview?.tunnel);
         const policy = opts.share ? 'window' : settings.policy;
         /*
@@ -833,14 +833,12 @@ export async function devServer(config, opts = {}) {
     A link that also hands this browser the box's global key (see GlobalGrant in dev-auth.ts).
   
     Always single-use, whatever `linkPolicy` says: the key it gives outlives this server, so the
-    code that carries it is worth exactly one browser. An edit grant lives as long as an edit
-    link; a view grant as long as a share link, because a person opens it when they get to it.
-    The key never appears here, only the code.
+    code that carries it is worth exactly one browser. Edit or view, it lives five minutes at most
+    (resolveGrantTtlMs): the cookie is what lasts, not the code. The key never appears here, only
+    the code.
     */
-    const printGrantLink = (grant, ttlMinutes) => {
-        const ttlMs = grant.key === 'view'
-            ? resolveShareTtlMs(config.preview?.tunnel, ttlMinutes)
-            : resolveLinkSettings(config.preview?.tunnel).ttlMs;
+    const printGrantLink = (grant) => {
+        const ttlMs = resolveGrantTtlMs(config.preview?.tunnel);
         const token = issueLink(auth, Date.now(), ttlMs, {
             readOnly: grant.key === 'view',
             grant,
@@ -848,8 +846,7 @@ export async function devServer(config, opts = {}) {
         const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`;
         const url = `${base}/?${LINK_PARAM}=${token}`;
         const minutes = Math.round(ttlMs / 60000);
-        const span = minutes >= 120 ? `${Math.round(minutes / 60)} hours` : `${minutes} min`;
-        console.log(`\n🔗 Single-use ${grant.key === 'edit' ? 'edit' : 'READ-ONLY'} link (valid ${span}): opens this workspace, and keeps that browser in every workspace on ${grant.domain} for 30 days:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`);
+        console.log(`\n🔗 Single-use ${grant.key === 'edit' ? 'edit' : 'READ-ONLY'} link (valid ${minutes} min): opens this workspace, and keeps that browser in every workspace on ${grant.domain} for 30 days:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`);
         return url;
     };
     /*

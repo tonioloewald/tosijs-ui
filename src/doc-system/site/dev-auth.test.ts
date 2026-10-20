@@ -1114,6 +1114,7 @@ import {
   READONLY_SESSION_TTL_MS,
   SHARE_LINK_TTL_MS,
   resolveShareTtlMs,
+  resolveGrantTtlMs,
   sessionMayWrite,
   cookieMayWrite,
   prune,
@@ -1217,6 +1218,17 @@ test('resolveShareTtlMs: default, override, config, and the cap', () => {
   expect(resolveShareTtlMs(undefined, 60 * 24 * 365)).toBe(
     READONLY_SESSION_TTL_MS
   )
+})
+
+test('resolveGrantTtlMs: a link that hands over a key lives five minutes at most', () => {
+  // The cookie is what lasts; the code that delivers it does not (maintainer, 2026-10-20).
+  // A view grant used to live as long as a share link: a day.
+  expect(resolveGrantTtlMs()).toBe(LINK_TOKEN_TTL_MS)
+  expect(LINK_TOKEN_TTL_MS).toBe(5 * 60 * 1000)
+  // config may shorten it…
+  expect(resolveGrantTtlMs({ linkTtlMinutes: 2 })).toBe(2 * 60 * 1000)
+  // …never lengthen it
+  expect(resolveGrantTtlMs({ linkTtlMinutes: 60 * 24 })).toBe(LINK_TOKEN_TTL_MS)
 })
 
 import {

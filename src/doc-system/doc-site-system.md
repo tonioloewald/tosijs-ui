@@ -1117,9 +1117,10 @@ never the key:
 Opening one starts a session in this workspace and gives that browser the key, as an
 `HttpOnly`, `Secure` cookie across the preview domain that lasts 30 days. From then on that
 browser opens every workspace holding the key, and the box's root list, without another link,
-across dev-server restarts. The code is spent by the first browser that uses it; the edit link
-expires with the usual link window (5 minutes, `tunnel.linkTtlMinutes`), the view link after a
-day (`--share-ttl` changes it), since a person opens it when they get to it.
+across dev-server restarts. The code is spent by the first browser that uses it, and both kinds
+expire after 5 minutes: the cookie is what lasts, not the code that delivers it.
+`tunnel.linkTtlMinutes` can shorten that window but not lengthen it, and `--share-ttl` does not
+apply. To give someone view access later, send them a plain `--link --share` link instead.
 `tosijs-tunnel --link --global` prints a fresh edit one, and `--link --global --share` a fresh
 view one. Plain `--link` and `--link --share` are unchanged: reusable for their window, and
 they open this workspace only.
@@ -1129,9 +1130,11 @@ the box holds the same one. It reads the box's `PREVIEW_DOMAIN` and a sha256 of 
 ssh (the keys stay on the box), and when it cannot offer a link it prints why, such as a key
 that differs between this machine and the box.
 
-You can also set the cookie by hand at any preview host with `?t=<key>`; add `&to=<label>` to
-be sent on to `<label>.<preview domain>`. `to` takes DNS labels only, so it cannot redirect
-anywhere else. The single-use link is the better habit: it never puts the key in a URL.
+The **view** key can also be given by hand at any preview host with `?t=<view key>`; add
+`&to=<label>` to be sent on to `<label>.<preview domain>`. `to` takes DNS labels only, so it
+cannot redirect anywhere else. The **edit** key has no URL form (since 1.16.31): a URL holding
+it would be a permanent bearer token for writing source on every workspace, sitting in browser
+history and anywhere it was pasted. Use `tosijs-tunnel --link --global`.
 
 With the cookie set, the box's root, `https://dev.example.com/`, is where you pick a workspace:
 it lists every registered one and asks each what your key opens there (`edit`, `view`, or
