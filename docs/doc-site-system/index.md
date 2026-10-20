@@ -1140,8 +1140,11 @@ it is not answering. A dev-server restart costs you nothing, which matters becau
 restarts on any edit to a file in its import graph, examples in component sources included. The
 next page load trades the cookie for a fresh session, and so does the next save from a page that
 was open across the restart: a request from the workspace's own page renews the session in
-place, so an unsaved edit is never lost to a reload. A request from another workspace's page
-gets nothing, though it carries the same cookie. A session started from the view key can browse and never save, never
+place, so an unsaved edit is never lost to a reload, and so does the haltija bridge's
+reconnection. "Own page" takes evidence: `Sec-Fetch-Site: same-origin`, or an `Origin` that is
+this host. A request from another workspace's page gets nothing though it carries the same
+cookie, and so does one with neither header (a script, `curl`). A session opened from a plain
+`--link` holds no key, so a restart still ends it. A session started from the view key can browse and never save, never
 drive the page with an agent.
 
 **Use long keys.** The box compares them with no rate limit in front, unlike the link codes,
@@ -1152,8 +1155,11 @@ key, and the dev server ignores a short key and says so at launch. The two must 
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
 you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
 is what revokes: a running dev server keeps honouring the key it read at launch, and a session
-a key or a single-use link already opened is not re-checked against the key (an edit session
-lasts up to 30 days, a read-only one 7). Sessions live in memory, so the restart ends them all.
+a key or a single-use link already opened is not re-checked against the key (a session from a
+key lasts a day; one from a link, up to 30 days for edit and 7 for read-only). Sessions live in
+memory, so a restart ends them all, but a browser still holding the old key's cookie gets a new
+session only if the restarted server has the old key. So for a key holder it is the cookie, not
+the session, that bounds access: 30 days, or until you rotate and restart.
 
 **The view key is your preview invite.** Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,

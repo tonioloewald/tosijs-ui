@@ -1765,9 +1765,19 @@ describe('global keys', () => {
         opts
       )
     ).toBe(null)
+    expect(
+      globalKeyRefresh(post({ 'sec-fetch-site': 'cross-site' }), opts)
+    ).toBe(null)
+    // `none` is a typed URL or a bookmark, never a page's own request.
+    expect(globalKeyRefresh(post({ 'sec-fetch-site': 'none' }), opts)).toBe(
+      null
+    )
+    // `Origin: null` is the one origin an attacker can choose (a sandboxed iframe, srcdoc).
+    expect(globalKeyRefresh(post({ origin: 'null' }), opts)).toBe(null)
     // No evidence either way is not evidence.
     expect(globalKeyRefresh(post({}), opts)).toBe(null)
-    // A page load is the redirecting exchange's job; a socket has no response to carry it.
+    // A page load is the redirecting exchange's job. A socket (the haltija bridge) renews: its
+    // 101 carries the cookie.
     expect(
       globalKeyRefresh(
         page(`tosi_edit=${EDIT}`, { 'sec-fetch-site': 'same-origin' }),
@@ -1779,7 +1789,7 @@ describe('global keys', () => {
         post({ 'sec-fetch-site': 'same-origin', upgrade: 'websocket' }),
         opts
       )
-    ).toBe(null)
+    ).toBe('edit')
     // The main listener is loopback and needs no key.
     expect(
       globalKeyRefresh(post({ 'sec-fetch-site': 'same-origin' }), {

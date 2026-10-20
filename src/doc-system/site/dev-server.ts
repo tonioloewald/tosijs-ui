@@ -467,6 +467,34 @@ export function haltijaTunnelLoaderSnippet(): string {
 /** Same-origin paths the tunnel bridge serves. One place, so the loader and the routes agree. */
 export const HALTIJA_BRIDGE_PREFIX = '/__haltija/'
 export const HALTIJA_BRIDGE_WS = '/__haltija/ws'
+
+/** The slice of a `Bun.Server` the request handler uses. */
+export type Upgrader = {
+  requestIP?: (r: Request) => { address?: string } | null
+  upgrade?: (
+    r: Request,
+    opts?: { data?: unknown; headers?: Record<string, string> }
+  ) => boolean
+}
+
+/**
+ * The same server, except that an accepted WebSocket upgrade also sets `setCookie` on its 101.
+ * How a renewed session reaches a browser whose request was a handshake (the haltija bridge),
+ * which has no Response of ours to carry it.
+ */
+export function upgraderSettingCookie(
+  srv: Upgrader,
+  setCookie: string
+): Upgrader {
+  return {
+    requestIP: (r) => srv.requestIP?.(r) ?? null,
+    upgrade: (r, opts) =>
+      srv.upgrade?.(r, {
+        ...opts,
+        headers: { ...opts?.headers, 'Set-Cookie': setCookie },
+      }) ?? false,
+  }
+}
 export const HALTIJA_BRIDGE_COMPONENT = '/__haltija/component.js'
 
 /**
@@ -2044,11 +2072,15 @@ export async function devServer(
   A request from this workspace's own page that holds a global key but a dead session (the
   server restarted under it) is served with a fresh session, which its response hands back.
   See `globalKeyRefresh`. The session goes into the request's cookie header, so every gate in
-  handleRequest sees a session and none of them has to know about keys.
+  handleRequest sees a session and none of them has to know about keys. A WebSocket upgrade
+  (the haltija bridge) carries the cookie on its 101, through `upgrade`'s headers.
   */
+  // Said once per process: a page left open across a restart renews on every request it makes.
+  let renewalLogged = false
   const withKeySession = async (
     request: Request,
-    handle: (request: Request) => Promise<Response>
+    srv: Upgrader | undefined,
+    handle: (request: Request, srv: Upgrader | undefined) => Promise<Response>
   ): Promise<Response> => {
     const grant = globalKeyRefresh(request, {
       viaTunnel: true,
@@ -2057,7 +2089,7 @@ export async function devServer(
       keys: globalKeys.keys,
       now: Date.now(),
     })
-    if (!grant) return handle(request)
+    if (!grant) return handle(request, srv)
     const session = issueSession(
       auth,
       Date.now(),
@@ -2072,12 +2104,18 @@ export async function devServer(
       .filter((c) => c && !c.startsWith(`${SESSION_COOKIE}=`))
     // The `name=value` pair the browser will send from now on.
     headers.set('cookie', [...others, setCookie.split(';')[0]].join('; '))
-    const response = await handle(new Request(request, { headers }))
+    if (!renewalLogged) {
+      renewalLogged = true
+      console.log(`🔓 global ${grant} key — session renewed after a restart`)
+    }
+    const response = await handle(
+      new Request(request, { headers }),
+      srv && upgraderSettingCookie(srv, setCookie)
+    )
+    // An accepted upgrade answers with nothing; its cookie went out on the 101.
+    if (!response) return response
     const refreshed = new Response(response.body, response)
     refreshed.headers.append('Set-Cookie', setCookie)
-    console.log(
-      `🔓 global ${grant} key — session renewed for ${request.method}`
-    )
     return refreshed
   }
 
@@ -2946,7 +2984,7 @@ export async function devServer(
         idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
         hostname: '127.0.0.1',
         fetch: (request: Request, srv: any) =>
-          withKeySession(request, (r) => handleRequest(r, srv, true)),
+          withKeySession(request, srv, (r, s) => handleRequest(r, s, true)),
         websocket: haltijaWebSocketHandlers,
       })
       console.log(

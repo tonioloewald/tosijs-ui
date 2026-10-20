@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=690201c870fd" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=3e72f4dd39c6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1350,8 +1350,11 @@ it is not answering. A dev-server restart costs you nothing, which matters becau
 restarts on any edit to a file in its import graph, examples in component sources included. The
 next page load trades the cookie for a fresh session, and so does the next save from a page that
 was open across the restart: a request from the workspace&#39;s own page renews the session in
-place, so an unsaved edit is never lost to a reload. A request from another workspace&#39;s page
-gets nothing, though it carries the same cookie. A session started from the view key can browse and never save, never
+place, so an unsaved edit is never lost to a reload, and so does the haltija bridge&#39;s
+reconnection. &quot;Own page&quot; takes evidence: <code>Sec-Fetch-Site: same-origin</code>, or an <code>Origin</code> that is
+this host. A request from another workspace&#39;s page gets nothing though it carries the same
+cookie, and so does one with neither header (a script, <code>curl</code>). A session opened from a plain
+<code>--link</code> holds no key, so a restart still ends it. A session started from the view key can browse and never save, never
 drive the page with an agent.</p>
 <p><strong>Use long keys.</strong> The box compares them with no rate limit in front, unlike the link codes,
 so both must be at least 24 letters, digits, <code>-</code> or <code>_</code>; the installer refuses a shorter edit
@@ -1360,8 +1363,11 @@ key, and the dev server ignores a short key and says so at launch. The two must 
 sign one. A leaked edit cookie is write access to every workspace that accepts the key until
 you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
 is what revokes: a running dev server keeps honouring the key it read at launch, and a session
-a key or a single-use link already opened is not re-checked against the key (an edit session
-lasts up to 30 days, a read-only one 7). Sessions live in memory, so the restart ends them all.</p>
+a key or a single-use link already opened is not re-checked against the key (a session from a
+key lasts a day; one from a link, up to 30 days for edit and 7 for read-only). Sessions live in
+memory, so a restart ends them all, but a browser still holding the old key&#39;s cookie gets a new
+session only if the restarted server has the old key. So for a key holder it is the cookie, not
+the session, that bounds access: 30 days, or until you rotate and restart.</p>
 <p><strong>The view key is your preview invite.</strong> Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,
 <code>requireToken</code> or not. That is what &quot;global view&quot; means here; if some of those people should

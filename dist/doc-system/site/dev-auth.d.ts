@@ -422,13 +422,16 @@ export declare const GLOBAL_EDIT_COOKIE = "tosi_edit";
 export declare const GLOBAL_KEY_MIN_LENGTH = 24;
 /**
  * A session minted from a global key lasts a day, or until this dev server stops (sessions
- * live in memory). The key is NOT re-checked while the session lives, so rotating a key ends
- * the sessions it already opened only when each workspace restarts.
+ * live in memory). While the key cookie lasts, the next page load or same-origin request mints
+ * another, so for a key holder it is the COOKIE's lifetime that ends access, not this. The key
+ * is NOT re-checked while a session lives, so rotating a key ends the sessions it already opened
+ * only when each workspace restarts.
  */
 export declare const GLOBAL_KEY_SESSION_TTL_MS: number;
 /**
  * The most live sessions one server holds; past it the oldest goes. Only a key holder can mint
- * one per page load, so this bounds a browser stuck reloading, not an attacker.
+ * one: per page load, and per request from a page left open across a restart until its first
+ * renewed cookie lands. So this bounds a browser stuck reloading, not an attacker.
  */
 export declare const MAX_SESSIONS = 1000;
 export interface GlobalKeys {
@@ -498,10 +501,13 @@ export declare function globalKeyExchange(request: {
  * involved: the session is issued and used on this same request.
  * - Positive evidence that the request comes from this origin: `Sec-Fetch-Site: same-origin`,
  *   or, from a browser that sends no fetch metadata, an `Origin` that is this host. Absence of
- *   both is NOT enough here (unlike `isSameOriginRequest`): every host under the preview domain
+ *   both is NOT enough here (unlike `isSameOriginRequest`, which allows it for curl and our
+ *   own CLI, whose requests are not a browser spending an ambient cookie): every host under the preview domain
  *   is the same site and receives the key cookie, so a sibling workspace's page must not be
  *   able to spend it here.
- * - Not a WebSocket upgrade, which has no response to carry the cookie.
+ *
+ * A WebSocket upgrade (the haltija bridge) qualifies too; browsers send `Origin` and
+ * `Sec-Fetch-Site` on the handshake, and the 101 carries the cookie.
  */
 export declare function globalKeyRefresh(request: {
     method: string;

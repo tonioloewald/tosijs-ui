@@ -10,7 +10,13 @@
   itself restarted the server, and the NEXT save from the same page was told "This workspace
   needs an invite link". Reloading recovered the session but lost the unsaved edit. Now a
   request from the workspace's own page that holds the global key cookie is given a fresh
-  session in place. A sibling workspace's page, which receives the same cookie, gets nothing.
+  session in place, and the haltija agent bridge's reconnection is too. "Own page" means
+  `Sec-Fetch-Site: same-origin` or an `Origin` that is this host; a sibling workspace's page,
+  which receives the same cookie, gets nothing, nor does a request with neither header. A
+  session opened from a plain `--link` holds no key, so a restart still ends it.
+- **For a key holder, the key cookie now bounds access, not the session.** A key opens a
+  one-day session, but the cookie renews it, so access lasts as long as the cookie (30 days for
+  the edit key) or until you rotate the key and restart the dev servers.
 
 ## 1.16.29
 

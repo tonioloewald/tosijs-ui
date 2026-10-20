@@ -579,3 +579,29 @@ test('the SPA fallback resolves the root page as the root (#3346)', () => {
     expect(rootRelativeUrls(kept)).toBe(kept)
   }
 })
+
+test('a renewed session reaches a WebSocket handshake on its 101', async () => {
+  // The haltija bridge is a handshake, not a Response of ours, so after a restart the renewed
+  // cookie has to ride `upgrade`'s headers or the bridge stays locked out until a reload.
+  const { upgraderSettingCookie } = await import('./dev-server.js')
+  const calls: unknown[] = []
+  const srv = {
+    requestIP: () => ({ address: '127.0.0.1' }),
+    upgrade: (_r: Request, opts?: unknown) => (calls.push(opts), true),
+  }
+  const wrapped = upgraderSettingCookie(srv, 'tosi_dev_session=b.t; Path=/')
+  const r = new Request('http://x/__haltija/ws')
+  expect(
+    wrapped.upgrade!(r, {
+      data: { kind: 'haltija-bridge' },
+      headers: { 'X-Other': '1' },
+    })
+  ).toBe(true)
+  expect(calls).toEqual([
+    {
+      data: { kind: 'haltija-bridge' },
+      headers: { 'X-Other': '1', 'Set-Cookie': 'tosi_dev_session=b.t; Path=/' },
+    },
+  ])
+  expect(wrapped.requestIP!(r)).toEqual({ address: '127.0.0.1' })
+})

@@ -150,6 +150,22 @@ export declare function haltijaTunnelLoaderSnippet(): string;
 /** Same-origin paths the tunnel bridge serves. One place, so the loader and the routes agree. */
 export declare const HALTIJA_BRIDGE_PREFIX = "/__haltija/";
 export declare const HALTIJA_BRIDGE_WS = "/__haltija/ws";
+/** The slice of a `Bun.Server` the request handler uses. */
+export type Upgrader = {
+    requestIP?: (r: Request) => {
+        address?: string;
+    } | null;
+    upgrade?: (r: Request, opts?: {
+        data?: unknown;
+        headers?: Record<string, string>;
+    }) => boolean;
+};
+/**
+ * The same server, except that an accepted WebSocket upgrade also sets `setCookie` on its 101.
+ * How a renewed session reaches a browser whose request was a handshake (the haltija bridge),
+ * which has no Response of ours to carry it.
+ */
+export declare function upgraderSettingCookie(srv: Upgrader, setCookie: string): Upgrader;
 export declare const HALTIJA_BRIDGE_COMPONENT = "/__haltija/component.js";
 /** br if the client takes it, else gzip, else nothing. */
 export declare function negotiateEncoding(accept: string | null): 'br' | 'gzip' | null;
