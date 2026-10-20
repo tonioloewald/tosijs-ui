@@ -9,9 +9,11 @@
   `/the-feature-registry/` and 404'd. The slug (file name) still wins when a page has one, so
   no link that worked changes target. A title two pages share reaches neither.
   Reported by tosijs-3d-ensemble (#234).
-- **The build reports a wikilink that reaches no page**, naming the file and the target, and
-  fails under `strict`. One site had nine of these, live 404s from as far back as its 0.3, and
-  no build had said a word.
+- **The build reports a wikilink that reaches no doc page**, naming the file and the target,
+  and fails under `strict`. One site had nine of these, live 404s from as far back as its 0.3,
+  and no build had said a word. **If you build with `strict: true`:** a wikilink to something
+  that is not a doc page, such as a hand-written page in your static folder, now fails the
+  build even though the link works. Write it as an ordinary `[label](/path/)`.
 - **The test-status widget sits in the header bar.** It was fixed at the bottom left over the
   page, so a full-page component's last list row lost clicks to it (#233). A page with
   `{"header": false}` still floats it there, having nowhere else to put it.

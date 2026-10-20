@@ -1724,8 +1724,10 @@ case is fully covered.
 - **Wikilinks**: `[[target]]` links to another page, `[[target|label]]` with your own text.
   The target is a page's slug (its file name, `[[registry]]` → `/registry/`) or, when no page
   has that slug, its title (`[[The feature registry]]` → `/registry/`). A slug always wins, and
-  a title two pages share reaches neither. The build warns about a wikilink that reaches no
-  page, naming the file and the target (it fails under `strict`).
+  a title two pages share reaches neither. A wikilink names a **doc page**: link a static file
+  or a hand-written page under your static folder with an ordinary `[label](/path/)`. The build
+  warns about a wikilink that reaches no doc page, naming the file and the target (it fails
+  under `strict`).
 
 ### Which fence languages EXECUTE
 

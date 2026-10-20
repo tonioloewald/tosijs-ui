@@ -2,6 +2,10 @@
 The screen someone sees when their session is not good enough.
 */
 
+import { GLOBAL_KEY_COOKIE_MAX_AGE_S } from './dev-auth.js'
+
+const LASTING_DAYS = Math.round(GLOBAL_KEY_COOKIE_MAX_AGE_S / 86400)
+
 export type SessionRejection = 'none' | 'stale' | 'unknown'
 
 /**
@@ -79,7 +83,7 @@ export function invitePageHtml(
     `<p><code>${linkCommand}</code></p>` +
     (lastingCommand
       ? `<p style="opacity:.7">For a link that keeps this browser in every workspace on the ` +
-        `preview box, across restarts, for 30 days:</p>` +
+        `preview box, across restarts, for ${LASTING_DAYS} days:</p>` +
         `<p><code>${lastingCommand}</code></p>`
       : '')
   )

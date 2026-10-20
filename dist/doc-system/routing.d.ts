@@ -19,10 +19,8 @@ export declare function homeDoc(docs: DocLike[]): string | null;
  * on array order.
  */
 export declare function buildSlugMap(docs: DocLike[]): Record<string, string>;
-/** A wikilink target as written, reduced to the form it is looked up by. */
-export declare function wikilinkKey(target: string): string;
 /**
- * What each `[[target]]` in a corpus can reach: { wikilinkKey -> slug }.
+ * What each `[[target]]` in a corpus can reach: { slugify(target) -> slug }.
  *
  * A page is reached by its slug, and also by its title when no page has that slug and no
  * other page has the same title (GitHub #234). Authors write a page's TITLE —

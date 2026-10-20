@@ -56,15 +56,8 @@ export function buildSlugMap(docs) {
     }
     return map;
 }
-/** A wikilink target as written, reduced to the form it is looked up by. */
-export function wikilinkKey(target) {
-    return target
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-}
 /**
- * What each `[[target]]` in a corpus can reach: { wikilinkKey -> slug }.
+ * What each `[[target]]` in a corpus can reach: { slugify(target) -> slug }.
  *
  * A page is reached by its slug, and also by its title when no page has that slug and no
  * other page has the same title (GitHub #234). Authors write a page's TITLE —
@@ -78,11 +71,11 @@ export function wikilinkTargets(docs) {
     for (const doc of docs) {
         const slug = slugs[doc.filename];
         if (slug !== '')
-            targets.set(wikilinkKey(slug), slug);
+            targets.set(slugify(slug), slug);
     }
     const byTitle = new Map();
     for (const doc of docs) {
-        const key = doc.title ? wikilinkKey(doc.title) : '';
+        const key = doc.title ? slugify(doc.title) : '';
         if (!key || targets.has(key))
             continue;
         // Two pages with one title: neither is reachable by it, so the link is reported.

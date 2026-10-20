@@ -11,7 +11,7 @@ give that example a stable anchor — see the docMarked renderer below.
 import { Marked, Renderer } from 'marked';
 import { parseFenceInfo } from './example-policy.js';
 import { HeadingIds, headingSlug } from './heading-id.js';
-import { pathForSlug, wikilinkKey } from './routing.js';
+import { pathForSlug, slugify } from './routing.js';
 const baseRenderer = new Renderer();
 let currentBakes;
 let currentWikilinks;
@@ -71,12 +71,6 @@ docMarked.use({
 // Enabled by default because each activates ONLY on its own syntax ([[…]] /
 // [^id]) — a doc that doesn't use them renders byte-identically (tosijs-ui's own
 // docs use neither). marked core supports neither; both are common in prose.
-function slugify(s) {
-    return s
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-}
 function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
@@ -134,7 +128,7 @@ docMarked.use({
                 };
             },
             renderer(token) {
-                const key = wikilinkKey(token.target);
+                const key = slugify(token.target);
                 const slug = currentWikilinks ? currentWikilinks.get(key) : key;
                 const missing = slug === undefined
                     ? ` -missing" data-target="${escapeAttr(token.target)}`

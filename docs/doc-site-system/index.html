@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=9359b186e59a" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=43c006706313" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=310e6e1c813d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=84c259350dae" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1894,8 +1894,10 @@ in-page link that matches no id on its page (it fails under <code>strict</code>)
 <li><strong>Wikilinks</strong>: <code>[[target]]</code> links to another page, <code>[[target|label]]</code> with your own text.
 The target is a page&#39;s slug (its file name, <code>[[registry]]</code> → <code>/registry/</code>) or, when no page
 has that slug, its title (<code>[[The feature registry]]</code> → <code>/registry/</code>). A slug always wins, and
-a title two pages share reaches neither. The build warns about a wikilink that reaches no
-page, naming the file and the target (it fails under <code>strict</code>).</li>
+a title two pages share reaches neither. A wikilink names a <strong>doc page</strong>: link a static file
+or a hand-written page under your static folder with an ordinary <code>[label](/path/)</code>. The build
+warns about a wikilink that reaches no doc page, naming the file and the target (it fails
+under <code>strict</code>).</li>
 </ul>
 <h3 id="which-fence-languages-execute">Which fence languages EXECUTE</h3>
 <p><strong>Six languages run. Everything else is display-only.</strong> This catches people out because two
@@ -2247,6 +2249,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-zzjcwrk6.js"></script>
+  <script type="module" src="../hydrate-1wam41at.js"></script>
 </body>
 </html>

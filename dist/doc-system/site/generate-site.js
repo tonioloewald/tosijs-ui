@@ -342,8 +342,9 @@ export async function generateSite(config) {
         count += 1;
     }
     if (danglingWikilinks.length) {
-        misconfigured(config.strict, `\n⚠️  Wikilinks that reach no page. A target matches a page's slug (its file name)\n` +
-            `    or its title; write [[slug|label]] to link one by file name:\n` +
+        misconfigured(config.strict, `\n⚠️  Wikilinks that reach no doc page. A target matches a page's slug (its file name)\n` +
+            `    or its title; write [[slug|label]] to link one by file name, and an ordinary\n` +
+            `    [label](/path/) for anything that is not a doc page (a static file or app):\n` +
             `${danglingWikilinks.join('\n')}\n`);
     }
     if (bareLinks.length) {
