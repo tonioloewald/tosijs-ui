@@ -22,6 +22,7 @@ export declare class TosiNotification extends Component {
             _notificationTextColor: string;
             _notificationIconSize: string;
             _notificationButtonSize: number;
+            _notificationMaxLines: string;
             _notificationBorderWidth: string;
             _notificationBorderRadius: string;
             position: string;
@@ -34,8 +35,6 @@ export declare class TosiNotification extends Component {
             flexDirection: string;
             margin: string;
             gap: string;
-            maxHeight: string;
-            overflow: string;
             boxShadow: string;
             color: string;
         };
@@ -54,6 +53,30 @@ export declare class TosiNotification extends Component {
             transition: string;
             transitionProperty: string;
             zIndex: number;
+        };
+        ':host .note.stacked': {
+            position: string;
+            left: number;
+            right: number;
+            pointerEvents: string;
+        };
+        ':host .note.buried': {
+            visibility: string;
+        };
+        ':host .dismiss-all': {
+            alignSelf: string;
+            font: string;
+            fontSize: string;
+            color: string;
+            background: string;
+            border: string;
+            borderRadius: number;
+            padding: string;
+            boxShadow: string;
+            cursor: string;
+        };
+        ':host .dismiss-all[hidden]': {
+            display: string;
         };
         ':host .note button': {
             display: string;
@@ -89,13 +112,39 @@ export declare class TosiNotification extends Component {
             flexDirection: string;
             alignItems: string;
             gap: string;
+            minWidth: number;
+        };
+        ':host .text': {
+            display: string;
+            WebkitBoxOrient: string;
+            WebkitLineClamp: string;
+            overflow: string;
+            overflowWrap: string;
+            maxWidth: string;
         };
         ':host .note.closing': {
             opacity: number;
             zIndex: number;
         };
     };
+    /** How many notes are shown in full; older ones stack behind them. */
+    static maxVisible: number;
+    /**
+     * How far (px) each stacked note peeks out beyond the one in front of it, up and to the
+     * right. Notes beyond the last offset are hidden.
+     */
+    static stackOffsets: number[];
+    private static closers;
     static removeNote(note: HTMLElement): void;
+    /** Close every open notification, as if the user had closed each one. */
+    static dismissAll(): void;
+    /**
+     * Lay out the open notes. They are in the DOM oldest first, which `column-reverse` puts at
+     * the bottom. Up to `maxVisible` sit in a column. Past that, the newest `maxVisible - 1` stay
+     * in the column, the oldest stays at the bottom as the front of a stack, and everything in
+     * between recedes behind it.
+     */
+    layout(): void;
     static post(spec: NotificationSpec | string): callback;
     content: null;
 }

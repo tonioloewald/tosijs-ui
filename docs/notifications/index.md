@@ -3,8 +3,18 @@
 `TosiNotification` provides a singleton custom `<tosi-notification>` element that manages
 a list of notifications.
 
-The notifications are displayed most-recent first. If the notifications would take more than
-half the height of the display, they are scrolled.
+Notifications stack up from the bottom of the screen, newest on top. Up to
+`TosiNotification.maxVisible` (3) they sit in a column. Past that, the bottom one becomes a
+stack: the older notifications recede behind it, up and slightly to the right, each peeking out
+less than the last, and any beyond `TosiNotification.stackOffsets` (`[8, 6, 4, 2]`, in px) are
+hidden until the ones in front are closed. Close the front card and the next one comes forward.
+
+When more than one notification is showing, a **Dismiss all** button sits below the bottom one.
+It closes every notification, firing each one's `close` callback as if the user had closed it.
+
+A long message is cut off with an ellipsis after four lines (`--notification-max-lines`), so the
+close button always stays in view; the full text is the notification's tooltip, and screen
+readers get all of it.
 
 You can post a notification simply with `TosiNotification.post()` or `postNotification()`.
 

@@ -5,8 +5,18 @@
 `TosiNotification` provides a singleton custom `<tosi-notification>` element that manages
 a list of notifications.
 
-The notifications are displayed most-recent first. If the notifications would take more than
-half the height of the display, they are scrolled.
+Notifications stack up from the bottom of the screen, newest on top. Up to
+`TosiNotification.maxVisible` (3) they sit in a column. Past that, the bottom one becomes a
+stack: the older notifications recede behind it, up and slightly to the right, each peeking out
+less than the last, and any beyond `TosiNotification.stackOffsets` (`[8, 6, 4, 2]`, in px) are
+hidden until the ones in front are closed. Close the front card and the next one comes forward.
+
+When more than one notification is showing, a **Dismiss all** button sits below the bottom one.
+It closes every notification, firing each one's `close` callback as if the user had closed it.
+
+A long message is cut off with an ellipsis after four lines (`--notification-max-lines`), so the
+close button always stays in view; the full text is the notification's tooltip, and screen
+readers get all of it.
 
 You can post a notification simply with `TosiNotification.post()` or `postNotification()`.
 
@@ -176,6 +186,7 @@ export class TosiNotification extends Component {
             _notificationTextColor: varDefault.textColor('#444'),
             _notificationIconSize: vars.notificationSpacing300,
             _notificationButtonSize: 48,
+            _notificationMaxLines: '4',
             _notificationBorderWidth: '3px 0 0',
             _notificationBorderRadius: vars.notificationSpacing50,
             position: 'fixed',
@@ -188,8 +199,7 @@ export class TosiNotification extends Component {
             flexDirection: 'column-reverse',
             margin: '0 auto',
             gap: vars.notificationSpacing,
-            maxHeight: '50vh',
-            overflow: 'hidden auto',
+            // No scrolling: past `maxVisible`, the bottom note becomes a stack (see layout).
             boxShadow: 'none !important',
             color: vars.notificationTextColor,
         },
@@ -197,7 +207,9 @@ export class TosiNotification extends Component {
             display: 'grid',
             background: vars.notificationBg,
             padding: vars.notificationPadding,
-            gridTemplateColumns: `${vars.notificationIconSize} 1fr ${vars.notificationButtonSize}`,
+            // minmax(0, …): a bare `1fr` grows to fit an unbreakable word and pushes the close
+            // button out of the note.
+            gridTemplateColumns: `${vars.notificationIconSize} minmax(0, 1fr) ${vars.notificationButtonSize}`,
             gap: vars.notificationSpacing,
             alignItems: 'center',
             borderRadius: vars.notificationBorderRadius,
@@ -206,8 +218,37 @@ export class TosiNotification extends Component {
             borderWidth: vars.notificationBorderWidth,
             borderStyle: 'solid',
             transition: '0.5s ease-in',
-            transitionProperty: 'margin, opacity',
+            transitionProperty: 'margin, opacity, transform',
             zIndex: 1,
+        },
+        /*
+        The notes behind the bottom one: out of the flow, their tops aligned with the front card's
+        and offset up and right by layout().
+        */
+        ':host .note.stacked': {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            pointerEvents: 'none',
+        },
+        // Hidden outright, so a pile of subtle shadows does not darken into a smudge.
+        ':host .note.buried': {
+            visibility: 'hidden',
+        },
+        ':host .dismiss-all': {
+            alignSelf: 'center',
+            font: 'inherit',
+            fontSize: vars.fontSize75,
+            color: vars.notificationTextColor,
+            background: vars.notificationBg,
+            border: 'none',
+            borderRadius: 99,
+            padding: `${vars.notificationSpacing50} ${vars.notificationSpacing150}`,
+            boxShadow: '0 2px 8px #0006',
+            cursor: 'pointer',
+        },
+        ':host .dismiss-all[hidden]': {
+            display: 'none',
         },
         ':host .note button': {
             display: 'flex',
@@ -243,20 +284,99 @@ export class TosiNotification extends Component {
             flexDirection: 'column',
             alignItems: 'center',
             gap: vars.notificationSpacing,
+            minWidth: 0,
+        },
+        ':host .text': {
+            display: '-webkit-box',
+            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: vars.notificationMaxLines,
+            overflow: 'hidden',
+            overflowWrap: 'anywhere',
+            maxWidth: '100%',
         },
         ':host .note.closing': {
             opacity: 0,
             zIndex: 0,
         },
     };
+    /** How many notes are shown in full; older ones stack behind them. */
+    static maxVisible = 3;
+    /**
+     * How far (px) each stacked note peeks out beyond the one in front of it, up and to the
+     * right. Notes beyond the last offset are hidden.
+     */
+    static stackOffsets = [8, 6, 4, 2];
+    static closers = new WeakMap();
     static removeNote(note) {
+        if (note.classList.contains('closing'))
+            return;
         note.classList.add('closing');
-        note.style.marginBottom = -note.offsetHeight + 'px';
+        if (!note.classList.contains('stacked')) {
+            note.style.marginBottom = -note.offsetHeight + 'px';
+        }
+        TosiNotification.singleton?.layout();
         const remove = () => {
             note.remove();
         };
         note.addEventListener('transitionend', remove);
         setTimeout(remove, 1000);
+    }
+    /** Close every open notification, as if the user had closed each one. */
+    static dismissAll() {
+        const root = TosiNotification.singleton?.shadowRoot;
+        if (!root)
+            return;
+        for (const note of root.querySelectorAll('.note:not(.closing)')) {
+            TosiNotification.closers.get(note)?.();
+        }
+    }
+    /**
+     * Lay out the open notes. They are in the DOM oldest first, which `column-reverse` puts at
+     * the bottom. Up to `maxVisible` sit in a column. Past that, the newest `maxVisible - 1` stay
+     * in the column, the oldest stays at the bottom as the front of a stack, and everything in
+     * between recedes behind it.
+     */
+    layout() {
+        const root = this.shadowRoot;
+        if (!root)
+            return;
+        const notes = [...root.querySelectorAll('.note:not(.closing)')];
+        const { maxVisible, stackOffsets } = TosiNotification;
+        const behind = notes.length > maxVisible
+            ? notes.slice(1, notes.length - Math.max(maxVisible - 1, 0))
+            : [];
+        const front = notes[0];
+        for (const note of notes) {
+            if (behind.includes(note))
+                continue;
+            note.classList.remove('stacked', 'buried');
+            note.inert = false;
+            for (const prop of ['transform', 'z-index', 'bottom', 'margin-top']) {
+                note.style.removeProperty(prop);
+            }
+        }
+        const dismiss = root.querySelector('.dismiss-all');
+        if (dismiss)
+            dismiss.hidden = notes.length < 2;
+        if (!behind.length)
+            return;
+        // Distance from the host's bottom edge to the front card's top: it does not move when
+        // notes above the front card come and go, because the host grows upward.
+        const frontTop = this.clientHeight - front.offsetTop;
+        let offset = 0;
+        behind.forEach((note, depth) => {
+            const buried = depth >= stackOffsets.length;
+            if (!buried)
+                offset += stackOffsets[depth];
+            note.classList.add('stacked');
+            note.classList.toggle('buried', buried);
+            note.inert = true;
+            note.style.bottom = `${frontTop - note.offsetHeight}px`;
+            note.style.transform = `translate(${offset / 2}px, ${-offset}px)`;
+            note.style.zIndex = String(-1 - depth);
+        });
+        // Room above the front card for the cards peeking out behind it.
+        front.style.marginTop = `${offset}px`;
     }
     static post(spec) {
         const { message, duration, type, close, progress, icon, color } = Object.assign({ type: 'info', duration: -1 }, typeof spec === 'string' ? { message: spec } : spec);
@@ -266,6 +386,19 @@ export class TosiNotification extends Component {
         const singleton = this.singleton;
         document.body.append(singleton);
         singleton.style.zIndex = String(findHighestZ() + 1);
+        const root = singleton.shadowRoot;
+        let dismiss = root.querySelector('.dismiss-all');
+        if (!dismiss) {
+            // First child, so `column-reverse` puts it below the bottom note.
+            dismiss = button({
+                class: 'dismiss-all',
+                hidden: true,
+                apply(elt) {
+                    elt.addEventListener('click', TosiNotification.dismissAll);
+                },
+            }, 'Dismiss all');
+            root.prepend(dismiss);
+        }
         const _notificationAccentColor = color || COLOR_MAP[type];
         const progressBar = progress || type === 'progress' ? elements.progress() : {};
         const closeCallback = () => {
@@ -284,7 +417,7 @@ export class TosiNotification extends Component {
             style: {
                 _notificationAccentColor,
             },
-        }, iconElement, div({ class: 'message' }, div(message), progressBar), button({
+        }, iconElement, div({ class: 'message' }, div({ class: 'text', title: message }, message), progressBar), button({
             class: 'close',
             title: 'close',
             ariaLabel: 'Close notification',
@@ -293,7 +426,9 @@ export class TosiNotification extends Component {
                 elt.addEventListener('click', closeCallback);
             },
         }, icons.x()));
-        singleton.shadowRoot.append(note);
+        TosiNotification.closers.set(note, closeCallback);
+        root.append(note);
+        singleton.layout();
         if (progressBar instanceof HTMLProgressElement &&
             progress instanceof Function) {
             progressBar.setAttribute('max', String(100));
@@ -315,7 +450,6 @@ export class TosiNotification extends Component {
                 TosiNotification.removeNote(note);
             }, duration * 1000);
         }
-        note.scrollIntoView();
         return closeCallback;
     }
     content = null;

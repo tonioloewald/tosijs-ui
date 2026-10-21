@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=7ed58095024e" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=c3a443ba8645" data-tosi-doc-system />
   <title>notifications — tosijs-ui</title>
   <meta name="description" content="TosiNotification provides a singleton custom &lt;tosi-notification&gt; element that manages a list of notifications." />
   <link rel="canonical" href="https://ui.tosijs.net/notifications/" />
@@ -30,13 +30,21 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=589eb2e3c501" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=abb095868e05" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="notifications.ts">
 <h1 id="notifications">notifications</h1>
 <p><code>TosiNotification</code> provides a singleton custom <code>&lt;tosi-notification&gt;</code> element that manages
 a list of notifications.</p>
-<p>The notifications are displayed most-recent first. If the notifications would take more than
-half the height of the display, they are scrolled.</p>
+<p>Notifications stack up from the bottom of the screen, newest on top. Up to
+<code>TosiNotification.maxVisible</code> (3) they sit in a column. Past that, the bottom one becomes a
+stack: the older notifications recede behind it, up and slightly to the right, each peeking out
+less than the last, and any beyond <code>TosiNotification.stackOffsets</code> (<code>[8, 6, 4, 2]</code>, in px) are
+hidden until the ones in front are closed. Close the front card and the next one comes forward.</p>
+<p>When more than one notification is showing, a <strong>Dismiss all</strong> button sits below the bottom one.
+It closes every notification, firing each one&#39;s <code>close</code> callback as if the user had closed it.</p>
+<p>A long message is cut off with an ellipsis after four lines (<code>--notification-max-lines</code>), so the
+close button always stays in view; the full text is the notification&#39;s tooltip, and screen
+readers get all of it.</p>
 <p>You can post a notification simply with <code>TosiNotification.post()</code> or <code>postNotification()</code>.</p>
 <pre><code>interface NotificationSpec {
   message: string
@@ -260,6 +268,6 @@ test(&#39;form renders&#39;, () =&gt; {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-v3697xth.js"></script>
+  <script type="module" src="../hydrate-3fs1z4tc.js"></script>
 </body>
 </html>
