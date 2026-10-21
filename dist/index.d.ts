@@ -41,6 +41,7 @@ export * from './size-break.js';
 export * from './sizer.js';
 export * from './tab-selector.js';
 export * from './tag-list.js';
+export * from './palette.js';
 export * from './search-field.js';
 export { trackDrag, bringToFront, findHighestZ } from './track-drag.js';
 export { version } from './version.js';

@@ -94,7 +94,7 @@ history, for a browser embedded in another page: drive it with `initialRoute`,
 `onRouteChange` and the element's `navigate(slug)` method.
 */
 /*{ "parent": "Documentation System", "order": 50 }*/
-import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';
+import { elements, vars, varDefault, bindings, getListItem, tosi, StyleSheet, } from 'tosijs';
 import { buildSlugMap, pathForSlug, filenameForPath, homeDoc, wikilinkTargets, } from './doc-system/routing.js';
 import { buildNavTree } from './doc-system/nav-tree.js';
 import { renderDocMarkdown } from './doc-system/render.js';
@@ -107,6 +107,8 @@ import { collectCodeTokens } from './doc-system/code-fences.js';
 import { isLiveFence } from './doc-system/example-policy.js';
 import { tosiSidenav, TosiSidenav } from './side-nav.js';
 import { icons } from './icons.js';
+import { tosiPalette } from './palette.js';
+import { buildDocIndex, searchDocs } from './doc-system/doc-search.js';
 import { tosiLocalized } from './localize.js';
 import { popMenu } from './menu.js';
 import { codeEditor } from './code-editor.js';
@@ -140,7 +142,7 @@ export const hasTestBlock = (text, policy = 'auto') => typeof text === 'string' 
     // Cheap reject first: lexing every doc in a large corpus is not free.
     text.includes('test') &&
     collectCodeTokens(text).some((t) => t.lang === 'test' && isLiveFence('test', t.mode, policy));
-const { div, span, a, header, button, template, input, h2, img, details, summary, ul, li, } = elements;
+const { div, span, a, header, button, template, h2, img, details, summary, ul, li, } = elements;
 /*
 Test colors, and the text color that goes ON each — because contrast is a PAIR.
 
@@ -306,42 +308,14 @@ function logoMark(logo, projectLinks) {
     mark.classList.add('logo-mark');
     return mark;
 }
-// The nav search box: the field, and its own clear button over the field's right end.
+// The nav search box: the palette's trigger, full width.
 const navSearchStyleSpec = {
     '.nav-search': {
-        position: 'relative',
         margin: '5px',
     },
-    '.nav-search input[type="search"]': {
+    '.nav-search > tosi-palette': {
+        display: 'flex',
         width: '100%',
-        boxSizing: 'border-box',
-        // room for the clear button, so text never runs under it
-        paddingRight: varDefault.touchSize('44px'),
-    },
-    '.nav-search input[type="search"]::-webkit-search-cancel-button': {
-        display: 'none',
-    },
-    '.nav-search .nav-search-clear': {
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        bottom: 0,
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: varDefault.touchSize('44px'),
-        padding: 0,
-        border: 'none',
-        boxShadow: 'none',
-        background: 'transparent',
-        color: 'inherit',
-        opacity: '0.5',
-    },
-    '.nav-search .nav-search-clear:hover, .nav-search .nav-search-clear:focus-visible': {
-        opacity: '1',
-    },
-    '.nav-search .nav-search-clear[hidden]': {
-        display: 'none',
     },
 };
 const logoMarkStyleSpec = {
@@ -637,63 +611,75 @@ export function createDocBrowser(options) {
             }
         },
     };
-    const filterDocs = debounce(() => {
-        const needle = searchField.value.toLocaleLowerCase();
-        app.docs.forEach((doc) => {
-            doc.hidden =
-                !doc.title.toLocaleLowerCase().includes(needle) &&
-                    !doc.text.toLocaleLowerCase().includes(needle);
-        });
-        touch(app.docs);
-        // resetOpen: when the field is cleared this collapses back to the current
-        // section; while typing, matching sections expand via the needle branch.
-        refreshNav(true);
-    });
     /*
-    The nav search's clear (✕) button. `type="search"` alone gave a clear affordance only in
-    some browsers and some states: Chromium shows its ✕ only while the field is focused, Safari
-    while it has text, Firefox never. So the field has its own, shown whenever there is text,
-    and the native one is hidden so there is never two. Escape clears too.
+    Search is a palette (board #3454): the field in the nav opens a centred modal of ranked
+    results, and you navigate from those. It no longer filters the sidebar, which hid pages
+    without ranking any (the maintainer's call, 2026-10-21). The index is built on first use:
+    a site that is never searched never lexes its corpus for headings.
     */
-    const updateSearchClear = () => {
-        searchClear.hidden = searchField.value === '';
+    let searchIndex = null;
+    const crumbsFor = (doc) => {
+        const parent = doc.parent
+            ? docs.find((d) => d.filename === doc.parent || slugFor(d.filename) === doc.parent) ?? { title: doc.parent }
+            : null;
+        return parent ? `${parent.title} › ${doc.title}` : String(doc.title);
     };
-    const clearSearch = () => {
-        searchField.value = '';
-        updateSearchClear();
-        filterDocs();
-        searchField.focus();
-    };
-    const searchInput = () => {
-        updateSearchClear();
-        filterDocs();
-    };
-    const searchKeydown = (event) => {
-        if (event.key === 'Escape' && searchField.value !== '') {
-            event.preventDefault();
-            clearSearch();
+    const openDoc = (filename, anchor) => {
+        go(filename);
+        if (!anchor)
+            return;
+        if (!memoryRouting) {
+            window.history.replaceState({ href: hrefFor(filename) }, '', `${hrefFor(filename)}#${anchor}`);
         }
+        requestAnimationFrame(() => {
+            docContent
+                .querySelector(`#${CSS.escape(anchor)}`)
+                ?.scrollIntoView({ block: 'start' });
+        });
     };
-    const searchField = input({
-        placeholder: 'search',
-        // A placeholder is not a label: it is not a reliable accessible name, and it
-        // disappears the moment anything is typed. This is the only text input in the
-        // doc-browser chrome, so it was the one unnamed field on every page of every
-        // site built with `tosijs-ui/site`.
-        'aria-label': 'Search documentation',
-        type: 'search',
-        onInput: searchInput,
-        onKeydown: searchKeydown,
-    });
-    const searchClear = button({
-        type: 'button',
-        class: 'nav-search-clear',
-        title: 'Clear search',
-        'aria-label': 'Clear search',
-        hidden: true,
-        onClick: clearSearch,
-    }, icons.x());
-    const searchBox = div({ slot: 'nav', class: 'nav-search' }, searchField, searchClear);
+    const docSearchSource = (query) => {
+        searchIndex ??= buildDocIndex(docs);
+        return searchDocs(searchIndex, query, 30).flatMap((hit) => {
+            const doc = hit.doc;
+            const page = {
+                title: String(doc.title),
+                description: hit.snippet,
+                path: crumbsFor(doc),
+                icon: 'fileText',
+                kind: 'page',
+                score: hit.score,
+                action: () => openDoc(doc.filename),
+            };
+            if (!hit.heading)
+                return [page];
+            return [
+                {
+                    title: hit.heading.text,
+                    description: `In ${doc.title}`,
+                    path: `${crumbsFor(doc)} › ${hit.heading.text}`,
+                    icon: 'hash',
+                    kind: 'section',
+                    score: hit.score + 1,
+                    action: () => openDoc(doc.filename, hit.heading.id),
+                },
+                page,
+            ];
+        });
+    };
+    const quickLinks = docs
+        .filter((d) => !d.hidden && !d.parent && !d.home)
+        .slice(0, 8)
+        .map((d) => ({
+        title: String(d.title),
+        icon: 'fileText',
+        action: () => openDoc(d.filename),
+    }));
+    const searchBox = div({ slot: 'nav', class: 'nav-search' }, tosiPalette({
+        placeholder: 'Search documentation',
+        shortcut: 'mod+k',
+        sources: [docSearchSource],
+        quickLinks,
+    }));
     // Memory routing is decoupled from the page URL, so it ignores browser
     // back/forward (the host owns history, if any).
     if (!memoryRouting) {
@@ -1520,16 +1506,6 @@ export function createDocBrowser(options) {
             return item;
         };
         const root = div(navStyle, ul(...roots.map(renderNode)));
-        // Search is computed straight from the raw docs (plain strings) — going
-        // through app.docs gives BoxedScalars / unreliable write-through.
-        const matchesSearch = (filename, needle) => {
-            if (!needle)
-                return true;
-            const doc = docs.find((d) => d.filename === filename);
-            return (!!doc &&
-                (String(doc.title).toLocaleLowerCase().includes(needle) ||
-                    String(doc.text).toLocaleLowerCase().includes(needle)));
-        };
         const applyStatus = (link, filename, current) => {
             link.classList.toggle('current', filename === current);
             const r = pageTestResults[filename];
@@ -1540,25 +1516,14 @@ export function createDocBrowser(options) {
             // app.currentDoc.filename is a BoxedScalar; coerce so === / includes work.
             const cur = app.currentDoc;
             const current = cur && cur.filename != null ? String(cur.filename) : '';
-            const needle = searchField.value.trim().toLocaleLowerCase();
-            // Use inline display (not the [hidden] attr): an author `display` rule on
-            // .doc-nav li would override [hidden]'s display:none.
-            for (const [filename, { li: item, link }] of leaves) {
-                item.style.display = matchesSearch(filename, needle) ? '' : 'none';
+            for (const [filename, { link }] of leaves) {
                 applyStatus(link, filename, current);
             }
-            for (const { li: item, el, link, filename, subtree } of branches) {
-                // Visible if the section name matches, or any descendant leaf is shown.
-                const visible = matchesSearch(filename, needle) ||
-                    subtree.some((fn) => leaves.has(fn) && leaves.get(fn).li.style.display !== 'none');
-                item.style.display = visible ? '' : 'none';
+            for (const { el, link, filename, subtree } of branches) {
                 applyStatus(link, filename, current);
-                // While searching, expand sections with matches. On navigation/clear
-                // (resetOpen), collapse everything except the current doc's section.
+                // On navigation (resetOpen), collapse everything except the current doc's section.
                 // Otherwise (e.g. test-status refresh) leave user toggles alone.
-                if (needle)
-                    el.open = visible;
-                else if (resetOpen)
+                if (resetOpen)
                     el.open = subtree.includes(current);
                 else if (subtree.includes(current))
                     el.open = true;

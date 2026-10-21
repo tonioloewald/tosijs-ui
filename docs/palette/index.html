@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="../doc-system.css?v=4402345bb7cc" data-tosi-doc-system />
+  <title>palette — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-palette&gt; looks like a small search field. Click it (or press its shortcut) and it opens a centred modal: a query field on top, ranked results below, and…" />
+  <link rel="canonical" href="https://ui.tosijs.net/palette/" />
+  <link rel="alternate" type="text/markdown" href="index.md" title="palette — tosijs-ui (markdown)" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="palette — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-palette&gt; looks like a small search field. Click it (or press its shortcut) and it opens a centred modal: a query field on top, ranked results below, and…" />
+  <meta property="og:url" content="https://ui.tosijs.net/palette/" />
+  <meta name="twitter:card" content="summary" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"palette","description":"\u003ctosi-palette> looks like a small search field. Click it (or press its shortcut) and it opens a centred modal: a query field on top, ranked results below, and…","url":"https://ui.tosijs.net/palette/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <link rel="icon" href="../favicon.svg" />
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
+</head>
+<body>
+  <tosi-doc-system docs="../docs.json?v=6cda3aac4304" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <article class="doc-content" data-doc="palette.ts">
+<h1 id="palette">palette</h1>
+<p><code>&lt;tosi-palette&gt;</code> looks like a small search field. Click it (or press its shortcut) and it
+opens a centred modal: a query field on top, ranked results below, and the keys to drive it
+along the bottom. It is the &quot;command palette&quot; pattern, for search, navigation, or anything else
+you can turn a query into a list of things to pick.</p>
+<p>Results come from <strong>sources</strong>: functions from the query to a list of results, or a promise of
+one. A slow source shows a spinner and never holds up the fast ones; one that takes longer than
+<code>timeout</code> milliseconds (10 seconds by default) is abandoned and says so. Each keystroke aborts
+the previous search&#39;s sources through the <code>signal</code> they are given.</p>
+<p>Rows can be different kinds of thing: a result&#39;s <code>kind</code> picks a <strong>renderer</strong> for it, and any
+kind without one gets the default row (an icon, the title with the query highlighted, a
+one-line description and a path). Results are ranked by <code>score</code> and grouped by <code>group</code>; set
+<code>rank</code> to order them yourself. With nothing typed, <code>quickLinks</code> are listed instead.</p>
+<p>Choosing a result fires <code>action</code> (with the result as <code>event.detail</code>) and calls the result&#39;s own
+<code>action</code>, then closes the palette, unless that <code>action</code> returns <code>false</code>.</p>
+<pre><code class="language-js">import { tosiPalette, postNotification } from &#39;tosijs-ui&#39;
+
+const fruit = [&#39;Apple&#39;, &#39;Apricot&#39;, &#39;Banana&#39;, &#39;Blackberry&#39;, &#39;Cherry&#39;, &#39;Grape&#39;, &#39;Mango&#39;, &#39;Orange&#39;]
+
+const palette = tosiPalette({
+  placeholder: &#39;Search fruit and colours&#39;,
+  shortcut: &#39;mod+k&#39;,
+  quickLinks: [
+    { title: &#39;Apple&#39;, description: &#39;A quick link, shown before you type&#39;, icon: &#39;star&#39; },
+    { title: &#39;Cherry&#39;, icon: &#39;star&#39; },
+  ],
+  sources: [
+    // a plain function: answers at once
+    (query) =&gt;
+      fruit
+        .filter((name) =&gt; name.toLowerCase().includes(query.toLowerCase()))
+        .map((name) =&gt; ({
+          title: name,
+          description: `${name} is a fruit`,
+          path: `fruit/${name.toLowerCase()}`,
+          icon: &#39;heart&#39;,
+          group: &#39;Fruit&#39;,
+          score: name.toLowerCase().startsWith(query.toLowerCase()) ? 2 : 1,
+        })),
+    // an async function: the palette shows a spinner until it answers
+    async (query, { signal }) =&gt; {
+      await new Promise((resolve) =&gt; setTimeout(resolve, 600))
+      if (signal.aborted) return []
+      return [&#39;red&#39;, &#39;green&#39;, &#39;blue&#39;]
+        .filter((colour) =&gt; colour.includes(query.toLowerCase()))
+        .map((colour) =&gt; ({
+          title: colour,
+          kind: &#39;colour&#39;,
+          group: &#39;Colours (slow source)&#39;,
+          colour,
+        }))
+    },
+  ],
+  // a renderer for one kind of row
+  renderers: {
+    colour: (result) =&gt; {
+      const row = document.createElement(&#39;div&#39;)
+      row.style.cssText = &#39;display:flex;align-items:center;gap:8px&#39;
+      const swatch = document.createElement(&#39;span&#39;)
+      swatch.style.cssText = `width:16px;height:16px;border-radius:4px;background:${result.colour}`
+      row.append(swatch, result.title)
+      return row
+    },
+  },
+})
+palette.addEventListener(&#39;action&#39;, (event) =&gt; {
+  postNotification({ message: `You chose ${event.detail.title}`, duration: 2 })
+})
+preview.append(palette)
+</code></pre>
+<pre><code class="language-test">test(&#39;opens a centred modal, ranks results and closes on a choice&#39;, async () =&gt; {
+  const palette = preview.querySelector(&#39;tosi-palette&#39;)
+  palette.open()
+  const dialog = palette.querySelector(&#39;dialog&#39;)
+  expect(dialog.open).toBe(true)
+  palette.search(&#39;ap&#39;)
+  const titles = [...palette.querySelectorAll(&#39;[role=&quot;option&quot;]&#39;)].map((o) =&gt; o.textContent)
+  expect(titles[0]).toContain(&#39;Apple&#39;)
+  expect(titles.some((t) =&gt; t.includes(&#39;Grape&#39;))).toBe(true)
+  palette.close()
+  expect(dialog.open).toBe(false)
+})
+</code></pre>
+<h2 id="properties">Properties</h2>
+<ul>
+<li><code>placeholder</code> — the hint in the field, and in the trigger.</li>
+<li><code>shortcut</code> — a key that opens it from anywhere on the page, such as <code>mod+k</code> (<code>mod</code> is ⌘ on a
+Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.</li>
+<li><code>multiline</code> — the query is a growing text box: Enter chooses, Shift+Enter starts a new line,
+and ↑/↓ move through results only from the first or last line. For a prompt rather than a
+search.</li>
+<li><code>timeout</code> — milliseconds before a slow source is abandoned (default 10000).</li>
+<li><code>sources</code>, <code>renderers</code>, <code>rank</code>, <code>quickLinks</code> — described above.</li>
+<li><code>value</code> — the query.</li>
+</ul>
+<p><code>open()</code>, <code>close()</code> and <code>search(query)</code> drive it from code. Pressing Enter with no result
+chosen fires <code>action</code> with <code>{ query }</code> as its detail, so a multiline prompt can be submitted.</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">interface</span> <span class="token class-name">PaletteResult</span> <span class="token punctuation">{</span>
+  title<span class="token operator">:</span> <span class="token builtin">string</span>
+  description<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  path<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  icon<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token operator">|</span> Element <span class="token comment">// an icon name, or an element</span>
+  kind<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>           <span class="token comment">// picks a renderer</span>
+  group<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">string</span>
+  score<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span>          <span class="token comment">// higher first</span>
+  action<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span>result<span class="token operator">:</span> PaletteResult<span class="token punctuation">,</span> palette<span class="token operator">:</span> TosiPalette<span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token keyword">void</span> <span class="token operator">|</span> <span class="token builtin">boolean</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a class="doc-link" href="../">tosijs-ui</a></li>
+    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="../carousel/">carousel</a></li>
+      <li><a class="doc-link" href="../code-editor/">code</a></li>
+      <li><a class="doc-link" href="../crud/">crud</a></li>
+      <li><a class="doc-link" href="../dialog/">dialog</a></li>
+      <li><a class="doc-link" href="../diff/">diff</a></li>
+      <li><a class="doc-link" href="../editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="../component/">example</a></li>
+      <li><a class="doc-link" href="../float/">float</a></li>
+      <li><a class="doc-link" href="../gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="../header/">header</a></li>
+      <li><details><summary><a class="doc-link" href="../icons/">icons</a></summary>
+      <ul>
+        <li><a class="doc-link" href="../icon-composition/">Icon Composition</a></li>
+        <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
+        <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
+      </ul>
+      </details></li>
+      <li><a class="doc-link" href="../layout/">layout</a></li>
+      <li><a class="doc-link" href="../bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="../mapbox/">map</a></li>
+      <li><a class="doc-link" href="../markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="../menu/">menu</a></li>
+      <li><a class="doc-link" href="../notifications/">notifications</a></li>
+      <li><a class="doc-link current" href="../palette/" aria-current="page">palette</a></li>
+      <li><a class="doc-link" href="../pocket-bar/">pocket bar</a></li>
+      <li><a class="doc-link" href="../pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="../schema-form/">schema-form</a></li>
+      <li><a class="doc-link" href="../side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="../size-break/">size-break</a></li>
+      <li><a class="doc-link" href="../sizer/">sizer</a></li>
+      <li><a class="doc-link" href="../data-table/">table</a></li>
+      <li><a class="doc-link" href="../tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="../tooltip/">tooltip</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a class="doc-link" href="../form-components/">Form Components</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../color-input/">color input field</a></li>
+      <li><a class="doc-link" href="../filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="../form/">forms</a></li>
+      <li><a class="doc-link" href="../month/">month</a></li>
+      <li><a class="doc-link" href="../password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="../rating/">rating</a></li>
+      <li><a class="doc-link" href="../rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="../search-field/">search-field</a></li>
+      <li><a class="doc-link" href="../segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="../select/">select</a></li>
+      <li><a class="doc-link" href="../tag-list/">tag-list</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="../drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="../hash-state/">hash-state</a></li>
+      <li><a class="doc-link" href="../live-theme/">live-theme</a></li>
+      <li><a class="doc-link" href="../localize/">localize</a></li>
+      <li><a class="doc-link" href="../make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
+      <li><a class="doc-link" href="../router/">router</a></li>
+      <li><a class="doc-link" href="../via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="../theme/">theme</a></li>
+      <li><a class="doc-link" href="../track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a class="doc-link" href="../documentation-system/">Documentation System</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../adopting-the-doc-system/">Adopting the doc system</a></li>
+      <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
+      <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="../docs/">docs</a></li>
+      <li><a class="doc-link" href="../highlight-block/">highlight-block</a></li>
+      <li><a class="doc-link" href="../highlight-styles/">highlight-styles</a></li>
+      <li><a class="doc-link" href="../data-client/">data client</a></li>
+      <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
+      <li><a class="doc-link" href="../no-header-demo/">Page without the header</a></li>
+      <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
+      <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
+    </ul>
+    </details></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script type="module" src="../hydrate-84a1srw9.js"></script>
+</body>
+</html>

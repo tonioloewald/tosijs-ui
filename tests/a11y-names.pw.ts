@@ -88,9 +88,9 @@ test('the data-table page has no unnamed controls', async ({ page }) => {
 })
 
 test('the doc-browser chrome has no unnamed controls', async ({ page }) => {
-  // The search field is the only text input in the chrome, and a `placeholder` is not a
+  // The search trigger (the palette) is the chrome's one search control, and a `placeholder` is not a
   // label — it is unreliable as a name and vanishes as soon as anything is typed.
-  const found = await unnamed(page, '', 'input[type=search]', 1)
+  const found = await unnamed(page, '', '.palette-trigger', 1)
   expect(
     found.buttons,
     `unnamed buttons: ${JSON.stringify(found.buttons)}`
