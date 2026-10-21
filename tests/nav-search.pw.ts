@@ -89,7 +89,8 @@ test('the search sits in the header, not the sidebar, and shrinks to its icon wh
   const palette = page.locator('header > tosi-palette.doc-search')
   await expect(palette).not.toHaveClass(/-icon/)
   await expect(palette.locator('.palette-trigger-label')).toBeVisible()
-  await page.setViewportSize({ width: 420, height: 700 })
+  // Narrow enough that, even with the header links moved into the menu, the field has no room.
+  await page.setViewportSize({ width: 320, height: 700 })
   await expect(palette).toHaveClass(/-icon/)
   await expect(palette.locator('.palette-trigger-label')).toBeHidden()
   // still opens, as an icon
@@ -114,4 +115,63 @@ test('on a page with no header, the shortcut still opens the search', async ({
   await expect(page).toHaveURL(/\/menu\/$/)
   // back in the header on a page that has one
   await expect(page.locator('header > tosi-palette.doc-search')).toHaveCount(1)
+})
+
+/** WCAG contrast of two computed CSS colours (rgb/rgba). */
+function contrast(a: string, b: string): number {
+  const lum = (c: string) => {
+    const [r, g, bl] = (c.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number)
+    const f = (v: number) => {
+      const s = v / 255
+      return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+    }
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(bl)
+  }
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p)
+  return (x + 0.05) / (y + 0.05)
+}
+
+for (const theme of ['light', 'dark'] as const) {
+  test(`palette text is readable in the header's subtree (${theme})`, async ({
+    page,
+  }) => {
+    // The header recolours --text-color to white for the brand bar; the dialog lives under it.
+    await page.addInitScript((theme) => {
+      localStorage.setItem(
+        'tosi-doc-system-prefs',
+        JSON.stringify({ theme, highContrast: false, locale: '' })
+      )
+    }, theme)
+    await page.goto('/menu/')
+    await trigger(page).click()
+    await query(page).fill('menu')
+    const [fg, bg, group] = await page.evaluate(() => {
+      const dialog = document.querySelector('tosi-palette.doc-search dialog')!
+      const title = dialog.querySelector(
+        '[role="option"]:not(.-active) .palette-title'
+      )!
+      return [
+        getComputedStyle(title).color,
+        getComputedStyle(dialog).backgroundColor,
+        getComputedStyle(dialog.querySelector('.palette-input')!).color,
+      ]
+    })
+    expect(contrast(fg, bg)).toBeGreaterThan(4.5)
+    expect(contrast(group, bg)).toBeGreaterThan(4.5)
+  })
+}
+
+test('on a narrow header the links move into the settings menu', async ({
+  page,
+}) => {
+  const links = page.locator('header > .header-link')
+  await expect(links.first()).toBeVisible()
+  await page.setViewportSize({ width: 390, height: 800 })
+  await expect(links.first()).toBeHidden()
+  await page.locator('header button[title="settings"]').click()
+  await expect(
+    page.locator('tosi-menu .tosi-menu-item, .tosi-menu-item').filter({
+      hasText: /github/i,
+    })
+  ).toHaveCount(1)
 })

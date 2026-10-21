@@ -308,9 +308,14 @@ function logoMark(logo, projectLinks) {
     mark.classList.add('logo-mark');
     return mark;
 }
+/** Below this many pixels of header, the header links move into the settings menu. */
+const HEADER_LINKS_COLLAPSE_PX = 600;
 // The search, in the header bar: the site's pill-shaped search field while there is room, its
 // icon alone when the header is squeezed (the palette compacts itself below `compactWidth`).
 const navSearchStyleSpec = {
+    'header.-links-collapsed > .header-link': {
+        display: 'none',
+    },
     'header > tosi-palette.doc-search': {
         display: 'flex',
         flex: '0 1 16em',
@@ -845,15 +850,20 @@ export function createDocBrowser(options) {
     const headerLink = (link) => {
         const iconFactory = link.icon ? icons[link.icon] : undefined;
         return a({
-            class: iconFactory ? 'iconic' : '',
+            class: iconFactory ? 'iconic header-link' : 'header-link',
             title: link.label,
             target: '_blank',
             href: link.href,
         }, iconFactory ? iconFactory() : link.label);
     };
+    // Every header link, so the settings menu can list them when the header is too narrow.
+    const headerLinks = [];
     if (navbarLinks) {
         // Configurable link set.
-        navbarLinks.forEach((link) => headerContent.push(headerLink(link)));
+        navbarLinks.forEach((link) => {
+            headerLinks.push(link);
+            headerContent.push(headerLink(link));
+        });
     }
     else {
         // Legacy: derive header icons from the known `projectLinks` keys.
@@ -865,8 +875,10 @@ export function createDocBrowser(options) {
             [projectLinks.npm, 'npm', 'npmjs'],
         ];
         for (const [href, icon, label] of legacy) {
-            if (href)
+            if (href) {
+                headerLinks.push({ href, label, icon });
                 headerContent.push(headerLink({ href, label, icon }));
+            }
         }
     }
     // The rendered-markdown content area. When hydrating a static page we ADOPT the
@@ -2054,6 +2066,26 @@ export function createDocBrowser(options) {
     ;
     container.sourceMenuItems = sourceMenuItems;
     container.testsMenuItem = testsMenuItem;
+    /*
+    On a narrow header (an iPhone held upright) the link icons crowd the title and the search, so
+    below HEADER_LINKS_COLLAPSE_PX of header they hide and the settings menu lists them instead
+    (the maintainer, 2026-10-21). Measured on the header, not the window, because a doc browser
+    can be embedded in something narrower than the page.
+    */
+    const collapseLinks = () => headerBar.classList.toggle('-links-collapsed', headerLinks.length > 0 &&
+        headerBar.clientWidth > 0 &&
+        headerBar.clientWidth < HEADER_LINKS_COLLAPSE_PX);
+    if (typeof ResizeObserver === 'function') {
+        new ResizeObserver(collapseLinks).observe(headerBar);
+    }
+    collapseLinks();
+    container.headerLinkMenuItems = () => headerBar.classList.contains('-links-collapsed')
+        ? headerLinks.map((link) => ({
+            caption: link.label,
+            icon: link.icon && icons[link.icon] ? link.icon : 'externalLink',
+            action: () => window.open(link.href, '_blank', 'noopener'),
+        }))
+        : [];
     // Memory routing: let the host drive navigation programmatically (by slug) and
     // read the current slug back, so the browser can live in a floating panel etc.
     if (memoryRouting) {

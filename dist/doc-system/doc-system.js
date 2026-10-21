@@ -417,6 +417,11 @@ export class TosiDocSystem extends withAttributes({
                 returns an empty array when the current doc has no source file, and an empty
                 submenu is worse than none, so this omits it entirely in that case.
                 */
+                // The header's links, when the header is too narrow to show them (doc-browser.ts).
+                const linkItems = this.browser?.headerLinkMenuItems?.() ?? [];
+                if (linkItems.length > 0) {
+                    menuItems.unshift(...linkItems, null);
+                }
                 const sourceItems = this.browser?.sourceMenuItems?.() ?? [];
                 if (sourceItems.length > 0) {
                     menuItems.push({

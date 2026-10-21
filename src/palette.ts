@@ -313,6 +313,12 @@ export class TosiPalette extends withAttributes({
       {
         display: 'none',
       },
+    // No hover means a touch screen: no keyboard to press the shortcut on, so no hint for it.
+    '@media (hover: none)': {
+      'tosi-palette > .palette-trigger > kbd': {
+        display: 'none',
+      },
+    },
     // `trigger="none"`: opened only from code or its shortcut. The host stays rendered, because
     // a modal <dialog> inside a display:none ancestor is not shown even in the top layer.
     ':host.-no-trigger > .palette-trigger': {
@@ -335,9 +341,15 @@ export class TosiPalette extends withAttributes({
       whiteSpace: 'nowrap',
     },
     ':host > dialog': {
-      _paletteBg: varDefault.background('#fff'),
-      _paletteColor: varDefault.textColor('#222'),
-      _paletteAccent: varDefault.brandColor('#0064d2'),
+      /*
+      The theme's `--tosi-*` colours first. The palette is often placed in a header that
+      recolours its own text (white on a brand bar, by redefining `--text-color`), and the
+      dialog is in that header's subtree, so `--text-color` gave white text on a light dialog.
+      `--tosi-text` is set once at the root and resolved there, so it survives.
+      */
+      _paletteBg: varDefault.tosiBg(varDefault.background('#fff')),
+      _paletteColor: varDefault.tosiText(varDefault.textColor('#222')),
+      _paletteAccent: varDefault.tosiAccent(varDefault.brandColor('#0064d2')),
       // A tint of the accent, so the active row follows the theme (pink on the doc site).
       _paletteActiveBg: `color-mix(in srgb, ${vars.paletteAccent} 12%, transparent)`,
       width: 'min(40em, calc(100vw - 32px))',
