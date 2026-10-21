@@ -101,7 +101,11 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 - `sources`, `renderers`, `rank`, `quickLinks` — described above.
 - `value` — the query.
 
-`open()`, `close()` and `search(query)` drive it from code. Pressing Enter with no result
+- `trigger` — what shows on the page: `field` (default) the search-field pill, which shrinks
+  to its icon when it has less than `compactWidth` pixels (160); `icon`, always just the icon;
+  `none`, nothing at all, for a palette opened from code or its `shortcut`.
+
+`open()`, `close()` and `search(query)` drive it from code, so any button can open it. Pressing Enter with no result
 chosen fires `action` with `{ query }` as its detail, so a multiline prompt can be submitted.
 
 ```typescript

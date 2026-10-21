@@ -31,6 +31,8 @@ declare const TosiPalette_base: import("tosijs").WithAttributes<{
     multiline: boolean;
     timeout: number;
     quickLinksCaption: string;
+    trigger: string;
+    compactWidth: number;
     emptyCaption: string;
 }>;
 export declare class TosiPalette extends TosiPalette_base {
@@ -61,6 +63,9 @@ export declare class TosiPalette extends TosiPalette_base {
     private onCancel;
     private clearField;
     content: () => (HTMLButtonElement | HTMLDialogElement)[];
+    private resizeObserver;
+    private compact;
+    private onResize;
     connectedCallback(): void;
     disconnectedCallback(): void;
     /** The query field: a text box when `multiline`, re-made when that changes. */

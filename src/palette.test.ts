@@ -133,3 +133,21 @@ test('a result whose action returns false keeps the palette open', () => {
   palette.close()
   palette.remove()
 })
+
+test('trigger="icon" and "none" set the classes that hide the label or the whole trigger; open() works without one', () => {
+  const palette = tosiPalette({
+    trigger: 'icon',
+    sources: [() => [{ title: 'x' }]],
+  })
+  document.body.append(palette)
+  palette.render()
+  expect(palette.classList.contains('-icon')).toBe(true)
+  palette.trigger = 'none'
+  palette.render()
+  expect(palette.classList.contains('-no-trigger')).toBe(true)
+  expect(palette.classList.contains('-icon')).toBe(false)
+  palette.open()
+  expect(palette.querySelector('dialog')!.open).toBe(true)
+  palette.close()
+  palette.remove()
+})

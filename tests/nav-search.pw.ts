@@ -12,10 +12,13 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/menu/')
 })
 
-const trigger = (page: any) => page.locator('.nav-search .palette-trigger')
-const dialog = (page: any) => page.locator('.nav-search dialog')
-const query = (page: any) => page.locator('.nav-search .palette-input')
-const options = (page: any) => page.locator('.nav-search [role="option"]')
+const trigger = (page: any) =>
+  page.locator('tosi-palette.doc-search .palette-trigger')
+const dialog = (page: any) => page.locator('tosi-palette.doc-search dialog')
+const query = (page: any) =>
+  page.locator('tosi-palette.doc-search .palette-input')
+const options = (page: any) =>
+  page.locator('tosi-palette.doc-search [role="option"]')
 
 test('the nav search opens a centred palette, and the sidebar is not filtered', async ({
   page,
@@ -26,9 +29,9 @@ test('the nav search opens a centred palette, and the sidebar is not filtered', 
   await expect(dialog(page)).toBeVisible()
   await expect(query(page)).toBeFocused()
   // Before typing: quick links.
-  await expect(page.locator('.nav-search .palette-group').first()).toHaveText(
-    'Quick links'
-  )
+  await expect(
+    page.locator('tosi-palette.doc-search .palette-group').first()
+  ).toHaveText('Quick links')
   await query(page).fill('select')
   const box = (await dialog(page).boundingBox())!
   const viewport = page.viewportSize()!
@@ -74,4 +77,41 @@ test('the shortcut opens it from anywhere on the page', async ({ page }) => {
   await page.keyboard.press('ControlOrMeta+k')
   await expect(dialog(page)).toBeVisible()
   await expect(query(page)).toBeFocused()
+})
+
+test('the search sits in the header, not the sidebar, and shrinks to its icon when squeezed', async ({
+  page,
+}) => {
+  await expect(page.locator('header > tosi-palette.doc-search')).toHaveCount(1)
+  await expect(page.locator('.doc-nav tosi-palette, .nav-search')).toHaveCount(
+    0
+  )
+  const palette = page.locator('header > tosi-palette.doc-search')
+  await expect(palette).not.toHaveClass(/-icon/)
+  await expect(palette.locator('.palette-trigger-label')).toBeVisible()
+  await page.setViewportSize({ width: 420, height: 700 })
+  await expect(palette).toHaveClass(/-icon/)
+  await expect(palette.locator('.palette-trigger-label')).toBeHidden()
+  // still opens, as an icon
+  await trigger(page).click()
+  await expect(dialog(page)).toBeVisible()
+  await query(page).press('Escape')
+  await page.setViewportSize({ width: 1280, height: 720 })
+  await expect(palette).not.toHaveClass(/-icon/)
+})
+
+test('on a page with no header, the shortcut still opens the search', async ({
+  page,
+}) => {
+  await page.goto('/no-header-demo/')
+  await expect(page.locator('header')).toBeHidden()
+  await expect(trigger(page)).toBeHidden()
+  await page.locator('body').click({ position: { x: 600, y: 400 } })
+  await page.keyboard.press('ControlOrMeta+k')
+  await expect(dialog(page)).toBeVisible()
+  await query(page).fill('menu')
+  await query(page).press('Enter')
+  await expect(page).toHaveURL(/\/menu\/$/)
+  // back in the header on a page that has one
+  await expect(page.locator('header > tosi-palette.doc-search')).toHaveCount(1)
 })

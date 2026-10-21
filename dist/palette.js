@@ -102,7 +102,11 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 - `sources`, `renderers`, `rank`, `quickLinks` — described above.
 - `value` — the query.
 
-`open()`, `close()` and `search(query)` drive it from code. Pressing Enter with no result
+- `trigger` — what shows on the page: `field` (default) the search-field pill, which shrinks
+  to its icon when it has less than `compactWidth` pixels (160); `icon`, always just the icon;
+  `none`, nothing at all, for a palette opened from code or its `shortcut`.
+
+`open()`, `close()` and `search(query)` drive it from code, so any button can open it. Pressing Enter with no result
 chosen fires `action` with `{ query }` as its detail, so a multiline prompt can be submitted.
 
 ```typescript
@@ -219,6 +223,8 @@ export class TosiPalette extends withAttributes({
     multiline: false,
     timeout: 10000,
     quickLinksCaption: 'Quick links',
+    trigger: 'field',
+    compactWidth: 160,
     emptyCaption: 'No results',
 }) {
     static preferredTagName = 'tosi-palette';
@@ -241,6 +247,24 @@ export class TosiPalette extends withAttributes({
             cursor: 'pointer',
             textAlign: 'left',
         },
+        // `trigger="icon"`, or a field squeezed narrower than `compactWidth`: just the icon.
+        ':host.-icon > .palette-trigger': {
+            justifyContent: 'center',
+            width: 'auto',
+            marginLeft: 'auto',
+            background: 'transparent',
+            boxShadow: 'none',
+            color: 'inherit',
+            padding: vars.spacing25,
+        },
+        ':host.-icon > .palette-trigger > .palette-trigger-label, :host.-icon > .palette-trigger > kbd': {
+            display: 'none',
+        },
+        // `trigger="none"`: opened only from code or its shortcut. The host stays rendered, because
+        // a modal <dialog> inside a display:none ancestor is not shown even in the top layer.
+        ':host.-no-trigger > .palette-trigger': {
+            display: 'none',
+        },
         ':host > .palette-trigger > .palette-trigger-label': {
             flex: '1 1 auto',
             overflow: 'hidden',
@@ -249,6 +273,7 @@ export class TosiPalette extends withAttributes({
         },
         ':host kbd, :host > dialog kbd': {
             lineHeight: 'normal',
+            alignSelf: 'center',
             font: 'inherit',
             fontSize: vars.fontSize75,
             padding: `0 ${vars.spacing25}`,
@@ -524,13 +549,33 @@ export class TosiPalette extends withAttributes({
             onMousemove: this.onListPointer,
         }), div({ class: 'palette-footer' }, kbd('↑'), kbd('↓'), span('Navigate'), kbd('↵'), span('Select'), span({ class: 'elastic' }), span('Close'), kbd('Esc'))),
     ];
+    /*
+    A field trigger shrinks to its icon when the room it is given drops below `compactWidth`. The
+    host's width comes from its container (give it a flex basis and `min-width`), not from its
+    content: if hiding the label shrank the host, it would never grow back.
+    */
+    resizeObserver = null;
+    compact = false;
+    onResize = () => {
+        const compact = this.clientWidth < Number(this.compactWidth);
+        if (compact !== this.compact) {
+            this.compact = compact;
+            this.render();
+        }
+    };
     connectedCallback() {
         super.connectedCallback();
         document.addEventListener('keydown', this.onDocumentKeydown);
+        if (typeof ResizeObserver === 'function') {
+            this.resizeObserver = new ResizeObserver(this.onResize);
+            this.resizeObserver.observe(this);
+        }
     }
     disconnectedCallback() {
         super.disconnectedCallback();
         document.removeEventListener('keydown', this.onDocumentKeydown);
+        this.resizeObserver?.disconnect();
+        this.resizeObserver = null;
     }
     /** The query field: a text box when `multiline`, re-made when that changes. */
     ensureField() {
@@ -741,6 +786,8 @@ export class TosiPalette extends withAttributes({
     }
     render() {
         super.render();
+        this.classList.toggle('-icon', this.trigger === 'icon' || (this.trigger === 'field' && this.compact));
+        this.classList.toggle('-no-trigger', this.trigger === 'none');
         const label = this.querySelector('.palette-trigger-label');
         if (label)
             label.textContent = this.placeholder;

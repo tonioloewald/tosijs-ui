@@ -308,17 +308,16 @@ function logoMark(logo, projectLinks) {
     mark.classList.add('logo-mark');
     return mark;
 }
-// The nav search box: the palette's trigger, full width.
+// The search, in the header bar: the site's pill-shaped search field while there is room, its
+// icon alone when the header is squeezed (the palette compacts itself below `compactWidth`).
 const navSearchStyleSpec = {
-    '.nav-search': {
-        margin: '5px',
-    },
-    '.nav-search > tosi-palette': {
+    'header > tosi-palette.doc-search': {
         display: 'flex',
-        width: '100%',
+        flex: '0 1 16em',
+        minWidth: vars.touchSize,
+        margin: `0 ${vars.spacing50}`,
     },
-    // The trigger looks like the search field it replaced: the site's pill-shaped input.
-    '.nav-search .palette-trigger': {
+    'header > tosi-palette.doc-search:not(.-icon) > .palette-trigger': {
         borderRadius: 99,
         background: vars.inputBg,
         boxShadow: vars.inputBorderShadow,
@@ -683,12 +682,14 @@ export function createDocBrowser(options) {
         icon: 'fileText',
         action: () => openDoc(d.filename),
     }));
-    const searchBox = div({ slot: 'nav', class: 'nav-search' }, tosiPalette({
+    // In the header bar (see headerContent); the nav no longer holds a search field.
+    const searchBox = tosiPalette({
+        class: 'doc-search',
         placeholder: 'Search documentation',
         shortcut: 'mod+k',
         sources: [docSearchSource],
         quickLinks,
-    }));
+    });
     // Memory routing is decoupled from the page URL, so it ignores browser
     // back/forward (the host owns history, if any).
     if (!memoryRouting) {
@@ -839,7 +840,7 @@ export function createDocBrowser(options) {
             },
         }, logoMark(logo, projectLinks), h2(projectName)));
     }
-    headerContent.push(span({ class: 'elastic' }));
+    headerContent.push(span({ class: 'elastic' }), searchBox);
     // A header link renders as an icon (if `icon` names a known icon) or its label.
     const headerLink = (link) => {
         const iconFactory = link.icon ? icons[link.icon] : undefined;
@@ -1592,7 +1593,7 @@ export function createDocBrowser(options) {
             // The sidenav has just introduced itself; give it the layout the doc asked for.
             applyFullScreen();
         },
-    }, searchBox, navContent, div({
+    }, navContent, div({
         style: {
             position: 'relative',
             overflowY: 'scroll',
@@ -1613,6 +1614,18 @@ export function createDocBrowser(options) {
         const home = floating ? container : headerBar;
         if (testWidget.parentElement !== home)
             home.appendChild(testWidget);
+        /*
+        The search lives in the header too, and a modal <dialog> inside a display:none header is
+        never shown, so ⌘K would do nothing on a header:false page. There it waits outside the
+        header with no trigger of its own, opened by its shortcut.
+        */
+        searchBox.trigger = floating ? 'none' : 'field';
+        if (floating && searchBox.parentElement !== container) {
+            container.appendChild(searchBox);
+        }
+        else if (!floating && searchBox.parentElement !== headerBar) {
+            headerBar.querySelector('.elastic').after(searchBox);
+        }
     };
     // Render the landing doc (adopts pre-rendered HTML when hydrating).
     showDoc(currentDoc);

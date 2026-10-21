@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=3b8f2562ed98" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=158b9cee9504" data-tosi-doc-system />
   <title>palette — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-palette&gt; looks like a small search field. Click it (or press its shortcut) and it opens a centred modal: a query field on top, ranked results below, and…" />
   <link rel="canonical" href="https://ui.tosijs.net/palette/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=6cda3aac4304" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=bd7bfb67f42d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="palette.ts">
 <h1 id="palette">palette</h1>
 <p><code>&lt;tosi-palette&gt;</code> looks like a small search field. Click it (or press its shortcut) and it
@@ -117,17 +117,27 @@ preview.append(palette)
 </code></pre>
 <h2 id="properties">Properties</h2>
 <ul>
-<li><code>placeholder</code> — the hint in the field, and in the trigger.</li>
-<li><code>shortcut</code> — a key that opens it from anywhere on the page, such as <code>mod+k</code> (<code>mod</code> is ⌘ on a
-Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.</li>
-<li><code>multiline</code> — the query is a growing text box: Enter chooses, Shift+Enter starts a new line,
+<li><p><code>placeholder</code> — the hint in the field, and in the trigger.</p>
+</li>
+<li><p><code>shortcut</code> — a key that opens it from anywhere on the page, such as <code>mod+k</code> (<code>mod</code> is ⌘ on a
+Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.</p>
+</li>
+<li><p><code>multiline</code> — the query is a growing text box: Enter chooses, Shift+Enter starts a new line,
 and ↑/↓ move through results only from the first or last line. For a prompt rather than a
-search.</li>
-<li><code>timeout</code> — milliseconds before a slow source is abandoned (default 10000).</li>
-<li><code>sources</code>, <code>renderers</code>, <code>rank</code>, <code>quickLinks</code> — described above.</li>
-<li><code>value</code> — the query.</li>
+search.</p>
+</li>
+<li><p><code>timeout</code> — milliseconds before a slow source is abandoned (default 10000).</p>
+</li>
+<li><p><code>sources</code>, <code>renderers</code>, <code>rank</code>, <code>quickLinks</code> — described above.</p>
+</li>
+<li><p><code>value</code> — the query.</p>
+</li>
+<li><p><code>trigger</code> — what shows on the page: <code>field</code> (default) the search-field pill, which shrinks
+to its icon when it has less than <code>compactWidth</code> pixels (160); <code>icon</code>, always just the icon;
+<code>none</code>, nothing at all, for a palette opened from code or its <code>shortcut</code>.</p>
+</li>
 </ul>
-<p><code>open()</code>, <code>close()</code> and <code>search(query)</code> drive it from code. Pressing Enter with no result
+<p><code>open()</code>, <code>close()</code> and <code>search(query)</code> drive it from code, so any button can open it. Pressing Enter with no result
 chosen fires <code>action</code> with <code>{ query }</code> as its detail, so a multiline prompt can be submitted.</p>
 <pre><code class="language-typescript" data-highlighted><span class="token keyword">interface</span> <span class="token class-name">PaletteResult</span> <span class="token punctuation">{</span>
   title<span class="token operator">:</span> <span class="token builtin">string</span>
@@ -246,6 +256,6 @@ chosen fires <code>action</code> with <code>{ query }</code> as its detail, so a
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-8m3w2z2j.js"></script>
+  <script type="module" src="../hydrate-kvds7vex.js"></script>
 </body>
 </html>
