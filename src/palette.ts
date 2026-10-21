@@ -490,6 +490,35 @@ export class TosiPalette extends withAttributes({
     ':host > dialog .palette-footer .elastic': {
       flex: '1 1 auto',
     },
+    ':host > dialog .palette-keys': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: vars.spacing50,
+    },
+    ':host > dialog .palette-close': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: vars.spacing50,
+      font: 'inherit',
+      color: 'inherit',
+      background: 'transparent',
+      border: 'none',
+      boxShadow: 'none',
+      padding: `${vars.spacing25} ${vars.spacing50}`,
+      borderRadius: vars.spacing50,
+      cursor: 'pointer',
+      lineHeight: 'inherit',
+    },
+    ':host > dialog .palette-close:hover': {
+      background: vars.paletteActiveBg,
+    },
+    // A touch screen has no arrow keys or Escape to hint at.
+    '@media (hover: none) and (pointer: coarse)': {
+      'tosi-palette > dialog .palette-keys, tosi-palette > dialog .palette-close > kbd':
+        {
+          display: 'none',
+        },
+    },
     '@keyframes tosi-palette-spin': {
       from: { transform: 'rotate(0deg)' },
       to: { transform: 'rotate(360deg)' },
@@ -579,6 +608,10 @@ export class TosiPalette extends withAttributes({
     this.close()
   }
 
+  private closeClicked = (): void => {
+    this.close()
+  }
+
   private clearField = (): void => {
     this.field!.value = ''
     this.grow()
@@ -636,14 +669,25 @@ export class TosiPalette extends withAttributes({
       }),
       div(
         { class: 'palette-footer' },
-        kbd('↑'),
-        kbd('↓'),
-        span('Navigate'),
-        kbd('↵'),
-        span('Select'),
+        span(
+          { class: 'palette-keys' },
+          kbd('↑'),
+          kbd('↓'),
+          span('Navigate'),
+          kbd('↵'),
+          span('Select')
+        ),
         span({ class: 'elastic' }),
-        span('Close'),
-        kbd('Esc')
+        // A button as well as a key hint: on a phone it is the way to close.
+        button(
+          {
+            class: 'palette-close',
+            type: 'button',
+            onClick: this.closeClicked,
+          },
+          span('Close'),
+          kbd('Esc')
+        )
       )
     ),
   ]

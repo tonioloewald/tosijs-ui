@@ -61,6 +61,7 @@ export declare class TosiPalette extends TosiPalette_base {
     private onListPointer;
     private onDialogClick;
     private onCancel;
+    private closeClicked;
     private clearField;
     content: () => (HTMLButtonElement | HTMLDialogElement)[];
     private resizeObserver;

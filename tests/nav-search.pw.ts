@@ -180,3 +180,41 @@ test('on a narrow header the links move into the settings menu', async ({
     })
   ).toHaveCount(1)
 })
+
+test('the footer Close is a button', async ({ page }) => {
+  await trigger(page).click()
+  await expect(dialog(page)).toBeVisible()
+  // with a keyboard and mouse, the key cues show
+  await expect(
+    page.locator('tosi-palette.doc-search .palette-keys')
+  ).toBeVisible()
+  await expect(
+    page.locator('tosi-palette.doc-search .palette-close > kbd')
+  ).toBeVisible()
+  await page.locator('tosi-palette.doc-search .palette-close').click()
+  await expect(dialog(page)).toBeHidden()
+})
+
+test.describe('on a touch screen', () => {
+  test.use({
+    hasTouch: true,
+    isMobile: true,
+    viewport: { width: 390, height: 760 },
+  })
+  test('the key cues are hidden; Close stays', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName === 'firefox', 'Firefox does not emulate isMobile')
+    await trigger(page).click()
+    await expect(
+      page.locator('tosi-palette.doc-search .palette-keys')
+    ).toBeHidden()
+    await expect(
+      page.locator('tosi-palette.doc-search .palette-close > kbd')
+    ).toBeHidden()
+    await expect(
+      page.locator('tosi-palette.doc-search .palette-close')
+    ).toBeVisible()
+  })
+})
