@@ -50,8 +50,7 @@ export declare class TosiNotification extends Component {
             borderColor: string;
             borderWidth: string;
             borderStyle: string;
-            transition: string;
-            transitionProperty: string;
+            animation: string;
             zIndex: number;
         };
         ':host .note.stacked': {
@@ -65,6 +64,8 @@ export declare class TosiNotification extends Component {
         };
         ':host .dismiss-all': {
             alignSelf: string;
+            position: string;
+            zIndex: number;
             font: string;
             fontSize: string;
             color: string;
@@ -125,13 +126,23 @@ export declare class TosiNotification extends Component {
         ':host .note.closing': {
             opacity: number;
             zIndex: number;
+            pointerEvents: string;
+            transition: string;
+        };
+        '@keyframes tosi-note-in': {
+            from: {
+                opacity: string;
+            };
+            to: {
+                opacity: string;
+            };
         };
     };
     /** How many notes are shown in full; older ones stack behind them. */
     static maxVisible: number;
     /**
-     * How far (px) each stacked note peeks out below the one in front of it (and half that to the
-     * left). Notes beyond the last offset are hidden.
+     * How far (px) each stacked note peeks out below the one in front of it. Notes beyond the last
+     * offset are hidden.
      */
     static stackOffsets: number[];
     private static closers;

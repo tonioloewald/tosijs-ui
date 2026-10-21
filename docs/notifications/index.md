@@ -5,13 +5,14 @@ a list of notifications.
 
 Notifications stack up from the bottom of the screen, newest on top. Up to
 `TosiNotification.maxVisible` (3) they sit in a column. Past that, the bottom one becomes the
-front of a stack: the older notifications sit underneath it, each one lower and slightly to the
-left of the card in front, by `TosiNotification.stackOffsets` (`[8, 4, 2]`, in px: each peeks
-out half as far as the last). Any beyond that are hidden until the ones in front are closed.
-Close the front card and the next one comes forward.
+front of a stack: the older notifications sit underneath it, each one's lower edge showing below
+the card in front by `TosiNotification.stackOffsets` (`[16, 8, 4]`, in px: each peeks out half
+as far as the last). Any beyond that are hidden until the ones in front are closed. Close the
+front card and the next one comes forward.
 
-When more than one notification is showing, a **Dismiss all** button sits below the bottom one,
-outlined in the colour of the most severe notification showing. It closes every notification,
+When more than one notification is showing, a **Dismiss all** button sits centred at the bottom,
+over the edges of any stacked cards, outlined in the colour of the most severe notification open,
+hidden ones included. It closes every notification,
 firing each one's `close` callback as if the user had closed it.
 
 A long message is cut off with an ellipsis after four lines (`--notification-max-lines`), so the

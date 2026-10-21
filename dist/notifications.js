@@ -7,13 +7,14 @@ a list of notifications.
 
 Notifications stack up from the bottom of the screen, newest on top. Up to
 `TosiNotification.maxVisible` (3) they sit in a column. Past that, the bottom one becomes the
-front of a stack: the older notifications sit underneath it, each one lower and slightly to the
-left of the card in front, by `TosiNotification.stackOffsets` (`[8, 4, 2]`, in px: each peeks
-out half as far as the last). Any beyond that are hidden until the ones in front are closed.
-Close the front card and the next one comes forward.
+front of a stack: the older notifications sit underneath it, each one's lower edge showing below
+the card in front by `TosiNotification.stackOffsets` (`[16, 8, 4]`, in px: each peeks out half
+as far as the last). Any beyond that are hidden until the ones in front are closed. Close the
+front card and the next one comes forward.
 
-When more than one notification is showing, a **Dismiss all** button sits below the bottom one,
-outlined in the colour of the most severe notification showing. It closes every notification,
+When more than one notification is showing, a **Dismiss all** button sits centred at the bottom,
+over the edges of any stacked cards, outlined in the colour of the most severe notification open,
+hidden ones included. It closes every notification,
 firing each one's `close` callback as if the user had closed it.
 
 A long message is cut off with an ellipsis after four lines (`--notification-max-lines`), so the
@@ -242,13 +243,17 @@ export class TosiNotification extends Component {
             borderColor: vars.notificationAccentColor,
             borderWidth: vars.notificationBorderWidth,
             borderStyle: 'solid',
-            transition: '0.5s ease-in',
-            transitionProperty: 'margin, opacity, transform',
+            /*
+            Only arriving and leaving animate. Restacking (a card moving into or out of the stack, the
+            room under the front card) used to transition too, and every post or close slid cards in
+            from wherever their last offset left them.
+            */
+            animation: 'tosi-note-in 0.2s ease-out',
             zIndex: 1,
         },
         /*
         The notes behind the bottom one: out of the flow, their bottoms aligned with the front
-        card's and offset down and left by layout().
+        card's and offset down by layout().
         */
         ':host .note.stacked': {
             position: 'absolute',
@@ -262,6 +267,9 @@ export class TosiNotification extends Component {
         },
         ':host .dismiss-all': {
             alignSelf: 'center',
+            // Above the stacked cards' edges, which it overlaps.
+            position: 'relative',
+            zIndex: 2,
             font: 'inherit',
             fontSize: vars.fontSize75,
             color: vars.notificationTextColor,
@@ -322,15 +330,21 @@ export class TosiNotification extends Component {
         ':host .note.closing': {
             opacity: 0,
             zIndex: 0,
+            pointerEvents: 'none',
+            transition: 'opacity 0.25s ease-in, margin 0.25s ease-in',
+        },
+        '@keyframes tosi-note-in': {
+            from: { opacity: '0' },
+            to: { opacity: '1' },
         },
     };
     /** How many notes are shown in full; older ones stack behind them. */
     static maxVisible = 3;
     /**
-     * How far (px) each stacked note peeks out below the one in front of it (and half that to the
-     * left). Notes beyond the last offset are hidden.
+     * How far (px) each stacked note peeks out below the one in front of it. Notes beyond the last
+     * offset are hidden.
      */
-    static stackOffsets = [8, 4, 2];
+    static stackOffsets = [16, 8, 4];
     static closers = new WeakMap();
     static removeNote(note) {
         if (note.classList.contains('closing'))
@@ -389,14 +403,18 @@ export class TosiNotification extends Component {
             if (worst)
                 dismiss.style.setProperty('--notification-accent-color', worst.style.getPropertyValue('--notification-accent-color'));
         }
-        if (!behind.length)
+        if (!behind.length) {
+            dismiss?.style.removeProperty('margin-top');
             return;
+        }
         const depthShown = Math.min(behind.length, stackOffsets.length);
         const room = stackOffsets
             .slice(0, depthShown)
             .reduce((sum, step) => sum + step, 0);
-        // Room below the front card for the cards peeking out from under it.
+        // Room below the front card for the cards peeking out from under it, which the Dismiss all
+        // button then rides up over.
         front.style.marginBottom = `${room}px`;
+        dismiss?.style.setProperty('margin-top', `${-room}px`);
         // Distance from the host's bottom edge to the front card's bottom: it does not move when
         // notes above the front card come and go, because the host grows upward.
         const frontBottom = this.clientHeight - front.offsetTop - front.offsetHeight;
@@ -409,7 +427,7 @@ export class TosiNotification extends Component {
             note.classList.toggle('buried', buried);
             note.inert = true;
             note.style.bottom = `${frontBottom}px`;
-            note.style.transform = `translate(${-offset / 2}px, ${offset}px)`;
+            note.style.transform = `translateY(${offset}px)`;
             note.style.zIndex = String(-1 - depth);
         });
     }

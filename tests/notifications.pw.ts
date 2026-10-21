@@ -99,21 +99,29 @@ test('past three, the bottom note becomes a receding stack', async ({
   expect(column.map((n) => n.message)).toEqual(['note 6', 'note 7'])
   expect(column.every((n) => !n.stacked && n.visible)).toBe(true)
   expect(column[0].bottom).toBeLessThanOrEqual(front.top)
-  // three peek out underneath, each lower and further left by half as much; the rest hidden
+  // three peek out underneath, straight down, each half as far as the last; the rest hidden
   expect(behind.map((n) => n.stacked)).toEqual([true, true, true, true, true])
   expect(behind.map((n) => n.visible)).toEqual([true, true, true, false, false])
   expect(behind.every((n) => n.inert)).toBe(true)
   const drops = behind
     .slice(0, 3)
     .map((n) => Math.round(n.bottom - front.bottom))
-  expect(drops).toEqual([8, 12, 14])
-  const lefts = behind.slice(0, 3).map((n) => Math.round(front.left - n.left))
-  expect(lefts).toEqual([4, 6, 7])
-  // the Dismiss all button clears the cards peeking out under the front one
+  expect(drops).toEqual([16, 24, 28])
+  for (const n of behind.slice(0, 3)) expect(n.left).toBe(front.left)
+  // Dismiss all rides over the edges peeking out under the front card
   const button = (await page
     .locator('tosi-notification .dismiss-all')
     .boundingBox())!
-  expect(button.y).toBeGreaterThanOrEqual(behind[2].bottom)
+  expect(button.y).toBeGreaterThanOrEqual(front.bottom)
+  expect(button.y).toBeLessThan(behind[2].bottom)
+  const onTop = await page.evaluate(
+    ({ x, y }) => {
+      const root = document.querySelector('tosi-notification')!.shadowRoot!
+      return root.elementFromPoint(x, y)?.className
+    },
+    { x: button.x + button.width / 2, y: button.y + button.height / 2 }
+  )
+  expect(onTop).toBe('dismiss-all')
 })
 
 test("Dismiss all is outlined in the most severe notification's colour", async ({
@@ -136,11 +144,20 @@ test("Dismiss all is outlined in the most severe notification's colour", async (
     postNotification({ message: 'b', type: 'success' })
   })
   expect(await accent()).toBe('green')
+  // red once an error is open, even buried in the stack where it cannot be seen
   await page.evaluate(() => {
     const { postNotification } = (window as any).xinjsui
-    postNotification({ message: 'c', type: 'error' })
-    postNotification({ message: 'd', type: 'warn' })
+    for (const m of ['x0', 'x1', 'x2']) postNotification({ message: m })
+    postNotification({ message: 'boom', type: 'error' })
+    for (const m of ['y0', 'y1', 'y2']) postNotification({ message: m })
   })
+  const buried = await page.evaluate(() =>
+    document
+      .querySelector('tosi-notification')!
+      .shadowRoot!.querySelector('.note.error')!
+      .classList.contains('buried')
+  )
+  expect(buried).toBe(true)
   expect(await accent()).toBe('red')
 })
 
