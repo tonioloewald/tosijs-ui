@@ -44,13 +44,26 @@ import {
   resolveSiteConfig,
   resolveTunnelLocalPort,
   parseArgv,
+  deviceRegistryLine,
+  parseDeviceListing,
+  DEVICE_LISTING_SEPARATOR,
+  DEVICE_ID_PATTERN,
 } from './resolve-site-config.ts'
 
 const { has, flag } = parseArgv(process.argv.slice(2), {
   bin: 'tosijs-tunnel',
   summary: 'expose the local dev server through the preview host',
-  flags: ['close', 'link', 'status', 'share', 'global'],
-  values: ['host', 'port', 'local-port', 'remote-port', 'url', 'share-ttl'],
+  flags: ['close', 'link', 'status', 'share', 'global', 'devices'],
+  values: [
+    'host',
+    'port',
+    'local-port',
+    'remote-port',
+    'url',
+    'share-ttl',
+    'label',
+    'revoke',
+  ],
   usage:
     `  tosijs-tunnel                        open the tunnel (foreground)\n` +
     `  --status                             report whether a tunnel is up\n` +
@@ -60,6 +73,9 @@ const { has, flag } = parseArgv(process.argv.slice(2), {
     `  --link --global [--share]            a SINGLE-USE 5-minute link that also gives that\n` +
     `                                       browser the box's key for 30 days (every workspace,\n` +
     `                                       the root list)\n` +
+    `  --label=<name>                       name the device a --global edit link is for\n` +
+    `  --devices                            list the devices given an edit pass, and which are revoked\n` +
+    `  --revoke=<device id>                 revoke one device's edit pass, on every workspace\n` +
     `  --share-ttl=<minutes>                how long a plain share link lives (default 1440)\n` +
     `  --host=user@box                      override the configured preview host\n` +
     `  --port= --local-port= --remote-port= override the resolved ports`,
@@ -123,7 +139,7 @@ let routed = true
 /** Ask the dev server (loopback only) for a link; `query` selects the kind. */
 async function askForLink(
   query: string
-): Promise<{ url?: string; error?: string }> {
+): Promise<{ url?: string; device?: string; error?: string }> {
   const res =
     await $`curl -sk --max-time 5 https://localhost:${localPort}/__devlink${query}`
       .nothrow()
@@ -159,9 +175,27 @@ async function globalLinks(
   const plan = planGlobalLinks(local, box)
   const links: { kind: 'edit' | 'view'; url: string }[] = []
   for (const kind of plan.kinds.filter((k) => kinds.includes(k))) {
+    const label = flag('label')
     const answer = await askForLink(
-      `?global=${kind}&domain=${encodeURIComponent(plan.domain!)}`
+      `?global=${kind}&domain=${encodeURIComponent(plan.domain!)}${
+        label ? `&label=${encodeURIComponent(label)}` : ''
+      }`
     )
+    if (answer.url && answer.device) {
+      // Recorded before the link is shown, so every pass in a browser is on the box's list.
+      const recorded = await registerDevice({
+        id: answer.device,
+        project: projectName,
+        // The links printed at start are recorded too, used or not; say which they were.
+        label: label ?? (has('link') ? '' : 'printed at tunnel start'),
+      })
+      if (!recorded) {
+        plan.notes.push(
+          `could not record device ${answer.device} on ${host}, so no ${kind} link: it could not be listed or revoked`
+        )
+        continue
+      }
+    }
     if (answer.url) links.push({ kind, url: answer.url })
     else
       plan.notes.push(
@@ -172,6 +206,33 @@ async function globalLinks(
   return { links, notes: plan.notes }
 }
 let startLinks: Awaited<ReturnType<typeof globalLinks>> | undefined
+
+/*
+DEVICES (board #3416). Each --global edit link is a pass for one device. The box keeps the
+record: `_devices/registry.tsv` (not served) lists every pass issued, and `_index/revoked.txt`
+(served beside the root list, behind its cookie gate) is what every workspace reads before it
+honours a pass. Both live under the preview root, written over the same ssh as the rest.
+*/
+const devicesRoot = () =>
+  previewRootFor(
+    preview?.path ?? '/srv/preview/placeholder',
+    preview?.caddySitesDir
+  )
+
+async function registerDevice(device: {
+  id: string
+  project: string
+  label: string
+}): Promise<boolean> {
+  const line = deviceRegistryLine({ ...device, issued: new Date() })
+  if (!line) return false
+  const root = devicesRoot()
+  const run =
+    await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host!} ${`mkdir -p ${root}/_devices && printf '%s\\n' '${line}' >> ${root}/_devices/registry.tsv`}`
+      .nothrow()
+      .quiet()
+  return run.exitCode === 0
+}
 
 /*
 Say where this is going, and where the address came from, BEFORE acting on it.
@@ -216,6 +277,67 @@ const pattern = `ssh .*-R ${remotePort}:localhost:${tunnelLocalPort} ${rx(
 async function running(): Promise<number[]> {
   const out = await $`pgrep -f ${pattern}`.nothrow().quiet().text()
   return out.trim().split('\n').filter(Boolean).map(Number)
+}
+
+if (has('devices')) {
+  const root = devicesRoot()
+  const read =
+    await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host!} ${`cat ${root}/_devices/registry.tsv 2>/dev/null; echo ${DEVICE_LISTING_SEPARATOR}; cat ${root}/_index/revoked.txt 2>/dev/null; true`}`
+      .nothrow()
+      .quiet()
+  if (read.exitCode !== 0) {
+    console.error(
+      `\nCould not read the device list on ${host}: ${read.stderr
+        .toString()
+        .trim()}\n`
+    )
+    process.exit(1)
+  }
+  const devices = parseDeviceListing(read.stdout.toString())
+  if (!devices.length) {
+    console.log(
+      '\nNo edit passes issued yet (`tosijs-tunnel --link --global`).\n'
+    )
+  } else {
+    console.log('')
+    for (const d of devices)
+      console.log(
+        `  ${d.id}  ${d.revoked ? 'REVOKED' : 'active '}  ${d.issued}  ${
+          d.project
+        }${d.label ? `  "${d.label}"` : ''}`
+      )
+    console.log(
+      `\n  Revoke one with \`tosijs-tunnel --revoke=<id>\`. A pass also expires 30 days after it was issued.\n`
+    )
+  }
+  process.exit(0)
+}
+
+if (flag('revoke') !== undefined) {
+  const id = flag('revoke')!
+  if (!DEVICE_ID_PATTERN.test(id)) {
+    console.error(
+      `\n${JSON.stringify(
+        id
+      )} is not a device id (ten letters and digits; see --devices).\n`
+    )
+    process.exit(1)
+  }
+  const root = devicesRoot()
+  const run =
+    await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host!} ${`mkdir -p ${root}/_index && printf '%s\\n' ${id} >> ${root}/_index/revoked.txt && chmod 644 ${root}/_index/revoked.txt`}`
+      .nothrow()
+      .quiet()
+  if (run.exitCode !== 0) {
+    console.error(
+      `\nCould not revoke ${id} on ${host}: ${run.stderr.toString().trim()}\n`
+    )
+    process.exit(1)
+  }
+  console.log(
+    `\n🔒 ${id} revoked. Every workspace stops honouring its pass, and ends its sessions, within a minute.\n`
+  )
+  process.exit(0)
 }
 
 if (has('link')) {

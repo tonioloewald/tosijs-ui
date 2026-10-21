@@ -1568,6 +1568,13 @@ import {
   haltijaBridgeAdmission,
   MAX_SESSIONS,
   GLOBAL_KEY_SESSION_TTL_MS,
+  signPass,
+  readPass,
+  grantCookies,
+  revokeDeviceSessions,
+  mintDeviceId,
+  cleanDeviceLabel,
+  DEVICE_ID_PATTERN,
 } from './dev-auth.js'
 
 describe('global keys', () => {
@@ -1575,6 +1582,12 @@ describe('global keys', () => {
   const VIEW = 'v'.repeat(12) + 'VIEWKEY_view-key'
   const secrets = { PREVIEW_EDIT_TOKEN: EDIT, PREVIEW_TOKEN: VIEW }
   const keys = { edit: EDIT, view: VIEW, editGrants: 'edit' as const }
+  const DOMAIN = 'dev.example.com'
+  /** A device pass cookie, signed with the edit key unless told otherwise. */
+  const passFor = (device: string, key = EDIT, exp = NOW + 86400_000) =>
+    `tosi_pass=${signPass({ device, domain: DOMAIN, label: '', exp }, key)}`
+  const PASS = passFor('device0001')
+  const cleared = { now: NOW, revoked: new Set<string>() }
 
   describe('a single-use link that hands over a global key', () => {
     /*
@@ -1641,17 +1654,47 @@ describe('global keys', () => {
       expect(state.grants.size).toBe(0)
     })
 
-    test('the cookie it sets is the box key, across the domain, for 30 days', () => {
-      expect(globalKeyCookie(grant, keys)).toBe(
-        `tosi_edit=${EDIT}; Domain=.dev.example.com; Path=/; Max-Age=${GLOBAL_KEY_COOKIE_MAX_AGE_S}; HttpOnly; Secure; SameSite=Lax`
+    test('an edit grant sets a pass for one device, never the key, across the domain, for 30 days', () => {
+      const device = { ...grant, device: 'device0001', label: 'phone' }
+      const cookie = globalKeyCookie(device, keys, NOW)!
+      expect(cookie).toStartWith('tosi_pass=')
+      expect(cookie).toEndWith(
+        `; Domain=.dev.example.com; Path=/; Max-Age=${GLOBAL_KEY_COOKIE_MAX_AGE_S}; HttpOnly; Secure; SameSite=Lax`
       )
+      expect(cookie).not.toContain(EDIT)
       expect(GLOBAL_KEY_COOKIE_MAX_AGE_S).toBe(2592000)
+      expect(readPass(cookie.split(';')[0], EDIT, NOW)).toEqual({
+        device: 'device0001',
+        domain: 'dev.example.com',
+        label: 'phone',
+        exp: NOW + GLOBAL_KEY_COOKIE_MAX_AGE_S * 1000,
+      })
       expect(
         globalKeyCookie({ key: 'view', domain: 'dev.example.com' }, keys)
       ).toStartWith(`tosi_preview=${VIEW}; Domain=.dev.example.com;`)
-      // Never a key this workspace would not honour.
-      expect(globalKeyCookie(grant, { ...keys, editGrants: 'view' })).toBeNull()
-      expect(globalKeyCookie(grant, { view: VIEW })).toBeNull()
+      // Never a key this workspace would not honour, and never an edit grant with no device.
+      expect(
+        globalKeyCookie(device, { ...keys, editGrants: 'view' })
+      ).toBeNull()
+      expect(globalKeyCookie(device, { view: VIEW })).toBeNull()
+      expect(globalKeyCookie(grant, keys)).toBeNull()
+    })
+
+    test('a redeemed edit grant also sets the view key and expires a raw edit key cookie', () => {
+      const cookies = grantCookies(
+        { ...grant, device: 'device0001' },
+        keys,
+        NOW
+      )
+      expect(cookies[0]).toStartWith('tosi_pass=')
+      expect(cookies[1]).toStartWith(`tosi_preview=${VIEW};`)
+      expect(cookies[2]).toBe(
+        'tosi_edit=; Domain=.dev.example.com; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax'
+      )
+      expect(grantCookies({ key: 'view', domain: DOMAIN }, keys)).toEqual([
+        globalKeyCookie({ key: 'view', domain: DOMAIN }, keys)!,
+      ])
+      expect(grantCookies(grant, keys)).toEqual([])
     })
 
     test('only on a domain the workspace sits under', () => {
@@ -1701,8 +1744,10 @@ describe('global keys', () => {
 
   test('the edit key opens at least what the view key does', () => {
     const viewOnly = resolveGlobalKeys('view', secrets).keys
-    expect(globalKeyAccess(`tosi_edit=${EDIT}`, viewOnly)).toBe('view')
-    expect(globalKeyAccess(`tosi_preview=${VIEW}`, viewOnly)).toBe('view')
+    expect(globalKeyAccess(PASS, viewOnly, cleared)).toBe('view')
+    expect(globalKeyAccess(`tosi_preview=${VIEW}`, viewOnly, cleared)).toBe(
+      'view'
+    )
   })
 
   test('a short or unmatchable key is not used, and says why', () => {
@@ -1732,16 +1777,83 @@ describe('global keys', () => {
   })
 
   test('the cookies grant edit, view or nothing', () => {
-    expect(globalKeyAccess(`tosi_edit=${EDIT}`, keys)).toBe('edit')
-    expect(globalKeyAccess(`tosi_preview=${VIEW}`, keys)).toBe('view')
+    expect(globalKeyAccess(PASS, keys, cleared)).toBe('edit')
+    expect(globalKeyAccess(`tosi_preview=${VIEW}`, keys, cleared)).toBe('view')
     expect(
-      globalKeyAccess(`tosi_preview=${VIEW}; tosi_edit=${EDIT}`, keys)
+      globalKeyAccess(`tosi_preview=${VIEW}; ${PASS}`, keys, cleared)
     ).toBe('edit')
     // The edit key in the view cookie is not an edit grant, nor a view one.
-    expect(globalKeyAccess(`tosi_preview=${EDIT}`, keys)).toBe(null)
-    expect(globalKeyAccess(`tosi_edit=${EDIT}x`, keys)).toBe(null)
-    expect(globalKeyAccess(`tosi_edit=${EDIT}`, { view: VIEW })).toBe(null)
-    expect(globalKeyAccess(`tosi_edit=${VIEW}`, keys)).toBe(null)
+    expect(globalKeyAccess(`tosi_preview=${EDIT}`, keys, cleared)).toBe(null)
+    expect(globalKeyAccess(PASS, { view: VIEW }, cleared)).toBe(null)
+  })
+
+  test('a pass opens nothing once tampered with, expired, signed by another key, or revoked', () => {
+    // Through 1.16.30 the cookie was the key itself, which no one device could lose alone.
+    expect(globalKeyAccess(`tosi_edit=${EDIT}`, keys, cleared)).toBe(null)
+    expect(globalKeyAccess(`${PASS}x`, keys, cleared)).toBe(null)
+    expect(globalKeyAccess(`${PASS}.x`, keys, cleared)).toBe(null)
+    expect(globalKeyAccess(passFor('device0001', VIEW), keys, cleared)).toBe(
+      null
+    )
+    expect(
+      globalKeyAccess(passFor('device0001', EDIT, NOW), keys, cleared)
+    ).toBe(null)
+    expect(
+      globalKeyAccess(PASS, keys, {
+        now: NOW,
+        revoked: new Set(['device0001']),
+      })
+    ).toBe(null)
+    // Another device on the list does not touch this one.
+    expect(
+      globalKeyAccess(PASS, keys, {
+        now: NOW,
+        revoked: new Set(['device0002']),
+      })
+    ).toBe('edit')
+    // A list that could not be read honours no pass, and leaves the view key alone.
+    expect(globalKeyAccess(PASS, keys, { now: NOW, revoked: null })).toBe(null)
+    expect(globalKeyAccess(PASS, keys)).toBe(null)
+    expect(
+      globalKeyAccess(`tosi_preview=${VIEW}`, keys, { now: NOW, revoked: null })
+    ).toBe('view')
+    // A payload swapped under a valid signature fails too.
+    const [, signature] = PASS.slice('tosi_pass='.length).split('.')
+    const forged = Buffer.from(
+      JSON.stringify({
+        device: 'device0009',
+        domain: DOMAIN,
+        label: '',
+        exp: NOW + 1e9,
+      })
+    ).toString('base64url')
+    expect(
+      globalKeyAccess(`tosi_pass=${forged}.${signature}`, keys, cleared)
+    ).toBe(null)
+  })
+
+  test("revoking a device ends that device's sessions and no one else's", () => {
+    const auth = createAuthState()
+    const mine = issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    const other = issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    const plain = issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    auth.sessionDevices.set(mine, 'device0001')
+    auth.sessionDevices.set(other, 'device0002')
+    expect(revokeDeviceSessions(auth, new Set(['device0001']))).toBe(1)
+    expect(auth.sessions.has(mine)).toBe(false)
+    expect(auth.sessions.has(other)).toBe(true)
+    expect(auth.sessions.has(plain)).toBe(true)
+    expect(auth.sessionDevices.has(mine)).toBe(false)
+  })
+
+  test('device ids and labels are safe to write into a shell line', () => {
+    for (let i = 0; i < 50; i++)
+      expect(mintDeviceId()).toMatch(DEVICE_ID_PATTERN)
+    expect(cleanDeviceLabel(`it's "my" phone;\n rm -rf`)).toBe(
+      'its my phone rm -rf'
+    )
+    expect(cleanDeviceLabel('x'.repeat(100))).toHaveLength(40)
+    expect(cleanDeviceLabel(42)).toBe('')
   })
 
   test('a request from this page that is not a page load renews a dead session, given evidence of its origin', () => {
@@ -1754,11 +1866,12 @@ describe('global keys', () => {
       auth: createAuthState(),
       keys,
       now: NOW,
+      revoked: new Set<string>(),
     }
     const post = (headers: Record<string, string>) =>
       new Request(`https://${HOST}/__docstore/source`, {
         method: 'POST',
-        headers: { cookie: `tosi_edit=${EDIT}`, ...headers },
+        headers: { cookie: PASS, ...headers },
       })
     expect(
       globalKeyRefresh(post({ 'sec-fetch-site': 'same-origin' }), opts)
@@ -1791,10 +1904,7 @@ describe('global keys', () => {
     // A page load is the redirecting exchange's job. A socket (the haltija bridge) renews: its
     // 101 carries the cookie.
     expect(
-      globalKeyRefresh(
-        page(`tosi_edit=${EDIT}`, { 'sec-fetch-site': 'same-origin' }),
-        opts
-      )
+      globalKeyRefresh(page(PASS, { 'sec-fetch-site': 'same-origin' }), opts)
     ).toBe(null)
     expect(
       globalKeyRefresh(
@@ -1813,36 +1923,39 @@ describe('global keys', () => {
 
   test('a key becomes a session only over the tunnel, on a page load, when it adds something', () => {
     const auth = createAuthState()
-    const opts = { viaTunnel: true, auth, keys, now: NOW }
-    expect(globalKeyExchange(page(`tosi_edit=${EDIT}`), opts)).toBe('edit')
+    const opts = {
+      viaTunnel: true,
+      auth,
+      keys,
+      now: NOW,
+      revoked: new Set<string>(),
+    }
+    expect(globalKeyExchange(page(PASS), opts)).toBe('edit')
+    // No revoked list given: no pass is honoured.
+    expect(globalKeyExchange(page(PASS), { ...opts, revoked: undefined })).toBe(
+      null
+    )
     expect(globalKeyExchange(page(`tosi_preview=${VIEW}`), opts)).toBe('view')
     expect(
-      globalKeyExchange(page(`tosi_edit=${EDIT}`), {
+      globalKeyExchange(page(PASS), {
         ...opts,
         viaTunnel: false,
       })
     ).toBe(null)
     // A fetch or a socket is not a page load.
     expect(
-      globalKeyExchange(
-        page(`tosi_edit=${EDIT}`, { 'sec-fetch-mode': 'cors' }),
-        opts
-      )
+      globalKeyExchange(page(PASS, { 'sec-fetch-mode': 'cors' }), opts)
     ).toBe(null)
     // Already holding a writing session: nothing to add.
     const full = sessionCookie(
       issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
     ).split(';')[0]
-    expect(globalKeyExchange(page(`tosi_edit=${EDIT}; ${full}`), opts)).toBe(
-      null
-    )
+    expect(globalKeyExchange(page(`${PASS}; ${full}`), opts)).toBe(null)
     // A read-only session plus the edit key upgrades.
     const ro = sessionCookie(
       issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, true)
     ).split(';')[0]
-    expect(globalKeyExchange(page(`tosi_edit=${EDIT}; ${ro}`), opts)).toBe(
-      'edit'
-    )
+    expect(globalKeyExchange(page(`${PASS}; ${ro}`), opts)).toBe('edit')
     expect(globalKeyExchange(page(`tosi_preview=${VIEW}; ${ro}`), opts)).toBe(
       null
     )

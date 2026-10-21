@@ -158,7 +158,61 @@ export {
 server reads the global tunnel keys from the same file; it is re-exported here for the bins.
 */
 export { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
-export { resolveGlobalKeys } from '../dist/doc-system/site/dev-auth.js'
+export {
+  resolveGlobalKeys,
+  DEVICE_ID_PATTERN,
+} from '../dist/doc-system/site/dev-auth.js'
+import {
+  DEVICE_ID_PATTERN,
+  cleanDeviceLabel,
+} from '../dist/doc-system/site/dev-auth.js'
+
+/*
+The box's device registry (board #3416): one tab-separated line per edit pass issued, written
+by `tosijs-tunnel` over ssh as `printf '%s\n' '<line>'`. So a line may hold no quote, tab or
+newline of its own: every field is checked or cleaned here, and a line that cannot be made safe
+is not written.
+*/
+export const DEVICE_LISTING_SEPARATOR = '--revoked--'
+
+export function deviceRegistryLine(device: {
+  id: string
+  issued: Date
+  project: string
+  label: string
+}): string | null {
+  if (!DEVICE_ID_PATTERN.test(device.id)) return null
+  const project = device.project.replace(/[^\w.-]/g, '').slice(0, 60)
+  return [
+    device.id,
+    device.issued.toISOString(),
+    project,
+    cleanDeviceLabel(device.label),
+  ].join('\t')
+}
+
+export interface DeviceRecord {
+  id: string
+  issued: string
+  project: string
+  label: string
+  revoked: boolean
+}
+
+/** `cat registry.tsv; echo --revoked--; cat revoked.txt` → one record per device, newest first. */
+export function parseDeviceListing(text: string): DeviceRecord[] {
+  const [registry = '', revokedText = ''] = text.split(
+    `${DEVICE_LISTING_SEPARATOR}\n`
+  )
+  const revoked = new Set(revokedText.split('\n').map((line) => line.trim()))
+  const devices: DeviceRecord[] = []
+  for (const line of registry.split('\n')) {
+    const [id = '', issued = '', project = '', label = ''] = line.split('\t')
+    if (!DEVICE_ID_PATTERN.test(id)) continue
+    devices.push({ id, issued, project, label, revoked: revoked.has(id) })
+  }
+  return devices.reverse()
+}
 import type { GlobalKeys } from '../dist/doc-system/site/dev-auth.js'
 import { readLocalSecret } from '../dist/doc-system/site/local-secrets.js'
 

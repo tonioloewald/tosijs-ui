@@ -13,12 +13,15 @@ import { request as httpsRequest } from 'https'
 import { createServer } from 'net'
 import { tmpdir } from 'os'
 import * as path from 'path'
+import { createServer as createHttpServer, type Server } from 'http'
+import { signPass } from '../src/doc-system/site/dev-auth'
 
 /*
 The preview host's global keys, through the real dev server's TUNNEL listener.
 
-Caddy sets `tosi_edit` / `tosi_preview` across the preview domain and forwards to the tunnel
-listener with the public Host. These requests do what Caddy would, so they are plain HTTP to
+A redeemed edit link sets a signed device pass (`tosi_pass`), a view link the view key
+(`tosi_preview`), across the preview domain, and Caddy forwards to the tunnel listener with the
+public Host. The box's revoked-device list is served here by a stand-in (`TOSIJS_REVOKED_URL`). These requests do what Caddy would, so they are plain HTTP to
 127.0.0.1 with that Host, sent with node's http client for full control over the headers (a
 browser would refuse the Secure cookies over plain HTTP, which is fine: in use the hop to the
 browser is HTTPS).
@@ -35,6 +38,18 @@ let dir = ''
 let tunnelPort = 0
 let port = 0
 let server: ChildProcess | undefined
+let revokedServer: Server | undefined
+let revokedPort = 0
+/** What the stand-in for the box's revoked.txt answers. */
+const revokedList = { status: 200, body: 'revokedd01\n' }
+
+/** A pass for `device`, signed with the workspace's edit key (or `key`). */
+const passFor = (device: string, key = EDIT, exp = Date.now() + 86400_000) =>
+  `tosi_pass=${signPass(
+    { device, domain: 'dev.example.test', label: '', exp },
+    key
+  )}`
+const PASS = passFor('activedev1')
 
 const freePort = () =>
   new Promise<number>((resolve, reject) => {
@@ -123,6 +138,12 @@ test.beforeAll(async ({ browserName }) => {
 
   port = await freePort()
   tunnelPort = await freePort()
+  revokedServer = createHttpServer((_req, res) => {
+    res.writeHead(revokedList.status, { 'content-type': 'text/plain' })
+    res.end(revokedList.body)
+  })
+  await new Promise<void>((resolve) => revokedServer!.listen(0, resolve))
+  revokedPort = (revokedServer.address() as { port: number }).port
   await startServer()
 })
 
@@ -162,6 +183,7 @@ async function startServer() {
         DEV_NO_WATCH: '1',
         HALTIJA_DEV: '0',
         TOSIJS_TRUST_LAN: '',
+        TOSIJS_REVOKED_URL: `http://127.0.0.1:${revokedPort}/revoked.txt?d={domain}`,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     }
@@ -197,18 +219,19 @@ async function stopServer() {
 
 test.afterAll(() => {
   server?.kill('SIGTERM')
+  revokedServer?.close()
   if (dir) rmSync(dir, { recursive: true, force: true })
 })
 
 test('the edit key opens the workspace and can save from its own origin only', async () => {
   expect((await navigate('')).status, 'no key, no session').toBe(401)
 
-  const exchanged = await navigate(`tosi_edit=${EDIT}`)
+  const exchanged = await navigate(PASS)
   expect(exchanged.status).toBe(302)
   expect(exchanged.headers.location).toBe('/')
   const session = sessionFrom(exchanged)
 
-  const page = await navigate(`tosi_edit=${EDIT}; ${session}`)
+  const page = await navigate(`${PASS}; ${session}`)
   expect(page.status).toBe(200)
   expect(page.body).toContain('home')
 
@@ -226,27 +249,39 @@ test('the view key opens the workspace read-only', async () => {
   expect((await navigate(session)).status).toBe(200)
   expect((await save(session, `https://${HOST}`)).status).toBe(403)
   // The edit key on top of a read-only session upgrades it.
-  expect((await navigate(`tosi_edit=${EDIT}; ${session}`)).status).toBe(302)
+  expect((await navigate(`${PASS}; ${session}`)).status).toBe(302)
 })
 
 test('the exchange never redirects off this origin', async () => {
-  const reply = await navigate(`tosi_edit=${EDIT}`, '//evil.example/x')
+  const reply = await navigate(PASS, '//evil.example/x')
   expect(reply.status).toBe(302)
   expect(reply.headers.location).toBe('/evil.example/x')
 })
 
+test('the raw edit key, a pass signed with another key, an expired or a revoked pass is no key', async () => {
+  // Through 1.16.30 the cookie held the key itself; it could not be revoked per device.
+  expect((await navigate(`tosi_edit=${EDIT}`)).status).toBe(401)
+  expect((await navigate(passFor('activedev1', VIEW))).status).toBe(401)
+  expect(
+    (await navigate(passFor('activedev1', EDIT, Date.now() - 1))).status
+  ).toBe(401)
+  expect((await navigate(passFor('revokedd01'))).status).toBe(401)
+  // A pass for a device not on the list still opens it.
+  expect((await navigate(passFor('otherdev01'))).status).toBe(302)
+})
+
 test('a wrong key, or a key in the wrong cookie, is no key', async () => {
-  expect((await navigate(`tosi_edit=${EDIT}x`)).status).toBe(401)
+  expect((await navigate(`${PASS}x`)).status).toBe(401)
   expect((await navigate(`tosi_preview=${EDIT}`)).status).toBe(401)
   // A fetch is not a page load: no exchange, so no session.
   const fetched = await viaTunnel('/', {
-    headers: { cookie: `tosi_edit=${EDIT}`, 'sec-fetch-mode': 'cors' },
+    headers: { cookie: PASS, 'sec-fetch-mode': 'cors' },
   })
   expect(fetched.status).toBe(401)
   // Nor is one from a sibling workspace, which receives the same domain cookie.
   const sibling = await viaTunnel('/', {
     headers: {
-      cookie: `tosi_edit=${EDIT}`,
+      cookie: PASS,
       'sec-fetch-mode': 'cors',
       'sec-fetch-site': 'same-site',
     },
@@ -259,7 +294,7 @@ test('the box root may ask what the reader can do here, and no one else may', as
     viaTunnel('/__alive', {
       headers: { cookie, ...(origin ? { origin } : {}) },
     })
-  const edit = await probe(LIST, `tosi_edit=${EDIT}`)
+  const edit = await probe(LIST, PASS)
   expect(edit.status).toBe(200)
   expect(edit.headers['access-control-allow-origin']).toBe(LIST)
   expect(edit.headers['access-control-allow-credentials']).toBe('true')
@@ -270,7 +305,7 @@ test('the box root may ask what the reader can do here, and no one else may', as
   })
   expect(JSON.parse((await probe(LIST, '')).body).access).toBe(null)
 
-  const elsewhere = await probe('https://evil.example', `tosi_edit=${EDIT}`)
+  const elsewhere = await probe('https://evil.example', PASS)
   expect(elsewhere.status).toBe(204)
   expect(elsewhere.headers['access-control-allow-origin']).toBeUndefined()
   // The tunnel bin's own liveness check is unchanged.
@@ -313,14 +348,46 @@ test('a single-use link opens the workspace and hands this browser the global ke
   expect(redeemed.status).toBe(302)
   const cookies = [redeemed.headers['set-cookie'] ?? []].flat()
   expect(cookies.some((c) => c.startsWith('tosi_dev_session='))).toBe(true)
-  expect(cookies).toContain(
-    `tosi_edit=${EDIT}; Domain=.dev.example.test; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax`
+  // A pass for one device, never the key; the view key for the box's list and static
+  // previews; and any raw edit key an earlier version left, expired.
+  expect(body.device).toMatch(/^[a-z0-9]{10}$/)
+  const pass = cookies.find((c) => c.startsWith('tosi_pass='))!
+  expect(pass).toContain(
+    '; Domain=.dev.example.test; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax'
   )
+  expect(pass).not.toContain(EDIT)
+  expect(
+    cookies.some((c) =>
+      c.startsWith(`tosi_preview=${VIEW}; Domain=.dev.example.test;`)
+    )
+  ).toBe(true)
+  expect(cookies).toContain(
+    'tosi_edit=; Domain=.dev.example.test; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax'
+  )
+  // The pass opens the workspace in a later visit, after the session is gone.
+  expect((await navigate(pass.split(';')[0])).status).toBe(302)
   // Spent: a second browser gets nothing from it.
   const again = await navigate('', `/?t=${code}`)
   expect([again.headers['set-cookie'] ?? []].flat().join()).not.toContain(
-    'tosi_edit='
+    'tosi_pass='
   )
+})
+
+test('when the revoked list cannot be read, no pass is honoured', async () => {
+  // A fresh device id: the server has no cached answer for this domain only if it never
+  // fetched, so restart it with the list failing.
+  revokedList.status = 500
+  await stopServer()
+  await startServer()
+  try {
+    expect((await navigate(PASS)).status).toBe(401)
+    // The view key does not depend on the list.
+    expect((await navigate(`tosi_preview=${VIEW}`)).status).toBe(302)
+  } finally {
+    revokedList.status = 200
+    await stopServer()
+    await startServer()
+  }
 })
 
 test('a view link hands over the view key, and opens read-only', async () => {
@@ -387,14 +454,14 @@ doc comment restarts the whole process. Sessions live in memory and die with it;
 is what brings the reader back.
 */
 test('a restart costs a key holder nothing', async () => {
-  const before = sessionFrom(await navigate(`tosi_edit=${EDIT}`))
+  const before = sessionFrom(await navigate(PASS))
   expect((await save(before, `https://${HOST}`)).status).toBe(200)
 
   await stopServer()
   await startServer()
 
   // A save from the page that was open across the restart: renewed in place, no reload.
-  const key = `tosi_edit=${EDIT}`
+  const key = PASS
   const stale = `${key}; ${before}`
   const saved = await save(stale, `https://${HOST}`)
   expect(saved.status).toBe(200)
@@ -419,10 +486,10 @@ test('a restart costs a key holder nothing', async () => {
   expect(bare.headers['set-cookie']).toBeUndefined()
 
   // The reload: the stale session plus the key cookie is exchanged for a fresh session.
-  const reloaded = await navigate(`tosi_edit=${EDIT}; ${before}`)
+  const reloaded = await navigate(`${PASS}; ${before}`)
   expect(reloaded.status).toBe(302)
   const after = sessionFrom(reloaded)
   expect(after).not.toBe(before)
-  expect((await navigate(`tosi_edit=${EDIT}; ${after}`)).status).toBe(200)
+  expect((await navigate(`${PASS}; ${after}`)).status).toBe(200)
   expect((await save(after, `https://${HOST}`)).status).toBe(200)
 })

@@ -49,7 +49,12 @@ Cookie flags, and why each:
 Build-time only. Never import this from browser code.
 */
 
-import { randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
+import {
+  createHmac,
+  randomBytes,
+  randomInt,
+  timingSafeEqual,
+} from 'node:crypto'
 
 /**
  * How long a link is redeemable. Overridable per project — see `LinkPolicy`.
@@ -256,6 +261,8 @@ export interface AuthState {
   grants: Map<string, GlobalGrant>
   /** Sessions minted from a granting link, until the redirect that sets the key takes them. */
   sessionGrants: Map<string, GlobalGrant>
+  /** Sessions minted from a device pass → that device, so revoking it ends them too. */
+  sessionDevices: Map<string, string>
 }
 
 /**
@@ -267,6 +274,9 @@ export interface AuthState {
 export interface GlobalGrant {
   key: 'edit' | 'view'
   domain: string
+  /** An edit grant's device id and label, which the pass it becomes carries. */
+  device?: string
+  label?: string
 }
 
 export function createAuthState(): AuthState {
@@ -276,6 +286,7 @@ export function createAuthState(): AuthState {
     readOnly: new Set(),
     grants: new Map(),
     sessionGrants: new Map(),
+    sessionDevices: new Map(),
   }
 }
 
@@ -292,6 +303,7 @@ export function prune(state: AuthState, now: number): void {
       state.sessions.delete(t)
       state.readOnly.delete(t)
       state.sessionGrants.delete(t)
+      state.sessionDevices.delete(t)
     }
 }
 
@@ -453,17 +465,151 @@ export const GLOBAL_KEY_COOKIE_MAX_AGE_S = 30 * 24 * 60 * 60
  */
 export function globalKeyCookie(
   grant: GlobalGrant,
-  keys: GlobalKeys
+  keys: GlobalKeys,
+  now: number = Date.now()
 ): string | null {
-  const value =
-    grant.key === 'edit'
-      ? (keys.editGrants ?? 'edit') === 'edit'
-        ? keys.edit
-        : undefined
-      : keys.view
-  if (!value) return null
-  const name = grant.key === 'edit' ? GLOBAL_EDIT_COOKIE : GLOBAL_VIEW_COOKIE
-  return `${name}=${value}; Domain=.${grant.domain}; Path=/; Max-Age=${GLOBAL_KEY_COOKIE_MAX_AGE_S}; HttpOnly; Secure; SameSite=Lax`
+  if (grant.key === 'edit') {
+    if ((keys.editGrants ?? 'edit') !== 'edit' || !keys.edit || !grant.device)
+      return null
+    const pass = signPass(
+      {
+        device: grant.device,
+        domain: grant.domain,
+        label: grant.label ?? '',
+        exp: now + GLOBAL_KEY_COOKIE_MAX_AGE_S * 1000,
+      },
+      keys.edit
+    )
+    return domainCookie(GLOBAL_PASS_COOKIE, pass, grant.domain)
+  }
+  if (!keys.view) return null
+  return domainCookie(GLOBAL_VIEW_COOKIE, keys.view, grant.domain)
+}
+
+function domainCookie(
+  name: string,
+  value: string,
+  domain: string,
+  maxAgeS = GLOBAL_KEY_COOKIE_MAX_AGE_S
+): string {
+  return `${name}=${value}; Domain=.${domain}; Path=/; Max-Age=${maxAgeS}; HttpOnly; Secure; SameSite=Lax`
+}
+
+/**
+ * Every cookie a redeemed granting link sets: the key cookie itself, and for an edit grant the
+ * view key too (Caddy can only compare a fixed value, so the box's root list and the static
+ * previews still open on the shared view key), and an expiry for any raw edit key cookie an
+ * earlier version left in the browser.
+ */
+export function grantCookies(
+  grant: GlobalGrant,
+  keys: GlobalKeys,
+  now: number = Date.now()
+): string[] {
+  const main = globalKeyCookie(grant, keys, now)
+  if (!main) return []
+  if (grant.key !== 'edit') return [main]
+  const view = globalKeyCookie({ key: 'view', domain: grant.domain }, keys)
+  return [
+    main,
+    ...(view ? [view] : []),
+    domainCookie(GLOBAL_EDIT_COOKIE, '', grant.domain, 0),
+  ]
+}
+
+/*
+DEVICE PASSES (board #3416; the maintainer, 2026-10-20: "per device revocation would be nice").
+
+Until 1.16.31 the edit cookie held the box's edit key itself, so every browser held the same
+credential: the only way to cut one device off was to rotate the key on the box and every
+machine. Now a redeemed edit grant sets a PASS: a device id, the preview domain, a label and an
+expiry, HMAC-signed with the edit key. The key never reaches a browser; it only signs.
+
+Revoking a device adds its id to a list on the box (`tosijs-tunnel --revoke`), which each
+workspace fetches (see device-revocation.ts) before it honours a pass, and which also ends the
+sessions that device already holds. A pass is checked against that list or not at all: a
+workspace that cannot read the list refuses passes rather than honour one it cannot clear.
+*/
+
+/** The cookie holding an edit device pass, across the preview domain. */
+export const GLOBAL_PASS_COOKIE = 'tosi_pass'
+
+export interface DevicePass {
+  device: string
+  domain: string
+  label: string
+  /** ms since the epoch */
+  exp: number
+}
+
+/** Device ids: ten lowercase letters and digits, safe in a shell line and a file name. */
+export const DEVICE_ID_PATTERN = /^[a-z0-9]{10}$/
+
+export function mintDeviceId(): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let id = ''
+  for (let i = 0; i < 10; i++) id += alphabet[randomInt(alphabet.length)]
+  return id
+}
+
+/** A device label: what `--label` may say, kept to characters any listing can print. */
+export function cleanDeviceLabel(label: unknown): string {
+  return typeof label === 'string'
+    ? label.replace(/[^\w .@-]/g, '').slice(0, 40)
+    : ''
+}
+
+const passSignature = (payload: string, key: string) =>
+  createHmac('sha256', key).update(payload).digest('base64url')
+
+export function signPass(pass: DevicePass, key: string): string {
+  const payload = Buffer.from(JSON.stringify(pass)).toString('base64url')
+  return `${payload}.${passSignature(payload, key)}`
+}
+
+/** The pass in this cookie header, if it is signed with `key` and unexpired; else null. */
+export function readPass(
+  cookieHeader: string | null | undefined,
+  key: string | undefined,
+  now: number
+): DevicePass | null {
+  const value = readCookie(cookieHeader, GLOBAL_PASS_COOKIE)
+  if (!key || !value) return null
+  const [payload, signature, extra] = value.split('.')
+  if (!payload || !signature || extra !== undefined) return null
+  if (!safeEqual(signature, passSignature(payload, key))) return null
+  let pass: DevicePass
+  try {
+    pass = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
+  } catch {
+    return null
+  }
+  if (
+    !pass ||
+    typeof pass.device !== 'string' ||
+    !DEVICE_ID_PATTERN.test(pass.device) ||
+    typeof pass.domain !== 'string' ||
+    typeof pass.exp !== 'number' ||
+    pass.exp <= now
+  )
+    return null
+  return pass
+}
+
+/** End every session minted from a pass for a device that is now revoked. */
+export function revokeDeviceSessions(
+  state: AuthState,
+  revoked: ReadonlySet<string>
+): number {
+  let ended = 0
+  for (const [session, device] of state.sessionDevices) {
+    if (!revoked.has(device)) continue
+    state.sessionDevices.delete(session)
+    state.sessions.delete(session)
+    state.readOnly.delete(session)
+    ended++
+  }
+  return ended
 }
 
 /**
@@ -1087,33 +1233,38 @@ So the box can hold two machine-wide keys, the same pair on the box and on this 
   PREVIEW_TOKEN       the VIEW key. Already the static previews' invite secret.
   PREVIEW_EDIT_TOKEN  the EDIT key. New, and only ever a credential you keep.
 
-The cookie (`tosi_preview` or `tosi_edit`, across the whole preview domain) arrives one of two
-ways: a workspace's single-use link sets it on redemption (see GlobalGrant, the usual way in,
-which never puts the key in a URL). Caddy also sets the VIEW cookie for `?t=<view key>` on any
-preview host; the edit key has no URL form since 1.16.31. A workspace that sees a matching cookie on a page load mints
-an ordinary session of the matching kind (read-only for the view key) and carries on, so the
-write gates below are unchanged: a key only ever becomes a session, at a navigation.
+The cookie (`tosi_preview` for the view key, `tosi_pass` for an edit device pass, across the
+whole preview domain) arrives from a workspace's single-use link on redemption (see
+GlobalGrant), which never puts a key in a URL. Caddy also sets the VIEW cookie for
+`?t=<view key>` on any preview host; the edit key has no URL form since 1.16.31. A workspace that
+sees a valid cookie on a page load mints an ordinary session of the matching kind (read-only for
+the view key) and carries on, so the write gates below are unchanged: a key only ever becomes a
+session, at a navigation.
 
-The cookie holds the key itself, because Caddy can compare a fixed value and cannot sign
-anything. A leaked edit cookie is therefore write access to every workspace that accepts the
-key until the key is rotated, and that is why the key must be long (it is compared online,
-with no throttle in front of Caddy) and why a project can refuse it (`tunnel.globalKeys`).
+The view cookie holds the key itself, because Caddy can compare a fixed value and cannot sign
+anything; the edit key only signs passes (see DEVICE PASSES). Both keys must be long (Caddy
+compares them online, with no throttle in front: the dev servers present the edit key to read
+the revoked list), and a project can refuse either (`tunnel.globalKeys`).
 The domain-wide cookie is also why writes over the tunnel now need a same-origin request:
 `SameSite=Lax` treats every sibling host as the same site.
 */
 
 /** Caddy's cookie for the view key; the static previews' invite gate already sets it. */
 export const GLOBAL_VIEW_COOKIE = 'tosi_preview'
-/** Caddy's cookie for the edit key. */
+/**
+ * Caddy's cookie for the raw edit key. Browsers no longer get it (they get a device pass); a
+ * dev server presents it to read the revoked list, and a redeemed edit link expires any copy an
+ * earlier version left in a browser.
+ */
 export const GLOBAL_EDIT_COOKIE = 'tosi_edit'
 /** Shorter keys are refused: Caddy compares them with no rate limit in front. */
 export const GLOBAL_KEY_MIN_LENGTH = 24
 /**
  * A session minted from a global key lasts a day, or until this dev server stops (sessions
  * live in memory). While the key cookie lasts, the next page load or same-origin request mints
- * another, so for a key holder it is the COOKIE's lifetime that ends access, not this. The key
- * is NOT re-checked while a session lives, so rotating a key ends the sessions it already opened
- * only when each workspace restarts.
+ * another, so for a key holder it is the COOKIE's lifetime that ends access, not this. Revoking a
+ * device ends the sessions its pass opened within a minute (revokeDeviceSessions); rotating a
+ * key ends the sessions it already opened only when each workspace restarts.
  */
 export const GLOBAL_KEY_SESSION_TTL_MS = 24 * 60 * 60 * 1000
 
@@ -1187,13 +1338,24 @@ export function resolveGlobalKeys(
   return { keys, problems }
 }
 
-/** What the global-key cookies on a request grant: the edit key wins over the view key. */
+/** What a device pass needs checked besides its signature: the time, and the revoked list. */
+export interface PassCheck {
+  now: number
+  /** Revoked device ids, or null when the list could not be read: then no pass is honoured. */
+  revoked: ReadonlySet<string> | null
+}
+
+/**
+ * What the global-key cookies on a request grant: an edit pass wins over the view key. The raw
+ * edit key in a cookie is no longer accepted: it could not be revoked per device.
+ */
 export function globalKeyAccess(
   cookieHeader: string | null | undefined,
-  keys: GlobalKeys
+  keys: GlobalKeys,
+  check: PassCheck = { now: Date.now(), revoked: null }
 ): 'edit' | 'view' | null {
-  const edit = readCookie(cookieHeader, GLOBAL_EDIT_COOKIE)
-  if (keys.edit && edit && safeEqual(edit, keys.edit))
+  const pass = readPass(cookieHeader, keys.edit, check.now)
+  if (pass && check.revoked && !check.revoked.has(pass.device))
     return keys.editGrants ?? 'edit'
   const view = readCookie(cookieHeader, GLOBAL_VIEW_COOKIE)
   if (keys.view && view && safeEqual(view, keys.view)) return 'view'
@@ -1217,9 +1379,17 @@ export function isNavigation(request: {
  * Only over the tunnel, only on a page load, and only when it would add something: no valid
  * session yet, or a read-only one when the edit key is held.
  */
+interface KeyOpts {
+  auth: AuthState
+  keys: GlobalKeys
+  now: number
+  /** See PassCheck: omitted or null, no edit pass is honoured. */
+  revoked?: ReadonlySet<string> | null
+}
+
 export function globalKeyExchange(
   request: { method: string; headers: { get(name: string): string | null } },
-  opts: { viaTunnel: boolean; auth: AuthState; keys: GlobalKeys; now: number }
+  opts: KeyOpts & { viaTunnel: boolean }
 ): 'edit' | 'view' | null {
   if (!opts.viaTunnel || !isNavigation(request)) return null
   return keyAddsAccess(request.headers.get('cookie'), opts)
@@ -1228,9 +1398,12 @@ export function globalKeyExchange(
 /** What a global key would add to this request's session: nothing, or a session of a kind. */
 function keyAddsAccess(
   header: string | null,
-  opts: { auth: AuthState; keys: GlobalKeys; now: number }
+  opts: KeyOpts
 ): 'edit' | 'view' | null {
-  const access = globalKeyAccess(header, opts.keys)
+  const access = globalKeyAccess(header, opts.keys, {
+    now: opts.now,
+    revoked: opts.revoked ?? null,
+  })
   if (!access) return null
   const held = readCookie(header, SESSION_COOKIE)
   if (validSessionCookie(opts.auth, held, opts.now)) {
@@ -1264,13 +1437,7 @@ function keyAddsAccess(
  */
 export function globalKeyRefresh(
   request: { method: string; headers: { get(name: string): string | null } },
-  opts: {
-    viaTunnel: boolean
-    host: string
-    auth: AuthState
-    keys: GlobalKeys
-    now: number
-  }
+  opts: KeyOpts & { viaTunnel: boolean; host: string }
 ): 'edit' | 'view' | null {
   if (!opts.viaTunnel || isNavigation(request)) return null
   const site = request.headers.get('sec-fetch-site')

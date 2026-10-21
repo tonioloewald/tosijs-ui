@@ -276,3 +276,56 @@ describe('what the box says about its keys', () => {
     })
   })
 })
+
+import {
+  deviceRegistryLine,
+  parseDeviceListing,
+  DEVICE_LISTING_SEPARATOR,
+} from './resolve-site-config'
+
+test('a device registry line holds nothing a single-quoted shell line could not', () => {
+  const line = deviceRegistryLine({
+    id: 'device0001',
+    issued: new Date('2026-10-21T10:00:00Z'),
+    project: "tosijs-ui'; rm -rf /",
+    label: "Tonio's\tphone\n",
+  })!
+  expect(line).toBe(
+    'device0001\t2026-10-21T10:00:00.000Z\ttosijs-uirm-rf\tToniosphone'
+  )
+  expect(line).not.toMatch(/['\n]/)
+  expect(
+    deviceRegistryLine({
+      id: "x'; reboot",
+      issued: new Date(),
+      project: 'p',
+      label: '',
+    })
+  ).toBeNull()
+})
+
+test('the device listing marks revoked passes, newest first', () => {
+  const text =
+    'device0001\t2026-10-01T00:00:00.000Z\tui\tlaptop\n' +
+    'device0002\t2026-10-02T00:00:00.000Z\tui\t\n' +
+    'garbage line\n' +
+    `${DEVICE_LISTING_SEPARATOR}\n` +
+    'device0001\n'
+  expect(parseDeviceListing(text)).toEqual([
+    {
+      id: 'device0002',
+      issued: '2026-10-02T00:00:00.000Z',
+      project: 'ui',
+      label: '',
+      revoked: false,
+    },
+    {
+      id: 'device0001',
+      issued: '2026-10-01T00:00:00.000Z',
+      project: 'ui',
+      label: 'laptop',
+      revoked: true,
+    },
+  ])
+  expect(parseDeviceListing(`${DEVICE_LISTING_SEPARATOR}\n`)).toEqual([])
+})

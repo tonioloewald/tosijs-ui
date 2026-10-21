@@ -75,19 +75,17 @@
 		redir * {tosi_link_target} 302
 	}
 
-	# THE GLOBAL EDIT KEY has NO URL form. A browser gets the `tosi_edit` cookie only from a
-	# workspace's single-use link (`tosijs-tunnel --link --global`), which carries a one-use code
-	# valid five minutes, never the key. The cookie lasts 30 days; the thing that delivers it
-	# does not (the maintainer's rule, 2026-10-20). Through 1.16.30 `?t=<edit key>` here set it
-	# too, which made the edit key a permanent bearer token in browser history and anywhere
-	# the URL was pasted, and the edit key is code execution on every workspace's machine
-	# (a source write lands in files the dev server imports).
+	# THE GLOBAL EDIT KEY has NO URL form, and no browser holds it. A browser that opens a
+	# workspace's single-use link (`tosijs-tunnel --link --global`, a one-use code valid five
+	# minutes) gets a signed pass for that one device, plus the view key below; the cookie lasts
+	# 30 days, the code that delivers it does not (the maintainer's rule, 2026-10-20). Through
+	# 1.16.30 `?t=<edit key>` here set the raw key as a cookie, a permanent bearer token for
+	# writing source on every workspace that no one device could lose on its own.
 	#
-	# This block still CHECKS the cookie below, so a browser that holds it opens these static
-	# previews and the root list. The cookie is the key itself: Caddy can compare a fixed value
-	# and cannot sign one. A leaked edit cookie is write access to every workspace that accepts
-	# the key until it is rotated (edit preview.env here and on each machine, re-run the
-	# installer).
+	# The gate below still accepts the raw edit key: the dev servers present it to read
+	# `revoked.txt` (the root's revoked-device list, which `tosijs-tunnel --revoke` appends to).
+	# Rotating it (edit preview.env here and on each machine, re-run the installer) invalidates
+	# every device pass at once.
 
 	# Anchored at both ends: unanchored, `tosi_edit=<key>x` matched too. That needed the key
 	# anyway, but the dev servers compare exactly, and the gate should agree with them.
