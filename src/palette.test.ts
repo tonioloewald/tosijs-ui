@@ -151,3 +151,17 @@ test('trigger="icon" and "none" set the classes that hide the label or the whole
   palette.close()
   palette.remove()
 })
+
+test('the clear button shows only when there is something to clear', () => {
+  const palette = tosiPalette({ sources: [() => []] })
+  document.body.append(palette)
+  palette.open()
+  const clear = palette.querySelector<HTMLElement>('.palette-clear')!
+  expect(clear.hidden).toBe(true)
+  palette.search('x')
+  expect(clear.hidden).toBe(false)
+  palette.search('')
+  expect(clear.hidden).toBe(true)
+  palette.close()
+  palette.remove()
+})

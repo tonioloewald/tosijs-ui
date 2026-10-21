@@ -347,6 +347,9 @@ export class TosiPalette extends withAttributes({
             lineHeight: 1.4,
             maxHeight: '8em',
         },
+        ':host > dialog .palette-clear[hidden]': {
+            display: 'none',
+        },
         ':host > dialog .palette-clear': {
             flex: '0 0 auto',
             background: 'transparent',
@@ -549,6 +552,8 @@ export class TosiPalette extends withAttributes({
             onClick: this.onDialogClick,
         }, div({ class: 'palette-header' }, icons.search(), span({ class: 'palette-spinner', hidden: true }, icons.loader()), div({ class: 'palette-field', style: { display: 'contents' } }), button({
             class: 'palette-clear',
+            // Shown only with something to clear: an ✕ in a dialog's corner reads as "close".
+            hidden: true,
             type: 'button',
             title: 'Clear',
             ariaLabel: 'Clear',
@@ -651,6 +656,9 @@ export class TosiPalette extends withAttributes({
         if (this.field && this.field.value !== query)
             this.field.value = query;
         this.value = query;
+        const clear = this.querySelector('.palette-clear');
+        if (clear)
+            clear.hidden = query === '';
         this.searching?.abort();
         const controller = new AbortController();
         this.searching = controller;
