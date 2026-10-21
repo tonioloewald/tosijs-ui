@@ -313,12 +313,6 @@ export class TosiPalette extends withAttributes({
       {
         display: 'none',
       },
-    // No hover means a touch screen: no keyboard to press the shortcut on, so no hint for it.
-    '@media (hover: none)': {
-      'tosi-palette > .palette-trigger > kbd': {
-        display: 'none',
-      },
-    },
     // `trigger="none"`: opened only from code or its shortcut. The host stays rendered, because
     // a modal <dialog> inside a display:none ancestor is not shown even in the top layer.
     ':host.-no-trigger > .palette-trigger': {

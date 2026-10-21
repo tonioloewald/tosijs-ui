@@ -89,8 +89,7 @@ test('the search sits in the header, not the sidebar, and shrinks to its icon wh
   const palette = page.locator('header > tosi-palette.doc-search')
   await expect(palette).not.toHaveClass(/-icon/)
   await expect(palette.locator('.palette-trigger-label')).toBeVisible()
-  // Narrow enough that, even with the header links moved into the menu, the field has no room.
-  await page.setViewportSize({ width: 320, height: 700 })
+  await page.setViewportSize({ width: 390, height: 700 })
   await expect(palette).toHaveClass(/-icon/)
   await expect(palette.locator('.palette-trigger-label')).toBeHidden()
   // still opens, as an icon
@@ -166,8 +165,14 @@ test('on a narrow header the links move into the settings menu', async ({
 }) => {
   const links = page.locator('header > .header-link')
   await expect(links.first()).toBeVisible()
+  // With room, the search is the full field and shows its shortcut.
+  const palette = page.locator('header > tosi-palette.doc-search')
+  await expect(palette.locator('.palette-trigger > kbd')).toBeVisible()
   await page.setViewportSize({ width: 390, height: 800 })
   await expect(links.first()).toBeHidden()
+  // …and when the links fold into the menu, the search folds to its icon.
+  await expect(palette).toHaveClass(/-icon/)
+  await expect(palette.locator('.palette-trigger-label')).toBeHidden()
   await page.locator('header button[title="settings"]').click()
   await expect(
     page.locator('tosi-menu .tosi-menu-item, .tosi-menu-item').filter({

@@ -929,6 +929,19 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       icon: 'fileText',
       action: () => openDoc(d.filename),
     }))
+  /*
+  What the search shows in the header: the field when the header has room, its icon when the
+  header is narrow (the same width at which the header links fold into the menu), nothing on a
+  header:false page, where only its shortcut opens it.
+  */
+  let searchHeaderless = false
+  const updateSearchTrigger = () => {
+    searchBox.trigger = searchHeaderless
+      ? 'none'
+      : headerBar?.classList.contains('-links-collapsed')
+      ? 'icon'
+      : 'field'
+  }
   // In the header bar (see headerContent); the nav no longer holds a search field.
   const searchBox = tosiPalette({
     class: 'doc-search',
@@ -1981,7 +1994,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     never shown, so ⌘K would do nothing on a header:false page. There it waits outside the
     header with no trigger of its own, opened by its shortcut.
     */
-    searchBox.trigger = floating ? 'none' : 'field'
+    searchHeaderless = floating
+    updateSearchTrigger()
     if (floating && searchBox.parentElement !== container) {
       container.appendChild(searchBox)
     } else if (!floating && searchBox.parentElement !== headerBar) {
@@ -2494,13 +2508,14 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   (the maintainer, 2026-10-21). Measured on the header, not the window, because a doc browser
   can be embedded in something narrower than the page.
   */
-  const collapseLinks = () =>
+  const collapseLinks = () => {
     headerBar.classList.toggle(
       '-links-collapsed',
-      headerLinks.length > 0 &&
-        headerBar.clientWidth > 0 &&
+      headerBar.clientWidth > 0 &&
         headerBar.clientWidth < HEADER_LINKS_COLLAPSE_PX
     )
+    updateSearchTrigger()
+  }
   if (typeof ResizeObserver === 'function') {
     new ResizeObserver(collapseLinks).observe(headerBar)
   }
