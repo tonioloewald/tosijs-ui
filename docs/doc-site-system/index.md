@@ -1114,8 +1114,11 @@ never the key:
    view: https://ui.edit.dev.example.com/?t=HDTXBNEJ  (read-only)
 ```
 
-Opening one starts a session in this workspace and gives that browser the key, as an
-`HttpOnly`, `Secure` cookie across the preview domain that lasts 30 days. From then on that
+Opening one starts a session in this workspace and sets an `HttpOnly`, `Secure` cookie across
+the preview domain that lasts 30 days. A view link sets the view key. An edit link sets a
+**pass for that one device**, signed with the edit key, so the key itself never reaches a
+browser, and each device can be revoked on its own (see "Devices" below); it sets the view key
+too, which is what opens the box's root list and the static previews. From then on that
 browser opens every workspace holding the key, and the box's root list, without another link,
 across dev-server restarts. The code is spent by the first browser that uses it, and both kinds
 expire after 5 minutes: the cookie is what lasts, not the code that delivers it.
@@ -1154,15 +1157,30 @@ drive the page with an agent.
 so both must be at least 24 letters, digits, `-` or `_`; the installer refuses a shorter edit
 key, and the dev server ignores a short key and says so at launch. The two must differ.
 
-**What it costs.** The cookie holds the key itself: Caddy can compare a fixed value and cannot
-sign one. A leaked edit cookie is write access to every workspace that accepts the key until
-you rotate it: edit both files, re-run the installer, and restart the dev servers. The restart
-is what revokes: a running dev server keeps honouring the key it read at launch, and a session
-a key or a single-use link already opened is not re-checked against the key (a session from a
-key lasts a day; one from a link, up to 30 days for edit and 7 for read-only). Sessions live in
-memory, so a restart ends them all, but a browser still holding the old key's cookie gets a new
-session only if the restarted server has the old key. So for a key holder it is the cookie, not
-the session, that bounds access: 30 days, or until you rotate and restart.
+**Devices.** Every `--link --global` edit link is a pass for one device, recorded on the box
+when the link is printed. Name the device with `--label`:
+
+```bash
+tosijs-tunnel --link --global --label="iPad"   # a link for one device, named
+tosijs-tunnel --devices                         # every pass issued, newest first, and which are revoked
+tosijs-tunnel --revoke=k3v9x2mq7a               # cut that device off, on every workspace
+```
+
+Revoking adds the id to `revoked.txt` beside the box's root list. Every workspace reads that
+list before it honours a pass, at most a minute old, and ends the sessions a revoked device
+already holds within the same minute. A workspace that cannot read the list (and has no copy
+less than ten minutes old) honours **no** pass until it can: it fails closed. A pass also
+expires 30 days after it was issued; a fresh link gives a fresh one.
+
+Edit links from tosijs-ui 1.16.30 and earlier set the raw edit key as the cookie. That cookie
+no longer opens anything, and a new link expires it, so each device needs one new
+`--link --global`.
+
+**What it costs.** The view key is still a shared value in the cookie, because Caddy can only
+compare a fixed value: a leaked view cookie is read access until you rotate the view key (edit
+both files, re-run the installer, restart the dev servers). The edit key signs passes and
+never leaves your machines and the box. Rotating it invalidates every pass at once; revoking
+cuts off one.
 
 **The view key is your preview invite.** Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,

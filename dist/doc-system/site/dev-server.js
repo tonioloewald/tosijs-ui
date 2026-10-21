@@ -22,8 +22,9 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, resolveGrantTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantCookies, readPass, revokeDeviceSessions, mintDeviceId, cleanDeviceLabel, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, resolveGrantTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
 import { readLocalSecret } from './local-secrets.js';
+import { revocationList, REVOCATION_FRESH_MS } from './device-revocation.js';
 import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
 /**
@@ -790,7 +791,7 @@ export async function devServer(config, opts = {}) {
      */
     const printLink = (opts = {}) => {
         if (opts.grant)
-            return printGrantLink(opts.grant);
+            return printGrantLink(opts.grant).url;
         const settings = resolveLinkSettings(config.preview?.tunnel);
         const policy = opts.share ? 'window' : settings.policy;
         /*
@@ -838,6 +839,9 @@ export async function devServer(config, opts = {}) {
     the code.
     */
     const printGrantLink = (grant) => {
+        // An edit grant becomes a pass for one device, which can be revoked on its own.
+        if (grant.key === 'edit' && !grant.device)
+            grant = { ...grant, device: mintDeviceId() };
         const ttlMs = resolveGrantTtlMs(config.preview?.tunnel);
         const token = issueLink(auth, Date.now(), ttlMs, {
             readOnly: grant.key === 'view',
@@ -846,8 +850,8 @@ export async function devServer(config, opts = {}) {
         const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`;
         const url = `${base}/?${LINK_PARAM}=${token}`;
         const minutes = Math.round(ttlMs / 60000);
-        console.log(`\n🔗 Single-use ${grant.key === 'edit' ? 'edit' : 'READ-ONLY'} link (valid ${minutes} min): opens this workspace, and keeps that browser in every workspace on ${grant.domain} for 30 days:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`);
-        return url;
+        console.log(`\n🔗 Single-use ${grant.key === 'edit' ? 'edit' : 'READ-ONLY'} link (valid ${minutes} min): opens this workspace, and keeps that browser in every workspace on ${grant.domain} for 30 days${grant.device ? ` (device ${grant.device})` : ''}:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`);
+        return { url, device: grant.device };
     };
     /*
     `kill -USR2` still works for a human at the terminal, but it is NOT how `--link`
@@ -879,6 +883,39 @@ export async function devServer(config, opts = {}) {
                 readLocalSecret('PREVIEW_EDIT_TOKEN'),
         })
         : { keys: {}, problems: [] };
+    /*
+    Device passes are checked against the box's revoked list (device-revocation.ts). `passCheck`
+    reads the pass a request carries and the list for its domain, and ends the sessions of any
+    device on it; a sweep does the same once a minute for every domain seen, so a revoked device
+    loses the sessions it already holds, not just the next one.
+    */
+    const revocations = globalKeys.keys.edit
+        ? revocationList({
+            editKey: globalKeys.keys.edit,
+            url: process.env.TOSIJS_REVOKED_URL || undefined,
+        })
+        : null;
+    const endRevoked = (revoked) => {
+        if (!revoked)
+            return;
+        const ended = revokeDeviceSessions(auth, revoked);
+        if (ended)
+            console.log(`🔒 ${ended} session(s) ended: device revoked`);
+    };
+    const passCheck = async (header) => {
+        const pass = readPass(header, globalKeys.keys.edit, Date.now());
+        if (!pass || !revocations)
+            return { pass: null, revoked: null };
+        const revoked = await revocations.current(pass.domain);
+        endRevoked(revoked);
+        return { pass, revoked };
+    };
+    if (revocations) {
+        setInterval(() => {
+            for (const domain of revocations.domains())
+                revocations.current(domain).then(endRevoked);
+        }, REVOCATION_FRESH_MS).unref();
+    }
     // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
     const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT, config.outputDir ?? 'docs');
     if (dataStore?.commit && !isGitWorkTree(dataStore.root)) {
@@ -1746,16 +1783,20 @@ export async function devServer(config, opts = {}) {
     // Said once per process: a page left open across a restart renews on every request it makes.
     let renewalLogged = false;
     const withKeySession = async (request, srv, handle) => {
+        const { pass, revoked } = await passCheck(request.headers.get('cookie'));
         const grant = globalKeyRefresh(request, {
             viaTunnel: true,
             host: request.headers.get('host') ?? '',
             auth,
             keys: globalKeys.keys,
             now: Date.now(),
+            revoked,
         });
         if (!grant)
             return handle(request, srv);
         const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
+        if (pass && revoked)
+            auth.sessionDevices.set(session, pass.device);
         const setCookie = sessionCookie(session, GLOBAL_KEY_SESSION_TTL_MS);
         const headers = new Headers(request.headers);
         const others = (headers.get('cookie') ?? '')
@@ -1806,7 +1847,11 @@ export async function devServer(config, opts = {}) {
             }
             const header = request.headers.get('cookie');
             const held = readCookie(header, SESSION_COOKIE);
-            const access = globalKeyAccess(header, globalKeys.keys) ??
+            const { revoked } = await passCheck(header);
+            const access = globalKeyAccess(header, globalKeys.keys, {
+                now: Date.now(),
+                revoked,
+            }) ??
                 (validSessionCookie(auth, held, Date.now())
                     ? cookieMayWrite(auth, held)
                         ? 'edit'
@@ -1913,14 +1958,20 @@ export async function devServer(config, opts = {}) {
         none of them has to know about keys. A link in the URL is left to the link exchange.
         */
         if (!linkToken) {
+            const { pass, revoked } = viaTunnel
+                ? await passCheck(request.headers.get('cookie'))
+                : { pass: null, revoked: null };
             const grant = globalKeyExchange(request, {
                 viaTunnel,
                 auth,
                 keys: globalKeys.keys,
                 now: Date.now(),
+                revoked,
             });
             if (grant) {
                 const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
+                if (pass && revoked)
+                    auth.sessionDevices.set(session, pass.device);
                 console.log(`🔓 global ${grant} key — session issued`);
                 return new Response(null, {
                     status: 302,
@@ -2021,11 +2072,14 @@ export async function devServer(config, opts = {}) {
                 reply.append('Set-Cookie', sessionCookie(session));
                 // A granting link also gives this browser the global key (see printGrantLink).
                 const grant = takeSessionGrant(auth, session);
-                const keyCookie = grant && globalKeyCookie(grant, globalKeys.keys);
-                if (keyCookie)
-                    reply.append('Set-Cookie', keyCookie);
-                console.log(keyCookie
-                    ? `🔓 link redeemed — session issued, and the global ${grant.key} key set for ${grant.domain}`
+                const keyCookies = grant ? grantCookies(grant, globalKeys.keys) : [];
+                for (const cookie of keyCookies)
+                    reply.append('Set-Cookie', cookie);
+                // Revoking the device ends this session too.
+                if (keyCookies.length && grant?.device)
+                    auth.sessionDevices.set(session, grant.device);
+                console.log(keyCookies.length
+                    ? `🔓 link redeemed — session issued, and the global ${grant.key} ${grant.device ? `pass (device ${grant.device})` : 'key'} set for ${grant.domain}`
                     : '🔓 edit link redeemed — session issued');
                 return new Response(null, { status: 302, headers: reply });
             }
@@ -2338,7 +2392,11 @@ export async function devServer(config, opts = {}) {
                         ? `${MAX_OUTSTANDING_GRANTS} single-use global links are already outstanding; use one, or wait for them to expire`
                         : !domain
                             ? `${params.get('domain')} is not a domain ${workspaceHost || 'this workspace'} is under`
-                            : !globalKeyCookie({ key, domain }, globalKeys.keys)
+                            : !globalKeyCookie({
+                                key,
+                                domain,
+                                device: key === 'edit' ? mintDeviceId() : undefined,
+                            }, globalKeys.keys)
                                 ? `this server does not accept the global ${key} key (see its launch warnings, or tunnel.globalKeys)`
                                 : null;
                 if (problem) {
@@ -2350,9 +2408,15 @@ export async function devServer(config, opts = {}) {
                         },
                     });
                 }
-                grant = { key: key, domain: domain };
+                grant = {
+                    key: key,
+                    domain: domain,
+                    label: cleanDeviceLabel(params.get('label')) || undefined,
+                };
             }
-            return new Response(JSON.stringify({ url: printLink({ share, ttlMinutes, grant }) }), {
+            return new Response(JSON.stringify(grant
+                ? printGrantLink(grant)
+                : { url: printLink({ share, ttlMinutes }) }), {
                 headers: {
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-store',
