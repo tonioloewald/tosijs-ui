@@ -47,16 +47,20 @@ when an operation completes). This will *also* call any `close` callback functio
 provided. (The progress demos in the example exercise this functionality.)
 
 ```js
-import { postNotification, icons } from 'tosijs-ui'
+import { postNotification, TosiNotification, icons } from 'tosijs-ui'
 
 const form = preview.querySelector('tosi-form')
 const submit = preview.querySelector('.submit')
 const closeButton = preview.querySelector('.close')
 
 let close
+// read the field itself: the form's value omits a field nobody has edited
+const maxVisible = () =>
+  Number(preview.querySelector('tosi-field[key=maxVisible] input').value) || 3
 
 form.submitCallback = (value, isValid) => {
   if (!isValid) return
+  TosiNotification.maxVisible = maxVisible()
   if (value.type.startsWith('progress')) {
     startTime = Date.now()
     const { message, duration, icon } = value
@@ -74,6 +78,13 @@ form.submitCallback = (value, isValid) => {
 }
 
 submit.addEventListener('click', form.submit)
+preview.querySelector('.burst').addEventListener('click', () => {
+  TosiNotification.maxVisible = maxVisible()
+  const types = ['error', 'warn', 'info', 'success', 'log']
+  for (let i = 1; i <= 8; i++) {
+    postNotification({ message: `Notification ${i} of 8`, type: types[i % types.length] })
+  }
+})
 closeButton.addEventListener('click', () => {
   if (close) {
     close()
@@ -100,7 +111,9 @@ postNotification({
     ></tosi-select>
   </tosi-field>
   <tosi-field caption="Duration" key="duration" type="number" value="2"></tosi-field>
+  <tosi-field caption="Max visible" key="maxVisible" type="number" value="3"></tosi-field>
   <button slot="footer" class="close" disabled>Close Last Notification</button>
+  <button slot="footer" class="burst">Post 8</button>
   <span slot="footer" class="elastic"></span>
   <button slot="footer" class="submit">Post Notification</button>
 </tosi-form>
