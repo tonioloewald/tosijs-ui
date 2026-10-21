@@ -270,6 +270,22 @@ test('the raw edit key, a pass signed with another key, an expired or a revoked 
   expect((await navigate(passFor('otherdev01'))).status).toBe(302)
 })
 
+test('a revoked device keeps view access, with one redirect, not a loop', async () => {
+  // Every redeemed edit link also sets the view key, so a revoked device still holds it.
+  // Tagging the view session with the revoked device made each request end it and grant
+  // another: ERR_TOO_MANY_REDIRECTS (1.16.31 review, B1).
+  const cookies = `${passFor('revokedd01')}; tosi_preview=${VIEW}`
+  const first = await navigate(cookies)
+  expect(first.status).toBe(302)
+  const session = sessionFrom(first)
+  const page = await navigate(`${cookies}; ${session}`)
+  expect(page.status).toBe(200)
+  expect(page.headers['set-cookie']).toBeUndefined()
+  expect((await save(`${cookies}; ${session}`, `https://${HOST}`)).status).toBe(
+    403
+  )
+})
+
 test('a wrong key, or a key in the wrong cookie, is no key', async () => {
   expect((await navigate(`${PASS}x`)).status).toBe(401)
   expect((await navigate(`tosi_preview=${EDIT}`)).status).toBe(401)

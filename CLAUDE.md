@@ -994,6 +994,13 @@ resolve, encodes a fix they want anyway, and lets us delete a local workaround. 
 1.10.9, and the CHANGELOG says to upgrade tosijs alongside. A floor that crosses a minor or
 major of the dependency is a different case and still the maintainer's decision.
 
+**Ruled for 1.16.31 (the maintainer's call, "the tunnel is mostly for dev use and does not
+impact consumers at all"):** a tunnel-auth change that makes a developer re-authenticate ships in
+a patch. Every browser needed one new `--link --global` (the raw-key cookie stopped opening a
+workspace), `?t=<edit key>` was dropped from the box's Caddyfile, and the CHANGELOG led with the
+upgrade steps. The test: the change lands on the people developing a site, not on an adopter's
+product or its readers.
+
 **Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
 about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
 removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a

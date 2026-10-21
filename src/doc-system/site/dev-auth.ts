@@ -434,7 +434,7 @@ export function redeemLink(
 
 /**
  * How many unspent granting links may exist at once. Each is a live code that, guessed, hands
- * over the box's key; a bound keeps the guessing odds where a handful of real links put them.
+ * over a global credential; a bound keeps the guessing odds where a handful of real links put them.
  */
 export const MAX_OUTSTANDING_GRANTS = 32
 
@@ -590,7 +590,9 @@ export function readPass(
     !DEVICE_ID_PATTERN.test(pass.device) ||
     typeof pass.domain !== 'string' ||
     typeof pass.exp !== 'number' ||
-    pass.exp <= now
+    pass.exp <= now ||
+    // A pass claiming to outlive the cookie that carries it was not minted here.
+    pass.exp > now + GLOBAL_KEY_COOKIE_MAX_AGE_S * 1000
   )
     return null
   return pass

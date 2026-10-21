@@ -3,17 +3,29 @@
 ## 1.16.31
 
 **Tunnel users: each browser needs one new `tosijs-tunnel --link --global`.** The edit cookie
-from earlier versions held the box's edit key itself, and it no longer opens anything (see
+from earlier versions held the box's edit key itself, and it no longer opens a workspace (see
 below). Reinstall the box's Caddyfile (`tosijs-caddy-install --go`) to drop `?t=<edit key>`.
+
+**If you used `--global` edit links or `?t=<edit key>` on 1.16.26–1.16.30, rotate the edit
+key.** Those versions put its raw value in browser cookies (for 30 days) and URLs (so browser
+history and anywhere one was pasted), and in 1.16.31 that same value signs every device pass:
+anyone holding a copy could sign passes of their own that `--revoke` cannot see. Set a new
+`PREVIEW_EDIT_TOKEN` in `/etc/caddy/preview.env` on the box and in
+`~/local-secrets/tosijs-preview.env` on each machine, re-run `tosijs-caddy-install --go`, and
+restart the dev servers. Upgrade every project that tunnels through the same box first: a new
+edit link expires the old `tosi_edit` cookie, so a workspace still on tosijs-ui 1.16.30 or
+earlier then opens read-only in that browser.
 
 ### Tunnel
 
 - **Each device gets its own edit pass, and you can revoke one.** A `--link --global` edit link
   used to give the browser the box's edit key as its cookie, so every device held the same
   credential, and the only way to cut one off was to rotate the key everywhere. Now the link
-  gives that browser a pass for that one device, signed with the edit key, which never reaches
-  a browser. `tosijs-tunnel --devices` lists every pass issued, `--revoke=<id>` cuts one device
-  off, and `--label=<name>` names the device a link is for. Every workspace checks the box's
+  gives that browser a pass for that one device, signed with the edit key, which no longer
+  reaches a browser. `tosijs-tunnel --devices` lists every pass issued, `--revoke=<id>` cuts one device
+  off, and `--label=<name>` names the device a link is for. Revoking ends
+  edit access; the device keeps the shared view key, so it can still browse until you rotate
+  that. Every workspace checks the box's
   revoked list before it honours a pass, at most a minute old, and ends a revoked device's open
   sessions within that minute. A workspace that cannot read the list honours no pass at all.
   An edit link also sets the view key, which opens the box's root list and the static previews.

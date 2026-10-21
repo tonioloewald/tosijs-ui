@@ -1798,6 +1798,25 @@ describe('global keys', () => {
     expect(
       globalKeyAccess(passFor('device0001', EDIT, NOW), keys, cleared)
     ).toBe(null)
+    // …nor one claiming to outlive the 30-day cookie that carries it.
+    expect(
+      globalKeyAccess(
+        passFor(
+          'device0001',
+          EDIT,
+          NOW + GLOBAL_KEY_COOKIE_MAX_AGE_S * 1000 + 1
+        ),
+        keys,
+        cleared
+      )
+    ).toBe(null)
+    expect(
+      globalKeyAccess(
+        passFor('device0001', EDIT, NOW + GLOBAL_KEY_COOKIE_MAX_AGE_S * 1000),
+        keys,
+        cleared
+      )
+    ).toBe('edit')
     expect(
       globalKeyAccess(PASS, keys, {
         now: NOW,

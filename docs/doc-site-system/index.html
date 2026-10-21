@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=2afe376773a1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=a015775779d2" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1369,21 +1369,33 @@ key, and the dev server ignores a short key and says so at launch. The two must 
 when the link is printed. Name the device with <code>--label</code>:</p>
 <pre><code class="language-bash" data-highlighted>tosijs-tunnel <span class="token parameter variable">--link</span> <span class="token parameter variable">--global</span> <span class="token parameter variable">--label</span><span class="token operator">=</span><span class="token string">"iPad"</span>   <span class="token comment"># a link for one device, named</span>
 tosijs-tunnel <span class="token parameter variable">--devices</span>                         <span class="token comment"># every pass issued, newest first, and which are revoked</span>
-tosijs-tunnel <span class="token parameter variable">--revoke</span><span class="token operator">=</span>k3v9x2mq7a               <span class="token comment"># cut that device off, on every workspace</span>
+tosijs-tunnel <span class="token parameter variable">--revoke</span><span class="token operator">=</span>k3v9x2mq7a               <span class="token comment"># end that device's edit access, on every workspace</span>
 </code></pre>
 <p>Revoking adds the id to <code>revoked.txt</code> beside the box&#39;s root list. Every workspace reads that
 list before it honours a pass, at most a minute old, and ends the sessions a revoked device
-already holds within the same minute. A workspace that cannot read the list (and has no copy
-less than ten minutes old) honours <strong>no</strong> pass until it can: it fails closed. A pass also
-expires 30 days after it was issued; a fresh link gives a fresh one.</p>
-<p>Edit links from tosijs-ui 1.16.30 and earlier set the raw edit key as the cookie. That cookie
-no longer opens anything, and a new link expires it, so each device needs one new
-<code>--link --global</code>.</p>
+already holds within the same minute. Revoking removes EDIT access only: an edit link also gave
+that device the shared view key, so it can still browse, read-only, until you rotate the view
+key. A workspace that cannot read the list (and has no copy less than ten minutes old) honours
+<strong>no</strong> pass until it can: it fails closed. A pass also expires 30 days after it was issued (a
+workspace refuses one claiming longer); a fresh link gives a fresh one.</p>
+<p>Edit links from tosijs-ui 1.16.30 and earlier set the raw edit key as the cookie. That cookie no
+longer opens a workspace, and a new link expires it, so each device needs one new
+<code>--link --global</code>. The box itself still accepts it for the root list and the static previews,
+because the dev servers present the edit key there to read <code>revoked.txt</code>.</p>
+<p><strong>If you used <code>--global</code> edit links or <code>?t=&lt;edit key&gt;</code> on 1.16.26–1.16.30, rotate the edit
+key.</strong> Those versions put its raw value in browser cookies (for 30 days) and URLs (so browser
+history and anywhere one was pasted), and in 1.16.31 that same value signs every device pass:
+anyone holding a copy could sign passes of their own that <code>--revoke</code> cannot see. Set a new
+<code>PREVIEW_EDIT_TOKEN</code> in <code>/etc/caddy/preview.env</code> on the box and in
+<code>~/local-secrets/tosijs-preview.env</code> on each machine, re-run <code>tosijs-caddy-install --go</code>, and
+restart the dev servers. Upgrade every project that tunnels through the same box first: a new
+edit link expires the old <code>tosi_edit</code> cookie, so a workspace still on tosijs-ui 1.16.30 or
+earlier then opens read-only in that browser.</p>
 <p><strong>What it costs.</strong> The view key is still a shared value in the cookie, because Caddy can only
 compare a fixed value: a leaked view cookie is read access until you rotate the view key (edit
-both files, re-run the installer, restart the dev servers). The edit key signs passes and
-never leaves your machines and the box. Rotating it invalidates every pass at once; revoking
-cuts off one.</p>
+both files, re-run the installer, restart the dev servers). From 1.16.31 the edit key only signs
+passes and never reaches a browser. Rotating it invalidates every pass at once; revoking ends
+one device&#39;s edit access.</p>
 <p><strong>The view key is your preview invite.</strong> Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,
 <code>requireToken</code> or not. That is what &quot;global view&quot; means here; if some of those people should

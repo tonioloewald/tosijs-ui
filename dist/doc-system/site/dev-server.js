@@ -902,13 +902,22 @@ export async function devServer(config, opts = {}) {
         if (ended)
             console.log(`🔒 ${ended} session(s) ended: device revoked`);
     };
+    /*
+    `device` is set only when the pass itself is good: signed, unexpired, and not on the list.
+    Only a session that pass granted may be tagged with it. A revoked device usually still holds
+    the view key, which grants a view session; tagging THAT with the revoked device had the next
+    request end it, grant another, and redirect forever (1.16.31 review, B1).
+    */
     const passCheck = async (header) => {
         const pass = readPass(header, globalKeys.keys.edit, Date.now());
         if (!pass || !revocations)
-            return { pass: null, revoked: null };
+            return { device: null, revoked: null };
         const revoked = await revocations.current(pass.domain);
         endRevoked(revoked);
-        return { pass, revoked };
+        return {
+            device: revoked && !revoked.has(pass.device) ? pass.device : null,
+            revoked,
+        };
     };
     if (revocations) {
         setInterval(() => {
@@ -1783,7 +1792,7 @@ export async function devServer(config, opts = {}) {
     // Said once per process: a page left open across a restart renews on every request it makes.
     let renewalLogged = false;
     const withKeySession = async (request, srv, handle) => {
-        const { pass, revoked } = await passCheck(request.headers.get('cookie'));
+        const { device, revoked } = await passCheck(request.headers.get('cookie'));
         const grant = globalKeyRefresh(request, {
             viaTunnel: true,
             host: request.headers.get('host') ?? '',
@@ -1795,8 +1804,8 @@ export async function devServer(config, opts = {}) {
         if (!grant)
             return handle(request, srv);
         const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
-        if (pass && revoked)
-            auth.sessionDevices.set(session, pass.device);
+        if (device)
+            auth.sessionDevices.set(session, device);
         const setCookie = sessionCookie(session, GLOBAL_KEY_SESSION_TTL_MS);
         const headers = new Headers(request.headers);
         const others = (headers.get('cookie') ?? '')
@@ -1958,9 +1967,9 @@ export async function devServer(config, opts = {}) {
         none of them has to know about keys. A link in the URL is left to the link exchange.
         */
         if (!linkToken) {
-            const { pass, revoked } = viaTunnel
+            const { device, revoked } = viaTunnel
                 ? await passCheck(request.headers.get('cookie'))
-                : { pass: null, revoked: null };
+                : { device: null, revoked: null };
             const grant = globalKeyExchange(request, {
                 viaTunnel,
                 auth,
@@ -1970,8 +1979,8 @@ export async function devServer(config, opts = {}) {
             });
             if (grant) {
                 const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
-                if (pass && revoked)
-                    auth.sessionDevices.set(session, pass.device);
+                if (device)
+                    auth.sessionDevices.set(session, device);
                 console.log(`🔓 global ${grant} key — session issued`);
                 return new Response(null, {
                     status: 302,
@@ -2350,7 +2359,7 @@ export async function devServer(config, opts = {}) {
             const peer = srv?.requestIP?.(request)?.address;
             /*
             Cross-site callers refused, as for /__build: every code minted here is a live credential
-            (a `global=` one carries the box's key), so a page in the developer's browser must not
+            (a `global=` one carries a global credential), so a page in the developer's browser must not
             be able to mint them in bulk with GETs. The bin uses curl, which sends no Origin.
             */
             if (viaTunnel ||

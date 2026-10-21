@@ -1163,24 +1163,37 @@ when the link is printed. Name the device with `--label`:
 ```bash
 tosijs-tunnel --link --global --label="iPad"   # a link for one device, named
 tosijs-tunnel --devices                         # every pass issued, newest first, and which are revoked
-tosijs-tunnel --revoke=k3v9x2mq7a               # cut that device off, on every workspace
+tosijs-tunnel --revoke=k3v9x2mq7a               # end that device's edit access, on every workspace
 ```
 
 Revoking adds the id to `revoked.txt` beside the box's root list. Every workspace reads that
 list before it honours a pass, at most a minute old, and ends the sessions a revoked device
-already holds within the same minute. A workspace that cannot read the list (and has no copy
-less than ten minutes old) honours **no** pass until it can: it fails closed. A pass also
-expires 30 days after it was issued; a fresh link gives a fresh one.
+already holds within the same minute. Revoking removes EDIT access only: an edit link also gave
+that device the shared view key, so it can still browse, read-only, until you rotate the view
+key. A workspace that cannot read the list (and has no copy less than ten minutes old) honours
+**no** pass until it can: it fails closed. A pass also expires 30 days after it was issued (a
+workspace refuses one claiming longer); a fresh link gives a fresh one.
 
-Edit links from tosijs-ui 1.16.30 and earlier set the raw edit key as the cookie. That cookie
-no longer opens anything, and a new link expires it, so each device needs one new
-`--link --global`.
+Edit links from tosijs-ui 1.16.30 and earlier set the raw edit key as the cookie. That cookie no
+longer opens a workspace, and a new link expires it, so each device needs one new
+`--link --global`. The box itself still accepts it for the root list and the static previews,
+because the dev servers present the edit key there to read `revoked.txt`.
+
+**If you used `--global` edit links or `?t=<edit key>` on 1.16.26–1.16.30, rotate the edit
+key.** Those versions put its raw value in browser cookies (for 30 days) and URLs (so browser
+history and anywhere one was pasted), and in 1.16.31 that same value signs every device pass:
+anyone holding a copy could sign passes of their own that `--revoke` cannot see. Set a new
+`PREVIEW_EDIT_TOKEN` in `/etc/caddy/preview.env` on the box and in
+`~/local-secrets/tosijs-preview.env` on each machine, re-run `tosijs-caddy-install --go`, and
+restart the dev servers. Upgrade every project that tunnels through the same box first: a new
+edit link expires the old `tosi_edit` cookie, so a workspace still on tosijs-ui 1.16.30 or
+earlier then opens read-only in that browser.
 
 **What it costs.** The view key is still a shared value in the cookie, because Caddy can only
 compare a fixed value: a leaked view cookie is read access until you rotate the view key (edit
-both files, re-run the installer, restart the dev servers). The edit key signs passes and
-never leaves your machines and the box. Rotating it invalidates every pass at once; revoking
-cuts off one.
+both files, re-run the installer, restart the dev servers). From 1.16.31 the edit key only signs
+passes and never reaches a browser. Rotating it invalidates every pass at once; revoking ends
+one device's edit access.
 
 **The view key is your preview invite.** Everyone you have given a static-preview link (or its
 30-day cookie) can also read every workspace that accepts the view key while it is up,

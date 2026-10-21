@@ -70,9 +70,9 @@ const { has, flag } = parseArgv(process.argv.slice(2), {
     `  --close                              close a running tunnel\n` +
     `  --link                               print a magic edit link\n` +
     `  --link --share                       print a READ-ONLY link to send to a person\n` +
-    `  --link --global [--share]            a SINGLE-USE 5-minute link that also gives that\n` +
-    `                                       browser the box's key for 30 days (every workspace,\n` +
-    `                                       the root list)\n` +
+    `  --link --global [--share]            a SINGLE-USE 5-minute link that also keeps that\n` +
+    `                                       browser in every workspace and the root list for\n` +
+    `                                       30 days (edit: a revocable device pass)\n` +
     `  --label=<name>                       name the device a --global edit link is for\n` +
     `  --devices                            list the devices given an edit pass, and which are revoked\n` +
     `  --revoke=<device id>                 revoke one device's edit pass, on every workspace\n` +
@@ -335,7 +335,7 @@ if (flag('revoke') !== undefined) {
     process.exit(1)
   }
   console.log(
-    `\n🔒 ${id} revoked. Every workspace stops honouring its pass, and ends its sessions, within a minute.\n`
+    `\n🔒 ${id} revoked. Every workspace stops honouring its edit pass, and ends its edit sessions, within a minute. It keeps the shared view key until you rotate that.\n`
   )
   process.exit(0)
 }
@@ -360,7 +360,7 @@ if (has('link')) {
   const shareTtl = flag('share-ttl')
   const ttl = shareTtl ? `&ttl=${encodeURIComponent(shareTtl)}` : ''
   /*
-  `--global` asks for a link that also hands over the box's key (see globalLinks): single-use,
+  `--global` asks for a link that also hands over a global credential (see globalLinks): single-use,
   valid five minutes whatever `--share-ttl` says, and the browser keeps every workspace for 30
   days. Opt-in, because it is a different promise
   from the two links above, which are reusable for their window and open this workspace only.
