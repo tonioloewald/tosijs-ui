@@ -157,9 +157,8 @@ export declare class TosiNotification extends Component {
     static dismissAll(): void;
     /**
      * Lay out the open notes. They are in the DOM oldest first, which `column-reverse` puts at
-     * the bottom. Up to `maxVisible` sit in a column. Past that, the newest `maxVisible - 1` stay
-     * in the column, the oldest stays at the bottom as the front of a stack, and everything in
-     * between recedes behind it.
+     * the bottom, so the newest is on top. The newest `maxVisible` sit in a column; the lowest of
+     * them is the front of a stack, with every older note behind it, newest first.
      */
     layout(): void;
     static post(spec: NotificationSpec | string): callback;

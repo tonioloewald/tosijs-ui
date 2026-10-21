@@ -6,8 +6,9 @@
 a list of notifications.
 
 Notifications stack up from the bottom of the screen, newest on top. Up to
-`TosiNotification.maxVisible` (3) they sit in a column. Past that, the bottom one becomes the
-front of a stack: the older notifications sit underneath it, each one's lower edge showing below
+`TosiNotification.maxVisible` (3) they sit in a column. Past that, the newest three stay in view
+and the lowest of them becomes the front of a stack: older notifications sit underneath it,
+newest first, each one's lower edge showing below
 the card in front by `TosiNotification.stackOffsets` (`[16, 8, 4]`, in px: each peeks out half
 as far as the last). Any beyond that are hidden until the ones in front are closed. Close the
 front card and the next one comes forward.
@@ -430,9 +431,8 @@ export class TosiNotification extends Component {
     }
     /**
      * Lay out the open notes. They are in the DOM oldest first, which `column-reverse` puts at
-     * the bottom. Up to `maxVisible` sit in a column. Past that, the newest `maxVisible - 1` stay
-     * in the column, the oldest stays at the bottom as the front of a stack, and everything in
-     * between recedes behind it.
+     * the bottom, so the newest is on top. The newest `maxVisible` sit in a column; the lowest of
+     * them is the front of a stack, with every older note behind it, newest first.
      */
     layout() {
         const root = this.shadowRoot;
@@ -440,11 +440,14 @@ export class TosiNotification extends Component {
             return;
         const notes = [...root.querySelectorAll('.note:not(.closing)')];
         const { maxVisible, stackOffsets } = TosiNotification;
-        const behind = notes.length > maxVisible
-            ? notes.slice(1, notes.length - Math.max(maxVisible - 1, 0))
-            : [];
-        const front = notes[0];
+        // The newest `maxVisible` stay in the column; the oldest of them is the front of the stack,
+        // and everything older sits behind it, newest first.
+        const visible = Math.max(maxVisible, 1);
+        const split = Math.max(notes.length - visible, 0);
+        const behind = notes.slice(0, split).reverse();
+        const front = notes[split];
         for (const note of notes) {
+            note.style.removeProperty('margin-bottom');
             if (behind.includes(note))
                 continue;
             note.classList.remove('stacked', 'buried');
@@ -453,8 +456,6 @@ export class TosiNotification extends Component {
                 note.style.removeProperty(prop);
             }
         }
-        if (front && !front.classList.contains('closing'))
-            front.style.removeProperty('margin-bottom');
         const dismiss = root.querySelector('.dismiss-all');
         if (dismiss) {
             dismiss.hidden = notes.length < 2;
@@ -474,6 +475,9 @@ export class TosiNotification extends Component {
         // button then rides up over.
         front.style.marginBottom = `${room}px`;
         dismiss?.style.setProperty('margin-top', `${-room}px`);
+        // Out of the flow before measuring: a note just pushed into the stack still takes room.
+        for (const note of behind)
+            note.classList.add('stacked');
         // Distance from the host's bottom edge to the front card's bottom: it does not move when
         // notes above the front card come and go, because the host grows upward.
         const frontBottom = this.clientHeight - front.offsetTop - front.offsetHeight;

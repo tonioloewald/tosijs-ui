@@ -90,15 +90,14 @@ test('past three, the bottom note becomes a receding stack', async ({
   await open(page)
   await post(page, 8)
   const shown = await notes(page)
-  const [front, ...rest] = shown
-  const behind = rest.slice(0, 5)
-  const column = rest.slice(5)
-  // the oldest stays in front at the bottom, the two newest stay in the column above it
-  expect(front.message).toBe('note 0')
-  expect(front.stacked).toBe(false)
-  expect(column.map((n) => n.message)).toEqual(['note 6', 'note 7'])
-  expect(column.every((n) => !n.stacked && n.visible)).toBe(true)
-  expect(column[0].bottom).toBeLessThanOrEqual(front.top)
+  const named = (m: string) => shown.find((n) => n.message === m)!
+  // the three newest stay in view, newest on top; the third newest fronts the stack
+  const [front, middle, top] = ['note 5', 'note 6', 'note 7'].map(named)
+  expect([front, middle, top].every((n) => !n.stacked && n.visible)).toBe(true)
+  expect(middle.bottom).toBeLessThanOrEqual(front.top)
+  expect(top.bottom).toBeLessThanOrEqual(middle.top)
+  // older ones sit behind it, newest first
+  const behind = ['note 4', 'note 3', 'note 2', 'note 1', 'note 0'].map(named)
   // three peek out underneath, straight down, each half as far as the last; the rest hidden
   expect(behind.map((n) => n.stacked)).toEqual([true, true, true, true, true])
   expect(behind.map((n) => n.visible)).toEqual([true, true, true, false, false])
@@ -149,7 +148,9 @@ test("Dismiss all is outlined in the most severe notification's colour", async (
     const { postNotification } = (window as any).xinjsui
     for (const m of ['x0', 'x1', 'x2']) postNotification({ message: m })
     postNotification({ message: 'boom', type: 'error' })
-    for (const m of ['y0', 'y1', 'y2']) postNotification({ message: m })
+    // three in view and three ahead of it in the stack, so the error is hidden
+    for (const m of ['y0', 'y1', 'y2', 'y3', 'y4', 'y5'])
+      postNotification({ message: m })
   })
   const buried = await page.evaluate(() =>
     document
@@ -164,19 +165,24 @@ test("Dismiss all is outlined in the most severe notification's colour", async (
 test('closing the front card brings the next one forward', async ({ page }) => {
   await open(page)
   await post(page, 5)
+  // notes 2–4 are in view, note 2 fronting the stack with notes 1 and 0 behind it
   await page.evaluate(() => {
     const root = document.querySelector('tosi-notification')!.shadowRoot!
-    root.querySelector<HTMLElement>('.note .close')!.click()
+    const front = [...root.querySelectorAll<HTMLElement>('.note')].find(
+      (n) => n.querySelector('.text')!.textContent === 'note 2'
+    )!
+    front.querySelector<HTMLElement>('.close')!.click()
   })
   await page.waitForTimeout(1100)
   const shown = await notes(page)
   expect(shown.map((n) => n.message)).toEqual([
+    'note 0',
     'note 1',
-    'note 2',
     'note 3',
     'note 4',
   ])
-  expect(shown.map((n) => n.stacked)).toEqual([false, true, false, false])
+  // note 1, the newest behind it, came forward
+  expect(shown.map((n) => n.stacked)).toEqual([true, false, false, false])
 })
 
 test('Dismiss all closes every note and fires each close callback', async ({
@@ -188,7 +194,7 @@ test('Dismiss all closes every note and fires each close callback', async ({
   await expect(dismiss).toBeHidden()
   await post(page, 6)
   await expect(dismiss).toBeVisible()
-  const front = (await notes(page))[0]
+  const front = (await notes(page)).find((n) => !n.stacked)!
   const box = (await dismiss.boundingBox())!
   // centred below the bottom note
   expect(box.y).toBeGreaterThanOrEqual(front.bottom)
