@@ -18,12 +18,13 @@ interface Entry {
     title: string;
     titleWords: string[];
     headings: (DocHeading & {
-        lower: string;
         words: string[];
     })[];
     keywords: string[];
-    description: string;
-    body: string;
+    description: string[];
+    lead: string[];
+    /** How many times each word appears in the text, code included. */
+    body: Map<string, number>;
 }
 export interface DocSearchHit {
     doc: SearchableDoc;

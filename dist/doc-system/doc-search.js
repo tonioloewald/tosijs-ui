@@ -2,28 +2,64 @@
 Rough relevance search over a doc corpus, for the doc browser's palette (board #3454).
 
 The nav filter it replaces was a substring test over each page's title and text: it hid
-non-matching pages and ranked nothing, so a query for a component's name listed every page
-that mentioned it, in nav order. This scores instead, field by field:
+non-matching pages and ranked nothing. This scores each query word field by field, taking the
+best field and adding how often the body uses it:
 
-  title        a word that IS the token 100, starts with it 60, contains it 25
-  heading      starts with it 30, contains it 12 (and the best heading becomes a deep link)
-  keywords     starts with it 20
-  description  contains it 10
-  body         contains it 3
+               whole word   start of a word
+  title           100            60
+  heading          35            30   (the best heading becomes a deep link)
+  keywords         25            10
+  description      18             6
+  lead             18             6   (the page's first prose paragraph)
+  body         4 up to 24 by how often (a whole word counts double a prefix), +10 for any
+               whole-word use, code included, so it beats a prefix anywhere but a title
+               or heading
 
-Every token must match somewhere (AND), so adding a word narrows. The whole query appearing in
-the title earns a bonus, and nav order breaks ties. It is deliberately rough: the point is
-that the page whose title is the thing you typed comes first.
+A word only ever matches the START of a word, camelCase split: "date" finds "dates" and
+"tosiDate" but not "update". Substring matching made "Automatic Updates" a strong match for
+"date" and ranked localize above month, and a page that uses "date" nineteen times scored the
+same as one that mentions it once (the maintainer's report, 2026-10-21). A whole word beats a
+prefix everywhere, in code too (also the maintainer's call): `date` in a code sample is a better
+sign than "dates" in passing.
+
+Every word must match somewhere (AND), so adding a word narrows. The whole query being the
+title, or appearing in it, earns a bonus, and nav order breaks ties. It is deliberately rough:
+the page whose title is the thing you typed comes first.
 
 Headings are lexed with marked and given ids by `HeadingIds`, THE rule the renderer uses, so a
 section result's anchor is the id the page actually carries.
 */
 import { marked } from 'marked';
 import { headingText, slugOfHeadingText, HeadingIds } from './heading-id.js';
+/** Lowercase words, camelCase split: `tosiMonth` is `tosi`, `month`. */
 const words = (text) => text
+    .replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2')
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
+/** Is `word` the token itself, give or take a plural? "icon" and "icons" match each other. */
+const same = (word, token) => word === token ||
+    word === `${token}s` ||
+    word === `${token}es` ||
+    token === `${word}s` ||
+    token === `${word}es`;
+/** 2 when `token` (or its plural) is one of `list`, 1 when it starts one, 0 otherwise. */
+const fit = (list, token) => list.some((w) => same(w, token))
+    ? 2
+    : list.some((w) => w.startsWith(token))
+        ? 1
+        : 0;
+/** The first paragraph that is prose: not a heading, a fence, a list or a metadata block. */
+function leadOf(text) {
+    const prose = text.replace(/```[\s\S]*?```/g, '\n\n');
+    for (const block of prose.split(/\n\s*\n/)) {
+        const trimmed = block.trim();
+        if (!trimmed || /^(#|<!--|\/\*|[-*+] |\d+\. |\||>)/.test(trimmed))
+            continue;
+        return trimmed;
+    }
+    return '';
+}
 /** The headings of a markdown text, with the ids the rendered page gives them. */
 export function docHeadings(text) {
     const ids = new HeadingIds();
@@ -54,6 +90,9 @@ export function buildDocIndex(docs) {
         const keywords = Array.isArray(doc.keywords)
             ? doc.keywords
             : String(doc.keywords ?? '').split(',');
+        const body = new Map();
+        for (const w of words(String(doc.text)))
+            body.set(w, (body.get(w) ?? 0) + 1);
         return {
             doc,
             order,
@@ -61,34 +100,30 @@ export function buildDocIndex(docs) {
             titleWords: words(String(doc.title)),
             headings: docHeadings(String(doc.text)).map((h) => ({
                 ...h,
-                lower: h.text.toLowerCase(),
                 words: words(h.text),
             })),
             keywords: keywords.flatMap((k) => words(k)),
-            description: String(doc.description ?? '').toLowerCase(),
-            body: String(doc.text).toLowerCase(),
+            description: words(String(doc.description ?? '')),
+            lead: words(leadOf(String(doc.text))),
+            body,
         };
     });
 }
-/** The text around the first place `token` appears in `text`, on one line. */
+/** The line of prose around the first word starting with one of `tokens`. */
 function snippetOf(source, tokens) {
     // Headings are the title and the section rows already; a snippet is body text.
-    const text = source.replace(/^[ \t]*#{1,6}[ \t].*$/gm, '');
-    const lower = text.toLowerCase();
-    let at = -1;
-    for (const token of tokens) {
-        at = lower.indexOf(token);
-        if (at >= 0)
-            break;
-    }
+    const text = source
+        .replace(/```[\s\S]*?```/g, '\n')
+        .replace(/^[ \t]*#{1,6}[ \t].*$/gm, '');
     const plain = (s) => s
-        .replace(/```[\s\S]*?```/g, ' ')
         .replace(/[#*_`>[\]()|]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
-    if (at < 0)
+    const escaped = tokens.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const found = new RegExp(`(^|[^\\p{L}\\p{N}])(${escaped.join('|')})`, 'iu').exec(text);
+    if (!found)
         return plain(text.slice(0, 200)).slice(0, 140);
-    const start = Math.max(0, text.lastIndexOf('\n', at) + 1);
+    const start = Math.max(0, text.lastIndexOf('\n', found.index) + 1);
     return plain(text.slice(start, start + 240)).slice(0, 160);
 }
 /** Score every page against `query`; best first, at most `limit`. */
@@ -101,50 +136,52 @@ export function searchDocs(index, query, limit = 20) {
     for (const entry of index) {
         let score = 0;
         let heading;
-        let headingScore = 0;
+        let headingFit = 0;
         let all = true;
         for (const token of tokens) {
-            let best = 0;
-            if (entry.titleWords.includes(token))
-                best = 100;
-            else if (entry.titleWords.some((w) => w.startsWith(token)))
-                best = 60;
-            else if (entry.title.includes(token))
-                best = 25;
+            const title = fit(entry.titleWords, token);
+            let best = title === 2 ? 100 : title ? 60 : 0;
+            // This word's best heading; the page's best heading over all words is the deep link.
+            let wordHeadingFit = 0;
             for (const h of entry.headings) {
-                const s = h.words.some((w) => w.startsWith(token))
-                    ? 30
-                    : h.lower.includes(token)
-                        ? 12
-                        : 0;
-                if (s > headingScore)
-                    [heading, headingScore] = [h, s];
-                best = Math.max(best, s);
+                const f = fit(h.words, token);
+                if (f > wordHeadingFit)
+                    wordHeadingFit = f;
+                if (f > headingFit)
+                    [heading, headingFit] = [h, f];
             }
-            if (entry.keywords.some((k) => k.startsWith(token)))
-                best = Math.max(best, 20);
-            if (entry.description.includes(token))
-                best = Math.max(best, 10);
-            if (!best && entry.body.includes(token))
-                best = 3;
-            if (!best) {
+            const field = (f, whole, prefix) => f === 2 ? whole : f ? prefix : 0;
+            best = Math.max(best, field(wordHeadingFit, 35, 30), field(fit(entry.keywords, token), 25, 10), field(fit(entry.description, token), 18, 6), field(fit(entry.lead, token), 18, 6));
+            let whole = 0;
+            let prefixed = 0;
+            for (const [w, n] of entry.body) {
+                if (same(w, token))
+                    whole += n;
+                else if (w.startsWith(token))
+                    prefixed += n;
+            }
+            const uses = whole + prefixed / 2;
+            const body = uses
+                ? Math.min(24, 4 + 4 * Math.log2(1 + uses)) + (whole ? 10 : 0)
+                : 0;
+            if (!best && !body) {
                 all = false;
                 break;
             }
-            score += best;
+            score += best + body;
         }
         if (!all)
             continue;
-        if (phrase.includes(' ') && entry.title.includes(phrase))
-            score += 50;
         if (entry.title === phrase)
             score += 100;
+        else if (phrase.includes(' ') && entry.title.includes(phrase))
+            score += 50;
         hits.push({
             doc: entry.doc,
             order: entry.order,
             score,
             // A heading is worth linking to only when it, not the title, is what matched.
-            heading: heading && headingScore >= 30 && !entry.title.includes(tokens[0])
+            heading: heading && !fit(entry.titleWords, tokens[0])
                 ? { text: heading.text, id: heading.id, depth: heading.depth }
                 : undefined,
             snippet: entry.doc.description

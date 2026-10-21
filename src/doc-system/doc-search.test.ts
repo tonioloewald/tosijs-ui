@@ -78,3 +78,46 @@ test('heading ids repeat the way the renderer numbers them', () => {
 test('an empty query finds nothing', () => {
   expect(searchDocs(index, '   ')).toEqual([])
 })
+
+test('a word matches the start of a word, never the middle ("date" is not in "update")', () => {
+  const index = buildDocIndex([
+    {
+      filename: 'a',
+      title: 'localize',
+      text: '## Automatic Updates\n\nIt updates.',
+    },
+    { filename: 'b', title: 'month', text: 'Pick a date. The date is today.' },
+  ])
+  expect(searchDocs(index, 'date').map((h) => h.doc.title)).toEqual(['month'])
+})
+
+test('a page that uses a word often outranks one that mentions it once', () => {
+  const index = buildDocIndex([
+    { filename: 'a', title: 'aside', text: 'One date here.' },
+    { filename: 'b', title: 'calendar', text: 'date '.repeat(20) },
+  ])
+  expect(searchDocs(index, 'date')[0].doc.title).toBe('calendar')
+})
+
+test('a whole word outranks a prefix, in code too', () => {
+  const index = buildDocIndex([
+    {
+      filename: 'a',
+      title: 'prose',
+      text: 'Our datebook lists datelines and datestamps.',
+    },
+    { filename: 'b', title: 'code', text: '```js\nconst d = new Date()\n```' },
+  ])
+  expect(searchDocs(index, 'date')[0].doc.title).toBe('code')
+})
+
+test('a plural and its singular match each other as whole words, camelCase splits', () => {
+  const index = buildDocIndex([
+    { filename: 'a', title: 'icons', text: 'x' },
+    { filename: 'b', title: 'trackDrag', text: 'x' },
+  ])
+  expect(searchDocs(index, 'icon')[0].score).toBeGreaterThanOrEqual(100)
+  expect(searchDocs(index, 'drag').map((h) => h.doc.title)).toEqual([
+    'trackDrag',
+  ])
+})

@@ -317,6 +317,15 @@ const navSearchStyleSpec = {
         display: 'flex',
         width: '100%',
     },
+    // The trigger looks like the search field it replaced: the site's pill-shaped input.
+    '.nav-search .palette-trigger': {
+        borderRadius: 99,
+        background: vars.inputBg,
+        boxShadow: vars.inputBorderShadow,
+        color: vars.placeholderColor,
+        lineHeight: 'calc(var(--line-height) + var(--spacing))',
+        padding: '0 var(--spacing)',
+    },
 };
 const logoMarkStyleSpec = {
     '.logo-mark': {

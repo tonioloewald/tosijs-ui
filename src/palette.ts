@@ -300,6 +300,7 @@ export class TosiPalette extends withAttributes({
       whiteSpace: 'nowrap',
     },
     ':host kbd, :host > dialog kbd': {
+      lineHeight: 'normal',
       font: 'inherit',
       fontSize: vars.fontSize75,
       padding: `0 ${vars.spacing25}`,
@@ -311,7 +312,8 @@ export class TosiPalette extends withAttributes({
       _paletteBg: varDefault.background('#fff'),
       _paletteColor: varDefault.textColor('#222'),
       _paletteAccent: varDefault.brandColor('#0064d2'),
-      _paletteActiveBg: '#0064d21a',
+      // A tint of the accent, so the active row follows the theme (pink on the doc site).
+      _paletteActiveBg: `color-mix(in srgb, ${vars.paletteAccent} 12%, transparent)`,
       width: 'min(40em, calc(100vw - 32px))',
       maxHeight: 'min(36em, calc(100vh - 64px))',
       marginTop: '10vh',
