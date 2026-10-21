@@ -812,3 +812,11 @@ gap, recorded rather than hidden.
 - **One unexplained Playwright run:** 833 passed, 2 failed, exit 1, and a re-run overwrote the report before the failing tests were read. Four later runs were clean (835 passed). An ensemble Playwright run was on the machine at the time; that is a candidate, not a cause. Read `playwright-report` BEFORE re-running.
 - **A review agent saw 25 unit failures** from a concurrent `dist/` rebuild; alone, 1970 pass. Agents running lanes in parallel with a build is the same race as a live `bun start`.
 - **Lanes:** unit 1970; Playwright 835 passed, 53 skipped; haltija 87 over 20 pages; consumer 58. Approval landed after the 60-minute wait, so verify ran as `verify_only` (run 39483970420), green; published dist identical to the tag.
+
+## 1.16.31 (2026-10-21)
+
+- **Two maintainer-driven threads in one release:** notification stacking (iterated live over the tunnel, five rounds against the maintainer's eyes and one diagram) and per-device edit passes (#3416). The maintainer caught every layout misreading in minutes; no lane would have, because each version was internally consistent. Showing a screenshot after every change was what made the loop fast.
+- **The review (pre-minor/full, auth) caught a real BLOCKER:** a revoked device still holds the shared view key, its view session was tagged with the revoked device, and the next request ended it: an endless 302 loop. The e2e test sent a revoked pass alone, never with the view cookie every real device carries. Test the credential set a real browser holds, not the one the feature is about.
+- **The review also caught the upgrade gap (M1):** the edit key's raw value sat in cookies and URLs through 1.16.30 and now signs passes, so rotation is a required upgrade step. Its suggested fix (derive the signing key) was declined: a holder of the old key can run the same derivation.
+- **Auth work in a separate worktree** kept half-wired code from restarting the maintainer's dev server mid-session; the first attempt in the main checkout locked them out for a few minutes. Do security changes to a running dev server's import graph in a worktree.
+- **Lanes:** unit 1986; Playwright 856 passed, 59 skipped; haltija 87 over 20 pages; consumer 58, all re-run after the review fixes. Publish run 39595000398 green including verify; published dist identical to the tag.
