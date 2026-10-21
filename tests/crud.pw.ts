@@ -372,3 +372,62 @@ test('typing writes the URL once, not once per keystroke', async ({ page }) => {
   expect(calls.n).toBeLessThanOrEqual(2)
   expect(calls.search).toBe('widget')
 })
+
+/*
+The examples as a reader meets them, in the doc page's preview (the maintainer, 2026-10-21:
+"they don't render or work properly in the default preview rect… New doesn't work… no way to
+close the detail views").
+*/
+const crudAt = (page: any, i: number) => page.locator('tosi-crud').nth(i)
+
+test('in the preview an open record replaces the list, and Close brings the list back', async ({
+  page,
+}) => {
+  const crud = crudAt(page, 0)
+  await expect(crud).toHaveClass(/-narrow/)
+  await crud.locator('tosi-table').getByText('Grace Hopper').click()
+  await expect(crud.locator('.crud-detail')).toBeVisible()
+  await expect(crud.locator('tosi-table')).toBeHidden()
+  // the record fits the preview: nothing spills out of the component
+  const preview = (await crud.evaluate((el: Element) =>
+    el.parentElement!.getBoundingClientRect().toJSON()
+  )) as DOMRect
+  const box = (await crud.boundingBox())!
+  expect(box.y + box.height).toBeLessThanOrEqual(preview.y + preview.height + 1)
+  await crud.locator('.crud-close').click()
+  await expect(crud.locator('.crud-detail')).toBeHidden()
+  await expect(crud.locator('tosi-table')).toBeVisible()
+})
+
+test('a store that can only list shows no New, Save or Delete', async ({
+  page,
+}) => {
+  const crud = crudAt(page, 1)
+  await expect(crud.locator('.crud-new')).toBeHidden()
+  await expect(crud.locator('.crud-save')).toBeHidden()
+  await expect(crud.locator('.crud-delete')).toBeHidden()
+})
+
+test('New with a schema adds a record that can be saved', async ({ page }) => {
+  const crud = crudAt(page, 2)
+  await crud.locator('.crud-new').click()
+  const sku = crud.locator('tosi-schema-form [data-path="sku"]')
+  await sku.fill('N-1')
+  await crud.locator('.crud-save').click()
+  // The saved record stays open (in the preview it replaces the list); Close shows the list.
+  await expect(crud.locator('.crud-status')).toHaveText('3 records')
+  await crud.locator('.crud-close').click()
+  await expect(crud.locator('tosi-table').getByText('N-1')).toBeVisible()
+})
+
+test('without a schema the list shows its columns, and New offers the rows’ fields', async ({
+  page,
+}) => {
+  const crud = crudAt(page, 3)
+  await expect(crud.locator('tosi-table').getByText('alphabet')).toBeVisible()
+  await crud.locator('.crud-new').click()
+  await expect(
+    crud.locator('tosi-schema-form [data-path="name"]')
+  ).toBeVisible()
+  await expect(crud.locator('tosi-schema-form [data-path="id"]')).toHaveCount(0)
+})

@@ -91,3 +91,30 @@ test('a schema with no properties yields no columns rather than throwing', () =>
   expect(columnsFromSchema({ type: 'object' } as any)).toEqual([])
   expect(columnsFromSchema(undefined as any)).toEqual([])
 })
+
+import { tosiCrud } from './crud'
+
+test('without a schema, New starts from the fields the rows have, empty of their kind, without the id', async () => {
+  const crud = tosiCrud({
+    store: {
+      async list() {
+        return [{ id: 1, name: 'Ada', age: 36, active: true, tags: ['x'] }]
+      },
+      async save(r: any) {
+        return r
+      },
+    },
+  }) as any
+  document.body.append(crud)
+  await crud.refresh()
+  crud.createNew()
+  expect(crud._selected).toEqual({
+    name: '',
+    age: 0,
+    active: false,
+    tags: null,
+  })
+  crud.close()
+  expect(crud._selected).toBeNull()
+  Element.prototype.remove.call(crud) // not crud.remove(): that deletes the record
+})

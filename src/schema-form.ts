@@ -1380,7 +1380,7 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 
 /*{ "parent": "Components" }*/
 
-import { ElementCreator, elements, unobserve, withAttributes } from 'tosijs'
+import { ElementCreator, elements, withAttributes } from 'tosijs'
 import type { JSONSchema } from './schema-form/json-schema.js'
 import {
   fieldsFor,
@@ -2809,7 +2809,8 @@ export class TosiSchemaForm extends withAttributes({
 
   content = null
 
-  private _localeListener: any = null
+  /** Stops the locale observer. A proxy's `.observe()` returns this, not a `Listener`. */
+  private _stopLocale: (() => void) | null = null
 
   connectedCallback(): void {
     super.connectedCallback()
@@ -2817,13 +2818,19 @@ export class TosiSchemaForm extends withAttributes({
     // The chrome ("Add …", the reorder tooltips) is localized when it is built, so a locale
     // change has to rebuild it — otherwise switching language leaves this form in the old
     // one until something else happens to touch it.
-    this._localeListener = i18n.locale.observe(() => this.rebuild())
+    this._stopLocale = i18n.locale.observe(() => this.rebuild())
   }
 
   disconnectedCallback(): void {
     live.delete(this)
-    if (this._localeListener) unobserve(this._localeListener)
-    this._localeListener = null
+    /*
+    A proxy's `.observe()` hands back the function that stops it. This passed that function to
+    `unobserve()`, which wants the `Listener` that the module-level `observe()` returns, so it
+    threw "unobserve failed, listener not found" every time a form left the page, and the
+    observer was never removed.
+    */
+    this._stopLocale?.()
+    this._stopLocale = null
     super.disconnectedCallback()
   }
 
@@ -2851,10 +2858,21 @@ export class TosiSchemaForm extends withAttributes({
     consumer can read it, edit it, and set it back. Set `.schema` explicitly to re-derive.
     */
     const inferSchema = getSchemaValidator()?.inferSchema
-    if (!this._schema?.properties && this._value) {
+    /*
+    "No schema" includes one inferred from an EMPTY value. Inferring from the initial `{}` gave
+    `{properties: {}}`, which then counted as an answer for good: <tosi-crud>'s New, with no
+    schema, handed the form a record with fields and it went on saying "This schema describes
+    no properties". An inferred schema with nothing in it is not a schema to keep.
+    */
+    const nothingKnown =
+      !this._schema?.properties ||
+      (this._schema.$inferred === true &&
+        Object.keys(this._schema.properties).length === 0)
+    if (nothingKnown && this._value) {
       if (inferSchema) {
         const inferred = inferSchema(this._value) as JSONSchema
-        if (inferred?.properties) this._schema = relaxInferred(inferred)
+        if (inferred?.properties && Object.keys(inferred.properties).length)
+          this._schema = relaxInferred(inferred)
       } else {
         // Nothing to render and no way to work out what to render. Say so where the user is
         // looking, not only in the console.

@@ -552,19 +552,19 @@ export class TosiPalette extends withAttributes({
   private field: HTMLInputElement | HTMLTextAreaElement | null = null
   private listId = `tosi-palette-${Math.random().toString(36).slice(2, 8)}`
 
-  private onDocumentKeydown = (event: KeyboardEvent): void => {
+  private handleDocumentKeydown = (event: KeyboardEvent): void => {
     if (!this.shortcut || !matchesShortcut(event, this.shortcut)) return
     event.preventDefault()
     if (this.dialogElement?.open) this.close()
     else this.open()
   }
 
-  private onFieldInput = (): void => {
+  private handleFieldInput = (): void => {
     this.grow()
     this.search(this.field!.value)
   }
 
-  private onFieldKeydown = (event: KeyboardEvent): void => {
+  private handleFieldKeydown = (event: KeyboardEvent): void => {
     const field = this.field!
     const atStart = field.selectionStart === 0 && field.selectionEnd === 0
     const atEnd = field.selectionStart === field.value.length
@@ -590,7 +590,7 @@ export class TosiPalette extends withAttributes({
     }
   }
 
-  private onListPointer = (event: Event): void => {
+  private handleListPointer = (event: Event): void => {
     const option = (event.target as Element).closest('[role="option"]')
     if (!option) return
     const index = Number((option as HTMLElement).dataset.index)
@@ -598,12 +598,12 @@ export class TosiPalette extends withAttributes({
     else if (index !== this.active) this.setActive(index)
   }
 
-  private onDialogClick = (event: MouseEvent): void => {
+  private handleDialogClick = (event: MouseEvent): void => {
     // A click on the backdrop lands on the <dialog> itself.
     if (event.target === this.dialogElement) this.close()
   }
 
-  private onCancel = (event: Event): void => {
+  private handleCancel = (event: Event): void => {
     event.preventDefault()
     this.close()
   }
@@ -639,8 +639,8 @@ export class TosiPalette extends withAttributes({
       {
         part: 'dialog',
         ariaLabel: 'Search',
-        onCancel: this.onCancel,
-        onClick: this.onDialogClick,
+        onCancel: this.handleCancel,
+        onClick: this.handleDialogClick,
       },
       div(
         { class: 'palette-header' },
@@ -664,8 +664,8 @@ export class TosiPalette extends withAttributes({
         class: 'palette-list',
         role: 'listbox',
         id: this.listId,
-        onClick: this.onListPointer,
-        onMousemove: this.onListPointer,
+        onClick: this.handleListPointer,
+        onMousemove: this.handleListPointer,
       }),
       div(
         { class: 'palette-footer' },
@@ -699,7 +699,7 @@ export class TosiPalette extends withAttributes({
   */
   private resizeObserver: ResizeObserver | null = null
   private compact = false
-  private onResize = (): void => {
+  private handleResize = (): void => {
     const compact = this.clientWidth < Number(this.compactWidth)
     if (compact !== this.compact) {
       this.compact = compact
@@ -709,16 +709,16 @@ export class TosiPalette extends withAttributes({
 
   connectedCallback(): void {
     super.connectedCallback()
-    document.addEventListener('keydown', this.onDocumentKeydown)
+    document.addEventListener('keydown', this.handleDocumentKeydown)
     if (typeof ResizeObserver === 'function') {
-      this.resizeObserver = new ResizeObserver(this.onResize)
+      this.resizeObserver = new ResizeObserver(this.handleResize)
       this.resizeObserver.observe(this)
     }
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback()
-    document.removeEventListener('keydown', this.onDocumentKeydown)
+    document.removeEventListener('keydown', this.handleDocumentKeydown)
     this.resizeObserver?.disconnect()
     this.resizeObserver = null
   }
@@ -738,8 +738,8 @@ export class TosiPalette extends withAttributes({
       ariaControls: this.listId,
       ariaExpanded: 'true',
       ariaLabel: this.placeholder,
-      onInput: this.onFieldInput,
-      onKeydown: this.onFieldKeydown,
+      onInput: this.handleFieldInput,
+      onKeydown: this.handleFieldKeydown,
     }
     const field = wantArea
       ? textarea({ ...props, rows: 1 })

@@ -493,7 +493,7 @@ export class TosiPalette extends withAttributes({
     spinner = null;
     field = null;
     listId = `tosi-palette-${Math.random().toString(36).slice(2, 8)}`;
-    onDocumentKeydown = (event) => {
+    handleDocumentKeydown = (event) => {
         if (!this.shortcut || !matchesShortcut(event, this.shortcut))
             return;
         event.preventDefault();
@@ -502,11 +502,11 @@ export class TosiPalette extends withAttributes({
         else
             this.open();
     };
-    onFieldInput = () => {
+    handleFieldInput = () => {
         this.grow();
         this.search(this.field.value);
     };
-    onFieldKeydown = (event) => {
+    handleFieldKeydown = (event) => {
         const field = this.field;
         const atStart = field.selectionStart === 0 && field.selectionEnd === 0;
         const atEnd = field.selectionStart === field.value.length;
@@ -537,7 +537,7 @@ export class TosiPalette extends withAttributes({
                 break;
         }
     };
-    onListPointer = (event) => {
+    handleListPointer = (event) => {
         const option = event.target.closest('[role="option"]');
         if (!option)
             return;
@@ -547,12 +547,12 @@ export class TosiPalette extends withAttributes({
         else if (index !== this.active)
             this.setActive(index);
     };
-    onDialogClick = (event) => {
+    handleDialogClick = (event) => {
         // A click on the backdrop lands on the <dialog> itself.
         if (event.target === this.dialogElement)
             this.close();
     };
-    onCancel = (event) => {
+    handleCancel = (event) => {
         event.preventDefault();
         this.close();
     };
@@ -579,8 +579,8 @@ export class TosiPalette extends withAttributes({
         dialog({
             part: 'dialog',
             ariaLabel: 'Search',
-            onCancel: this.onCancel,
-            onClick: this.onDialogClick,
+            onCancel: this.handleCancel,
+            onClick: this.handleDialogClick,
         }, div({ class: 'palette-header' }, icons.search(), span({ class: 'palette-spinner', hidden: true }, icons.loader()), div({ class: 'palette-field', style: { display: 'contents' } }), button({
             class: 'palette-clear',
             // Shown only with something to clear: an ✕ in a dialog's corner reads as "close".
@@ -593,8 +593,8 @@ export class TosiPalette extends withAttributes({
             class: 'palette-list',
             role: 'listbox',
             id: this.listId,
-            onClick: this.onListPointer,
-            onMousemove: this.onListPointer,
+            onClick: this.handleListPointer,
+            onMousemove: this.handleListPointer,
         }), div({ class: 'palette-footer' }, span({ class: 'palette-keys' }, kbd('↑'), kbd('↓'), span('Navigate'), kbd('↵'), span('Select')), span({ class: 'elastic' }), 
         // A button as well as a key hint: on a phone it is the way to close.
         button({
@@ -610,7 +610,7 @@ export class TosiPalette extends withAttributes({
     */
     resizeObserver = null;
     compact = false;
-    onResize = () => {
+    handleResize = () => {
         const compact = this.clientWidth < Number(this.compactWidth);
         if (compact !== this.compact) {
             this.compact = compact;
@@ -619,15 +619,15 @@ export class TosiPalette extends withAttributes({
     };
     connectedCallback() {
         super.connectedCallback();
-        document.addEventListener('keydown', this.onDocumentKeydown);
+        document.addEventListener('keydown', this.handleDocumentKeydown);
         if (typeof ResizeObserver === 'function') {
-            this.resizeObserver = new ResizeObserver(this.onResize);
+            this.resizeObserver = new ResizeObserver(this.handleResize);
             this.resizeObserver.observe(this);
         }
     }
     disconnectedCallback() {
         super.disconnectedCallback();
-        document.removeEventListener('keydown', this.onDocumentKeydown);
+        document.removeEventListener('keydown', this.handleDocumentKeydown);
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;
     }
@@ -646,8 +646,8 @@ export class TosiPalette extends withAttributes({
             ariaControls: this.listId,
             ariaExpanded: 'true',
             ariaLabel: this.placeholder,
-            onInput: this.onFieldInput,
-            onKeydown: this.onFieldKeydown,
+            onInput: this.handleFieldInput,
+            onKeydown: this.handleFieldKeydown,
         };
         const field = wantArea
             ? textarea({ ...props, rows: 1 })

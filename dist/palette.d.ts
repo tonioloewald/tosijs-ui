@@ -55,18 +55,18 @@ export declare class TosiPalette extends TosiPalette_base {
     private spinner;
     private field;
     private listId;
-    private onDocumentKeydown;
-    private onFieldInput;
-    private onFieldKeydown;
-    private onListPointer;
-    private onDialogClick;
-    private onCancel;
+    private handleDocumentKeydown;
+    private handleFieldInput;
+    private handleFieldKeydown;
+    private handleListPointer;
+    private handleDialogClick;
+    private handleCancel;
     private closeClicked;
     private clearField;
     content: () => (HTMLButtonElement | HTMLDialogElement)[];
     private resizeObserver;
     private compact;
-    private onResize;
+    private handleResize;
     connectedCallback(): void;
     disconnectedCallback(): void;
     /** The query field: a text box when `multiline`, re-made when that changes. */

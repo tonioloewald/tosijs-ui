@@ -176,7 +176,9 @@ preview.append(
         return rows
       },
       async save(record) {
-        rows = rows.map((r) => (r.sku === record.sku ? record : r))
+        rows = rows.some((r) => r.sku === record.sku)
+          ? rows.map((r) => (r.sku === record.sku ? record : r))
+          : [...rows, record]
         return record
       },
     },
@@ -280,7 +282,7 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 - `rows` — the records currently listed.
 - `value` — the selected record (the form's live model).
 - `table` / `form` — the composed elements.
-- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()`
+- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()` / `close()`
 - `whenIdle()` — resolves when no store operation is in flight; for tests, mostly.
 - `change` — the selection or the saved record changed.
 - `error` — a store operation failed.

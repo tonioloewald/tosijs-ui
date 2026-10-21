@@ -2279,6 +2279,16 @@ export class TosiTable extends withAttributes({
     get columns() {
         if (!Array.isArray(this._columns)) {
             const { _array } = this;
+            /*
+            Inferred from the first row, and NOT remembered while there is none.
+      
+            Caching the inference from an empty array fixed the table at zero columns: a table whose
+            data arrives later (any async store, <tosi-crud> with no schema) listed "3 records" and
+            showed nothing, because the empty list it was asked about first was the only one it
+            ever inferred from.
+            */
+            if (!_array.length)
+                return [];
             this._columns = Object.keys(_array[0] || {}).map((prop) => {
                 const width = defaultWidth(_array, prop, this.charWidth);
                 return {

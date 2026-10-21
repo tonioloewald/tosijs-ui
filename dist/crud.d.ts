@@ -28,6 +28,7 @@ interface CrudParts {
     saveButton: HTMLButtonElement;
     deleteButton: HTMLButtonElement;
     newButton: HTMLButtonElement;
+    closeButton: HTMLButtonElement;
 }
 export declare function columnsFromSchema(schema: JSONSchema): ColumnOptions[];
 declare const TosiCrud_base: import("tosijs").WithAttributes<{
@@ -45,6 +46,11 @@ export declare class TosiCrud extends TosiCrud_base<CrudParts> {
             gridTemplateRows: string;
             gap: string;
             minHeight: string;
+            height: string;
+            boxSizing: string;
+        };
+        ':host button[hidden]': {
+            display: string;
         };
         ':host .crud-toolbar': {
             display: string;
@@ -70,6 +76,12 @@ export declare class TosiCrud extends TosiCrud_base<CrudParts> {
         ':host .crud-detail[hidden]': {
             display: string;
         };
+        ':host.-narrow .crud-body': {
+            gridTemplateColumns: string;
+        };
+        ':host.-narrow.-detail-open tosi-table': {
+            display: string;
+        };
         ':host .crud-actions': {
             display: string;
             gap: string;
@@ -84,6 +96,9 @@ export declare class TosiCrud extends TosiCrud_base<CrudParts> {
         };
         ':host tosi-table': {
             minHeight: string;
+        };
+        ':host .crud-actions .elastic': {
+            flex: string;
         };
     };
     private _store;
@@ -124,6 +139,13 @@ export declare class TosiCrud extends TosiCrud_base<CrudParts> {
     private run;
     refresh(): Promise<void>;
     select(record: any): void;
+    /** Close the open record and go back to the list. Unsaved edits are dropped. */
+    close(): void;
+    /** Narrow enough that the list and the record cannot sit side by side. */
+    static NARROW_WIDTH: number;
+    private _resize;
+    private measure;
+    private blankRecord;
     /** Start a blank record. Nothing is stored until `save()`. */
     createNew(): void;
     save(): Promise<any>;

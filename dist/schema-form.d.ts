@@ -277,7 +277,8 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     private buildProposal;
     private syncHiddenErrors;
     content: null;
-    private _localeListener;
+    /** Stops the locale observer. A proxy's `.observe()` returns this, not a `Listener`. */
+    private _stopLocale;
     connectedCallback(): void;
     disconnectedCallback(): void;
     /** Throw away the DOM and build it again — a schema change, or a new plugin. */

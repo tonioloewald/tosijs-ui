@@ -413,3 +413,10 @@ describe('#157: selection API respects mode and notifies', () => {
     expect(t.array.filter((r: any) => r[t.selectedKey]).length).toBe(3)
   })
 })
+
+test('columns inferred from an empty array are not remembered (data that arrives later still gets columns)', () => {
+  const table = tosiTable()
+  expect(table.columns).toEqual([])
+  table.array = [{ name: 'Ada', role: 'admin' }]
+  expect(table.columns.map((c) => c.prop)).toEqual(['name', 'role'])
+})

@@ -177,7 +177,9 @@ preview.append(
         return rows
       },
       async save(record) {
-        rows = rows.map((r) => (r.sku === record.sku ? record : r))
+        rows = rows.some((r) => r.sku === record.sku)
+          ? rows.map((r) => (r.sku === record.sku ? record : r))
+          : [...rows, record]
         return record
       },
     },
@@ -281,7 +283,7 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 - `rows` — the records currently listed.
 - `value` — the selected record (the form's live model).
 - `table` / `form` — the composed elements.
-- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()`
+- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()` / `close()`
 - `whenIdle()` — resolves when no store operation is in flight; for tests, mostly.
 - `change` — the selection or the saved record changed.
 - `error` — a store operation failed.
@@ -327,6 +329,7 @@ interface CrudParts {
   saveButton: HTMLButtonElement
   deleteButton: HTMLButtonElement
   newButton: HTMLButtonElement
+  closeButton: HTMLButtonElement
 }
 
 /*
@@ -363,7 +366,7 @@ export function columnsFromSchema(schema: JSONSchema): ColumnOptions[] {
           ? 100
           : 180,
     }
-    if (field?.kind === 'boolean') column.type = 'boolean(✓,✗)' as any
+    if (field?.kind === 'boolean') column.type = 'boolean(check,x)' as any
     return column
   })
 }
@@ -383,7 +386,15 @@ export class TosiCrud extends withAttributes({
       gridTemplateRows: 'auto minmax(0, 1fr) auto',
       gap: 'var(--tosi-spacing, 10px)',
       minHeight: '300px',
+      // Fill a container that has a height (a live example's preview, a panel), so the list
+      // and the record scroll inside it instead of spilling out. In a container with no height
+      // this is `auto`, as before.
+      height: '100%',
+      boxSizing: 'border-box',
     },
+    // A page's own `button { display: … }` must not resurrect a button this component hid:
+    // the list-only store's Save and Delete showed on the doc site.
+    ':host button[hidden]': { display: 'none' },
     ':host .crud-toolbar': {
       display: 'flex',
       gap: 'var(--tosi-spacing-sm, 8px)',
@@ -403,6 +414,13 @@ export class TosiCrud extends withAttributes({
       overflow: 'auto',
     },
     ':host .crud-detail[hidden]': { display: 'none' },
+    /*
+    Narrow (under NARROW_WIDTH): one column, and an open record REPLACES the list rather than
+    squeezing in beside it, with Close to go back. Side by side at 650px left the form a
+    210px column in the doc preview.
+    */
+    ':host.-narrow .crud-body': { gridTemplateColumns: 'minmax(0, 1fr)' },
+    ':host.-narrow.-detail-open tosi-table': { display: 'none' },
     ':host .crud-actions': {
       display: 'flex',
       gap: 'var(--tosi-spacing-sm, 8px)',
@@ -413,6 +431,7 @@ export class TosiCrud extends withAttributes({
       opacity: '1',
     },
     ':host tosi-table': { minHeight: '200px' },
+    ':host .crud-actions .elastic': { flex: '1 1 auto' },
   }
 
   private _store: CrudStore | null = null
@@ -588,10 +607,49 @@ export class TosiCrud extends withAttributes({
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
+  /** Close the open record and go back to the list. Unsaved edits are dropped. */
+  close(): void {
+    this.select(null)
+  }
+
+  /** Narrow enough that the list and the record cannot sit side by side. */
+  static NARROW_WIDTH = 720
+  private _resize: ResizeObserver | null = null
+  private measure = (): void => {
+    const narrow =
+      this.clientWidth > 0 && this.clientWidth < TosiCrud.NARROW_WIDTH
+    this.classList.toggle('-narrow', narrow)
+  }
+
+  /*
+  A blank record to start from. With a schema the form knows the fields; without one it infers
+  them from the record it edits, and from `{}` that is nothing at all, so New showed "This schema
+  describes no properties". So without a schema, start from the fields the listed rows have,
+  each empty of its kind, leaving out the id (the store assigns it).
+  */
+  private blankRecord(): any {
+    if (this._schema) return {}
+    const blank: Record<string, unknown> = {}
+    for (const row of this._rows) {
+      for (const [key, value] of Object.entries(row ?? {})) {
+        if (key === this.idPath || key in blank) continue
+        blank[key] =
+          typeof value === 'number'
+            ? 0
+            : typeof value === 'boolean'
+            ? false
+            : typeof value === 'string'
+            ? ''
+            : null
+      }
+    }
+    return blank
+  }
+
   /** Start a blank record. Nothing is stored until `save()`. */
   createNew(): void {
     this._creating = true
-    this._selected = {}
+    this._selected = this.blankRecord()
     this.showSelected()
     this._hash?.set('id', undefined)
     this.queueRender()
@@ -723,6 +781,11 @@ export class TosiCrud extends withAttributes({
           button(
             { part: 'deleteButton', class: 'crud-delete' },
             localize('Delete')
+          ),
+          div({ class: 'elastic' }),
+          button(
+            { part: 'closeButton', class: 'crud-close' },
+            localize('Close')
           )
         )
       )
@@ -741,6 +804,11 @@ export class TosiCrud extends withAttributes({
 
     this.parts.table.selectionChanged = this.handleSelectionChanged
     this.parts.newButton.onclick = () => this.createNew()
+    this.parts.closeButton.onclick = () => this.close()
+    if (typeof ResizeObserver === 'function') {
+      this._resize = new ResizeObserver(this.measure)
+      this._resize.observe(this)
+    }
     /*
     Swallow the rejection AT THE BUTTON, and only here.
 
@@ -762,6 +830,8 @@ export class TosiCrud extends withAttributes({
   }
 
   disconnectedCallback(): void {
+    this._resize?.disconnect()
+    this._resize = null
     clearTimeout(this._searchTimer)
     this._stopHash?.()
     this._hash?.stop()
@@ -821,6 +891,7 @@ export class TosiCrud extends withAttributes({
   private showSelected(): void {
     if (!this.hydrated) return
     this.parts.detail.hidden = !this._selected
+    this.classList.toggle('-detail-open', Boolean(this._selected))
     // Load only when the SELECTION changed. A render must never push a record the user is
     // in the middle of editing.
     if (this._selected && this._loaded !== this._selected) {

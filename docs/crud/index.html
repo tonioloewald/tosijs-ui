@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=f53329d761b2" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=b3f5f834f99d" data-tosi-doc-system />
   <title>crud — tosijs-ui</title>
   <meta name="description" content="Search, list, edit — &lt;tosi-table&gt; and &lt;tosi-schema-form&gt; over a store you supply." />
   <link rel="canonical" href="https://ui.tosijs.net/crud/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=bd7bfb67f42d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ac889f898d3f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="crud.ts">
 <h1 id="crud">crud</h1>
 <!--{ "parent": "Components" }-->
@@ -189,7 +189,9 @@ preview.append(
         return rows
       },
       async save(record) {
-        rows = rows.map((r) =&gt; (r.sku === record.sku ? record : r))
+        rows = rows.some((r) =&gt; r.sku === record.sku)
+          ? rows.map((r) =&gt; (r.sku === record.sku ? record : r))
+          : [...rows, record]
         return record
       },
     },
@@ -282,7 +284,7 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
 <li><code>rows</code> — the records currently listed.</li>
 <li><code>value</code> — the selected record (the form&#39;s live model).</li>
 <li><code>table</code> / <code>form</code> — the composed elements.</li>
-<li><code>refresh()</code> / <code>select(record)</code> / <code>save()</code> / <code>remove()</code> / <code>createNew()</code></li>
+<li><code>refresh()</code> / <code>select(record)</code> / <code>save()</code> / <code>remove()</code> / <code>createNew()</code> / <code>close()</code></li>
 <li><code>whenIdle()</code> — resolves when no store operation is in flight; for tests, mostly.</li>
 <li><code>change</code> — the selection or the saved record changed.</li>
 <li><code>error</code> — a store operation failed.</li>
@@ -393,6 +395,6 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-w8twvw63.js"></script>
+  <script type="module" src="../hydrate-t1sd7q1q.js"></script>
 </body>
 </html>

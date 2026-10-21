@@ -1378,7 +1378,7 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 ```
 */
 /*{ "parent": "Components" }*/
-import { elements, unobserve, withAttributes } from 'tosijs';
+import { elements, withAttributes } from 'tosijs';
 import { fieldsFor, itemFields, branchFields, matchBranch, selectBranch, insertAt, removeAt, moveItem, blankFor, getByPath, setByPath, collectErrors, coerceToSchema, errorFor, relaxInferred, } from './schema-form/fields.js';
 import { localize, i18n } from './localize.js';
 import { unenforcedNote } from './schema-form/unenforced.js';
@@ -2502,20 +2502,26 @@ export class TosiSchemaForm extends withAttributes({
             ]));
     }
     content = null;
-    _localeListener = null;
+    /** Stops the locale observer. A proxy's `.observe()` returns this, not a `Listener`. */
+    _stopLocale = null;
     connectedCallback() {
         super.connectedCallback();
         live.add(this);
         // The chrome ("Add …", the reorder tooltips) is localized when it is built, so a locale
         // change has to rebuild it — otherwise switching language leaves this form in the old
         // one until something else happens to touch it.
-        this._localeListener = i18n.locale.observe(() => this.rebuild());
+        this._stopLocale = i18n.locale.observe(() => this.rebuild());
     }
     disconnectedCallback() {
         live.delete(this);
-        if (this._localeListener)
-            unobserve(this._localeListener);
-        this._localeListener = null;
+        /*
+        A proxy's `.observe()` hands back the function that stops it. This passed that function to
+        `unobserve()`, which wants the `Listener` that the module-level `observe()` returns, so it
+        threw "unobserve failed, listener not found" every time a form left the page, and the
+        observer was never removed.
+        */
+        this._stopLocale?.();
+        this._stopLocale = null;
         super.disconnectedCallback();
     }
     /** Throw away the DOM and build it again — a schema change, or a new plugin. */
@@ -2541,10 +2547,19 @@ export class TosiSchemaForm extends withAttributes({
         consumer can read it, edit it, and set it back. Set `.schema` explicitly to re-derive.
         */
         const inferSchema = getSchemaValidator()?.inferSchema;
-        if (!this._schema?.properties && this._value) {
+        /*
+        "No schema" includes one inferred from an EMPTY value. Inferring from the initial `{}` gave
+        `{properties: {}}`, which then counted as an answer for good: <tosi-crud>'s New, with no
+        schema, handed the form a record with fields and it went on saying "This schema describes
+        no properties". An inferred schema with nothing in it is not a schema to keep.
+        */
+        const nothingKnown = !this._schema?.properties ||
+            (this._schema.$inferred === true &&
+                Object.keys(this._schema.properties).length === 0);
+        if (nothingKnown && this._value) {
             if (inferSchema) {
                 const inferred = inferSchema(this._value);
-                if (inferred?.properties)
+                if (inferred?.properties && Object.keys(inferred.properties).length)
                     this._schema = relaxInferred(inferred);
             }
             else {
