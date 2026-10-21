@@ -45,13 +45,23 @@ export function revocationList(opts) {
     const now = opts.now ?? Date.now;
     const cache = new Map();
     const inFlight = new Map();
+    /** When each domain last FAILED, so a broken box is asked at most once per FRESH window. */
+    const failedAt = new Map();
+    const problems = new Map();
     const trusted = (domain) => {
         const entry = cache.get(domain);
         return entry && now() - entry.at <= REVOCATION_STALE_MS ? entry.ids : null;
     };
-    const refresh = async (domain) => {
+    const report = (domain, problem) => {
+        if ((problems.get(domain) ?? null) === problem)
+            return;
+        problems.set(domain, problem);
+        opts.onChange?.(domain, problem);
+    };
+    const fetchList = async (domain) => {
+        const url = revocationUrl(domain, opts.url);
         try {
-            const response = await get(revocationUrl(domain, opts.url), {
+            const response = await get(url, {
                 headers: { cookie: `tosi_edit=${opts.editKey}` },
                 redirect: 'manual',
                 signal: AbortSignal.timeout(REVOCATION_TIMEOUT_MS),
@@ -61,26 +71,54 @@ export function revocationList(opts) {
                 : response.status === 200
                     ? parseRevoked(await response.text())
                     : null;
-            if (ids)
+            if (ids) {
                 cache.set(domain, { ids, at: now() });
+                failedAt.delete(domain);
+            }
+            else {
+                failedAt.set(domain, now());
+                // 401/403: the box does not accept this workspace's edit key (a half-done rotation).
+                if (!trusted(domain))
+                    report(domain, `${url} answered ${response.status}`);
+            }
         }
-        catch {
-            // Unreachable or timed out: keep the last good copy while it is trusted.
+        catch (error) {
+            failedAt.set(domain, now());
+            if (!trusted(domain))
+                report(domain, `${url} could not be read (${error.message})`);
         }
-        return trusted(domain);
+        const ids = trusted(domain);
+        if (ids)
+            report(domain, null);
+        return ids;
+    };
+    const refresh = (domain) => {
+        let pending = inFlight.get(domain);
+        if (!pending) {
+            pending = fetchList(domain).finally(() => inFlight.delete(domain));
+            inFlight.set(domain, pending);
+        }
+        return pending;
     };
     return {
         current(domain) {
             const entry = cache.get(domain);
-            if (entry && now() - entry.at < REVOCATION_FRESH_MS)
+            const age = entry ? now() - entry.at : Infinity;
+            const failed = failedAt.get(domain);
+            const recentlyFailed = failed !== undefined && now() - failed < REVOCATION_FRESH_MS;
+            if (age < REVOCATION_FRESH_MS)
                 return Promise.resolve(entry.ids);
-            let pending = inFlight.get(domain);
-            if (!pending) {
-                pending = refresh(domain).finally(() => inFlight.delete(domain));
-                inFlight.set(domain, pending);
+            if (age <= REVOCATION_STALE_MS) {
+                // Stale but trusted: answer now, refresh behind.
+                if (!recentlyFailed)
+                    void refresh(domain);
+                return Promise.resolve(entry.ids);
             }
-            return pending;
+            if (recentlyFailed)
+                return Promise.resolve(null);
+            return refresh(domain);
         },
-        domains: () => [...cache.keys()],
+        refresh,
+        domains: () => [...new Set([...cache.keys(), ...failedAt.keys()])],
     };
 }

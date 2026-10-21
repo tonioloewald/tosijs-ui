@@ -95,3 +95,25 @@ describe('parseArgv', () => {
     expect(r.code).toBe(1)
   })
 })
+
+import { tunnelFlagProblems } from './resolve-site-config'
+
+test('tosijs-tunnel refuses flag combinations it would silently ignore', () => {
+  const run = (...argv: string[]) =>
+    tunnelFlagProblems({
+      has: (name) => argv.includes(`--${name}`),
+      flag: (name) =>
+        argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3),
+    })
+  expect(run('--link', '--share', '--share-ttl=60')).toEqual([])
+  expect(run('--link', '--global', '--label=iPad')).toEqual([])
+  expect(run('--link', '--global', '--share', '--share-ttl=60')[0]).toContain(
+    'does not apply to --global'
+  )
+  expect(run('--link', '--share-ttl=60')[0]).toContain('only applies')
+  expect(run('--link', '--label=iPad')[0]).toContain('--label names')
+  expect(run('--link', '--global', '--share', '--label=x')[0]).toContain(
+    '--label names'
+  )
+  expect(run('--devices', '--label=x')).toHaveLength(1)
+})

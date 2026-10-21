@@ -50,8 +50,14 @@ interface Entry {
 }
 
 export interface RevocationList {
-  /** The list for `domain`: cached while fresh, else fetched; null when it cannot be trusted. */
+  /**
+   * The list for `domain`, or null when it cannot be trusted. Never waits on the box while a
+   * copy less than `REVOCATION_STALE_MS` old exists: a copy older than `REVOCATION_FRESH_MS` is
+   * returned at once and refreshed in the background.
+   */
   current(domain: string): Promise<ReadonlySet<string> | null>
+  /** Fetch now, whatever the cache holds (the once-a-minute sweep). */
+  refresh(domain: string): Promise<ReadonlySet<string> | null>
   /** Every domain a pass has been checked for, so a sweep can refresh them. */
   domains(): string[]
 }
@@ -63,20 +69,36 @@ export function revocationList(opts: {
   url?: string
   fetch?: (url: string, init: RequestInit) => Promise<Response>
   now?: () => number
+  /**
+   * Told when the list for a domain stops or starts being readable: `problem` says why, or is
+   * null when it is readable again. While it is unreadable no device pass is honoured, which
+   * looks to a key holder like "this workspace needs an invite link", so say it.
+   */
+  onChange?: (domain: string, problem: string | null) => void
 }): RevocationList {
   const get = opts.fetch ?? ((url, init) => fetch(url, init))
   const now = opts.now ?? Date.now
   const cache = new Map<string, Entry>()
   const inFlight = new Map<string, Promise<ReadonlySet<string> | null>>()
+  /** When each domain last FAILED, so a broken box is asked at most once per FRESH window. */
+  const failedAt = new Map<string, number>()
+  const problems = new Map<string, string | null>()
 
   const trusted = (domain: string): Set<string> | null => {
     const entry = cache.get(domain)
     return entry && now() - entry.at <= REVOCATION_STALE_MS ? entry.ids : null
   }
 
-  const refresh = async (domain: string) => {
+  const report = (domain: string, problem: string | null) => {
+    if ((problems.get(domain) ?? null) === problem) return
+    problems.set(domain, problem)
+    opts.onChange?.(domain, problem)
+  }
+
+  const fetchList = async (domain: string) => {
+    const url = revocationUrl(domain, opts.url)
     try {
-      const response = await get(revocationUrl(domain, opts.url), {
+      const response = await get(url, {
         headers: { cookie: `tosi_edit=${opts.editKey}` },
         redirect: 'manual',
         signal: AbortSignal.timeout(REVOCATION_TIMEOUT_MS),
@@ -87,25 +109,51 @@ export function revocationList(opts: {
           : response.status === 200
           ? parseRevoked(await response.text())
           : null
-      if (ids) cache.set(domain, { ids, at: now() })
-    } catch {
-      // Unreachable or timed out: keep the last good copy while it is trusted.
+      if (ids) {
+        cache.set(domain, { ids, at: now() })
+        failedAt.delete(domain)
+      } else {
+        failedAt.set(domain, now())
+        // 401/403: the box does not accept this workspace's edit key (a half-done rotation).
+        if (!trusted(domain))
+          report(domain, `${url} answered ${response.status}`)
+      }
+    } catch (error) {
+      failedAt.set(domain, now())
+      if (!trusted(domain))
+        report(domain, `${url} could not be read (${(error as Error).message})`)
     }
-    return trusted(domain)
+    const ids = trusted(domain)
+    if (ids) report(domain, null)
+    return ids
+  }
+
+  const refresh = (domain: string) => {
+    let pending = inFlight.get(domain)
+    if (!pending) {
+      pending = fetchList(domain).finally(() => inFlight.delete(domain))
+      inFlight.set(domain, pending)
+    }
+    return pending
   }
 
   return {
     current(domain) {
       const entry = cache.get(domain)
-      if (entry && now() - entry.at < REVOCATION_FRESH_MS)
-        return Promise.resolve(entry.ids)
-      let pending = inFlight.get(domain)
-      if (!pending) {
-        pending = refresh(domain).finally(() => inFlight.delete(domain))
-        inFlight.set(domain, pending)
+      const age = entry ? now() - entry.at : Infinity
+      const failed = failedAt.get(domain)
+      const recentlyFailed =
+        failed !== undefined && now() - failed < REVOCATION_FRESH_MS
+      if (age < REVOCATION_FRESH_MS) return Promise.resolve(entry!.ids)
+      if (age <= REVOCATION_STALE_MS) {
+        // Stale but trusted: answer now, refresh behind.
+        if (!recentlyFailed) void refresh(domain)
+        return Promise.resolve(entry!.ids)
       }
-      return pending
+      if (recentlyFailed) return Promise.resolve(null)
+      return refresh(domain)
     },
-    domains: () => [...cache.keys()],
+    refresh,
+    domains: () => [...new Set([...cache.keys(), ...failedAt.keys()])],
   }
 }

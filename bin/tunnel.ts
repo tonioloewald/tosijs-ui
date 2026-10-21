@@ -48,6 +48,7 @@ import {
   parseDeviceListing,
   DEVICE_LISTING_SEPARATOR,
   DEVICE_ID_PATTERN,
+  tunnelFlagProblems,
 } from './resolve-site-config.ts'
 
 const { has, flag } = parseArgv(process.argv.slice(2), {
@@ -80,6 +81,15 @@ const { has, flag } = parseArgv(process.argv.slice(2), {
     `  --host=user@box                      override the configured preview host\n` +
     `  --port= --local-port= --remote-port= override the resolved ports`,
 })
+
+{
+  const problems = tunnelFlagProblems({ has, flag })
+  if (problems.length) {
+    for (const problem of problems) console.error(`\n${problem}`)
+    console.error('')
+    process.exit(1)
+  }
+}
 
 const siteConfig = await resolveSiteConfig()
 

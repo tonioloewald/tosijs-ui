@@ -423,6 +423,35 @@ export interface Argv {
 }
 
 /**
+ * `tosijs-tunnel` flag combinations that would otherwise be silently ignored, each with what to
+ * do instead (1.16.31 review). A flag that changes nothing is a promise the bin does not keep.
+ */
+export function tunnelFlagProblems(args: {
+  has: (name: string) => boolean
+  flag: (name: string) => string | undefined
+}): string[] {
+  const problems: string[] = []
+  const link = args.has('link')
+  const share = args.has('share')
+  const global = args.has('global')
+  if (args.flag('share-ttl') !== undefined) {
+    if (global)
+      problems.push(
+        '--share-ttl does not apply to --global links: they always expire after 5 minutes. For a longer-lived view link, use --link --share --share-ttl=… without --global.'
+      )
+    else if (!(link && share))
+      problems.push('--share-ttl only applies to --link --share.')
+  }
+  if (args.flag('label') !== undefined) {
+    if (!(link && global) || share)
+      problems.push(
+        '--label names the device a --link --global EDIT link is for; it does nothing elsewhere.'
+      )
+  }
+  return problems
+}
+
+/**
  * Parse `argv` against `spec`. Prints usage and exits on `--help` (0) or on an
  * unrecognised flag (1); returns a reader otherwise.
  */

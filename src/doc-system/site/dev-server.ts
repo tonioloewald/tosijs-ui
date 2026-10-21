@@ -1103,6 +1103,15 @@ export async function devServer(
     ? revocationList({
         editKey: globalKeys.keys.edit,
         url: process.env.TOSIJS_REVOKED_URL || undefined,
+        onChange: (domain, problem) =>
+          problem
+            ? console.warn(
+                `⚠️  Device passes for ${domain} are refused: the revoked-device list is unreadable (${problem}). ` +
+                  `Is the box up, and does its PREVIEW_EDIT_TOKEN match this machine's?`
+              )
+            : console.log(
+                `🔒 Revoked-device list for ${domain} readable again`
+              ),
       })
     : null
   const endRevoked = (revoked: ReadonlySet<string> | null) => {
@@ -1134,7 +1143,7 @@ export async function devServer(
   if (revocations) {
     setInterval(() => {
       for (const domain of revocations.domains())
-        revocations.current(domain).then(endRevoked)
+        revocations.refresh(domain).then(endRevoked)
     }, REVOCATION_FRESH_MS).unref()
   }
   // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
@@ -2136,6 +2145,13 @@ export async function devServer(
     srv: Upgrader | undefined,
     handle: (request: Request, srv: Upgrader | undefined) => Promise<Response>
   ): Promise<Response> => {
+    // A request that already holds a writing session has nothing to gain from a key.
+    const held = readCookie(request.headers.get('cookie'), SESSION_COOKIE)
+    if (
+      validSessionCookie(auth, held, Date.now()) &&
+      cookieMayWrite(auth, held)
+    )
+      return handle(request, srv)
     const { device, revoked } = await passCheck(request.headers.get('cookie'))
     const grant = globalKeyRefresh(request, {
       viaTunnel: true,

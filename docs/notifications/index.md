@@ -13,8 +13,8 @@ front card and the next one comes forward.
 
 When more than one notification is showing, a **Dismiss all** button sits centred at the bottom,
 over the edges of any stacked cards, outlined in the colour of the most severe notification open,
-hidden ones included. It closes every notification,
-firing each one's `close` callback as if the user had closed it.
+hidden ones included. It closes every notification, firing each one's `close` callback as if the
+user had closed it; `TosiNotification.dismissAll()` does the same from code.
 
 A long message is cut off with an ellipsis after four lines (`--notification-max-lines`), so the
 close button always stays in view; the full text is the notification's tooltip, and screen

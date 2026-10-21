@@ -15,8 +15,8 @@ front card and the next one comes forward.
 
 When more than one notification is showing, a **Dismiss all** button sits centred at the bottom,
 over the edges of any stacked cards, outlined in the colour of the most severe notification open,
-hidden ones included. It closes every notification,
-firing each one's `close` callback as if the user had closed it.
+hidden ones included. It closes every notification, firing each one's `close` callback as if the
+user had closed it; `TosiNotification.dismissAll()` does the same from code.
 
 A long message is cut off with an ellipsis after four lines (`--notification-max-lines`), so the
 close button always stays in view; the full text is the notification's tooltip, and screen
@@ -445,10 +445,11 @@ export class TosiNotification extends Component {
         const visible = Math.max(maxVisible, 1);
         const split = Math.max(notes.length - visible, 0);
         const behind = notes.slice(0, split).reverse();
+        const stacked = new Set(behind);
         const front = notes[split];
         for (const note of notes) {
             note.style.removeProperty('margin-bottom');
-            if (behind.includes(note))
+            if (stacked.has(note))
                 continue;
             note.classList.remove('stacked', 'buried');
             note.inert = false;
@@ -459,7 +460,13 @@ export class TosiNotification extends Component {
         const dismiss = root.querySelector('.dismiss-all');
         if (dismiss) {
             dismiss.hidden = notes.length < 2;
-            const worst = notes.reduce((a, b) => (a && severity(a) >= severity(b) ? a : b), undefined);
+            let worst;
+            let worstSeverity = -1;
+            for (const note of notes) {
+                const level = severity(note);
+                if (level > worstSeverity)
+                    [worst, worstSeverity] = [note, level];
+            }
             if (worst)
                 dismiss.style.setProperty('--notification-accent-color', worst.style.getPropertyValue('--notification-accent-color'));
         }
