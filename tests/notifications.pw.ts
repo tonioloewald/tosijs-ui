@@ -99,15 +99,49 @@ test('past three, the bottom note becomes a receding stack', async ({
   expect(column.map((n) => n.message)).toEqual(['note 6', 'note 7'])
   expect(column.every((n) => !n.stacked && n.visible)).toBe(true)
   expect(column[0].bottom).toBeLessThanOrEqual(front.top)
-  // four peek out, each further up and right by less than the last; the fifth is hidden
+  // three peek out underneath, each lower and further left by half as much; the rest hidden
   expect(behind.map((n) => n.stacked)).toEqual([true, true, true, true, true])
-  expect(behind.map((n) => n.visible)).toEqual([true, true, true, true, false])
+  expect(behind.map((n) => n.visible)).toEqual([true, true, true, false, false])
   expect(behind.every((n) => n.inert)).toBe(true)
-  const rises = behind.slice(0, 4).map((n) => Math.round(front.top - n.top))
-  expect(rises).toEqual([8, 14, 18, 20])
-  for (const n of behind.slice(0, 4)) expect(n.left).toBeGreaterThan(front.left)
-  // the column clears the peeking cards
-  expect(column[0].bottom).toBeLessThanOrEqual(behind[3].top)
+  const drops = behind
+    .slice(0, 3)
+    .map((n) => Math.round(n.bottom - front.bottom))
+  expect(drops).toEqual([8, 12, 14])
+  const lefts = behind.slice(0, 3).map((n) => Math.round(front.left - n.left))
+  expect(lefts).toEqual([4, 6, 7])
+  // the Dismiss all button clears the cards peeking out under the front one
+  const button = (await page
+    .locator('tosi-notification .dismiss-all')
+    .boundingBox())!
+  expect(button.y).toBeGreaterThanOrEqual(behind[2].bottom)
+})
+
+test("Dismiss all is outlined in the most severe notification's colour", async ({
+  page,
+}) => {
+  await open(page)
+  const accent = () =>
+    page.evaluate(() =>
+      getComputedStyle(
+        document
+          .querySelector('tosi-notification')!
+          .shadowRoot!.querySelector('.dismiss-all')!
+      )
+        .getPropertyValue('--notification-accent-color')
+        .trim()
+    )
+  await page.evaluate(() => {
+    const { postNotification } = (window as any).xinjsui
+    postNotification({ message: 'a', type: 'log' })
+    postNotification({ message: 'b', type: 'success' })
+  })
+  expect(await accent()).toBe('green')
+  await page.evaluate(() => {
+    const { postNotification } = (window as any).xinjsui
+    postNotification({ message: 'c', type: 'error' })
+    postNotification({ message: 'd', type: 'warn' })
+  })
+  expect(await accent()).toBe('red')
 })
 
 test('closing the front card brings the next one forward', async ({ page }) => {

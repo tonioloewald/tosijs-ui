@@ -130,8 +130,8 @@ export declare class TosiNotification extends Component {
     /** How many notes are shown in full; older ones stack behind them. */
     static maxVisible: number;
     /**
-     * How far (px) each stacked note peeks out beyond the one in front of it, up and to the
-     * right. Notes beyond the last offset are hidden.
+     * How far (px) each stacked note peeks out below the one in front of it (and half that to the
+     * left). Notes beyond the last offset are hidden.
      */
     static stackOffsets: number[];
     private static closers;

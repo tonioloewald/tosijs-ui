@@ -6,13 +6,15 @@
 a list of notifications.
 
 Notifications stack up from the bottom of the screen, newest on top. Up to
-`TosiNotification.maxVisible` (3) they sit in a column. Past that, the bottom one becomes a
-stack: the older notifications recede behind it, up and slightly to the right, each peeking out
-less than the last, and any beyond `TosiNotification.stackOffsets` (`[8, 6, 4, 2]`, in px) are
-hidden until the ones in front are closed. Close the front card and the next one comes forward.
+`TosiNotification.maxVisible` (3) they sit in a column. Past that, the bottom one becomes the
+front of a stack: the older notifications sit underneath it, each one lower and slightly to the
+left of the card in front, by `TosiNotification.stackOffsets` (`[8, 4, 2]`, in px: each peeks
+out half as far as the last). Any beyond that are hidden until the ones in front are closed.
+Close the front card and the next one comes forward.
 
-When more than one notification is showing, a **Dismiss all** button sits below the bottom one.
-It closes every notification, firing each one's `close` callback as if the user had closed it.
+When more than one notification is showing, a **Dismiss all** button sits below the bottom one,
+outlined in the colour of the most severe notification showing. It closes every notification,
+firing each one's `close` callback as if the user had closed it.
 
 A long message is cut off with an ellipsis after four lines (`--notification-max-lines`), so the
 close button always stays in view; the full text is the notification's tooltip, and screen
@@ -47,16 +49,20 @@ when an operation completes). This will *also* call any `close` callback functio
 provided. (The progress demos in the example exercise this functionality.)
 
 ```js
-import { postNotification, icons } from 'tosijs-ui'
+import { postNotification, TosiNotification, icons } from 'tosijs-ui'
 
 const form = preview.querySelector('tosi-form')
 const submit = preview.querySelector('.submit')
 const closeButton = preview.querySelector('.close')
 
 let close
+// read the field itself: the form's value omits a field nobody has edited
+const maxVisible = () =>
+  Number(preview.querySelector('tosi-field[key=maxVisible] input').value) || 3
 
 form.submitCallback = (value, isValid) => {
   if (!isValid) return
+  TosiNotification.maxVisible = maxVisible()
   if (value.type.startsWith('progress')) {
     startTime = Date.now()
     const { message, duration, icon } = value
@@ -74,6 +80,13 @@ form.submitCallback = (value, isValid) => {
 }
 
 submit.addEventListener('click', form.submit)
+preview.querySelector('.burst').addEventListener('click', () => {
+  TosiNotification.maxVisible = maxVisible()
+  const types = ['error', 'warn', 'info', 'success', 'log']
+  for (let i = 1; i <= 8; i++) {
+    postNotification({ message: `Notification ${i} of 8`, type: types[i % types.length] })
+  }
+})
 closeButton.addEventListener('click', () => {
   if (close) {
     close()
@@ -100,7 +113,9 @@ postNotification({
     ></tosi-select>
   </tosi-field>
   <tosi-field caption="Duration" key="duration" type="number" value="2"></tosi-field>
+  <tosi-field caption="Max visible" key="maxVisible" type="number" value="3"></tosi-field>
   <button slot="footer" class="close" disabled>Close Last Notification</button>
+  <button slot="footer" class="burst">Post 8</button>
   <span slot="footer" class="elastic"></span>
   <button slot="footer" class="submit">Post Notification</button>
 </tosi-form>
@@ -163,6 +178,16 @@ const COLOR_MAP = {
     success: 'green',
     progress: 'royalblue',
 };
+/** How much a note's type demands attention, for the Dismiss all button's outline. */
+const SEVERITY = {
+    error: 4,
+    warn: 3,
+    progress: 2,
+    info: 2,
+    success: 1,
+    log: 0,
+};
+const severity = (note) => Math.max(0, ...[...note.classList].map((name) => SEVERITY[name] ?? 0));
 export class TosiNotification extends Component {
     static preferredTagName = 'tosi-notification';
     static singleton;
@@ -222,8 +247,8 @@ export class TosiNotification extends Component {
             zIndex: 1,
         },
         /*
-        The notes behind the bottom one: out of the flow, their tops aligned with the front card's
-        and offset up and right by layout().
+        The notes behind the bottom one: out of the flow, their bottoms aligned with the front
+        card's and offset down and left by layout().
         */
         ':host .note.stacked': {
             position: 'absolute',
@@ -244,7 +269,7 @@ export class TosiNotification extends Component {
             border: 'none',
             borderRadius: 99,
             padding: `${vars.notificationSpacing50} ${vars.notificationSpacing150}`,
-            boxShadow: '0 2px 8px #0006',
+            boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${vars.notificationAccentColor}`,
             cursor: 'pointer',
         },
         ':host .dismiss-all[hidden]': {
@@ -302,10 +327,10 @@ export class TosiNotification extends Component {
     /** How many notes are shown in full; older ones stack behind them. */
     static maxVisible = 3;
     /**
-     * How far (px) each stacked note peeks out beyond the one in front of it, up and to the
-     * right. Notes beyond the last offset are hidden.
+     * How far (px) each stacked note peeks out below the one in front of it (and half that to the
+     * left). Notes beyond the last offset are hidden.
      */
-    static stackOffsets = [8, 6, 4, 2];
+    static stackOffsets = [8, 4, 2];
     static closers = new WeakMap();
     static removeNote(note) {
         if (note.classList.contains('closing'))
@@ -351,18 +376,30 @@ export class TosiNotification extends Component {
                 continue;
             note.classList.remove('stacked', 'buried');
             note.inert = false;
-            for (const prop of ['transform', 'z-index', 'bottom', 'margin-top']) {
+            for (const prop of ['transform', 'z-index', 'bottom']) {
                 note.style.removeProperty(prop);
             }
         }
+        if (front && !front.classList.contains('closing'))
+            front.style.removeProperty('margin-bottom');
         const dismiss = root.querySelector('.dismiss-all');
-        if (dismiss)
+        if (dismiss) {
             dismiss.hidden = notes.length < 2;
+            const worst = notes.reduce((a, b) => (a && severity(a) >= severity(b) ? a : b), undefined);
+            if (worst)
+                dismiss.style.setProperty('--notification-accent-color', worst.style.getPropertyValue('--notification-accent-color'));
+        }
         if (!behind.length)
             return;
-        // Distance from the host's bottom edge to the front card's top: it does not move when
+        const depthShown = Math.min(behind.length, stackOffsets.length);
+        const room = stackOffsets
+            .slice(0, depthShown)
+            .reduce((sum, step) => sum + step, 0);
+        // Room below the front card for the cards peeking out from under it.
+        front.style.marginBottom = `${room}px`;
+        // Distance from the host's bottom edge to the front card's bottom: it does not move when
         // notes above the front card come and go, because the host grows upward.
-        const frontTop = this.clientHeight - front.offsetTop;
+        const frontBottom = this.clientHeight - front.offsetTop - front.offsetHeight;
         let offset = 0;
         behind.forEach((note, depth) => {
             const buried = depth >= stackOffsets.length;
@@ -371,12 +408,10 @@ export class TosiNotification extends Component {
             note.classList.add('stacked');
             note.classList.toggle('buried', buried);
             note.inert = true;
-            note.style.bottom = `${frontTop - note.offsetHeight}px`;
-            note.style.transform = `translate(${offset / 2}px, ${-offset}px)`;
+            note.style.bottom = `${frontBottom}px`;
+            note.style.transform = `translate(${-offset / 2}px, ${offset}px)`;
             note.style.zIndex = String(-1 - depth);
         });
-        // Room above the front card for the cards peeking out behind it.
-        front.style.marginTop = `${offset}px`;
     }
     static post(spec) {
         const { message, duration, type, close, progress, icon, color } = Object.assign({ type: 'info', duration: -1 }, typeof spec === 'string' ? { message: spec } : spec);
