@@ -146,7 +146,13 @@ export declare class TosiNotification extends Component {
      */
     static stackOffsets: number[];
     private static closers;
+    private static leaving;
     static removeNote(note: HTMLElement): void;
+    /**
+     * Apply `change`, lay out, and animate every note (and the Dismiss all button) from where it
+     * was to where it now is. A note coming out of hiding fades in.
+     */
+    moveTo(change: () => void): void;
     /** Close every open notification, as if the user had closed each one. */
     static dismissAll(): void;
     /**

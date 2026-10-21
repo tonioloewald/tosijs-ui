@@ -179,6 +179,13 @@ const COLOR_MAP = {
     success: 'green',
     progress: 'royalblue',
 };
+/** How long a closing note fades in place before the others move. */
+const FADE_MS = 150;
+/** How long the others take to move to their new places. */
+const MOVE_MS = 200;
+const nextFrame = (fn) => typeof requestAnimationFrame === 'function'
+    ? requestAnimationFrame(fn)
+    : setTimeout(fn, 16);
 /** How much a note's type demands attention, for the Dismiss all button's outline. */
 const SEVERITY = {
     error: 4,
@@ -331,7 +338,7 @@ export class TosiNotification extends Component {
             opacity: 0,
             zIndex: 0,
             pointerEvents: 'none',
-            transition: 'opacity 0.25s ease-in, margin 0.25s ease-in',
+            transition: `opacity ${FADE_MS}ms ease-in`,
         },
         '@keyframes tosi-note-in': {
             from: { opacity: '0' },
@@ -346,19 +353,71 @@ export class TosiNotification extends Component {
      */
     static stackOffsets = [16, 8, 4];
     static closers = new WeakMap();
+    /*
+    Closing is two steps, so that nothing moves twice. The note fades where it is, keeping its
+    place; then it leaves, the stack is laid out once, and everything that changed place glides
+    there from where it was (FLIP). Collapsing the note while restacking at once made cards pop up
+    and slide back, and left the stack hanging where the old front card had been.
+  
+    Notes that finish fading in the same frame (Dismiss all) leave together, in one move.
+    */
+    static leaving = new Set();
     static removeNote(note) {
         if (note.classList.contains('closing'))
             return;
         note.classList.add('closing');
-        if (!note.classList.contains('stacked')) {
-            note.style.marginBottom = -note.offsetHeight + 'px';
+        setTimeout(() => {
+            const first = TosiNotification.leaving.size === 0;
+            TosiNotification.leaving.add(note);
+            if (!first)
+                return;
+            nextFrame(() => {
+                const notes = [...TosiNotification.leaving];
+                TosiNotification.leaving.clear();
+                const singleton = TosiNotification.singleton;
+                if (singleton)
+                    singleton.moveTo(() => notes.forEach((n) => n.remove()));
+                else
+                    notes.forEach((n) => n.remove());
+            });
+        }, FADE_MS);
+    }
+    /**
+     * Apply `change`, lay out, and animate every note (and the Dismiss all button) from where it
+     * was to where it now is. A note coming out of hiding fades in.
+     */
+    moveTo(change) {
+        const root = this.shadowRoot;
+        if (!root)
+            return change();
+        const selector = '.note:not(.closing), .dismiss-all';
+        const before = new Map();
+        const hidden = new Set();
+        for (const el of root.querySelectorAll(selector)) {
+            before.set(el, el.getBoundingClientRect().top);
+            if (el.classList.contains('buried') || el.hidden)
+                hidden.add(el);
         }
-        TosiNotification.singleton?.layout();
-        const remove = () => {
-            note.remove();
-        };
-        note.addEventListener('transitionend', remove);
-        setTimeout(remove, 1000);
+        change();
+        this.layout();
+        for (const el of root.querySelectorAll(selector)) {
+            const was = before.get(el);
+            if (was === undefined || typeof el.animate !== 'function')
+                continue;
+            if (hidden.has(el)) {
+                if (!el.classList.contains('buried') && !el.hidden)
+                    el.animate([{ opacity: 0 }, { opacity: 1 }], MOVE_MS);
+                continue;
+            }
+            const dy = was - el.getBoundingClientRect().top;
+            if (Math.abs(dy) < 0.5)
+                continue;
+            const settled = el.style.transform;
+            el.animate([
+                { transform: `translateY(${dy}px) ${settled}` },
+                { transform: settled || 'none' },
+            ], { duration: MOVE_MS, easing: 'ease-out' });
+        }
     }
     /** Close every open notification, as if the user had closed each one. */
     static dismissAll() {
@@ -480,8 +539,7 @@ export class TosiNotification extends Component {
             },
         }, icons.x()));
         TosiNotification.closers.set(note, closeCallback);
-        root.append(note);
-        singleton.layout();
+        singleton.moveTo(() => root.append(note));
         if (progressBar instanceof HTMLProgressElement &&
             progress instanceof Function) {
             progressBar.setAttribute('max', String(100));
