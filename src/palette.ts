@@ -357,6 +357,12 @@ export class TosiPalette extends withAttributes({
       boxShadow: '0 10px 40px #0005',
       overflow: 'hidden',
       flexDirection: 'column',
+      // Its own text metrics: a palette placed in a header inherits the header's (a line
+      // height sized for the site title, and nowrap), which tripled every row's height.
+      lineHeight: 1.35,
+      whiteSpace: 'normal',
+      textAlign: 'left',
+      fontSize: varDefault.fontSize('16px'),
     },
     ':host > dialog[open]': {
       display: 'flex',
