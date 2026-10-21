@@ -1,5 +1,53 @@
 # Changelog
 
+## 1.16.31
+
+**Tunnel users: each browser needs one new `tosijs-tunnel --link --global`.** The edit cookie
+from earlier versions held the box's edit key itself, and it no longer opens anything (see
+below). Reinstall the box's Caddyfile (`tosijs-caddy-install --go`) to drop `?t=<edit key>`.
+
+### Tunnel
+
+- **Each device gets its own edit pass, and you can revoke one.** A `--link --global` edit link
+  used to give the browser the box's edit key as its cookie, so every device held the same
+  credential, and the only way to cut one off was to rotate the key everywhere. Now the link
+  gives that browser a pass for that one device, signed with the edit key, which never reaches
+  a browser. `tosijs-tunnel --devices` lists every pass issued, `--revoke=<id>` cuts one device
+  off, and `--label=<name>` names the device a link is for. Every workspace checks the box's
+  revoked list before it honours a pass, at most a minute old, and ends a revoked device's open
+  sessions within that minute. A workspace that cannot read the list honours no pass at all.
+  An edit link also sets the view key, which opens the box's root list and the static previews.
+- **A link that hands over a key lives five minutes.** The view `--global` link lasted a day;
+  now both kinds expire after five minutes, single use. The cookie it sets is what lasts (30
+  days), not the code that delivers it. `tunnel.linkTtlMinutes` can shorten the window, never
+  lengthen it, and `--share-ttl` no longer applies to these links; to give someone view access
+  later, send a plain `--link --share`.
+- **The edit key has no URL form.** The box no longer accepts `?t=<edit key>`, which made the
+  key a permanent bearer token in browser history and anywhere the URL was pasted. The view key
+  still works that way for the static previews.
+- **The box's workspace list opens each link in a new tab**, so the list stays open as the
+  place you pick the next one.
+
+### Notifications
+
+- **A long message can no longer push the close button out of the notification.** The message
+  column cannot grow past the note, an unbroken string wraps anywhere, and a message is cut off
+  with an ellipsis after four lines (`--notification-max-lines`); the full text is the tooltip,
+  and screen readers get all of it.
+- **Many notifications stack instead of scrolling.** The newest `TosiNotification.maxVisible`
+  (3) stay in view, newest on top; the lowest of them fronts a stack, with older notifications
+  behind it, each one's lower edge showing by `TosiNotification.stackOffsets` (`[16, 8, 4]` px),
+  and the rest hidden until the ones in front close. Stacked notifications show their lower
+  edges straight below the front card, with no sideways offset.
+- **Dismiss all.** A button whenever more than one notification is open, which sits centred
+  over those edges at the bottom, outlined in the colour of the most severe one open (hidden ones included), and
+  `TosiNotification.dismissAll()`. Both fire each notification's `close` callback, as if the
+  user had closed it.
+- **Smoother movement.** A closing notification fades where it is, then the rest move once,
+  straight to their new places; restacking used to slide cards in from wherever their last
+  offset left them. (A pre-release bug is fixed too: notes just pushed into the stack were
+  measured while still in the flow, so the stack sat one card too high.)
+
 ## 1.16.30
 
 ### Tunnel
