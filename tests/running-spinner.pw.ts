@@ -32,7 +32,13 @@ test('a pending run shows a spinning ring, centred over the example', async ({
   const example = await startSlowRun(page)
   const spinner = example.locator('[part="running"]')
   await expect(spinner).toBeVisible({ timeout: 2000 })
-  const outer = (await example.locator('[part="example"]').boundingBox())!
+  // the preview's cell: the toolbar column beside it is not part of what the ring is over
+  const outer = await example.evaluate((el) => {
+    const r = (el as any).parts.example.shadowRoot
+      .querySelector('[part="content"]')
+      .getBoundingClientRect()
+    return { x: r.x, y: r.y, width: r.width, height: r.height }
+  })
   const ring = (await spinner.boundingBox())!
   const dx = ring.x + ring.width / 2 - (outer.x + outer.width / 2)
   const dy = ring.y + ring.height / 2 - (outer.y + outer.height / 2)

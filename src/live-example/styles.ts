@@ -15,13 +15,20 @@ export const liveExampleStyleSpec = {
     height: 'var(--tosi-example-height)',
     background: 'var(--background)',
     boxSizing: 'border-box',
-    // The bordered, rounded card wraps the whole example (preview + editors).
-    // overflow:hidden clips the inner split to the radius; the inset box-shadow
-    // (moved here from .preview) draws the border over both panes. CM tooltips
-    // escape this clip via tooltips({position:'fixed'}) in code-editor-cm.ts.
-    borderRadius: vars.spacing25,
-    boxShadow: 'inset 0 0 0 2px #8883',
+    // CM tooltips escape this clip via tooltips({position:'fixed'}) in code-editor-cm.ts.
     overflow: 'hidden',
+  },
+
+  /*
+  The outline is drawn round the PREVIEW and round the code, not round the whole example, so
+  the toolbar column sits outside it, beside the example rather than in it. An outline (inset
+  by its width), not an inset box-shadow: an outline paints over the element's children, so
+  CodeMirror's surface cannot cover it, and it follows the radius.
+  */
+  ':host [part="example"]::part(content), :host .code-editors': {
+    borderRadius: vars.spacing25,
+    outline: '2px solid #8883',
+    outlineOffset: '-2px',
   },
 
   // Local-edit indicator: an accent outline on the always-visible `<>` handle when
@@ -31,10 +38,9 @@ export const liveExampleStyleSpec = {
   // descendant combinator would leak a CONTAINER example's state class onto a
   // NESTED example's widget (the self-hosting demo). The child chain pins each rule
   // to the example's own direct toolbar.
-  ':host.-locally-edited > [part="example"] > [part="exampleWidgets"]': {
+  ':host.-locally-edited > [part="example"]::part(fixture)': {
     outline: '2px solid var(--brand-color, #da1167)',
     outlineOffset: '1px',
-    borderRadius: '4px',
   },
 
   ':host.-maximize': {
@@ -169,8 +175,12 @@ export const liveExampleStyleSpec = {
   ':host [part="example"]': {
     flex: '1 1 50%',
     height: '100%',
-    position: 'relative',
+    minWidth: '0',
+  },
+  // the preview scrolls sideways, not the toolbar with it
+  ':host [part="example"]::part(content)': {
     overflowX: 'auto',
+    overflowY: 'hidden',
   },
 
   ':host .preview': {
@@ -330,35 +340,38 @@ export const liveExampleStyleSpec = {
     position: 'relative',
   },
 
-  // The example toolbar (a <tosi-pocket-bar>), pinned top-right so it never covers
-  // the editor in side-by-side mode. Only the collapsed `<>` handle carries the
-  // test-status colour — the action buttons stay neutral — via the pocket bar's
-  // --tosi-pocket-handle-color (the -test-* rules below drive --widget-color).
+  /*
+  The example toolbar: the fixture of the example's <tosi-affix>, a column beside the preview
+  (inside along the bottom when it does not fit or the example is maximized). The affix lays
+  out and colours the column; this wrapper steps aside (display: contents) so its controls
+  are the column's items. Controls are neutral; only the tests check carries status.
+  */
   ':host [part="exampleWidgets"]': {
-    position: 'absolute',
-    top: '5px',
-    right: '5px',
-    zIndex: '100',
-    // Action controls are neutral (text colour); only the handle carries status.
+    display: 'contents',
     color: 'var(--text-color)',
-    '--widget-color': 'var(--brand-color)',
-    /*
-    STATUS MOVED FROM THE ICON TO THE BADGE, because the owl is a colour icon.
-
-    The handle used to be `<>`, a stroked glyph that took `--tosi-pocket-handle-color`
-    and so turned green or red with the test status. The owl is a multi-colour drawing
-    and ignores `color` entirely — switching to it would have silently dropped that
-    signal. The circular badge behind it carries the status now, which is more visible
-    than a thin glyph was, and the brand colour is the resting state.
-    */
-    '--tosi-pocket-handle-color': 'var(--widget-color)',
-    '--tosi-pocket-handle-bg': 'var(--widget-color)',
-    // A circle needs both: 50% of a non-square box is an ellipse, and the handle is
-    // content-sized (26×29) unless given a size.
-    '--tosi-pocket-handle-radius': '50%',
-    '--tosi-pocket-handle-size': '32px',
   },
-
+  ':host [part="example"]::part(fixture)': {
+    gap: '2px',
+    padding: '4px 2px',
+  },
+  ':host [part="exampleWidgets"] button, :host [part="exampleWidgets"] label': {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '28px',
+    height: '28px',
+    padding: '0',
+    margin: '0',
+    border: '0',
+    borderRadius: '4px',
+    background: 'transparent',
+    color: 'inherit',
+    cursor: 'pointer',
+  },
+  ':host [part="exampleWidgets"] button:hover, :host [part="exampleWidgets"] label:hover':
+    {
+      background: 'color-mix(in srgb, currentColor 15%, transparent)',
+    },
   // The doc site brand-colours bare <button>s by overriding --text-color ON the
   // button (a link affordance). Revert it here so the toolbar's icon buttons are
   // neutral, matching the check <label> (which the button rule never touched).
@@ -423,13 +436,14 @@ export const liveExampleStyleSpec = {
     '50%': { opacity: '0.4' },
   },
 
-  // Test status colours the `<>` handle (via --widget-color → the pocket bar's
-  // --tosi-pocket-handle-color). The handle is translucent at rest, so the colour
-  // reads as a subtle tint until you hover.
+  // Test status colours the tests check (--widget-color), which is neutral until tests run.
   ':host.-test-running > [part="example"] > [part="exampleWidgets"]': {
     '--widget-color': '#fa0',
-    animation: 'test-pulse 0.75s ease-in-out infinite',
   },
+  ':host.-test-running > [part="example"] > [part="exampleWidgets"] > .tests-toggle':
+    {
+      animation: 'test-pulse 0.75s ease-in-out infinite',
+    },
 
   ':host.-test-passed > [part="example"] > [part="exampleWidgets"]': {
     '--widget-color': '#0a0',
@@ -438,6 +452,10 @@ export const liveExampleStyleSpec = {
   ':host.-test-failed > [part="example"] > [part="exampleWidgets"]': {
     '--widget-color': '#f00',
   },
+  ':host:is(.-test-running, .-test-passed, .-test-failed) > [part="example"] > [part="exampleWidgets"] > .tests-toggle':
+    {
+      color: 'var(--widget-color)',
+    },
 
   ':host [part="testResults"]': {
     position: 'absolute',

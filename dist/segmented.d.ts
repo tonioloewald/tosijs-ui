@@ -25,7 +25,7 @@ export declare class TosiSegmented extends TosiSegmented_base {
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
     get values(): string[];
-    content: () => (HTMLDivElement | HTMLSlotElement)[];
+    content: () => (HTMLSlotElement | HTMLDivElement)[];
     static shadowStyleSpec: {
         ':host': {
             display: string;

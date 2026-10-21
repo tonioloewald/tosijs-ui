@@ -88,7 +88,7 @@ export declare class TosiTabs extends TosiTabs_base {
      */
     get onCloseTab(): TabCloseHandler | null;
     set onCloseTab(handler: TabCloseHandler | null);
-    content: (HTMLDivElement | HTMLSlotElement)[];
+    content: (HTMLSlotElement | HTMLDivElement)[];
     addTabBody(body: HTMLElement, selectTab?: boolean): void;
     removeTabBody(body: HTMLElement): void;
     keyTab: (event: Event) => void;

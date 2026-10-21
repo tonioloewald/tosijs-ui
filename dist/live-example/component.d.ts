@@ -43,14 +43,16 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
             height: string;
             background: string;
             boxSizing: string;
-            borderRadius: string;
-            boxShadow: string;
             overflow: string;
         };
-        ':host.-locally-edited > [part="example"] > [part="exampleWidgets"]': {
+        ':host [part="example"]::part(content), :host .code-editors': {
+            borderRadius: string;
             outline: string;
             outlineOffset: string;
-            borderRadius: string;
+        };
+        ':host.-locally-edited > [part="example"]::part(fixture)': {
+            outline: string;
+            outlineOffset: string;
         };
         ':host.-maximize': {
             position: string;
@@ -139,8 +141,11 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         ':host [part="example"]': {
             flex: string;
             height: string;
-            position: string;
+            minWidth: string;
+        };
+        ':host [part="example"]::part(content)': {
             overflowX: string;
+            overflowY: string;
         };
         ':host .preview': {
             height: string;
@@ -283,16 +288,29 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
             position: string;
         };
         ':host [part="exampleWidgets"]': {
-            position: string;
-            top: string;
-            right: string;
-            zIndex: string;
+            display: string;
             color: string;
-            '--widget-color': string;
-            '--tosi-pocket-handle-color': string;
-            '--tosi-pocket-handle-bg': string;
-            '--tosi-pocket-handle-radius': string;
-            '--tosi-pocket-handle-size': string;
+        };
+        ':host [part="example"]::part(fixture)': {
+            gap: string;
+            padding: string;
+        };
+        ':host [part="exampleWidgets"] button, :host [part="exampleWidgets"] label': {
+            display: string;
+            alignItems: string;
+            justifyContent: string;
+            width: string;
+            height: string;
+            padding: string;
+            margin: string;
+            border: string;
+            borderRadius: string;
+            background: string;
+            color: string;
+            cursor: string;
+        };
+        ':host [part="exampleWidgets"] button:hover, :host [part="exampleWidgets"] label:hover': {
+            background: string;
         };
         ':host [part="exampleWidgets"] button': {
             '--text-color': string;
@@ -348,6 +366,8 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         };
         ':host.-test-running > [part="example"] > [part="exampleWidgets"]': {
             '--widget-color': string;
+        };
+        ':host.-test-running > [part="example"] > [part="exampleWidgets"] > .tests-toggle': {
             animation: string;
         };
         ':host.-test-passed > [part="example"] > [part="exampleWidgets"]': {
@@ -355,6 +375,9 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         };
         ':host.-test-failed > [part="example"] > [part="exampleWidgets"]': {
             '--widget-color': string;
+        };
+        ':host:is(.-test-running, .-test-passed, .-test-failed) > [part="example"] > [part="exampleWidgets"] > .tests-toggle': {
+            color: string;
         };
         ':host [part="testResults"]': {
             position: string;
@@ -634,7 +657,8 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     viewChanges: () => void;
     doRefresh: () => void;
     sourceMenu: (event: Event) => void;
-    collapseWidgetsAfterAction: (event: Event) => void;
+    private toolbarWatch?;
+    syncToolbarPlace: () => void;
     toggleMaximize: () => void;
     showCode: () => void;
     showInline: (view?: "code" | "console") => void;

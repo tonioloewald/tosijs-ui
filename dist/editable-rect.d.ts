@@ -92,7 +92,7 @@ export declare class EditableRect extends EditableRect_base {
     get element(): HTMLElement;
     adjustRotation: (event: Event) => void;
     toggleLock: (event: Event) => void;
-    content: () => (HTMLDivElement | HTMLSlotElement)[];
+    content: () => (HTMLSlotElement | HTMLDivElement)[];
     connectedCallback(): void;
     render(): void;
 }

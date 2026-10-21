@@ -82,7 +82,7 @@ export declare class TosiForm extends XinComponent {
             overflow: string;
         };
     };
-    content: (HTMLFormElement | HTMLSlotElement)[];
+    content: (HTMLSlotElement | HTMLFormElement)[];
     getField: (key: string) => TosiField | null;
     get fields(): any;
     set fields(values: {

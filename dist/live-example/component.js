@@ -731,7 +731,7 @@ import { elements, StyleSheet, tosi, vars, varDefault, withAttributes, } from 't
 import { codeEditor, CodeEditor } from '../code-editor.js';
 import { tosiTabs } from '../tab-selector.js';
 import { icons } from '../icons.js';
-import { tosiPocketBar } from '../pocket-bar.js';
+import { tosiAffix } from '../affix.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
 import { prefersReducedMotion } from '../reduced-motion.js';
@@ -2281,38 +2281,30 @@ export class LiveExample extends withAttributes({
         }
     };
     content = () => [
-        div({ part: 'example' }, style({ part: 'style' }), pre({ part: 'testResults', hidden: true }), 
-        // The example toolbar: a pocket bar whose collapsed `<>` handle carries the
-        // test-status colour (via --widget-color). Pinned top-right, growing left, so
-        // it never covers the editor in side-by-side mode.
         /*
-        ORDERED BY REACH, and the order below IS the left-to-right order.
-  
-        The bar grows WEST from a handle pinned top-right, so the LAST child sits nearest
-        the handle — the shortest travel for the pointer that just opened it. Maximize goes
-        there because it is the one you reach for repeatedly while reading; tests, which you
-        toggle once, sits furthest. Measured: handle at x=853, children at 694/738/781/825.
-  
-        The owl rather than `<>`: the handle is the one piece of this UI on every example
-        of every doc site built with this, which makes it the one place branding costs
-        nothing and is seen everywhere.
+        The example and its toolbar: an affix, so the toolbar is a column BESIDE the preview and
+        never covers what the example draws (it used to be a pocket bar over the top-right
+        corner, on top of whatever the example put there). When the column is taller than the
+        preview, and when the example is maximized, it moves inside, along the bottom
+        (syncToolbarPlace).
         */
-        tosiPocketBar({
-            part: 'exampleWidgets',
-            icon: 'tosi',
-            direction: 'w',
-            onClick: this.collapseWidgetsAfterAction,
-        }, label({ class: 'tests-toggle', title: 'run tests' }, input({
+        tosiAffix({ part: 'example', position: 'en', fallback: 's inside' }, style({ part: 'style' }), pre({ part: 'testResults', hidden: true }), 
+        /*
+        ORDERED BY REACH, top to bottom: maximize, which you reach for repeatedly while
+        reading, sits at the top; tests, which you toggle once, last. The tests check carries
+        the test status (green, red, pulsing amber).
+        */
+        div({ part: 'exampleWidgets', slot: 'fixture' }, button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
+        // Both icons render; the existing .hide-if-maximized / .show-if-maximized
+        // CSS shows the right one for the current state — no JS icon swap.
+        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })), button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({
+            title: 'view/edit code in a new window',
+            onClick: this.openEditorWindow,
+        }, icons.edit()), label({ class: 'tests-toggle', title: 'run tests' }, input({
             type: 'checkbox',
             part: 'testsCheckbox',
             onChange: this.handleTestsToggle,
-        }), icons.check()), button({
-            title: 'view/edit code in a new window',
-            onClick: this.openEditorWindow,
-        }, icons.edit()), button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
-        // Both icons render; the existing .hide-if-maximized / .show-if-maximized
-        // CSS shows the right one for the current state — no JS icon swap.
-        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' }))), 
+        }), icons.check())), 
         // Shown while a `run` dialect's run is pending (see refresh()).
         div({
             part: 'running',
@@ -2440,13 +2432,21 @@ export class LiveExample extends withAttributes({
         // does not fire reliably during page unload.
         this.beforeUnloadHandler = () => this.remoteSync?.sendClose();
         addEventListener('beforeunload', this.beforeUnloadHandler);
-        // Reflect maximize state + tests-enabled on the pocket-bar controls. The
+        // Reflect tests-enabled on the toolbar's tests check. The
         // run-tests icon greys globally via the --tests-enabled CSS var (maintained on
         // <body>), so no per-instance observer is needed to keep examples in sync.
         this.updateExampleWidgets();
+        this.toolbarWatch = new MutationObserver(this.syncToolbarPlace);
+        this.toolbarWatch.observe(this, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+        this.syncToolbarPlace();
     }
     disconnectedCallback() {
         super.disconnectedCallback();
+        this.toolbarWatch?.disconnect();
+        this.toolbarWatch = undefined;
         this.runAbort?.abort();
         this.remoteSync?.sendClose();
         this.remoteSync?.stopListening();
@@ -2752,30 +2752,22 @@ export class LiveExample extends withAttributes({
         });
     };
     /*
-    Collapse the bar once the user has actually done something.
-  
-    It used to stay open over the example after every action — you clicked "maximize" and
-    the bar sat there covering the corner of the thing you had just maximised, until you
-    remembered to click the handle again.
-  
-    Only the SLOTTED controls count. The handle lives in the bar's own shadow root, so
-    closing on any click would close it the instant you opened it. `composedPath` because
-    the click lands on an icon INSIDE a button, and a direct child of the bar is exactly
-    the set of affordances we put there.
+    Maximized, the toolbar goes inside along the bottom: the example fills the screen and there
+    is no room beside it worth taking. Every path that maximizes sets the class, so the class is
+    what is watched (connectedCallback).
     */
-    collapseWidgetsAfterAction = (event) => {
+    toolbarWatch;
+    syncToolbarPlace = () => {
         if (!this.hydrated)
             return;
-        // `close()`, not `open = false`: writing `open` behind the component's back leaves its
-        // private `pinned` flag set, and then the bar re-opens on hover and stays open — the very
-        // thing this handler exists to stop. (`this.parts` throws rather than returning nullish,
-        // so the old undefined/null guard here was dead code.)
-        const bar = this.parts.exampleWidgets;
-        const acted = event
-            .composedPath()
-            .some((node) => node instanceof HTMLElement && node.parentElement === bar);
-        if (acted)
-            bar.close?.();
+        const example = this.parts.example;
+        const inside = this.classList.contains('-maximize');
+        const position = inside ? 's' : 'en';
+        const { wanted } = example;
+        if (wanted.position !== position)
+            example.position = position;
+        if (wanted.inside !== inside)
+            example.inside = inside;
     };
     toggleMaximize = () => {
         this.classList.toggle('-maximize');

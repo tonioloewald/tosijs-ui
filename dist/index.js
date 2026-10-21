@@ -79,6 +79,7 @@ export * from './month.js';
 export * from './notifications.js';
 export * from './password-strength.js';
 export * from './pocket-bar.js';
+export * from './affix.js';
 export * from './pop-float.js';
 export * from './rating.js';
 export * from './schema-form.js';

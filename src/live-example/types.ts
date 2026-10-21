@@ -18,7 +18,7 @@ export interface ExampleParts extends PartsMap {
   codeEditors: HTMLElement
   undo: HTMLButtonElement
   redo: HTMLButtonElement
-  // The example toolbar (a <tosi-pocket-bar>); carries the test-status colour.
+  // The example toolbar: the fixture of the example affix; its tests check carries the status.
   exampleWidgets: HTMLElement
   testsCheckbox: HTMLInputElement
   editors: TosiTabs

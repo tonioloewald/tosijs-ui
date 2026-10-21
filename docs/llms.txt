@@ -29,6 +29,8 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   `<tosi-ab>` provides a simple method for implementing A|B-testing.
 - https://ui.tosijs.net/adopting-the-doc-system/ — Adopting the doc system
   A first hour with tosijs-ui/site: the minimum that works, how to tell it is actually working, and the four things that fail silently while the site still serves 200s.
+- https://ui.tosijs.net/affix/ — affix
+  `<tosi-affix>` fixes a **fixture** — a toolbar, a badge, a caption — to one edge of its
 - https://ui.tosijs.net/appendices/ — Appendices
   Upgrading and release tooling.
 - https://ui.tosijs.net/carousel/ — carousel
