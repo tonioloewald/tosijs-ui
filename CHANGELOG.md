@@ -52,7 +52,8 @@ gzip and the affix 5.0 KB. The ESM path pays only for what it imports.
   the next query word. The trigger looks like the search field it replaced (the site's
   pill-shaped input), and the active row is a tint of the theme's accent. The ranking is
   exported as `buildDocIndex` / `searchDocs` from `tosijs-ui/doc-system/doc-search`, with
-  section anchors taken from the renderer's own heading ids.
+  section anchors taken from the renderer's own heading ids. `createDocBrowser({ searchShortcut })` sets the key
+  that opens the search, `''` for none.
 - **A live example's toolbar sits beside the preview**, outside its outline, instead of a
   pocket bar over the preview's top-right corner (which covered whatever the example drew
   there, the crud example's New button for one). It moves inside along the bottom when the
