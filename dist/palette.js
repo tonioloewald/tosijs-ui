@@ -95,6 +95,9 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 - `placeholder` — the hint in the field, and in the trigger.
 - `shortcut` — a key that opens it from anywhere on the page, such as `mod+k` (`mod` is ⌘ on a
   Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.
+  The modifiers are `mod`, `meta` (also `cmd`), `ctrl`, `shift` and `alt` (also `option`); a
+  shortcut naming any other is ignored, with a console warning, rather than binding the bare
+  key. When two palettes share a shortcut, the first to see the keystroke opens.
 - `multiline` — the query is a growing text box: Enter chooses, Shift+Enter starts a new line,
   and ↑/↓ move through results only from the first or last line. For a prompt rather than a
   search.
@@ -121,6 +124,13 @@ interface PaletteResult {
   action?: (result: PaletteResult, palette: TosiPalette) => void | boolean
 }
 ```
+
+## Helpers
+
+`rankResults(results)` is the default ranking (grouped, best first), `defaultPaletteRow(result,
+query)` the default row, and `highlight(text, query)` the row's title with each query word in a
+`<mark>`, as nodes, never HTML. `matchesShortcut(event, shortcut)` and
+`describeShortcut(shortcut)` (⌘K on a Mac, Ctrl K elsewhere) are the shortcut rules.
 */
 /*{ "parent": "Components" }*/
 import { elements, vars, varDefault, withAttributes, } from 'tosijs';
@@ -129,16 +139,36 @@ import { findHighestZ } from './track-drag.js';
 const { button, span, kbd, div, dialog, input, textarea, mark } = elements;
 const isMac = () => typeof navigator !== 'undefined' &&
     /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const MODIFIERS = ['mod', 'meta', 'ctrl', 'shift', 'alt'];
+const MODIFIER_ALIASES = {
+    cmd: 'meta',
+    command: 'meta',
+    control: 'ctrl',
+    option: 'alt',
+};
+const warnedShortcuts = new Set();
 /** Does this keydown match a shortcut such as `mod+k` or `ctrl+shift+p`? */
 export function matchesShortcut(event, shortcut) {
     const parts = shortcut
         .toLowerCase()
         .split('+')
         .map((p) => p.trim());
-    const key = parts.pop();
-    if (!key || event.key.toLowerCase() !== key)
+    const wanted = parts.pop();
+    const modifiers = parts.map((p) => MODIFIER_ALIASES[p] ?? p);
+    // An unknown modifier used to be ignored, so `hyper+k` bound the bare k key page-wide.
+    const unknown = modifiers.filter((p) => !MODIFIERS.includes(p));
+    if (unknown.length) {
+        if (!warnedShortcuts.has(shortcut)) {
+            warnedShortcuts.add(shortcut);
+            console.warn(`tosi-palette: shortcut "${shortcut}" has unknown modifier(s) ${unknown.join(', ')} and is ignored; use ${MODIFIERS.join(', ')}`);
+        }
         return false;
-    const want = new Set(parts);
+    }
+    // A keydown can have no key (Chrome's autofill fires one).
+    const key = event.key?.toLowerCase();
+    if (!wanted || !key || key !== wanted)
+        return false;
+    const want = new Set(modifiers);
     const mod = want.has('mod');
     const meta = want.has('meta') || (mod && isMac());
     const ctrl = want.has('ctrl') || (mod && !isMac());
@@ -153,7 +183,8 @@ export function describeShortcut(shortcut) {
     return shortcut
         .split('+')
         .map((p) => {
-        const part = p.trim().toLowerCase();
+        const raw = p.trim().toLowerCase();
+        const part = MODIFIER_ALIASES[raw] ?? raw;
         if (part === 'mod')
             return mac ? '⌘' : 'Ctrl';
         if (part === 'meta')
@@ -494,6 +525,9 @@ export class TosiPalette extends withAttributes({
     field = null;
     listId = `tosi-palette-${Math.random().toString(36).slice(2, 8)}`;
     handleDocumentKeydown = (event) => {
+        // Another palette (or the page) already took this keystroke: one shortcut opens one dialog.
+        if (event.defaultPrevented)
+            return;
         if (!this.shortcut || !matchesShortcut(event, this.shortcut))
             return;
         event.preventDefault();
@@ -614,7 +648,7 @@ export class TosiPalette extends withAttributes({
         const compact = this.clientWidth < Number(this.compactWidth);
         if (compact !== this.compact) {
             this.compact = compact;
-            this.render();
+            this.queueRender();
         }
     };
     connectedCallback() {

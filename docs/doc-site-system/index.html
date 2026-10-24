@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=8c317d94ccc4" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=73a960a662fc" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=aa4b794e280c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=b81aa2ea0b96" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1335,8 +1335,8 @@ too, which is what opens the box&#39;s root list and the static previews. From t
 browser opens every workspace holding the key, and the box&#39;s root list, without another link,
 across dev-server restarts. The code is spent by the first browser that uses it, and both kinds
 expire after 5 minutes: the cookie is what lasts, not the code that delivers it.
-<code>tunnel.linkTtlMinutes</code> can shorten that window but not lengthen it, and <code>--share-ttl</code> does not
-apply. To give someone view access later, send them a plain <code>--link --share</code> link instead.
+<code>tunnel.linkTtlMinutes</code> can shorten that window but not lengthen it, and <code>tosijs-tunnel</code> refuses
+<code>--share-ttl</code> with <code>--global</code>. To give someone view access later, send them a plain <code>--link --share</code> link instead.
 <code>tosijs-tunnel --link --global</code> prints a fresh edit one, and <code>--link --global --share</code> a fresh
 view one. Plain <code>--link</code> and <code>--link --share</code> are unchanged: reusable for their window, and
 they open this workspace only.</p>
@@ -1371,12 +1371,15 @@ when the link is printed. Name the device with <code>--label</code>:</p>
 tosijs-tunnel <span class="token parameter variable">--devices</span>                         <span class="token comment"># every pass issued, newest first, and which are revoked</span>
 tosijs-tunnel <span class="token parameter variable">--revoke</span><span class="token operator">=</span>k3v9x2mq7a               <span class="token comment"># end that device's edit access, on every workspace</span>
 </code></pre>
-<p>Revoking adds the id to <code>revoked.txt</code> beside the box&#39;s root list. Every workspace reads that
-list before it honours a pass, at most a minute old, and ends the sessions a revoked device
-already holds within the same minute. Revoking removes EDIT access only: an edit link also gave
+<p>Revoking adds the id to <code>revoked.txt</code> beside the box&#39;s root list. Every workspace sweeps that
+list once a minute and ends the sessions a revoked device already holds when the sweep sees it.
+To honour a new pass it uses its copy of the list, refreshing it behind the request once the
+copy is a minute old, so a pass can be honoured on a copy up to ten minutes old while the box
+is slow to answer. Revoking removes EDIT access only: an edit link also gave
 that device the shared view key, so it can still browse, read-only, until you rotate the view
 key. A workspace that cannot read the list (and has no copy less than ten minutes old) honours
-<strong>no</strong> pass until it can: it fails closed. A pass also expires 30 days after it was issued (a
+<strong>no</strong> new pass until it can: it fails closed. Sessions a pass already opened carry on until
+they expire (24 hours) or a readable sweep ends them. A pass also expires 30 days after it was issued (a
 workspace refuses one claiming longer); a fresh link gives a fresh one.</p>
 <p>Edit links from tosijs-ui 1.16.30 and earlier set the raw edit key as the cookie. That cookie no
 longer opens a workspace, and a new link expires it, so each device needs one new
@@ -2187,10 +2190,10 @@ exports.</p>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
-    <li><a class="doc-link" href="../affix/">affix</a></li>
     <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="../affix/">affix</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
       <li><a class="doc-link" href="../code-editor/">code</a></li>
       <li><a class="doc-link" href="../crud/">crud</a></li>
@@ -2289,6 +2292,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-2twc4hxt.js"></script>
+  <script type="module" src="../hydrate-tbvfvkvr.js"></script>
 </body>
 </html>

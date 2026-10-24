@@ -34,6 +34,25 @@ describe('doc-browser', () => {
     expect(svg?.classList.contains('logo-mark')).toBe(true)
   })
 
+  test('searchShortcut sets the key that opens the search; an empty one binds none', async () => {
+    const { createDocBrowser } = await import('./doc-browser.js')
+    // An element's props read back once it is connected.
+    const shortcutOf = (options: Record<string, unknown>) => {
+      const browser = createDocBrowser({
+        docs: makeDocs() as any,
+        routing: 'memory',
+        ...options,
+      })
+      document.body.append(browser)
+      const shortcut = (browser.querySelector('.doc-search') as any)?.shortcut
+      browser.remove()
+      return shortcut
+    }
+    expect(shortcutOf({})).toBe('mod+k')
+    expect(shortcutOf({ searchShortcut: '' })).toBe('')
+    expect(shortcutOf({ searchShortcut: 'mod+shift+f' })).toBe('mod+shift+f')
+  })
+
   test('logo: image URL renders an <img> brand mark, size via class not inline', async () => {
     const { createDocBrowser } = await import('./doc-browser.js')
     const el = createDocBrowser({

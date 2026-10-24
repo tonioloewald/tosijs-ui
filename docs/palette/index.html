@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=8c317d94ccc4" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=73a960a662fc" data-tosi-doc-system />
   <title>palette — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-palette&gt; looks like a small search field. Click it (or press its shortcut) and it opens a centred modal: a query field on top, ranked results below, and…" />
   <link rel="canonical" href="https://ui.tosijs.net/palette/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=aa4b794e280c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=b81aa2ea0b96" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="palette.ts">
 <h1 id="palette">palette</h1>
 <p><code>&lt;tosi-palette&gt;</code> looks like a small search field. Click it (or press its shortcut) and it
@@ -120,7 +120,10 @@ preview.append(palette)
 <li><p><code>placeholder</code> — the hint in the field, and in the trigger.</p>
 </li>
 <li><p><code>shortcut</code> — a key that opens it from anywhere on the page, such as <code>mod+k</code> (<code>mod</code> is ⌘ on a
-Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.</p>
+Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.
+The modifiers are <code>mod</code>, <code>meta</code> (also <code>cmd</code>), <code>ctrl</code>, <code>shift</code> and <code>alt</code> (also <code>option</code>); a
+shortcut naming any other is ignored, with a console warning, rather than binding the bare
+key. When two palettes share a shortcut, the first to see the keystroke opens.</p>
 </li>
 <li><p><code>multiline</code> — the query is a growing text box: Enter chooses, Shift+Enter starts a new line,
 and ↑/↓ move through results only from the first or last line. For a prompt rather than a
@@ -150,15 +153,19 @@ chosen fires <code>action</code> with <code>{ query }</code> as its detail, so a
   action<span class="token operator">?</span><span class="token operator">:</span> <span class="token punctuation">(</span>result<span class="token operator">:</span> PaletteResult<span class="token punctuation">,</span> palette<span class="token operator">:</span> TosiPalette<span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token keyword">void</span> <span class="token operator">|</span> <span class="token builtin">boolean</span>
 <span class="token punctuation">}</span>
 </code></pre>
+<h2 id="helpers">Helpers</h2>
+<p><code>rankResults(results)</code> is the default ranking (grouped, best first), <code>defaultPaletteRow(result, query)</code> the default row, and <code>highlight(text, query)</code> the row&#39;s title with each query word in a
+<code>&lt;mark&gt;</code>, as nodes, never HTML. <code>matchesShortcut(event, shortcut)</code> and
+<code>describeShortcut(shortcut)</code> (⌘K on a Mac, Ctrl K elsewhere) are the shortcut rules.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
-    <li><a class="doc-link" href="../affix/">affix</a></li>
     <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="../affix/">affix</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
       <li><a class="doc-link" href="../code-editor/">code</a></li>
       <li><a class="doc-link" href="../crud/">crud</a></li>
@@ -257,6 +264,6 @@ chosen fires <code>action</code> with <code>{ query }</code> as its detail, so a
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-2twc4hxt.js"></script>
+  <script type="module" src="../hydrate-tbvfvkvr.js"></script>
 </body>
 </html>

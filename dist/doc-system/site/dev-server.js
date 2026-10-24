@@ -894,7 +894,7 @@ export async function devServer(config, opts = {}) {
             editKey: globalKeys.keys.edit,
             url: process.env.TOSIJS_REVOKED_URL || undefined,
             onChange: (domain, problem) => problem
-                ? console.warn(`⚠️  Device passes for ${domain} are refused: the revoked-device list is unreadable (${problem}). ` +
+                ? console.warn(`⚠️  New device passes for ${domain} are refused (sessions already open carry on): the revoked-device list is unreadable (${problem}). ` +
                     `Is the box up, and does its PREVIEW_EDIT_TOKEN match this machine's?`)
                 : console.log(`🔒 Revoked-device list for ${domain} readable again`),
         })

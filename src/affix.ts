@@ -65,7 +65,8 @@ fixture shares the content's cell and sits over it.
 | `en` `es` | right | top / bottom |
 | `wn` `ws` | left | top / bottom |
 
-The default is `nw`. Add `inside` to put the fixture inside the content's bounds.
+The default is `nw`, and any other value (FloatPosition's `side` and `auto` included, which
+name no edge) falls back to it. Add `inside` to put the fixture inside the content's bounds.
 
 ## Fallback
 
@@ -78,7 +79,9 @@ buttons beside a preview forty pixels tall. `fallback` names where it goes inste
 **Setting `position` or `inside` sets where you WANT the fixture; reading them tells you where
 it IS** — the fallback, when the wanted place does not fit. Whenever that changes the affix
 fires a `reposition` event, whose `detail` is `{ position, inside }`, and it reflects the
-placement as the `placed` attribute (`placed="s inside"`) for styling.
+placement as the `placed` attribute (`placed="s inside"`) for styling. To change one half of
+the WANTED place while it sits at its fallback, read `wanted` (`{ position, inside }`), not
+`position` and `inside`.
 
 ```html
 <tosi-affix class="affix-resizable" position="en" fallback="s inside">
@@ -131,7 +134,16 @@ right with no work. Override it with these variables:
 or restyle it entirely with `tosi-affix::part(fixture)`; the content's cell is
 `::part(content)`. A fixture that is a single wrapper element can follow the axis with
 `flex-direction: var(--tosi-affix-direction)`, which the affix sets to `column` or `row`.
+
+## Helpers
+
+`affixPosition(value)` reads a position (anything else is `nw`), `parsePlacement('s inside')`
+and `describePlacement({ position, inside })` convert between the attribute and
+`{ position, inside }`, and `affixCell(placement)` gives the grid cell and alignment a
+placement takes.
 */
+
+/*{ "parent": "Components" }*/
 
 import { Component, ElementCreator, elements, PartsMap } from 'tosijs'
 

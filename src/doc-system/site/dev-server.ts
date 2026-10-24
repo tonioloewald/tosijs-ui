@@ -1106,7 +1106,7 @@ export async function devServer(
         onChange: (domain, problem) =>
           problem
             ? console.warn(
-                `⚠️  Device passes for ${domain} are refused: the revoked-device list is unreadable (${problem}). ` +
+                `⚠️  New device passes for ${domain} are refused (sessions already open carry on): the revoked-device list is unreadable (${problem}). ` +
                   `Is the box up, and does its PREVIEW_EDIT_TOKEN match this machine's?`
               )
             : console.log(

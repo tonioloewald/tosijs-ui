@@ -108,6 +108,12 @@ export interface DocBrowserOptions {
      */
     onRouteChange?: (slug: string) => void;
     /**
+     * The key that opens the search palette from anywhere on the page, in `<tosi-palette>`'s
+     * `shortcut` form. Default `'mod+k'` (Cmd-K on a Mac, Ctrl-K elsewhere); `''` binds none,
+     * for a host page that owns that key or embeds more than one browser.
+     */
+    searchShortcut?: string;
+    /**
      * Header-bar links. When provided, these replace the legacy `projectLinks` icon
      * set in the header (each renders as an icon if `icon` names a known icon, else
      * as its text label). `projectLinks` is still used for the logo and view-source.

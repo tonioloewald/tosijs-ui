@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=8c317d94ccc4" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=73a960a662fc" data-tosi-doc-system />
   <title>affix — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-affix&gt; fixes a fixture — a toolbar, a badge, a caption — to one edge of its content. Put the content in the default slot and the fixture in…" />
   <link rel="canonical" href="https://ui.tosijs.net/affix/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=aa4b794e280c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=b81aa2ea0b96" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="affix.ts">
 <h1 id="affix">affix</h1>
 <p><code>&lt;tosi-affix&gt;</code> fixes a <strong>fixture</strong> — a toolbar, a badge, a caption — to one edge of its
@@ -116,7 +116,8 @@ fixture shares the content&#39;s cell and sits over it.</p>
 <td>top / bottom</td>
 </tr>
 </tbody></table>
-<p>The default is <code>nw</code>. Add <code>inside</code> to put the fixture inside the content&#39;s bounds.</p>
+<p>The default is <code>nw</code>, and any other value (FloatPosition&#39;s <code>side</code> and <code>auto</code> included, which
+name no edge) falls back to it. Add <code>inside</code> to put the fixture inside the content&#39;s bounds.</p>
 <h2 id="fallback">Fallback</h2>
 <p>A fixture that is longer than the edge it sits on does not fit there: a column of five
 buttons beside a preview forty pixels tall. <code>fallback</code> names where it goes instead, with
@@ -125,7 +126,9 @@ buttons beside a preview forty pixels tall. <code>fallback</code> names where it
 <p><strong>Setting <code>position</code> or <code>inside</code> sets where you WANT the fixture; reading them tells you where
 it IS</strong> — the fallback, when the wanted place does not fit. Whenever that changes the affix
 fires a <code>reposition</code> event, whose <code>detail</code> is <code>{ position, inside }</code>, and it reflects the
-placement as the <code>placed</code> attribute (<code>placed=&quot;s inside&quot;</code>) for styling.</p>
+placement as the <code>placed</code> attribute (<code>placed=&quot;s inside&quot;</code>) for styling. To change one half of
+the WANTED place while it sits at its fallback, read <code>wanted</code> (<code>{ position, inside }</code>), not
+<code>position</code> and <code>inside</code>.</p>
 <pre><code class="language-html">&lt;tosi-affix class=&quot;affix-resizable&quot; position=&quot;en&quot; fallback=&quot;s inside&quot;&gt;
   &lt;div class=&quot;affix-content&quot;&gt;Drag the corner to shrink me&lt;/div&gt;
   &lt;button slot=&quot;fixture&quot; title=&quot;Edit&quot;&gt;&lt;tosi-icon icon=&quot;edit&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
@@ -172,15 +175,20 @@ right with no work. Override it with these variables:</p>
 <p>or restyle it entirely with <code>tosi-affix::part(fixture)</code>; the content&#39;s cell is
 <code>::part(content)</code>. A fixture that is a single wrapper element can follow the axis with
 <code>flex-direction: var(--tosi-affix-direction)</code>, which the affix sets to <code>column</code> or <code>row</code>.</p>
+<h2 id="helpers">Helpers</h2>
+<p><code>affixPosition(value)</code> reads a position (anything else is <code>nw</code>), <code>parsePlacement(&#39;s inside&#39;)</code>
+and <code>describePlacement({ position, inside })</code> convert between the attribute and
+<code>{ position, inside }</code>, and <code>affixCell(placement)</code> gives the grid cell and alignment a
+placement takes.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
-    <li><a class="doc-link current" href="../affix/" aria-current="page">affix</a></li>
-    <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
+      <li><a class="doc-link current" href="../affix/" aria-current="page">affix</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
       <li><a class="doc-link" href="../code-editor/">code</a></li>
       <li><a class="doc-link" href="../crud/">crud</a></li>
@@ -279,6 +287,6 @@ right with no work. Override it with these variables:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-2twc4hxt.js"></script>
+  <script type="module" src="../hydrate-tbvfvkvr.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@ tables, menus, layout, media, and more.
 
 <!-- toc -->
 - [3d](/babylon-3d/)
+- [affix](/affix/)
 - [carousel](/carousel/)
 - [code](/code-editor/)
 - [crud](/crud/)

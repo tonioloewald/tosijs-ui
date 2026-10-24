@@ -4,7 +4,12 @@
 
 Two new components, a doc search that ranks, and live examples whose toolbar no longer covers
 what they draw. Nothing an adopter has to change: the toolbar and the search are doc-site
-behaviour, and both components are new.
+behaviour, and both components are new. One thing to know if you embed the doc browser in an
+app: it now opens its search on Cmd/Ctrl-K. If your page owns that key, pass
+`createDocBrowser({ searchShortcut: '' })` (or another key).
+
+`dist/iife.js` grows by about 7 KB gzip (496.4 KB to 503.4 KB, +1.4%): the palette is 9.1 KB
+gzip and the affix 5.0 KB. The ESM path pays only for what it imports.
 
 ### New components
 
@@ -14,7 +19,8 @@ behaviour, and both components are new.
   per `kind` by `renderers` (or a default row: icon, highlighted title, one-line description,
   path), ranked by `score` and grouped by `group` (or by your own `rank`), with `quickLinks`
   before anything is typed. Arrow keys, Enter and Escape drive it, `shortcut: 'mod+k'` opens it
-  from anywhere, `multiline` makes the query a growing prompt, and choosing fires `action`.
+  from anywhere (a shortcut with an unknown modifier is ignored, with a console warning, rather
+  than binding the bare key), `multiline` makes the query a growing prompt, and choosing fires `action`.
   `trigger` is `field` (the default, which shrinks to its icon below `compactWidth`, 160px),
   `icon`, or `none` for a palette opened only by `open()` or its shortcut. Its colours come
   from the theme's root `--tosi-text` / `--tosi-bg` / `--tosi-accent`, so a recoloured header
@@ -45,8 +51,8 @@ behaviour, and both components are new.
   often counts for more than one used once. A word matched in one heading no longer counts for
   the next query word. The trigger looks like the search field it replaced (the site's
   pill-shaped input), and the active row is a tint of the theme's accent. The ranking is
-  exported as `buildDocIndex` / `searchDocs`, with section anchors taken from the renderer's
-  own heading ids.
+  exported as `buildDocIndex` / `searchDocs` from `tosijs-ui/doc-system/doc-search`, with
+  section anchors taken from the renderer's own heading ids.
 - **A live example's toolbar sits beside the preview**, outside its outline, instead of a
   pocket bar over the preview's top-right corner (which covered whatever the example drew
   there, the crud example's New button for one). It moves inside along the bottom when the
@@ -68,6 +74,7 @@ behaviour, and both components are new.
   infers them once there is a row.
 - `<tosi-schema-form>` with no schema kept the schema inferred from an empty value forever, and
   threw "unobserve failed, listener not found" every time it left the page.
+
 ### Dependencies
 
 - The optional `happy-dom` peer accepts `^21.0.4` as well as `^20.7.0`, and tosijs-ui's own

@@ -58,11 +58,6 @@ field.addEventListener('action', () => {
 show()
 preview.append(field, output)
 ```
-```css
-.preview tosi-search-field {
-  margin-right: var(--touch-size, 44px);
-}
-```
 ```test
 test('typing discloses hints; picking one makes a tag and consumes the text', async () => {
   const field = preview.querySelector('tosi-search-field')
@@ -123,9 +118,6 @@ Give each tag a `test(item)`, and a `textTest` for the text left in the field, a
 field's `filter` is ready to hand to a `<tosi-table>`. Here it filters 3,655 emoji: type
 `food`, `flag` or `cat`, and pick a category or subcategory, or just keep typing to match
 names.
-
-(Both examples leave room at the field's right end, where the example's own toolbar floats;
-otherwise it covers the clear button.)
 
 ```js
 import { tosiSearchField, tosiTable } from 'tosijs-ui'
@@ -192,10 +184,6 @@ preview.append(div({ class: 'emoji-search' }, field, table))
   flex-direction: column;
   gap: var(--spacing, 8px);
   height: 100%;
-}
-
-.preview .emoji-search tosi-search-field {
-  margin-right: var(--touch-size, 44px);
 }
 
 .preview .emoji-search tosi-table {

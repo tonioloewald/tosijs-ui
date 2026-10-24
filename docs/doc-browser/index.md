@@ -82,6 +82,7 @@ interface DocBrowserOptions {
   routing?: 'query' | 'path' | 'memory' // see below (default: 'query')
   initialRoute?: string // memory routing: the first page
   onRouteChange?: (slug: string) => void // memory routing: page changes
+  searchShortcut?: string // opens the search; '' for none (default: 'mod+k')
   navbarLinks?: LinkItem[] // icon links in the header bar
   contentElement?: HTMLElement // adopt this element as the content area
 }
@@ -91,3 +92,7 @@ interface DocBrowserOptions {
 clean `/slug/` URLs, as the static site does. `'memory'` never touches the page's URL or
 history, for a browser embedded in another page: drive it with `initialRoute`,
 `onRouteChange` and the element's `navigate(slug)` method.
+
+The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that owns that key,
+or embeds more than one browser, passes `searchShortcut: ''` (or another key in
+`<tosi-palette>`'s `shortcut` form).

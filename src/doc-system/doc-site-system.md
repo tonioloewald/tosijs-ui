@@ -1122,8 +1122,8 @@ too, which is what opens the box's root list and the static previews. From then 
 browser opens every workspace holding the key, and the box's root list, without another link,
 across dev-server restarts. The code is spent by the first browser that uses it, and both kinds
 expire after 5 minutes: the cookie is what lasts, not the code that delivers it.
-`tunnel.linkTtlMinutes` can shorten that window but not lengthen it, and `--share-ttl` does not
-apply. To give someone view access later, send them a plain `--link --share` link instead.
+`tunnel.linkTtlMinutes` can shorten that window but not lengthen it, and `tosijs-tunnel` refuses
+`--share-ttl` with `--global`. To give someone view access later, send them a plain `--link --share` link instead.
 `tosijs-tunnel --link --global` prints a fresh edit one, and `--link --global --share` a fresh
 view one. Plain `--link` and `--link --share` are unchanged: reusable for their window, and
 they open this workspace only.
@@ -1166,12 +1166,15 @@ tosijs-tunnel --devices                         # every pass issued, newest firs
 tosijs-tunnel --revoke=k3v9x2mq7a               # end that device's edit access, on every workspace
 ```
 
-Revoking adds the id to `revoked.txt` beside the box's root list. Every workspace reads that
-list before it honours a pass, at most a minute old, and ends the sessions a revoked device
-already holds within the same minute. Revoking removes EDIT access only: an edit link also gave
+Revoking adds the id to `revoked.txt` beside the box's root list. Every workspace sweeps that
+list once a minute and ends the sessions a revoked device already holds when the sweep sees it.
+To honour a new pass it uses its copy of the list, refreshing it behind the request once the
+copy is a minute old, so a pass can be honoured on a copy up to ten minutes old while the box
+is slow to answer. Revoking removes EDIT access only: an edit link also gave
 that device the shared view key, so it can still browse, read-only, until you rotate the view
 key. A workspace that cannot read the list (and has no copy less than ten minutes old) honours
-**no** pass until it can: it fails closed. A pass also expires 30 days after it was issued (a
+**no** new pass until it can: it fails closed. Sessions a pass already opened carry on until
+they expire (24 hours) or a readable sweep ends them. A pass also expires 30 days after it was issued (a
 workspace refuses one claiming longer); a fresh link gives a fresh one.
 
 Edit links from tosijs-ui 1.16.30 and earlier set the raw edit key as the cookie. That cookie no

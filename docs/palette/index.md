@@ -94,6 +94,9 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 - `placeholder` — the hint in the field, and in the trigger.
 - `shortcut` — a key that opens it from anywhere on the page, such as `mod+k` (`mod` is ⌘ on a
   Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.
+  The modifiers are `mod`, `meta` (also `cmd`), `ctrl`, `shift` and `alt` (also `option`); a
+  shortcut naming any other is ignored, with a console warning, rather than binding the bare
+  key. When two palettes share a shortcut, the first to see the keystroke opens.
 - `multiline` — the query is a growing text box: Enter chooses, Shift+Enter starts a new line,
   and ↑/↓ move through results only from the first or last line. For a prompt rather than a
   search.
@@ -120,3 +123,10 @@ interface PaletteResult {
   action?: (result: PaletteResult, palette: TosiPalette) => void | boolean
 }
 ```
+
+## Helpers
+
+`rankResults(results)` is the default ranking (grouped, best first), `defaultPaletteRow(result,
+query)` the default row, and `highlight(text, query)` the row's title with each query word in a
+`<mark>`, as nodes, never HTML. `matchesShortcut(event, shortcut)` and
+`describeShortcut(shortcut)` (⌘K on a Mac, Ctrl K elsewhere) are the shortcut rules.

@@ -83,6 +83,7 @@ interface DocBrowserOptions {
   routing?: 'query' | 'path' | 'memory' // see below (default: 'query')
   initialRoute?: string // memory routing: the first page
   onRouteChange?: (slug: string) => void // memory routing: page changes
+  searchShortcut?: string // opens the search; '' for none (default: 'mod+k')
   navbarLinks?: LinkItem[] // icon links in the header bar
   contentElement?: HTMLElement // adopt this element as the content area
 }
@@ -92,6 +93,10 @@ interface DocBrowserOptions {
 clean `/slug/` URLs, as the static site does. `'memory'` never touches the page's URL or
 history, for a browser embedded in another page: drive it with `initialRoute`,
 `onRouteChange` and the element's `navigate(slug)` method.
+
+The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that owns that key,
+or embeds more than one browser, passes `searchShortcut: ''` (or another key in
+`<tosi-palette>`'s `shortcut` form).
 */
 /*{ "parent": "Documentation System", "order": 50 }*/
 import { elements, vars, varDefault, bindings, getListItem, tosi, StyleSheet, } from 'tosijs';
@@ -349,7 +354,7 @@ const logoMarkStyleSpec = {
 // tosi() registry key (see stateKey below) and two browsers can't share state.
 let docBrowserSeq = 0;
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, navbarLinks, contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, searchShortcut = 'mod+k', navbarLinks, contentElement, } = options;
     // Memory routing is fully self-contained: it never reads or writes
     // window.history/location, so an embedded or nested browser can't hijack the
     // host page's URL (or recurse into it).
@@ -704,7 +709,7 @@ export function createDocBrowser(options) {
     const searchBox = tosiPalette({
         class: 'doc-search',
         placeholder: 'Search documentation',
-        shortcut: 'mod+k',
+        shortcut: searchShortcut,
         sources: [docSearchSource],
         quickLinks,
     });

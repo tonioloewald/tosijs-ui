@@ -51,6 +51,28 @@ test('shortcuts match the key and exactly its modifiers', () => {
   expect(matchesShortcut(key('j', { ctrlKey: true }), 'ctrl+k')).toBe(false)
   expect(matchesShortcut(key('/'), '/')).toBe(true)
   expect(describeShortcut('shift+p')).toMatch(/P$/)
+  // aliases name real modifiers
+  expect(matchesShortcut(key('k', { metaKey: true }), 'cmd+k')).toBe(true)
+  expect(matchesShortcut(key('k', { altKey: true }), 'option+k')).toBe(true)
+})
+
+test('an unknown modifier never binds the bare key, and says so once', () => {
+  const warn = console.warn
+  const warnings: string[] = []
+  console.warn = (message: string) => warnings.push(message)
+  try {
+    const plain = { key: 'k' } as KeyboardEvent
+    expect(matchesShortcut(plain, 'hyper+k')).toBe(false)
+    expect(matchesShortcut(plain, 'hyper+k')).toBe(false)
+    expect(warnings.length).toBe(1)
+    expect(warnings[0]).toContain('hyper')
+  } finally {
+    console.warn = warn
+  }
+})
+
+test('a keydown with no key matches nothing and does not throw', () => {
+  expect(matchesShortcut({} as KeyboardEvent, 'mod+k')).toBe(false)
 })
 
 test('a sync source lists at once; quick links before typing; choosing fires action and closes', async () => {
