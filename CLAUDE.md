@@ -1001,6 +1001,13 @@ workspace), `?t=<edit key>` was dropped from the box's Caddyfile, and the CHANGE
 upgrade steps. The test: the change lands on the people developing a site, not on an adopter's
 product or its readers.
 
+**Ruled for 1.16.32 (the maintainer's call, "it's dev only and tests only"):** an optional peer
+used only by tests and build tooling (`happy-dom`: `tosijs-ui/test-setup` and the ePub pass) may
+cross a major in a patch to take a security fix. happy-dom `^20.7.0` → `^21.0.4` for
+GHSA-834v-8h66-3h79, which has no fixed 20.x. Nothing an adopter ships to a browser depends on
+it. A peer that reaches an adopter's product (tosijs, marked) crossing a major is still the
+maintainer's decision.
+
 **Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
 about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
 removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a

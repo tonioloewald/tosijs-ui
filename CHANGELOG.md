@@ -78,12 +78,12 @@ gzip and the affix 5.0 KB. The ESM path pays only for what it imports.
 
 ### Dependencies
 
-- The optional `happy-dom` peer accepts `^21.0.4` as well as `^20.7.0`, and tosijs-ui's own
-  tests run on 21.0.4. Every happy-dom from 17.0.0 to 21.0.3 is affected by
+- The optional `happy-dom` peer is now `^21.0.4` (was `^20.7.0`), and tosijs-ui's own tests
+  run on 21.0.4. Every happy-dom from 17.0.0 to 21.0.3 is affected by
   [GHSA-834v-8h66-3h79](https://github.com/advisories/GHSA-834v-8h66-3h79) (an unsanitized
-  import alias leads to host code execution), and there is no fixed 20.x. If you use
-  `tosijs-ui/test-setup` or build ePubs, upgrade to 21.0.4. Its one breaking change is that
-  CSS and iframe loading are off by default.
+  import alias leads to host code execution), and there is no fixed 20.x. It matters only if
+  you use `tosijs-ui/test-setup` or build ePubs; then upgrade to 21.0.4. Its one breaking
+  change is that CSS and iframe loading are off by default, which neither relies on.
 
 ### Tunnel
 
