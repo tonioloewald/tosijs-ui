@@ -1,5 +1,90 @@
 # Changelog
 
+## 1.16.32
+
+Two new components, a doc search that ranks, and live examples whose toolbar no longer covers
+what they draw. Nothing an adopter has to change: the toolbar and the search are doc-site
+behaviour, and both components are new.
+
+### New components
+
+- **`<tosi-palette>`** (`tosiPalette`): a command palette. A compact search-field trigger
+  opens a centred modal of ranked results. Results come from `sources` (sync, or async with a
+  spinner and a `timeout`, 10s by default; each keystroke aborts the last search), are drawn
+  per `kind` by `renderers` (or a default row: icon, highlighted title, one-line description,
+  path), ranked by `score` and grouped by `group` (or by your own `rank`), with `quickLinks`
+  before anything is typed. Arrow keys, Enter and Escape drive it, `shortcut: 'mod+k'` opens it
+  from anywhere, `multiline` makes the query a growing prompt, and choosing fires `action`.
+  `trigger` is `field` (the default, which shrinks to its icon below `compactWidth`, 160px),
+  `icon`, or `none` for a palette opened only by `open()` or its shortcut. Its colours come
+  from the theme's root `--tosi-text` / `--tosi-bg` / `--tosi-accent`, so a recoloured header
+  does not make its results invisible. The dialog sets its own line height, wrapping and font
+  size, so a header's do not reach it. The palette footer's Close is a button, for a phone,
+  which has no Escape key; on a touch screen the arrow/Enter cues and the Esc hint are hidden.
+  The ✕ that clears the query is hidden until something is typed.
+- **`<tosi-affix>`** (`tosiAffix`): fixes a fixture (`slot="fixture"`) to an edge of its
+  content, in the FloatPosition vocabulary: the first letter is the edge, the second the
+  alignment, so `en` is the right edge, top-aligned. Outside (the default) it takes a grid cell
+  beside the content, so it never covers it and an ancestor's overflow cannot clip it; `inside`
+  puts it within the content against that edge. `fallback` (e.g. `"s inside"`) is used while
+  the fixture is longer than its edge. Setting `position`/`inside` sets where it is wanted,
+  reading them gives where it is, the `placed` attribute reflects it, and a `reposition` event
+  fires when it changes. It looks finished with no styling: a flex column on a side edge, a row
+  on top or bottom, the theme's inset background and spacing, outer corners rounded
+  (`--tosi-affix-bg/gap/padding/radius`, `::part(fixture)`).
+
+### Doc system
+
+- **Search ranks pages, in the header.** The sidebar's nav filter (a substring test that hid
+  pages and ranked nothing) is replaced by a palette in the header bar: the site's search
+  field while there is room, its icon when the header is narrow, and Cmd/Ctrl-K on every page,
+  `{"header": false}` pages included. Pages are ranked by rough relevance (title, then
+  headings, keywords, description, opening paragraph, body), and a matching heading becomes a
+  deep link. A query word matches only the start of a word, camelCase split ("date" finds
+  `tosiDate`, not "update"), a whole word or its plural outranks a prefix, and a word used
+  often counts for more than one used once. A word matched in one heading no longer counts for
+  the next query word. The trigger looks like the search field it replaced (the site's
+  pill-shaped input), and the active row is a tint of the theme's accent. The ranking is
+  exported as `buildDocIndex` / `searchDocs`, with section anchors taken from the renderer's
+  own heading ids.
+- **A live example's toolbar sits beside the preview**, outside its outline, instead of a
+  pocket bar over the preview's top-right corner (which covered whatever the example drew
+  there, the crud example's New button for one). It moves inside along the bottom when the
+  column is taller than the preview, and when the example is maximized. The run-tests check
+  shows the test status; the owl handle is gone.
+- Below 600px of header the link icons fold into the settings (⋮) menu, so an upright phone
+  has room for the title and the search.
+
+### Fixed
+
+- `<tosi-crud>` has a Close button (and `close()`) that returns to the list. Under 720px (the
+  doc preview included) an open record replaces the list instead of squeezing into a 210px
+  column beside it, and the component fills a container with a height. A store that can only
+  list no longer shows New, Save and Delete where the page styles `button` with a `display`.
+  Without a schema, New starts from the fields the listed rows have instead of an empty form.
+- Boolean columns from a schema asked for icons named "✓" and "✗", which do not exist; they
+  use `check` and `x`.
+- `<tosi-table>` with no `columns` and data that arrived later showed no columns: it now
+  infers them once there is a row.
+- `<tosi-schema-form>` with no schema kept the schema inferred from an empty value forever, and
+  threw "unobserve failed, listener not found" every time it left the page.
+### Dependencies
+
+- The optional `happy-dom` peer accepts `^21.0.4` as well as `^20.7.0`, and tosijs-ui's own
+  tests run on 21.0.4. Every happy-dom from 17.0.0 to 21.0.3 is affected by
+  [GHSA-834v-8h66-3h79](https://github.com/advisories/GHSA-834v-8h66-3h79) (an unsanitized
+  import alias leads to host code execution), and there is no fixed 20.x. If you use
+  `tosijs-ui/test-setup` or build ePubs, upgrade to 21.0.4. Its one breaking change is that
+  CSS and iframe loading are off by default.
+
+### Tunnel
+
+- A workspace no longer makes a request wait on the box for the revoked-device list. A
+  copy up to ten minutes old is used at once and refreshed behind, and when the list becomes
+  unreadable the dev server says so, and why. `tosijs-tunnel` refuses flag combinations it
+  used to ignore silently: `--share-ttl` with `--global` or without `--link --share`, and
+  `--label` anywhere but on a `--link --global` edit link.
+
 ## 1.16.31
 
 **Tunnel users: each browser needs one new `tosijs-tunnel --link --global`.** The edit cookie
