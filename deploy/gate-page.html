@@ -122,7 +122,7 @@ is still redeemed, single-use and rate-limited, by the dev server that minted it
         return say(
           'No live link has the code ' +
             code +
-            '. Codes last five minutes: ask for a fresh one.'
+            '. Check it for a typo and try again: a code is eight letters, and case does not matter.'
         )
       if (target.protocol !== 'https:' || !ours(target.hostname))
         return say(
@@ -167,6 +167,12 @@ is still redeemed, single-use and rate-limited, by the dev server that minted it
         ? location.pathname.replace(/^\/+|\/+$/g, '')
         : ''
     const arrived = normalize(query || path)
-    if (CODE.test(arrived)) redeem(arrived)
+    if (CODE.test(arrived)) {
+      // In the box too, so a typo in the URL is a one-letter fix (board #3505).
+      const box = document.getElementById('t')
+      box.value = arrived
+      box.focus()
+      redeem(arrived)
+    }
   })()
 </script>

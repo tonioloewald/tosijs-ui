@@ -25,8 +25,8 @@ export declare function invitePageHtml(rejection: SessionRejection, linkCommand:
  */
 lastingCommand?: string, 
 /**
- * A code that matched no live link, spent or expired one included (board #3505): most likely
- * a typo. The page says so and puts it back in the box, so fixing one letter on a headset does
+ * A code that matches nothing the server minted or remembers retiring (board #3505): most
+ * likely a typo. The page says so and puts it back in the box, so fixing one letter on a headset does
  * not mean typing all eight again.
  */
 mistypedCode?: string): string;

@@ -2,7 +2,7 @@
 The screen someone sees when their session is not good enough.
 */
 
-import { GLOBAL_KEY_COOKIE_MAX_AGE_S } from './dev-auth.js'
+import { GLOBAL_KEY_COOKIE_MAX_AGE_S, normalizeLinkToken } from './dev-auth.js'
 
 const LASTING_DAYS = Math.round(GLOBAL_KEY_COOKIE_MAX_AGE_S / 86400)
 
@@ -54,15 +54,15 @@ export function invitePageHtml(
    */
   lastingCommand?: string,
   /**
-   * A code that matched no live link, spent or expired one included (board #3505): most likely
-   * a typo. The page says so and puts it back in the box, so fixing one letter on a headset does
+   * A code that matches nothing the server minted or remembers retiring (board #3505): most
+   * likely a typo. The page says so and puts it back in the box, so fixing one letter on a headset does
    * not mean typing all eight again.
    */
   mistypedCode?: string
 ): string {
-  // Only what a code can hold goes back into the page: letters and digits, folded, at most 16.
-  const typed = (mistypedCode ?? '')
-    .toUpperCase()
+  // Folded as the server looked it up, and only what a code can hold (letters and digits, at
+  // most 16) goes back into the page.
+  const typed = normalizeLinkToken(mistypedCode ?? '')
     .replace(/[^A-Z0-9]/g, '')
     .slice(0, 16)
   return (

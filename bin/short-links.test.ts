@@ -192,6 +192,34 @@ describe('the gate page', () => {
     expect(notCode.message).toContain('not a code')
   })
 
+  test('#3505: a short link with a typo says so, and puts the code in the box to fix', async () => {
+    // Not "ask for a fresh one": that sent a headset user off to mint a link when one letter
+    // was wrong (review of 1.16.33, F1).
+    const run = await gate({
+      url: 'https://dev.example.com/RCQAMHFY',
+      codes: {},
+    })
+    expect(run.message).toContain('No live link has the code RCQAMHFY')
+    expect(run.message).toContain('typo')
+    expect(run.message).not.toContain('fresh one')
+    expect(run.box).toBe('RCQAMHFY')
+  })
+
+  test('the installer refuses a gate page that names a key placeholder', () => {
+    // It is embedded before the keys are substituted, so the key would be served to anyone.
+    for (const name of ['__PREVIEW_TOKEN__', '__PREVIEW_EDIT_TOKEN__'])
+      expect(() =>
+        embedGatePage(
+          'respond "__GATE_PAGE__" 401',
+          PAGE.replace('</h1>', `${name}</h1>`)
+        )
+      ).toThrow('key placeholder')
+    // In a comment it is dropped with the comment, so it is fine there.
+    expect(() =>
+      embedGatePage('__GATE_PAGE__', `<!-- __PREVIEW_TOKEN__ -->\n${PAGE}`)
+    ).not.toThrow()
+  })
+
   test('a page path on a static preview is left alone', async () => {
     const run = await gate({
       url: 'https://docs.dev.example.com/abcdefgh/',
@@ -254,7 +282,12 @@ async function gate(opts: {
   url: string
   codes: Record<string, string>
   type?: string
-}): Promise<{ went?: string; fetched: string[]; message: string }> {
+}): Promise<{
+  went?: string
+  fetched: string[]
+  message: string
+  box: string
+}> {
   const html = embedGatePage('__GATE_PAGE__', PAGE)
     .replace(/\\"/g, '"')
     .replaceAll('{{PREVIEW_DOMAIN}}', 'dev.example.com')
@@ -294,5 +327,9 @@ async function gate(opts: {
       .dispatchEvent(new Event('submit', { cancelable: true }))
   }
   await new Promise((resolve) => setTimeout(resolve, 20))
-  return { ...result, message: doc.getElementById('msg')!.textContent ?? '' }
+  return {
+    ...result,
+    message: doc.getElementById('msg')!.textContent ?? '',
+    box: (doc.getElementById('t') as HTMLInputElement).value,
+  }
 }

@@ -1310,8 +1310,8 @@ guesser can test codes there faster than at the workspace. At a sustained 2,000 
 second for a code's whole five minutes, the odds of hitting a given live code are about **1 in
 100,000**, against 1 in 18 million at the workspace. That was judged worth it for typing a short
 link on a headset (the maintainer's call, 1.16.33). Short-link codes appear in the box's
-access log as paths; the log is readable by root and Caddy only, and a code is spent or expired
-within five minutes.
+access log as paths, unredacted; a code there is spent or expired within five minutes, but keep
+the log readable only by root and the Caddy user, as it is on a stock install.
 
 The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;

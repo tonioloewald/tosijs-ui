@@ -2146,8 +2146,7 @@ export async function devServer(config, opts = {}) {
                         `<p>Each link opens one browser. If you pasted this ` +
                         `link into a chat app, its link preview may have spent it before you clicked.</p>`
                     : `<h1>That invite link has expired</h1>` +
-                        `<p>A link only opens a browser for a few minutes after it is printed; the ` +
-                        `browser that opens one stays in.</p>`) +
+                        `<p>Every link has a time limit; the browser that opens one in time stays in.</p>`) +
                 `<p>Ask for a fresh one: <code>${TUNNEL_LINK_CMD}</code></p>`;
             return new Response(spent, {
                 status: 401,

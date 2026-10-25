@@ -27,7 +27,8 @@ the box does not serve them yet and prints the long link as before.
   2,000 requests a second for a code's five minutes, against 1 in 18 million at the workspace.
   The maintainer accepted that for headset typing. `doc-site-system.md` has the details.
 - **A mistyped code says so.** A code that matches no live link now gets the code box back,
-  naming the code and with it filled in, so a one-letter typo is a one-letter fix. A spent code
+  naming the code and with it filled in, so a one-letter typo is a one-letter fix. That holds on
+  a workspace's own page and on the box's (a short link with a typo, or a code typed there). A spent code
   still reads "has been used", and an expired one says it has expired; through 1.16.32 all three
   read "has been used" (board #3505).
 

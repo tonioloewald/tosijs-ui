@@ -235,11 +235,17 @@ comments are dropped (they are for whoever edits it, and they mention placeholde
 would expand).
 */
 export function embedGatePage(template: string, page: string): string {
-  const body = page
-    .replace(/<!--[\s\S]*?-->\n?/g, '')
-    .trim()
-    .replace(/"/g, '\\"')
-  return template.split('__GATE_PAGE__').join(body)
+  const stripped = page.replace(/<!--[\s\S]*?-->\n?/g, '').trim()
+  /*
+  Embedded BEFORE the installer substitutes the keys, so a key placeholder here would be filled
+  with the real key and served to anyone without a cookie. The installer's leftover-placeholder
+  guard cannot see that: by then it is a key, not a placeholder.
+  */
+  if (/__PREVIEW_(EDIT_)?TOKEN__/.test(stripped))
+    throw new Error(
+      'the gate page names a key placeholder (__PREVIEW_TOKEN__ / __PREVIEW_EDIT_TOKEN__), which would publish the key on a page anyone can load'
+    )
+  return template.split('__GATE_PAGE__').join(stripped.replace(/"/g, '\\"'))
 }
 
 export interface DeviceRecord {

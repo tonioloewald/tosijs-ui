@@ -266,7 +266,10 @@ async function registerShortCode(
 ): Promise<string | undefined> {
   const code = new URL(url).searchParams.get('t') ?? ''
   const script = shortCodeScript(devicesRoot(), code, url)
-  if (!script) return undefined
+  if (!script) {
+    shortLinkProblem = `${url} is not a link the box can shorten`
+    return undefined
+  }
   const run =
     await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host!} ${script}`
       .nothrow()
