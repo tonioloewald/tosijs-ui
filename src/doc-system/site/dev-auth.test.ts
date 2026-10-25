@@ -31,6 +31,8 @@ import {
   resolveLanTrust,
   describeLanTrust,
   trustLanRefusalHint,
+  linkRejection,
+  RETIRED_LINK_MEMORY_MS,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -2095,5 +2097,54 @@ describe('the haltija bridge over the tunnel', () => {
   test('a sibling host may not reach the component or socket, though the page load may come from the list', () => {
     expect(ask(full, 'https://other.dev.example.com', true)).toBe(false)
     expect(ask(full, 'https://dev.example.com', false)).toBe(true)
+  })
+})
+
+describe('#3505: a refused code says whether it was mistyped, spent or expired', () => {
+  // A headset user mistyped one letter, was told the code "has been used", and minted a new
+  // link when retyping would have done.
+  test('a code nobody minted is unknown, which reads as a typo', () => {
+    const s = createAuthState()
+    const real = issueLink(s, NOW)
+    const typo = (real[0] === 'A' ? 'B' : 'A') + real.slice(1)
+    expect(redeemLink(s, typo, NOW)).toBe(null)
+    expect(linkRejection(s, typo, NOW)).toBe('unknown')
+  })
+
+  test('a spent code is used, however it is typed', () => {
+    const s = createAuthState()
+    const code = issueLink(s, NOW)
+    expect(redeemLink(s, code, NOW, 'single-use')).toBeTruthy()
+    expect(redeemLink(s, code, NOW + 1, 'single-use')).toBe(null)
+    expect(linkRejection(s, code.toLowerCase(), NOW + 1)).toBe('used')
+  })
+
+  test('a code past its window is expired', () => {
+    const s = createAuthState()
+    const code = issueLink(s, NOW)
+    const later = NOW + LINK_TOKEN_TTL_MS + 1
+    expect(redeemLink(s, code, later)).toBe(null)
+    expect(linkRejection(s, code, later)).toBe('expired')
+  })
+
+  test('a reusable link is never called used, only expired once its window closes', () => {
+    const s = createAuthState()
+    const code = issueLink(s, NOW)
+    expect(redeemLink(s, code, NOW, 'window')).toBeTruthy()
+    expect(redeemLink(s, code, NOW + 1, 'window')).toBeTruthy()
+    expect(linkRejection(s, code, NOW + LINK_TOKEN_TTL_MS + 1)).toBe('expired')
+  })
+
+  test('is remembered for an hour, then forgotten, so the map stays bounded', () => {
+    const s = createAuthState()
+    const code = issueLink(s, NOW)
+    redeemLink(s, code, NOW, 'single-use')
+    expect(linkRejection(s, code, NOW + RETIRED_LINK_MEMORY_MS - 1)).toBe(
+      'used'
+    )
+    expect(linkRejection(s, code, NOW + RETIRED_LINK_MEMORY_MS + 1)).toBe(
+      'unknown'
+    )
+    expect(s.retired.size).toBe(0)
   })
 })

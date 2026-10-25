@@ -27,6 +27,7 @@ import { invitePageHtml } from './invite-page.js'
 import {
   TUNNEL_LINK_CMD,
   resolveLinkArrival,
+  linkRejection,
   isLockedDown,
   hasTunnel,
   isLoopbackAddressForAuth as isLoopbackAddress,
@@ -2529,15 +2530,42 @@ export async function devServer(
       unfurlers as a reason for single-use without handling the consequence: you click
       a dead link, get silently redirected, and the next signal is a save failing.
       */
+      /*
+      Which refusal (board #3505). A code nobody minted is almost always a typo, and saying
+      "has been used" sent a headset user off to mint a new link when retyping one letter
+      would have done: so an unknown code gets the box back, with what was typed in it.
+      */
+      const why = linkRejection(auth, linkToken, Date.now())
+      const noStore = {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Referrer-Policy': 'no-referrer',
+      }
+      if (why === 'unknown') {
+        return new Response(
+          invitePageHtml(
+            'none',
+            TUNNEL_LINK_CMD,
+            globalKeys.keys.edit ? `${TUNNEL_LINK_CMD} --global` : undefined,
+            linkToken
+          ),
+          { status: 401, headers: noStore }
+        )
+      }
       const spent =
-        `<!doctype html><meta charset=utf-8><title>Link already used</title>` +
+        `<!doctype html><meta charset=utf-8><title>${
+          why === 'used' ? 'Link already used' : 'Link expired'
+        }</title>` +
         `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:32rem;padding:0 1.5rem;color:#222}` +
         `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
         `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
-        `<h1>That invite link has been used</h1>` +
-        `<p>Invite links expire. If you pasted this ` +
-        `link into a chat app, its link preview may have spent it before you clicked — ` +
-        `which is exactly why they expire.</p>` +
+        (why === 'used'
+          ? `<h1>That invite link has been used</h1>` +
+            `<p>Each link opens one browser. If you pasted this ` +
+            `link into a chat app, its link preview may have spent it before you clicked.</p>`
+          : `<h1>That invite link has expired</h1>` +
+            `<p>A link only opens a browser for a few minutes after it is printed; the ` +
+            `browser that opens one stays in.</p>`) +
         `<p>Ask for a fresh one: <code>${TUNNEL_LINK_CMD}</code></p>`
       return new Response(spent, {
         status: 401,

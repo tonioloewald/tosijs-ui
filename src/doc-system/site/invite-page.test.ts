@@ -66,3 +66,23 @@ test('#232: with global keys, the page names the lasting link as well as the per
   expect(html).toContain(`<code>${CMD} --global</code>`)
   expect(html).toContain('30 days')
 })
+
+test('#3505: a mistyped code is named and put back in the box, so one letter can be fixed', () => {
+  const html = invitePageHtml('none', CMD, undefined, 'rcqa-mhfz')
+  expect(html).toContain('No live link has the code <code>RCQAMHFZ</code>')
+  expect(html).toContain('value="RCQAMHFZ"')
+  // It replaces the explanation for arriving without a session; the box is still there.
+  expect(html).not.toContain('invite links expire')
+  expect(html).toContain('name="t"')
+})
+
+test('#3505: only letters and digits of what was typed reach the page', () => {
+  const html = invitePageHtml(
+    'none',
+    CMD,
+    undefined,
+    '"><script>alert(1)</script>'
+  )
+  expect(html).not.toContain('<script>')
+  expect(html).toContain('value="SCRIPTALERT1SCRI"')
+})

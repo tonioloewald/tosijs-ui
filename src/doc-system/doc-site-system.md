@@ -1246,6 +1246,12 @@ for a letter they misread (`5`→`S`, `2`→`Z`, `8`→`B`, `6`→`G`) are mappe
 since a digit can never be part of a real code. The failure this designs out is a correct human
 being told they typed it wrong.
 
+The opposite failure is designed out too. A code that matches no live link gets the code box
+back, saying so, with what you typed already in it, so a one-letter typo is a one-letter fix. A
+code that has been spent, or has expired, says which (the server remembers retired codes for an
+hour). Through 1.16.32 all three read "that invite link has been used", which sent a headset
+user to mint a new link when retyping would have done.
+
 Eight letters is ~35.7 bits — slightly _more_ than the seven base32 characters it replaced
 (35.0) — and the server makes that plenty by capping how fast anyone can guess: **redemption is
 serialized, and every attempt takes at least 100ms**, success or failure alike. Ten attempts a

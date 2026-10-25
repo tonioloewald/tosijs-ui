@@ -52,8 +52,19 @@ export function invitePageHtml(
    * preview box's global keys. Without it the page offered only per-visit links, and a reader
    * whose key cookie had lapsed read that as the daily-link problem coming back (#232).
    */
-  lastingCommand?: string
+  lastingCommand?: string,
+  /**
+   * A code that matched no live link, spent or expired one included (board #3505): most likely
+   * a typo. The page says so and puts it back in the box, so fixing one letter on a headset does
+   * not mean typing all eight again.
+   */
+  mistypedCode?: string
 ): string {
+  // Only what a code can hold goes back into the page: letters and digits, folded, at most 16.
+  const typed = (mistypedCode ?? '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 16)
   return (
     `<!doctype html><meta charset=utf-8>` +
     `<title>Link required</title>` +
@@ -62,7 +73,12 @@ export function invitePageHtml(
     `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
     `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
     `<h1>This workspace needs an invite link</h1>` +
-    explain(rejection) +
+    (mistypedCode !== undefined
+      ? `<p class="mistyped"><b>No live link has the code <code>${
+          typed || '(empty)'
+        }</code>.</b> Check it for a typo and try again: a code is eight letters, and case ` +
+        `does not matter. Each code opens the workspace that printed it.</p>`
+      : explain(rejection)) +
     `<form method="GET" action="/" style="margin:1.5em 0">` +
     `<label for="t" style="display:block;margin-bottom:.4em">Have a code? Type it here:</label>` +
     /*
@@ -74,6 +90,7 @@ export function invitePageHtml(
     */
     `<input id="t" name="t" inputmode="latin" autocapitalize="off" autocorrect="off" ` +
     `spellcheck="false" autocomplete="off" placeholder="ABCDEFGH" ` +
+    (typed ? `value="${typed}" autofocus ` : '') +
     `style="font:inherit;font-family:ui-monospace,monospace;letter-spacing:.15em;` +
     `padding:.6em .7em;min-width:9em;border:1px solid #8886;border-radius:6px;background:#8881;color:inherit">` +
     `<button type="submit" style="font:inherit;padding:.6em 1.1em;margin-left:.5em;` +

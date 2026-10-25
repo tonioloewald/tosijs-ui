@@ -263,7 +263,15 @@ export interface AuthState {
   sessionGrants: Map<string, GlobalGrant>
   /** Sessions minted from a device pass → that device, so revoking it ends them too. */
   sessionDevices: Map<string, string>
+  /**
+   * Link codes that have left `links`, folded, with why and until when they are remembered:
+   * so a refused code can be told apart as mistyped, spent or expired (see linkRejection).
+   */
+  retired: Map<string, { why: 'used' | 'expired'; until: number }>
 }
+
+/** How long a spent or expired code is remembered, for the message only. */
+export const RETIRED_LINK_MEMORY_MS = 60 * 60 * 1000
 
 /**
  * What a single-use link hands over besides a session here: the box's global `key`, as a
@@ -287,6 +295,7 @@ export function createAuthState(): AuthState {
     grants: new Map(),
     sessionGrants: new Map(),
     sessionDevices: new Map(),
+    retired: new Map(),
   }
 }
 
@@ -297,7 +306,10 @@ export function prune(state: AuthState, now: number): void {
       state.links.delete(t)
       state.readOnly.delete(t)
       state.grants.delete(t)
+      retire(state, t, 'expired', now)
     }
+  for (const [t, { until }] of state.retired)
+    if (until <= now) state.retired.delete(t)
   for (const [t, exp] of state.sessions)
     if (exp <= now) {
       state.sessions.delete(t)
@@ -415,6 +427,7 @@ export function redeemLink(
     state.links.delete(matched)
     state.readOnly.delete(matched)
     state.grants.delete(matched)
+    retire(state, matched, 'used', now)
   }
   /*
   The capability rides from the link to the session it mints, and so does the shorter horizon.
@@ -430,6 +443,35 @@ export function redeemLink(
   )
   if (grant) state.sessionGrants.set(session, grant)
   return session
+}
+
+function retire(
+  state: AuthState,
+  token: string,
+  why: 'used' | 'expired',
+  now: number
+): void {
+  state.retired.set(normalizeLinkToken(token), {
+    why,
+    until: now + RETIRED_LINK_MEMORY_MS,
+  })
+}
+
+/*
+Why a code was refused, so the page can say the useful thing (board #3505). A headset user who
+mistyped one letter was told the code "has been used", and went off to mint a new link when
+retyping would have done. Mistyped, spent and expired now read differently.
+
+This tells a guesser nothing useful: "used" and "expired" are said only of codes that can no
+longer open anything, and everything else is "unknown", as before.
+*/
+export function linkRejection(
+  state: AuthState,
+  token: string,
+  now: number
+): 'used' | 'expired' | 'unknown' {
+  prune(state, now)
+  return state.retired.get(normalizeLinkToken(token))?.why ?? 'unknown'
 }
 
 /**
