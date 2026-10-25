@@ -438,6 +438,9 @@ that feed back into the resolution pipeline:
 - `spin<dps><Icon>` — continuous rotation at N°/second (e.g. `spin360Loader`)
 - `spin_<dps><Icon>` — counter-clockwise (e.g. `spin_180Star`)
 
+  The rotation is a CSS animation on an HTML wrapper, not on the `<svg>`, so the browser can
+  run it off the main thread and it keeps turning while the page is busy.
+
 The overlay rules are just string rewrites — for example, `unFoo`
 becomes `slash25o$foo75s75o`. **Overlay icons should have a square
 viewBox** for best results on non-square base icons.
@@ -722,30 +725,54 @@ export const svg2DataUrl = (
 const safeIconSuffix = (name: string): string =>
   /\d$/.test(name) ? name + '_' : name
 
-// The rule list and how names match it live in icon-rules.ts, shared with iconSvg. Spin
-// animates, so its renderer is installed here.
+/*
+The rule list and how names match it live in icon-rules.ts, shared with iconSvg. Spin
+animates, so its renderer is installed here.
+
+The rotation is a CSS animation on an HTML span, never on the svg (board #3508). WebKit runs
+an animated transform on an SVG element on the main thread, whichever API starts it, so a
+loader froze exactly while the page was busy: the one time a loader is on screen. It was also
+started with `el.animate()`, which lives in script rather than in the markup, so a clone of
+the icon (a list template, `cloneNode`) stood still.
+
+The keyframes travel inside the icon as a `<style>`: a document-level `@keyframes` does not
+reach an icon in a shadow root in Chromium or Firefox (measured), and icons are drawn inside
+shadow-DOM components.
+
+The suffix transform (`spin90Loader40s_30x`) moves to a span OUTSIDE the rotation, so the
+icon still spins about its own centre, as it did when the rotation was appended to that
+transform, instead of orbiting the offset.
+*/
+const SPIN_KEYFRAMES = '@keyframes tosi-icon-spin{to{transform:rotate(360deg)}}'
+
 spinRule.apply = (baseName, match, parts) => {
   const dps = (match as RegExpMatchArray)[1].replace('_', '-')
   const duration = 360 / Math.abs(parseFloat(dps))
   const direction = dps.startsWith('-') ? 'reverse' : 'normal'
   // Resolve baseName with suffixes intact — they apply to the icon
-  const icon = resolveIcon(baseName, [])
-  const el = icon as HTMLElement
-  if (el.animate) {
-    const base = el.style.transform || ''
-    el.animate(
-      [
-        { transform: `${base} rotate(0deg)` },
-        { transform: `${base} rotate(360deg)` },
-      ],
-      {
-        duration: duration * 1000,
-        iterations: Infinity,
-        direction,
-      }
+  const icon = resolveIcon(baseName, []) as HTMLElement
+  const { transform, transformOrigin } = icon.style
+  icon.style.transform = ''
+  icon.style.transformOrigin = ''
+  const keyframes = document.createElement('style')
+  keyframes.textContent = SPIN_KEYFRAMES
+  let spun: HTMLElement = elements.span(
+    {
+      class: 'tosi-icon-spin',
+      style: {
+        display: 'inline-flex',
+        animation: `tosi-icon-spin ${duration}s linear infinite ${direction}`,
+      },
+    },
+    icon
+  )
+  if (transform) {
+    spun = elements.span(
+      { style: { display: 'inline-flex', transform, transformOrigin } },
+      spun
     )
   }
-  return wrapIcon(baseName, parts, icon)
+  return wrapIcon(baseName, parts, keyframes, spun)
 }
 
 let iconIdCounter = 0

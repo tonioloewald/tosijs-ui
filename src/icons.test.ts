@@ -378,8 +378,9 @@ describe('icons', () => {
       expect(icons['un:lock$shield']().children.length).toBe(2)
       const spun = icons['spin90:loader40s']()
       expect(spun.classList.contains('tosi-icon-composite')).toBe(true)
-      const inner = spun.querySelector('svg') as SVGElement
-      expect(inner.style.transform).toContain('scale(0.4)')
+      const scaled = spun.querySelector('.tosi-icon-spin')!
+        .parentElement as HTMLElement
+      expect(scaled.style.transform).toContain('scale(0.4)')
     })
 
     test('rules chain: a rule may apply to another rule', () => {
@@ -744,9 +745,14 @@ describe('icons', () => {
     test('suffixes on spin icon apply to inner icon', () => {
       const icon = icons.spin360Loader40s()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
-      // Suffixes apply to the resolved icon inside the spin wrapper
-      const inner = icon.querySelector('svg') || icon.children[0]
-      expect((inner as SVGElement).style.transform).toContain('scale(0.4)')
+      // The transform suffixes sit OUTSIDE the rotation, so the icon spins about its own
+      // centre rather than orbiting its offset; the rest stay on the svg.
+      const spin = icon.querySelector('.tosi-icon-spin') as HTMLElement
+      expect((spin.parentElement as HTMLElement).style.transform).toContain(
+        'scale(0.4)'
+      )
+      expect(spin.style.transform).toBe('')
+      expect((icon.querySelector('svg') as SVGElement).style.transform).toBe('')
     })
 
     test('suffixes on overlay in stacked icon', () => {
@@ -767,6 +773,40 @@ describe('icons', () => {
       const icon = icons.spin_180Star()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
       expect(icon.querySelector('svg')).toBeTruthy()
+    })
+
+    // Board #3508: WebKit animates an svg's transform on the main thread, so a loader froze
+    // while the page worked; and el.animate() did not survive a clone.
+    test('spins an HTML span with a CSS animation, never the svg', () => {
+      const icon = icons.spin90Loader()
+      const spin = icon.querySelector('.tosi-icon-spin') as HTMLElement
+      expect(spin).toBeInstanceOf(HTMLSpanElement)
+      expect(spin.style.animation).toContain('tosi-icon-spin')
+      expect(spin.style.animation).toContain('4s')
+      expect(spin.style.animation).toContain('linear')
+      expect(spin.style.animation).toContain('infinite')
+      expect(spin.style.animation).toContain('normal')
+      const svg = icon.querySelector('svg') as SVGElement
+      expect(svg.parentElement).toBe(spin)
+      expect(svg.getAnimations().length).toBe(0)
+      expect(
+        icons.spin_180Star().querySelector<HTMLElement>('.tosi-icon-spin')!
+          .style.animation
+      ).toContain('reverse')
+    })
+
+    test('carries its own keyframes, so it spins in a shadow root and as a clone', () => {
+      const icon = icons.spin90Loader()
+      expect(icon.querySelector('style')!.textContent).toContain(
+        '@keyframes tosi-icon-spin'
+      )
+      const clone = icon.cloneNode(true) as HTMLElement
+      expect(clone.querySelector('style')!.textContent).toContain(
+        '@keyframes tosi-icon-spin'
+      )
+      expect(
+        clone.querySelector<HTMLElement>('.tosi-icon-spin')!.style.animation
+      ).toContain('tosi-icon-spin')
     })
   })
 

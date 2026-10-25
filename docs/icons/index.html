@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=9b14d15c7207" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=3d99ec6e0fe8" data-tosi-doc-system />
   <title>icons — tosijs-ui</title>
   <meta name="description" content="Icons is a proxy that generates an ElementCreator for a given icon on demand, e.g. icons.chevronDown() produces an &lt;svg&gt; element (class tosi-icon) containing a" />
   <link rel="canonical" href="https://ui.tosijs.net/icons/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3150c88f44bc" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=31c74e1e8092" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="icons.ts">
 <h1 id="icons">icons</h1>
 <div class="center" style="display: flex; gap: 10px; padding: 10px">
@@ -420,12 +420,20 @@ need its own SVG:</p>
 <p>Rules apply named prefixes to icons. Built-in rules use string rewrites
 that feed back into the resolution pipeline:</p>
 <ul>
-<li><code>un&lt;Icon&gt;</code> — translucent slash overlay (e.g. <code>unPin</code>, <code>unLock</code>)</li>
-<li><code>check&lt;Icon&gt;</code> — green check overlay</li>
-<li><code>cancel&lt;Icon&gt;</code> — red x overlay</li>
-<li><code>search&lt;Icon&gt;</code> — magnifier overlay</li>
-<li><code>spin&lt;dps&gt;&lt;Icon&gt;</code> — continuous rotation at N°/second (e.g. <code>spin360Loader</code>)</li>
-<li><code>spin_&lt;dps&gt;&lt;Icon&gt;</code> — counter-clockwise (e.g. <code>spin_180Star</code>)</li>
+<li><p><code>un&lt;Icon&gt;</code> — translucent slash overlay (e.g. <code>unPin</code>, <code>unLock</code>)</p>
+</li>
+<li><p><code>check&lt;Icon&gt;</code> — green check overlay</p>
+</li>
+<li><p><code>cancel&lt;Icon&gt;</code> — red x overlay</p>
+</li>
+<li><p><code>search&lt;Icon&gt;</code> — magnifier overlay</p>
+</li>
+<li><p><code>spin&lt;dps&gt;&lt;Icon&gt;</code> — continuous rotation at N°/second (e.g. <code>spin360Loader</code>)</p>
+</li>
+<li><p><code>spin_&lt;dps&gt;&lt;Icon&gt;</code> — counter-clockwise (e.g. <code>spin_180Star</code>)</p>
+<p>The rotation is a CSS animation on an HTML wrapper, not on the <code>&lt;svg&gt;</code>, so the browser can
+run it off the main thread and it keeps turning while the page is busy.</p>
+</li>
 </ul>
 <p>The overlay rules are just string rewrites — for example, <code>unFoo</code>
 becomes <code>slash25o$foo75s75o</code>. <strong>Overlay icons should have a square
@@ -655,6 +663,6 @@ copies or substantial portions of the Software.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-e452aje9.js"></script>
+  <script type="module" src="../hydrate-v890mrz2.js"></script>
 </body>
 </html>
