@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=73a960a662fc" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=9b14d15c7207" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b81aa2ea0b96" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=b6afcfbe7297" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1437,6 +1437,11 @@ an unlucky token cannot spell an obscenity.</p>
 for a letter they misread (<code>5</code>→<code>S</code>, <code>2</code>→<code>Z</code>, <code>8</code>→<code>B</code>, <code>6</code>→<code>G</code>) are mapped back — pure upside,
 since a digit can never be part of a real code. The failure this designs out is a correct human
 being told they typed it wrong.</p>
+<p>The opposite failure is designed out too. A code that matches no live link gets the code box
+back, saying so, with what you typed already in it, so a one-letter typo is a one-letter fix. A
+code that has been spent, or has expired, says which (the server remembers retired codes for an
+hour). Through 1.16.32 all three read &quot;that invite link has been used&quot;, which sent a headset
+user to mint a new link when retyping would have done.</p>
 <p>Eight letters is ~35.7 bits — slightly <em>more</em> than the seven base32 characters it replaced
 (35.0) — and the server makes that plenty by capping how fast anyone can guess: <strong>redemption is
 serialized, and every attempt takes at least 100ms</strong>, success or failure alike. Ten attempts a
@@ -1457,6 +1462,35 @@ a human; it only gets slower to knock on.</p>
 deliberate. Redeeming a link <em>while someone is attacking the endpoint</em> is a non-goal — what has
 to hold is that brute force fails hard, and it does. Note where the security actually comes
 from: the <strong>slot</strong> sets the guess rate, the queue depth only decides how a burst is absorbed.</p>
+<h4 id="short-links-devexamplecomcode-or-type-the-code-into-the-box">Short links: <code>dev.example.com/&lt;CODE&gt;</code>, or type the code into the box</h4>
+<p>A <code>--global</code> link names its workspace (<code>https://ui.edit.dev.example.com/?t=RCQAMHFX</code>), and on a
+headset <code>/</code>, <code>=</code> and digits are each a trip to another keyboard page. So the tunnel also tells
+the box which workspace minted the code, and prints a short form with the code in two groups,
+which are easier to hold in your head than eight letters:</p>
+<pre><code>🔗 Single-use link (that browser keeps every workspace for 30 days):
+   https://ui.edit.dev.example.com/?t=RCQAMHFX
+   https://dev.example.com/RCQAMHFX   (the same link, shorter)
+
+   code:  RCQA MHFX   (case-insensitive; or open dev.example.com and type it into the box)
+</code></pre>
+<p>On a headset, the shortest route is to open <code>dev.example.com</code> (letters and dots only) and type
+the eight letters into the box on the page that opens. That box is on the page a browser
+without a cookie sees, and on the root list too, because a browser that still holds the view
+cookie lands there instead. The box also takes a whole link pasted in, and follows it only to
+a host under your preview domain. <code>?t=&lt;code&gt;</code> at the root, or on any preview host, works the same.</p>
+<p>How it works: <code>tosijs-tunnel</code> writes <code>/srv/preview/_codes/&lt;CODE&gt;</code> on the box, holding the full
+link, and sweeps codes past their five minutes. The box&#39;s gate page (<code>deploy/gate-page.html</code>,
+embedded by <code>tosijs-caddy-install</code>) reads it and goes there, so the code is still redeemed by
+the dev server that minted it, once, at the rate above. Only links from <code>--link --global</code> and
+the ones printed at tunnel start are recorded; a plain <code>--link</code> opens one workspace and its
+link already names it.</p>
+<p><strong>What it costs.</strong> The box answers &quot;is this a live code?&quot; with no rate limit in front, so a
+guesser can test codes there faster than at the workspace. At a sustained 2,000 requests a
+second for a code&#39;s whole five minutes, the odds of hitting a given live code are about <strong>1 in
+100,000</strong>, against 1 in 18 million at the workspace. That was judged worth it for typing a short
+link on a headset (the maintainer&#39;s call, 1.16.33). Short-link codes appear in the box&#39;s
+access log as paths; the log is readable by root and Caddy only, and a code is spent or expired
+within five minutes.</p>
 <p>The <strong>session</strong> token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;
 only the half a human has to transcribe got shorter.</p>
@@ -2292,6 +2326,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-tbvfvkvr.js"></script>
+  <script type="module" src="../hydrate-e452aje9.js"></script>
 </body>
 </html>

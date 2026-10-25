@@ -114,7 +114,17 @@ export interface AuthState {
     sessionGrants: Map<string, GlobalGrant>;
     /** Sessions minted from a device pass → that device, so revoking it ends them too. */
     sessionDevices: Map<string, string>;
+    /**
+     * Link codes that have left `links`, folded, with why and until when they are remembered:
+     * so a refused code can be told apart as mistyped, spent or expired (see linkRejection).
+     */
+    retired: Map<string, {
+        why: 'used' | 'expired';
+        until: number;
+    }>;
 }
+/** How long a spent or expired code is remembered, for the message only. */
+export declare const RETIRED_LINK_MEMORY_MS: number;
 /**
  * What a single-use link hands over besides a session here: the box's global `key`, as a
  * cookie across `domain`, so this browser opens every workspace (and the box's root list)
@@ -192,6 +202,7 @@ export declare function resolveGrantTtlMs(tunnel?: {
  * the set before the lookup. Widening reuse must not widen lifetime.
  */
 export declare function redeemLink(state: AuthState, token: string, now: number, policy?: LinkPolicy): string | null;
+export declare function linkRejection(state: AuthState, token: string, now: number): 'used' | 'expired' | 'unknown';
 /**
  * How many unspent granting links may exist at once. Each is a live code that, guessed, hands
  * over a global credential; a bound keeps the guessing odds where a handful of real links put them.

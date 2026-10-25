@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.16.33
+
+Typing a link on a headset gets much shorter, and a mistyped code no longer sends you off to mint
+a new one. Both are tunnel changes; nothing an adopter's product sees changes. **To get short
+links, re-run `tosijs-caddy-install --go`** on your preview box: until you do, the tunnel says
+the box does not serve them yet and prints the long link as before.
+
+### Tunnel
+
+- **Short links.** `tosijs-tunnel --link --global`, and the links it prints at start, also print
+  `https://<preview domain>/<CODE>`, with the code in two groups of four (`RCQA MHFX`), which
+  are easier to hold in your head than eight letters. The tunnel records which workspace minted
+  the code on the box (`/srv/preview/_codes/<CODE>`), sweeps codes past their five minutes, and
+  reads it back through Caddy before printing it, so a box whose Caddyfile predates short links
+  gets a note instead of a dead link. The code is still redeemed, once and rate-limited, by the
+  dev server that minted it.
+- **A box for a link or a code on the box's own pages.** The page a browser without the preview
+  cookie sees (now `deploy/gate-page.html`, embedded by `tosijs-caddy-install`) has a box that
+  takes a code, in any case and with spaces, or a whole link. A code finds the workspace that
+  minted it; a link is followed only to a host under the preview domain. The root list has the
+  same box, since a browser that still holds the view cookie lands there rather than on the gate.
+  On a headset, open `dev.example.com` (letters and dots only) and type the eight letters.
+- **What short links cost.** The box answers "is this a live code?" without the dev server's
+  rate limit, so a guesser can test codes there faster: about 1 in 100,000 odds at a sustained
+  2,000 requests a second for a code's five minutes, against 1 in 18 million at the workspace.
+  The maintainer accepted that for headset typing. `doc-site-system.md` has the details.
+- **A mistyped code says so.** A code that matches no live link now gets the code box back,
+  naming the code and with it filled in, so a one-letter typo is a one-letter fix. A spent code
+  still reads "has been used", and an expired one says it has expired; through 1.16.32 all three
+  read "has been used" (board #3505).
+
 ## 1.16.32
 
 Two new components, a doc search that ranks, and live examples whose toolbar no longer covers

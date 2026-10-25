@@ -23,4 +23,10 @@ export declare function invitePageHtml(rejection: SessionRejection, linkCommand:
  * preview box's global keys. Without it the page offered only per-visit links, and a reader
  * whose key cookie had lapsed read that as the daily-link problem coming back (#232).
  */
-lastingCommand?: string): string;
+lastingCommand?: string, 
+/**
+ * A code that matched no live link, spent or expired one included (board #3505): most likely
+ * a typo. The page says so and puts it back in the box, so fixing one letter on a headset does
+ * not mean typing all eight again.
+ */
+mistypedCode?: string): string;

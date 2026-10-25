@@ -1246,6 +1246,12 @@ for a letter they misread (`5`→`S`, `2`→`Z`, `8`→`B`, `6`→`G`) are mappe
 since a digit can never be part of a real code. The failure this designs out is a correct human
 being told they typed it wrong.
 
+The opposite failure is designed out too. A code that matches no live link gets the code box
+back, saying so, with what you typed already in it, so a one-letter typo is a one-letter fix. A
+code that has been spent, or has expired, says which (the server remembers retired codes for an
+hour). Through 1.16.32 all three read "that invite link has been used", which sent a headset
+user to mint a new link when retyping would have done.
+
 Eight letters is ~35.7 bits — slightly _more_ than the seven base32 characters it replaced
 (35.0) — and the server makes that plenty by capping how fast anyone can guess: **redemption is
 serialized, and every attempt takes at least 100ms**, success or failure alike. Ten attempts a
@@ -1270,6 +1276,42 @@ Under an actual flood the endpoint sheds load and refuses everyone, you included
 deliberate. Redeeming a link _while someone is attacking the endpoint_ is a non-goal — what has
 to hold is that brute force fails hard, and it does. Note where the security actually comes
 from: the **slot** sets the guess rate, the queue depth only decides how a burst is absorbed.
+
+#### Short links: `dev.example.com/<CODE>`, or type the code into the box
+
+A `--global` link names its workspace (`https://ui.edit.dev.example.com/?t=RCQAMHFX`), and on a
+headset `/`, `=` and digits are each a trip to another keyboard page. So the tunnel also tells
+the box which workspace minted the code, and prints a short form with the code in two groups,
+which are easier to hold in your head than eight letters:
+
+```
+🔗 Single-use link (that browser keeps every workspace for 30 days):
+   https://ui.edit.dev.example.com/?t=RCQAMHFX
+   https://dev.example.com/RCQAMHFX   (the same link, shorter)
+
+   code:  RCQA MHFX   (case-insensitive; or open dev.example.com and type it into the box)
+```
+
+On a headset, the shortest route is to open `dev.example.com` (letters and dots only) and type
+the eight letters into the box on the page that opens. That box is on the page a browser
+without a cookie sees, and on the root list too, because a browser that still holds the view
+cookie lands there instead. The box also takes a whole link pasted in, and follows it only to
+a host under your preview domain. `?t=<code>` at the root, or on any preview host, works the same.
+
+How it works: `tosijs-tunnel` writes `/srv/preview/_codes/<CODE>` on the box, holding the full
+link, and sweeps codes past their five minutes. The box's gate page (`deploy/gate-page.html`,
+embedded by `tosijs-caddy-install`) reads it and goes there, so the code is still redeemed by
+the dev server that minted it, once, at the rate above. Only links from `--link --global` and
+the ones printed at tunnel start are recorded; a plain `--link` opens one workspace and its
+link already names it.
+
+**What it costs.** The box answers "is this a live code?" with no rate limit in front, so a
+guesser can test codes there faster than at the workspace. At a sustained 2,000 requests a
+second for a code's whole five minutes, the odds of hitting a given live code are about **1 in
+100,000**, against 1 in 18 million at the workspace. That was judged worth it for typing a short
+link on a headset (the maintainer's call, 1.16.33). Short-link codes appear in the box's
+access log as paths; the log is readable by root and Caddy only, and a code is spent or expired
+within five minutes.
 
 The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;
