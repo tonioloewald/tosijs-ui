@@ -820,3 +820,25 @@ gap, recorded rather than hidden.
 - **The review also caught the upgrade gap (M1):** the edit key's raw value sat in cookies and URLs through 1.16.30 and now signs passes, so rotation is a required upgrade step. Its suggested fix (derive the signing key) was declined: a holder of the old key can run the same derivation.
 - **Auth work in a separate worktree** kept half-wired code from restarting the maintainer's dev server mid-session; the first attempt in the main checkout locked them out for a few minutes. Do security changes to a running dev server's import graph in a worktree.
 - **Lanes:** unit 1986; Playwright 856 passed, 59 skipped; haltija 87 over 20 pages; consumer 58, all re-run after the review fixes. Publish run 39595000398 green including verify; published dist identical to the tag.
+
+## 1.16.32 (2026-10-25)
+
+- **The gate caught:** the dependency-audit gate failed the build on happy-dom
+  GHSA-834v-8h66-3h79, which has no fixed 20.x. The maintainer ruled that a test- and
+  build-only optional peer may cross a major in a patch ("it's dev only and tests only"); the
+  peer is now `^21.0.4`. The ePub, the one shipped path through happy-dom, was rebuilt and
+  diffed against the previous build: only the pages that changed differed.
+- **The review caught:** a `<tosi-palette>` shortcut with an unknown modifier (`hyper+k`)
+  bound the bare key, so plain typing opened the palette; a keydown with no `key` threw.
+  Both are fixed with tests that fail with the fix reverted.
+- **Recurrence:** `release-check` missed seven CHANGELOG bullets on its first run, six from
+  the feature commits and one (`searchShortcut`) from a review fix. It was green before the
+  push both times, so the pattern is now caught at the gate rather than at tag time.
+- **Process slip:** a `git add -A` swept the review report into the happy-dom commit, so the
+  last commit before the tag carried a `[change]` bullet rather than `[note]` only. The gate
+  was green; the rule exists to stop the loop, and it did not loop here, but it was not followed.
+- **Publish:** approval landed after the workflow's 60-minute wait, so the first run ended
+  "verification owed"; `verify_only` then went green. The published `dist/` is identical to
+  the tagged tree.
+- **Flakes under load (avg ~128):** two Playwright failures that passed 120/120 on re-run,
+  recorded on #3484 rather than dismissed.
