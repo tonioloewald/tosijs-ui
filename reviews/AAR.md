@@ -842,3 +842,21 @@ gap, recorded rather than hidden.
   the tagged tree.
 - **Flakes under load (avg ~128):** two Playwright failures that passed 120/120 on re-run,
   recorded on #3484 rather than dismissed.
+
+## 1.16.33 (2026-10-25)
+
+- **Where it came from:** the maintainer needed a new dev link on a Quest 3, where letters,
+  digits and `=` are on different keyboards. Short links (#3504) and the box on the box's page
+  came out of that, and so did #3505: testing on the headset showed a mistyped code was
+  reported as "has been used", which sent the reader off to ask for a fresh link.
+- **The review caught:** the box's own page (F1) still answered a typo with "ask for a fresh
+  one" after #3505 had fixed the workspace's page. Two pages for one job, and the fix landed on
+  only one of them. Fixed before the tag, with a test that fails if it is reverted.
+- **Process slip:** the #3505 auth edits were first made in main while the maintainer's dev
+  server was running. They were moved to a worktree before that server rebuilt, and main was
+  reverted. In that worktree, `rm -rf tls` removed tracked files, which were restored from git.
+- **Not yet live:** the box still serves the gate page from before the review, because a
+  Caddyfile change needs `tosijs-caddy-install --go`, which is a separate step after publishing.
+  The F1 wording reaches the box only when that runs.
+- **Publish:** approval came inside the 60-minute window, so the first run went green. The
+  published `dist/` is identical to the tagged tree.
