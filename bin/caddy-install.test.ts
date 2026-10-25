@@ -197,6 +197,25 @@ test(
 )
 
 test(
+  'the gate page is embedded into the template, with the domain filled in',
+  async () => {
+    writeEnv(FULL_ENV)
+    const tpl = join(sandbox, 'Gate')
+    writeFileSync(
+      tpl,
+      'x.{{PREVIEW_DOMAIN}} {\n  respond "__GATE_PAGE__" 401\n}\n'
+    )
+    const { code } = await run(['--go'], tpl)
+    expect(code).toBe(0)
+    const installed = readFileSync(etc('Caddyfile'), 'utf8')
+    expect(installed).not.toContain('__GATE_PAGE__')
+    expect(installed).toContain('placeholder=\\"link or code\\"')
+    expect(installed).toContain("const DOMAIN = 'dev.example.com'")
+  },
+  SPAWN_TIMEOUT
+)
+
+test(
   '--go substitutes and installs',
   async () => {
     writeEnv(FULL_ENV)

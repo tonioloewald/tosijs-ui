@@ -37,6 +37,7 @@ Three deliberate properties:
 
 import { existsSync, readFileSync } from 'fs'
 import {
+  embedGatePage,
   parseArgv,
   resolvePreviewHost,
   resolveSiteConfig,
@@ -93,7 +94,18 @@ if (!existsSync(templatePath)) {
   process.exit(1)
 }
 
-const template = readFileSync(templatePath, 'utf8')
+/*
+`__GATE_PAGE__` is the page a browser without the preview cookie sees (deploy/gate-page.html,
+with its box for a link or a code). It is not a secret, so it is embedded here rather than on the
+box. A template of your own that names it gets the shipped page.
+*/
+const template = embedGatePage(
+  readFileSync(templatePath, 'utf8'),
+  readFileSync(
+    new URL('../deploy/gate-page.html', import.meta.url).pathname,
+    'utf8'
+  )
+)
 
 // The template is delivered inside a quoted heredoc, so it is copied verbatim with no shell
 // expansion. A template containing the delimiter would truncate the file silently — refuse

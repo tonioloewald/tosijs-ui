@@ -78,6 +78,15 @@ test('every registered workspace is listed, ahead of the deployed builds', () =>
   expect(headings).toEqual(['Live workspaces', 'Deployed builds'])
 })
 
+test('has a box for a code, since a browser with the view cookie lands here, not on the gate', () => {
+  // `/?t=<code>` at the root is answered by the gate page, which finds the workspace that
+  // minted the code (board #3504).
+  const form = buildIndex().querySelector('form.code')!
+  expect(form.getAttribute('action')).toBe('/')
+  expect((form.getAttribute('method') ?? 'get').toLowerCase()).toBe('get')
+  expect(form.querySelector('input')!.getAttribute('name')).toBe('t')
+})
+
 test('every link opens in a new tab, so the list stays open', () => {
   tunnel('alpha', 'alpha.edit.dev.example.test')
   mkdirSync(join(root, 'site'))

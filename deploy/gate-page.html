@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!--
+The page a browser without the preview cookie sees, and the page that redeems a short link.
+
+Embedded into the Caddyfile at install time (`__GATE_PAGE__`, by `tosijs-caddy-install`), so it
+must survive being a Caddyfile string:
+  - a double quote is escaped for it, nothing else is, so never write a backslash before one;
+  - `{name}` with no space inside is read as a Caddy placeholder (`{path}`, `{host}`, `{query}`
+    are real ones), so every brace below has whitespace after it.
+`bin/caddy-install.test.ts` checks both.
+
+Short links (board #3504): `tosijs-tunnel --link --global` writes `/_codes/<CODE>` on the box,
+holding the workspace link that code belongs to. `https://<domain>/<CODE>` (or `/?t=<CODE>`, or
+the code typed into the box below) lands here, which looks the code up and goes there. The code
+is still redeemed, single-use and rate-limited, by the dev server that minted it.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="referrer" content="no-referrer" />
+<title>Link required</title>
+<style>
+  body {
+    font: 16px/1.6 system-ui;
+    margin: 15vh auto;
+    max-width: 30rem;
+    padding: 0 1.5rem;
+    color: #222;
+  }
+  form {
+    display: flex;
+    gap: 0.5em;
+    margin: 1.5em 0;
+  }
+  input {
+    flex: 1;
+    font: inherit;
+    font-size: 1.25em;
+    letter-spacing: 0.08em;
+    padding: 0.4em 0.6em;
+    border: 1px solid #8888;
+    border-radius: 6px;
+    min-width: 0;
+  }
+  button {
+    font: inherit;
+    font-size: 1.25em;
+    padding: 0.4em 1em;
+    border: 0;
+    border-radius: 6px;
+    background: #2563eb;
+    color: white;
+  }
+  #msg.problem {
+    color: #b91c1c;
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: #16171a;
+      color: #e8e8ea;
+    }
+    input {
+      background: #222;
+      color: inherit;
+    }
+    #msg.problem {
+      color: #f87171;
+    }
+  }
+</style>
+<h1>This preview needs an invite link</h1>
+<p id="msg">
+  Open the link you were given, or type its code (or paste the whole link) here.
+</p>
+<form id="go">
+  <input
+    id="t"
+    aria-label="link or code"
+    placeholder="link or code"
+    inputmode="latin"
+    autocomplete="off"
+    autocapitalize="off"
+    autocorrect="off"
+    spellcheck="false"
+  />
+  <button>Go</button>
+</form>
+<script>
+  ;(() => {
+    const DOMAIN = '{{PREVIEW_DOMAIN}}'
+    const CODE = /^[ABCDEFGHJKMNPQRSTVWXYZ]{8}$/
+
+    // The same folding as normalizeLinkToken in tosijs-ui's dev-auth.ts (the test compares them).
+    const normalize = (typed) =>
+      typed
+        .replace(/[\s-]/g, '')
+        .toUpperCase()
+        .replace(/5/g, 'S')
+        .replace(/2/g, 'Z')
+        .replace(/8/g, 'B')
+        .replace(/6/g, 'G')
+
+    const ours = (host) => host === DOMAIN || host.endsWith('.' + DOMAIN)
+    const msg = document.getElementById('msg')
+    const say = (text) => {
+      msg.textContent = text
+      msg.className = 'problem'
+    }
+
+    async function redeem(code) {
+      // Codes are looked up at the root, so send any other preview host there.
+      if (location.hostname !== DOMAIN) {
+        location.href = 'https://' + DOMAIN + '/' + code
+        return
+      }
+      msg.textContent = 'Opening ' + code + '…'
+      let target = null
+      try {
+        const res = await fetch('/_codes/' + code, { cache: 'no-store' })
+        if (res.ok) target = new URL((await res.text()).trim())
+      } catch (e) {}
+      if (!target)
+        return say(
+          'No live link has the code ' +
+            code +
+            '. Codes last five minutes: ask for a fresh one.'
+        )
+      if (target.protocol !== 'https:' || !ours(target.hostname))
+        return say(
+          'That code points outside ' + DOMAIN + ', so it was not followed.'
+        )
+      location.replace(target.href)
+    }
+
+    function go(typed) {
+      typed = typed.trim()
+      if (!typed) return
+      // A link has a dot, slash or colon; a code never does.
+      if (/[./:]/.test(typed)) {
+        let url = null
+        try {
+          url = new URL(
+            /^https?:\/\//i.test(typed) ? typed : 'https://' + typed
+          )
+        } catch (e) {}
+        if (!url || !ours(url.hostname))
+          return say('That link is not under ' + DOMAIN + '.')
+        url.protocol = 'https:'
+        location.href = url.href
+        return
+      }
+      const code = normalize(typed)
+      if (!CODE.test(code))
+        return say(typed + ' is not a code: a code is eight letters.')
+      redeem(code)
+    }
+
+    document.getElementById('go').addEventListener('submit', (event) => {
+      event.preventDefault()
+      go(document.getElementById('t').value)
+    })
+
+    // Arrived with a code: /<CODE> at the root, or ?t=<CODE> on any preview host. Anything else
+    // (a page path on a static preview, a stale key) just shows the box.
+    const query = new URLSearchParams(location.search).get('t')
+    const path =
+      location.hostname === DOMAIN
+        ? location.pathname.replace(/^\/+|\/+$/g, '')
+        : ''
+    const arrived = normalize(query || path)
+    if (CODE.test(arrived)) redeem(arrived)
+  })()
+</script>

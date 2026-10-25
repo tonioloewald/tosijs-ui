@@ -139,10 +139,21 @@ cat > "$OUT/index.html" <<HTML
 	.access.edit { color:#2a8a3e; }
 	.access.none { font-weight:400; }
 	footer { color:var(--dim); font-size:.8rem; margin-top:2.5rem; }
+	form.code { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin:0 0 2rem 3.75rem; }
+	form.code input, form.code button { font:inherit; padding:.35rem .6rem; border:1px solid var(--line); border-radius:6px; background:var(--card); color:inherit; }
+	form.code input { letter-spacing:.08em; width:11em; }
 </style>
 <main>
 	<header>$ICON<h1>tosijs previews</h1></header>
 	<p class="sub">Live workspaces, and the builds deployed here.</p>
+	<!-- A code from \`tosijs-tunnel --link --global\`: \`/?t=<code>\` is answered by the gate page,
+	     which finds the workspace that minted it (deploy/Caddyfile, short links). A browser that
+	     already holds the view cookie lands HERE, so this page needs the box as much as the gate. -->
+	<form class="code" action="/" method="get">
+		<label for="code">Have a code?</label>
+		<input id="code" name="t" placeholder="eight letters" inputmode="latin" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+		<button>Go</button>
+	</form>
 	$(if [ -n "$live" ]; then echo "<section id=\"live\"><h2>Live workspaces</h2><ul>$live
 	</ul></section>"; fi)
 	<h2>Deployed builds</h2>

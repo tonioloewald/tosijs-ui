@@ -93,10 +93,11 @@
 		not header_regexp Cookie "(^|; *)tosi_preview=__PREVIEW_TOKEN__(;|$)"
 		not header_regexp Cookie "(^|; *)tosi_edit=__PREVIEW_EDIT_TOKEN__(;|$)"
 	}
+	# deploy/gate-page.html, embedded by the installer: a box that takes a link or a code.
 	handle @unauthed {
 		header Content-Type "text/html; charset=utf-8"
 		header Cache-Control "no-store"
-		respond "<!doctype html><meta charset=utf-8><title>Link required</title><style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}</style><h1>This preview needs an invite link</h1><p>Ask for one — it sets a cookie and then you can browse normally.</p>" 401
+		respond "__GATE_PAGE__" 401
 	}
 
 	file_server
@@ -191,6 +192,57 @@
 # send someone should still show what you meant an hour later.
 {{PREVIEW_DOMAIN}} {
 	root * /srv/preview/_index
+
+	# SHORT LINKS (board #3504): `https://{{PREVIEW_DOMAIN}}/<CODE>` instead of the workspace's
+	# own `https://<label>.edit.{{PREVIEW_DOMAIN}}/?t=<CODE>`, typed on a headset keyboard.
+	# `tosijs-tunnel --link --global` writes /srv/preview/_codes/<CODE> holding the full link;
+	# the gate page (deploy/gate-page.html) reads it and goes there. Both are answered BEFORE the
+	# cookie gate, because a browser that needs a link has no cookie yet. Neither grants anything:
+	# the code is still redeemed by the dev server that minted it, once, rate-limited.
+	#
+	# What this does cost: the box answers "is this a live code?" without the dev server's rate
+	# limit. Codes are 8 of 22 letters (35.7 bits) and live five minutes, so even sustained
+	# hammering finds one with odds around 1 in 100,000; the maintainer accepted that for
+	# typing a short link on a headset (2026-10-25).
+	#
+	# A missing code is answered with an explicit 404 rather than by file_server, whose error would
+	# reach preview_site's handle_errors: that rewrites to /index.html, and served the cookie-gated
+	# root list to a visitor with no cookie would be the leak this gate exists to prevent.
+	@codefile {
+		path_regexp ^/_codes/[A-Z]{8}$
+		file {
+			root /srv/preview
+		}
+	}
+	handle @codefile {
+		root * /srv/preview
+		header Cache-Control "no-store"
+		header Content-Type "text/plain; charset=utf-8"
+		file_server
+	}
+	handle /_codes/* {
+		header Cache-Control "no-store"
+		respond "" 404
+	}
+	@code {
+		path_regexp ^/[A-Za-z2568-]{8,12}/?$
+	}
+	@codequery {
+		path /
+		query t=*
+		not query t=__PREVIEW_TOKEN__
+	}
+	handle @code {
+		header Content-Type "text/html; charset=utf-8"
+		header Cache-Control "no-store"
+		respond "__GATE_PAGE__" 200
+	}
+	handle @codequery {
+		header Content-Type "text/html; charset=utf-8"
+		header Cache-Control "no-store"
+		respond "__GATE_PAGE__" 200
+	}
+
 	import preview_site
 }
 

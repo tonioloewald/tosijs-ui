@@ -191,6 +191,57 @@ export function deviceRegistryLine(device: {
   ].join('\t')
 }
 
+/*
+SHORT LINKS (board #3504). A single-use code is typed on a headset, where `/`, `=` and digits are
+each a trip to another keyboard page, so the box also answers `https://<domain>/<CODE>` and a box
+on its gate and root pages. For that it has to know which workspace minted the code:
+`tosijs-tunnel` writes `<root>/_codes/<CODE>` holding the full link, and the gate page
+(deploy/gate-page.html) reads it back. The code is still redeemed by the dev server that minted
+it. Files older than the code's five-minute life are swept on the next write; one left over
+only points at a code that no longer redeems.
+
+Both values go into a shell command, so both are checked against narrow patterns, and a pair
+that fails is not written (the long link still works).
+*/
+const SHORT_CODE = /^[ABCDEFGHJKMNPQRSTVWXYZ]{8}$/
+const SHORT_LINK_TARGET = /^https:\/\/[a-z0-9.-]+\/\?t=[A-Z]{8}$/
+
+export function shortCodeScript(
+  root: string,
+  code: string,
+  link: string
+): string | null {
+  if (!SHORT_CODE.test(code) || !SHORT_LINK_TARGET.test(link)) return null
+  if (!link.endsWith(`?t=${code}`)) return null
+  if (!/^\/[\w./-]+$/.test(root)) return null
+  const dir = `${root}/_codes`
+  return (
+    `mkdir -p ${dir} && chmod 755 ${dir} && ` +
+    `find ${dir} -type f -mmin +5 -delete; ` +
+    `printf '%s\\n' '${link}' > ${dir}/${code} && chmod 644 ${dir}/${code}`
+  )
+}
+
+/** `ABCD EFGH`: two groups of four are easier to hold in your head than eight letters. */
+export function groupCode(code: string): string {
+  return code.length === 8 ? `${code.slice(0, 4)} ${code.slice(4)}` : code
+}
+
+/*
+The gate page is a file (deploy/gate-page.html) so it can be read, edited and tested as HTML, and
+is embedded into the Caddyfile's `respond "__GATE_PAGE__"` at install time. Inside a Caddyfile
+quoted string only `\"` is an escape, so a double quote is all that needs escaping; its HTML
+comments are dropped (they are for whoever edits it, and they mention placeholder names Caddy
+would expand).
+*/
+export function embedGatePage(template: string, page: string): string {
+  const body = page
+    .replace(/<!--[\s\S]*?-->\n?/g, '')
+    .trim()
+    .replace(/"/g, '\\"')
+  return template.split('__GATE_PAGE__').join(body)
+}
+
 export interface DeviceRecord {
   id: string
   issued: string

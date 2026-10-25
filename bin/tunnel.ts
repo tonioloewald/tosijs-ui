@@ -45,6 +45,8 @@ import {
   resolveTunnelLocalPort,
   parseArgv,
   deviceRegistryLine,
+  groupCode,
+  shortCodeScript,
   parseDeviceListing,
   DEVICE_LISTING_SEPARATOR,
   DEVICE_ID_PATTERN,
@@ -171,7 +173,7 @@ holds too; `notes` says why any other is missing.
 async function globalLinks(
   kinds: ('edit' | 'view')[] = ['edit', 'view']
 ): Promise<{
-  links: { kind: 'edit' | 'view'; url: string }[]
+  links: { kind: 'edit' | 'view'; url: string; short?: string }[]
   notes: string[]
 }> {
   const local = resolveGlobalKeys(preview?.tunnel?.globalKeys, {
@@ -183,7 +185,7 @@ async function globalLinks(
   const box =
     local.keys.edit || local.keys.view ? await previewBoxKeys(host!) : {}
   const plan = planGlobalLinks(local, box)
-  const links: { kind: 'edit' | 'view'; url: string }[] = []
+  const links: { kind: 'edit' | 'view'; url: string; short?: string }[] = []
   for (const kind of plan.kinds.filter((k) => kinds.includes(k))) {
     const label = flag('label')
     const answer = await askForLink(
@@ -206,8 +208,16 @@ async function globalLinks(
         continue
       }
     }
-    if (answer.url) links.push({ kind, url: answer.url })
-    else
+    if (answer.url) {
+      const short = await registerShortCode(answer.url, plan.domain!)
+      if (!short)
+        plan.notes.push(
+          `no short link (${
+            shortLinkProblem || `could not record it on ${host}`
+          }); the full link still works`
+        )
+      links.push({ kind, url: answer.url, short })
+    } else
       plan.notes.push(
         answer.error ??
           `the dev server on :${localPort} did not answer, so no ${kind} link: start it (\`bun start\`), then \`tosijs-tunnel --link\``
@@ -242,6 +252,38 @@ async function registerDevice(device: {
       .nothrow()
       .quiet()
   return run.exitCode === 0
+}
+
+/*
+SHORT LINKS (board #3504): record which workspace a code belongs to, so `https://<domain>/<CODE>`
+(or the code typed into the box on the gate and root pages) finds it. See shortCodeScript.
+Returns the short link, or undefined if it could not be recorded.
+*/
+let shortLinkProblem = ''
+async function registerShortCode(
+  url: string,
+  domain: string
+): Promise<string | undefined> {
+  const code = new URL(url).searchParams.get('t') ?? ''
+  const script = shortCodeScript(devicesRoot(), code, url)
+  if (!script) return undefined
+  const run =
+    await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host!} ${script}`
+      .nothrow()
+      .quiet()
+  if (run.exitCode !== 0) return undefined
+  // Read it back through Caddy: a box whose Caddyfile predates short links answers with its
+  // gate, and a short link printed over that would lead nowhere.
+  const served = await fetch(`https://${domain}/_codes/${code}`, {
+    signal: AbortSignal.timeout(5000),
+  })
+    .then((res) => (res.ok ? res.text() : ''))
+    .catch(() => '')
+  if (served.trim() !== url) {
+    shortLinkProblem = `the box's Caddyfile does not serve short links yet: run \`tosijs-caddy-install --go\``
+    return undefined
+  }
+  return `https://${domain}/${code}`
 }
 
 /*
@@ -378,10 +420,12 @@ if (has('link')) {
   break the promise `--share` makes to the person you send it to.
   */
   let url: string
+  let short: string | undefined
   if (has('global')) {
     const global = await globalLinks([share ? 'view' : 'edit'])
     for (const note of global.notes) console.log(`note: ${note}`)
     url = global.links[0]?.url ?? ''
+    short = global.links[0]?.short
     if (!url) {
       console.error('\nNo single-use global link (see the note above).\n')
       process.exit(1)
@@ -419,7 +463,14 @@ if (has('link')) {
         ? 'Share link (READ ONLY)'
         : 'Edit link'
     }:\n   ${url}\n` +
-      (code ? `\n   code:  ${code}   (case-insensitive)\n` : '')
+      (short ? `   ${short}   (the same link, shorter)\n` : '') +
+      (code
+        ? `\n   code:  ${groupCode(code)}   (case-insensitive${
+            short
+              ? `; or open ${new URL(short).host} and type it into the box`
+              : ''
+          })\n`
+        : '')
   )
 
   /*
@@ -654,8 +705,13 @@ if (publicUrl) {
       `\n   Single-use links: each opens this workspace, then keeps that browser in every` +
         `\n   workspace on the box (and its root list) for 30 days:`
     )
-    for (const { kind, url } of startLinks.links)
-      console.log(`   ${kind}: ${url}${kind === 'view' ? '  (read-only)' : ''}`)
+    for (const { kind, url, short } of startLinks.links) {
+      const code = new URL(url).searchParams.get('t') ?? ''
+      console.log(
+        `   ${kind}: ${url}${kind === 'view' ? '  (read-only)' : ''}` +
+          (short ? `\n         ${short}   code ${groupCode(code)}` : '')
+      )
+    }
   }
   for (const note of startLinks?.notes ?? []) console.log(`   note: ${note}`)
 }
