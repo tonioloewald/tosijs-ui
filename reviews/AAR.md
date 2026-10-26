@@ -911,3 +911,22 @@ gap, recorded rather than hidden.
 - **Publish:** approval again came after the 60-minute window; the `verify_only` run passed, and
   published `dist/` is identical to the tagged tree. Second release in a row needing it, so the
   window is shorter than the maintainer's approval loop, not an accident.
+
+## 1.16.37 (2026-10-27)
+
+- **What it was:** three fixes found by the maintainer looking at the doc site on a phone through
+  the tunnel (#3515): Safari stalled the background test run at "Running 0", the tunnel started
+  with tests off, and a pass blanked the header's test widget.
+- **A long-standing skip was the bug.** `doc-tests.pw.ts` had skipped WebKit since the gate was
+  set up, recorded as "its iframe runner never signals". The cause was WebKit not giving an
+  off-screen frame any animation frames; moving the frame into the viewport (clipped) fixed it, and
+  the WebKit doc tier passes. A skip whose reason is "the engine is quirky" was hiding a reader-facing
+  defect for every Safari developer on localhost too.
+- **The review caught:** the dev-server mark injected at the end of `<body>` arrived after a classic
+  iife script had read the default, so adopters without `bundleEntry` would have got none of the
+  tunnel behaviour. This repo's module bundle masked it, as with every packaging defect the consumer
+  lane exists for. Fixed with `injectFirst` before tagging.
+- **Process:** the badge took four iterations against the maintainer's eye ("faded green on pink",
+  then "a CSS filter"); a screenshot early would have saved two of them.
+- **Publish:** approved inside the 60-minute window for once; the workflow's own verify passed and
+  the published `dist/` is identical to the tagged tree.
