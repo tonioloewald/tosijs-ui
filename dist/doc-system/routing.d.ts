@@ -55,8 +55,16 @@ export declare function slugForPath(pathname: string): string;
 /**
  * Resolve a browser location.pathname to a doc filename, using a slug map.
  * Returns '' if nothing matches (caller falls back to the first/README doc).
+ *
+ * `aliases` ({ alias path -> slug }, the site config's `aliases`) are a doc's extra paths: a
+ * page's own slug wins, so an alias never takes a path from a page.
  */
-export declare function filenameForPath(pathname: string, slugMap: Record<string, string>): string;
+export declare function filenameForPath(pathname: string, slugMap: Record<string, string>, aliases?: Record<string, string>): string;
+/**
+ * Check a site's `aliases` against its slug map, and return the problems in words (empty when
+ * there are none). An alias is one path segment, takes no page's own path, and names a page.
+ */
+export declare function aliasProblems(aliases: Record<string, string>, slugMap: Record<string, string>): string[];
 /** Turn a human name/title into a slug: 'Form Components' -> 'form-components'. */
 export declare function slugify(s: string): string;
 /**

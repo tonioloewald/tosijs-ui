@@ -4,6 +4,7 @@ import {
   pathForSlug,
   legacyQueryPath,
   rewriteDocLinks,
+  filenameForPath,
 } from './routing.js'
 
 const docs = [
@@ -105,4 +106,12 @@ test('two docs marked home leave README at the root rather than share it', () =>
   expect(map['README.md']).toBe('')
   expect(map['a.md']).toBe('a')
   expect(map['b.md']).toBe('b')
+})
+
+test('filenameForPath: an alias opens its page, and never takes a page’s own path (#3513)', () => {
+  const slugMap = { 'README.md': '', 'guide.md': 'guide' }
+  expect(filenameForPath('/readme/', slugMap, { readme: '' })).toBe('README.md')
+  expect(filenameForPath('/readme/', slugMap)).toBe('')
+  expect(filenameForPath('/guide/', slugMap, { guide: '' })).toBe('guide.md')
+  expect(filenameForPath('/constructor/', slugMap, {})).toBe('')
 })

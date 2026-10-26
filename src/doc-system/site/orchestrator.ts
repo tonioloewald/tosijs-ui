@@ -1771,6 +1771,7 @@ export async function buildSite(
       const pageCount = await generateSite({
         liveExamples: config.liveExamples,
         docs,
+        aliases: config.aliases,
         outputDir: PUBLIC,
         projectName: config.name,
         bookVolumes: printCoverManifestUrl(config),

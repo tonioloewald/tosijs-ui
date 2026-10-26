@@ -62,6 +62,15 @@ export interface SiteConfig {
      */
     home?: string;
     /**
+     * Extra paths a page is served at, as `{ alias: slug }`; `''` is the root page. With
+     * `aliases: { readme: '' }` the README (the root page) is also written to `/readme/`, with its
+     * stylesheet, bundle and `docs.json` references computed for that depth, and the browser
+     * opens it as the README. Each alias page's canonical link names the page's own path, and
+     * aliases stay out of the sitemap and the nav. The build fails on an alias that is more than
+     * one path segment, takes a page's own path, or names no page.
+     */
+    aliases?: Record<string, string>;
+    /**
      * Directories to skip while scanning `docPaths` — by basename (skipped wherever it
      * appears) or by path (skipped only at that location). Added to the built-in
      * `node_modules` / `dist` / `build` / output-dir set, never replacing it.

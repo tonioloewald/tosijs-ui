@@ -48,6 +48,8 @@ export declare class TosiDocSystem extends TosiDocSystem_base {
     private initPrefs;
     private initLocale;
     private settingsButton;
+    /** The site's `aliases`, which the build writes into the config attribute (board #3513). */
+    private configAliases;
     private parseLinks;
     connectedCallback(): void;
     render(): void;

@@ -354,7 +354,7 @@ const logoMarkStyleSpec = {
 // tosi() registry key (see stateKey below) and two browsers can't share state.
 let docBrowserSeq = 0;
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, searchShortcut = 'mod+k', navbarLinks, contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, aliases = {}, onRouteChange, searchShortcut = 'mod+k', navbarLinks, contentElement, } = options;
     // Memory routing is fully self-contained: it never reads or writes
     // window.history/location, so an embedded or nested browser can't hijack the
     // host page's URL (or recurse into it).
@@ -381,7 +381,7 @@ export function createDocBrowser(options) {
         if (memoryRouting)
             return initialRoute ? filenameForSlug(initialRoute) : '';
         return routing === 'path'
-            ? filenameForPath(document.location.pathname, slugMap)
+            ? filenameForPath(document.location.pathname, slugMap, aliases)
             : document.location.search !== ''
                 ? document.location.search.substring(1).split('&')[0]
                 : '';
@@ -414,7 +414,7 @@ export function createDocBrowser(options) {
         }
         // Clean `/slug/` path form (only meaningful when slugs are in play).
         if (!memoryRouting && routing !== 'query') {
-            const filename = known(filenameForPath(url.pathname, slugMap));
+            const filename = known(filenameForPath(url.pathname, slugMap, aliases));
             if (filename)
                 return filename;
         }

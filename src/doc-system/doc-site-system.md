@@ -311,6 +311,7 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 | `docPaths`    | `['src', 'README.md']` | dirs scanned for `/*#` + `.md` files (list root `.md` files explicitly)                                                                       |
 | `ignoreDocPaths` | `['reviews']`       | directory basenames skipped while scanning. **`reviews/` is excluded by default** — an adopter listing a docPath whose tree contained one published their internal pre-release review reports, BLOCK verdicts and all, to the open web (#153). Name a directory in `docPaths` explicitly to publish it anyway |
 | `home`        | README                 | the page served at `/`, by slug or filename (`home: 'host'` for a site that is an app). README then gets its own page at `/readme/`, and the nav, canonical links, sitemap, `llms.txt` and books follow. The build fails if it names no page, if it names a hidden one, or if a second doc claims the root. A doc can claim the root itself with `{"home": true}` |
+| `aliases`     | none                   | extra paths a page is served at, `{ alias: slug }` (`''` is the root page). `aliases: { readme: '' }` also writes the root page to `/readme/`. See [Serving a page at a second path](#serving-a-page-at-a-second-path) |
 | `sectionsDir` | `'src/docs'`           | where auto-created section docs + their `<!-- toc -->` blocks are written (must be inside a `docPath`, not named `docs`)                      |
 | `docsJson`    | `'demo/docs.json'`     | path of the intermediate doc corpus the build writes and re-reads; its directory is created automatically, so you don't need a `demo/` folder |
 
@@ -820,6 +821,24 @@ header, so such a page links back to the docs its own way. See [the demo page](/
 `"home": true` (or the site's `home` option) makes a page the site root, `/`. README then moves
 to `/readme/`, so **README's URL and canonical link change**: inbound links to `/` now reach
 the new home page, and anything that linked to README by its root URL needs `/readme/` (#225).
+
+#### Serving a page at a second path
+
+To serve a page at another path as well as its own, name the path in `aliases`. An app at the
+root that still wants its README at `/readme/` writes `aliases: { readme: '' }`; a site that keeps
+an old address alive writes `aliases: { 'getting-started': 'guide' }`.
+
+Each alias is a copy of the page written where it is served, because a page's stylesheet,
+bundle, `docs.json` and nav links are relative to where it sits (that is what lets one build
+work under any mount). A host rewrite from `/readme/` to the root page cannot work: it serves the
+root page's bytes one level down, those references 404, and the page renders but never
+hydrates. The browser is told about the aliases too, so `/readme/` opens as the README rather
+than as whichever doc comes first.
+
+An alias page's canonical link names the page's own path, and aliases stay out of the sitemap,
+the nav, `llms.txt` and books, so search engines see one page. Links from an alias page go to
+the pages' own paths. The build fails on an alias that is more than one path segment, takes a
+page's own path, or names no page (#3513).
 
 #### `preview` — deploy the built site to a host you control
 

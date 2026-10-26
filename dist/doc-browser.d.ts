@@ -103,6 +103,11 @@ export interface DocBrowserOptions {
      */
     initialRoute?: string;
     /**
+     * Path routing only: extra paths a doc is served at, `{ alias: slug }` (`''` is the root
+     * page). The site build passes its `aliases` here, so `/readme/` opens the README.
+     */
+    aliases?: Record<string, string>;
+    /**
      * Memory routing only: called with the current doc's slug whenever in-app
      * navigation happens, so a host can reflect it (e.g. to an attribute).
      */

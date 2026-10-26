@@ -12,7 +12,7 @@ component (src/doc-system/*) so static and hydrated output agree.
 */
 import { pageTitle } from '../doc-title.js';
 import { highlightHtml } from '../highlight.js';
-import { buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
+import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, docDescription, } from '../render.js';
 import { bareNameLinks, deadInPageAnchors, missingWikilinks, misconfigured, } from './build-warnings.js';
@@ -111,11 +111,13 @@ export function relativeUrl(depth, p) {
     const rel = '../'.repeat(depth) + p.slice(1);
     return rel === '' ? './' : rel;
 }
-async function pageHtml(doc, config, slugMap, configAttr, wikilinks) {
+async function pageHtml(doc, config, slugMap, configAttr, wikilinks, 
+/** the slug this copy is written at: the doc's own, or an alias of it */
+at = slugMap[doc.filename] ?? '') {
     const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', assetStamp, docsStamp, localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
     // Functional URLs are emitted relative to THIS page's depth so the build is
     // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
-    const depth = pageDepth(slugMap[doc.filename] ?? '');
+    const depth = pageDepth(at);
     const localizedAttr = config.localizedStrings
         ? ` localized="${escapeAttr(relativeUrl(depth, localizedUrl))}"`
         : '';
@@ -303,8 +305,19 @@ export async function generateSite(config) {
         }
         seen.set(slug, doc.filename);
     }
+    // A wrong alias fails the build like a `home` that names no page: it is a typo or a
+    // renamed page, and a site with a dead path is not one to ship quietly.
+    const aliases = config.aliases ?? {};
+    const problems = aliasProblems(aliases, slugMap);
+    if (problems.length) {
+        throw new Error(`generate-site: aliases are wrong:\n${problems
+            .map((p) => `    ${p}`)
+            .join('\n')}`);
+    }
     const configAttr = escapeAttr(JSON.stringify({
         projectName: config.projectName,
+        // The browser needs them too, or an alias page hydrates as whichever doc comes first.
+        ...(Object.keys(aliases).length ? { aliases } : {}),
         projectLinks: config.projectLinks,
         logo: config.logo,
         bookVolumes: config.bookVolumes,
@@ -340,6 +353,26 @@ export async function generateSite(config) {
             await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n');
         }
         count += 1;
+    }
+    /*
+    Each alias is the page again, written where the alias is served, so its relative references
+    (stylesheet, bundle, docs.json, nav links) resolve from there. A host rewrite to the original
+    page cannot do that: it serves the same bytes at a different depth and the page never
+    hydrates (board #3513). The canonical link stays the page's own path.
+    */
+    for (const [alias, target] of Object.entries(aliases)) {
+        const doc = docs.find((d) => slugMap[d.filename] === target);
+        const dir = `${outputDir}/${alias}`;
+        // A bare name works on the root page and not one level down, where the alias is.
+        const bare = target === ''
+            ? bareNameLinks(renderDocMarkdown(doc.text, { wikilinks }))
+            : [];
+        if (bare.length)
+            bareLinks.push(`    ${doc.path || doc.filename} (at /${alias}/): ${bare.join(', ')}`);
+        await Bun.write(`${dir}/index.html`, await pageHtml(doc, config, slugMap, configAttr, wikilinks, alias));
+        if (hasMarkdownPage(doc, config)) {
+            await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n');
+        }
     }
     if (danglingWikilinks.length) {
         misconfigured(config.strict, `\n⚠️  Wikilinks that reach no doc page. A target matches a page's slug (its file name)\n` +

@@ -437,6 +437,11 @@ export interface DocBrowserOptions {
    */
   initialRoute?: string
   /**
+   * Path routing only: extra paths a doc is served at, `{ alias: slug }` (`''` is the root
+   * page). The site build passes its `aliases` here, so `/readme/` opens the README.
+   */
+  aliases?: Record<string, string>
+  /**
    * Memory routing only: called with the current doc's slug whenever in-app
    * navigation happens, so a host can reflect it (e.g. to an attribute).
    */
@@ -564,6 +569,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     minSize = 600,
     routing = 'query',
     initialRoute,
+    aliases = {},
     onRouteChange,
     searchShortcut = 'mod+k',
     navbarLinks,
@@ -596,7 +602,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // Memory routing ignores the page URL entirely — it starts at initialRoute.
     if (memoryRouting) return initialRoute ? filenameForSlug(initialRoute) : ''
     return routing === 'path'
-      ? filenameForPath(document.location.pathname, slugMap)
+      ? filenameForPath(document.location.pathname, slugMap, aliases)
       : document.location.search !== ''
       ? document.location.search.substring(1).split('&')[0]
       : ''
@@ -627,7 +633,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     }
     // Clean `/slug/` path form (only meaningful when slugs are in play).
     if (!memoryRouting && routing !== 'query') {
-      const filename = known(filenameForPath(url.pathname, slugMap))
+      const filename = known(filenameForPath(url.pathname, slugMap, aliases))
       if (filename) return filename
     }
     return null

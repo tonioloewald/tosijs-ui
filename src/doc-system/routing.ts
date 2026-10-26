@@ -149,16 +149,51 @@ export function slugForPath(pathname: string): string {
 /**
  * Resolve a browser location.pathname to a doc filename, using a slug map.
  * Returns '' if nothing matches (caller falls back to the first/README doc).
+ *
+ * `aliases` ({ alias path -> slug }, the site config's `aliases`) are a doc's extra paths: a
+ * page's own slug wins, so an alias never takes a path from a page.
  */
 export function filenameForPath(
   pathname: string,
-  slugMap: Record<string, string>
+  slugMap: Record<string, string>,
+  aliases: Record<string, string> = {}
 ): string {
   const slug = slugForPath(pathname)
-  for (const [filename, docSlug] of Object.entries(slugMap)) {
-    if (docSlug === slug) return filename
+  const find = (wanted: string): string => {
+    for (const [filename, docSlug] of Object.entries(slugMap)) {
+      if (docSlug === wanted) return filename
+    }
+    return ''
   }
-  return ''
+  const own = find(slug)
+  return own || (Object.hasOwn(aliases, slug) ? find(aliases[slug]) : '')
+}
+
+/**
+ * Check a site's `aliases` against its slug map, and return the problems in words (empty when
+ * there are none). An alias is one path segment, takes no page's own path, and names a page.
+ */
+export function aliasProblems(
+  aliases: Record<string, string>,
+  slugMap: Record<string, string>
+): string[] {
+  const slugs = new Set(Object.values(slugMap))
+  const problems: string[] = []
+  for (const [alias, target] of Object.entries(aliases)) {
+    if (!/^[a-z0-9][a-z0-9._-]*$/i.test(alias)) {
+      problems.push(
+        `"${alias}" is not one path segment (letters, digits, ".", "_", "-")`
+      )
+    } else if (slugs.has(alias)) {
+      problems.push(`"${alias}" is already a page's own path`)
+    }
+    if (!slugs.has(target)) {
+      problems.push(
+        `"${alias}" names "${target}", which is no page's slug ('' is the root page)`
+      )
+    }
+  }
+  return problems
 }
 
 /** Turn a human name/title into a slug: 'Form Components' -> 'form-components'. */

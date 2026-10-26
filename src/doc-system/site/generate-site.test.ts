@@ -305,3 +305,82 @@ describe('bare-name links under strict', () => {
     ).rejects.toThrow('bare page name')
   })
 })
+
+// virta serves its README at /readme/ as well as at the root (board #3513). A host rewrite to
+// the root page 404'd the bundle, the stylesheet and docs.json, so the page never hydrated.
+describe('aliases', () => {
+  const docs = [
+    {
+      filename: 'README.md',
+      title: 'Home',
+      path: 'README.md',
+      text: '# Home\n\nHi.',
+    },
+    {
+      filename: 'guide.md',
+      title: 'Guide',
+      path: 'guide.md',
+      text: '# Guide\n',
+    },
+  ]
+  const build = async (aliases: Record<string, string>) => {
+    const dir = `${tmpdir()}/tosi-alias-${Math.floor(performance.now() * 1000)}`
+    try {
+      await generateSite({
+        docs: docs as any,
+        aliases,
+        outputDir: dir,
+        projectName: 'T',
+        baseUrl: 'https://t.test',
+        hydrateUrl: '/hydrate-abc.js',
+      } as any)
+      const read = async (f: string) =>
+        (await Bun.file(`${dir}/${f}`).exists())
+          ? await Bun.file(`${dir}/${f}`).text()
+          : null
+      return {
+        root: (await read('index.html')) as string,
+        alias: await read('readme/index.html'),
+        aliasMd: await read('readme/index.md'),
+        sitemap: (await read('sitemap.xml')) as string,
+      }
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  }
+
+  test('an alias page is the page again, with every reference resolving from where it sits', async () => {
+    const { alias, aliasMd, sitemap } = await build({ readme: '' })
+    const page = 'https://t.test/readme/'
+    const at = (re: RegExp) => new URL(alias!.match(re)![1], page).pathname
+    expect(at(/<link rel="stylesheet" href="([^"?]+)/)).toBe('/doc-system.css')
+    expect(at(/<script type="module" src="([^"]+)"/)).toBe('/hydrate-abc.js')
+    expect(at(/docs="([^"?]+)/)).toBe('/docs.json')
+    expect(at(/href="([^"]+)">Guide</)).toBe('/guide/')
+    expect(alias).toContain('data-doc="README.md"')
+    // one canonical page: the alias names the root, and stays out of the sitemap
+    expect(alias).toContain('<link rel="canonical" href="https://t.test/" />')
+    expect(sitemap).not.toContain('/readme/')
+    expect(aliasMd).toBe('# Home\n\nHi.\n')
+    // the browser is told, so it opens the README there and not the first doc
+    expect(alias).toContain(
+      '&quot;aliases&quot;:{&quot;readme&quot;:&quot;&quot;}'
+    )
+  })
+
+  test('with no aliases the config attribute does not mention them', async () => {
+    const { root, alias } = await build({})
+    expect(alias).toBeNull()
+    expect(root).not.toContain('aliases')
+  })
+
+  test('a wrong alias fails the build and says which', async () => {
+    await expect(build({ readme: 'nope' })).rejects.toThrow(
+      '"nope", which is no page'
+    )
+    await expect(build({ guide: '' })).rejects.toThrow(
+      "already a page's own path"
+    )
+    await expect(build({ 'a/b': '' })).rejects.toThrow('not one path segment')
+  })
+})

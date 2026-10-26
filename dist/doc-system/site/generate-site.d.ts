@@ -6,6 +6,8 @@ declare global {
 }
 export interface GenerateSiteConfig {
     docs: Doc[];
+    /** `SiteConfig.aliases`: { alias path -> slug } (board #3513) */
+    aliases?: Record<string, string>;
     /**
      * Mirrors `SiteConfig.liveExamples`. The static highlighter needs it so it skips the
      * fences that will become live examples — a highlighted block hands the example markup

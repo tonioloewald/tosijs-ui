@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.16.36
+
+One additive site option. Nothing changes for a site that does not set it.
+
+- **A page can be served at a second path (#3513).** `aliases: { readme: '' }` in the site
+  config also writes the root page to `/readme/`, with its stylesheet, bundle and `docs.json`
+  references worked out for that depth, and the browser opens it as the README. Before this a
+  host rewrite was the only way, and it served the page one level down with every relative
+  reference 404ing, so the page rendered but never hydrated. An alias page's canonical link
+  names the page's own path, aliases stay out of the sitemap and the nav, and the build fails on
+  an alias that is not one path segment, takes a page's own path, or names no page.
+
 ## 1.16.35
 
 Board follow-ups from 1.16.32 and 1.16.33, plus one tunnel feature. Nothing to change in an

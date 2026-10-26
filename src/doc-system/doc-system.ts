@@ -570,6 +570,16 @@ export class TosiDocSystem extends withAttributes({
 
   // Parse a declarative <ul class="..."> of <li><a href data-icon?>label</a> into
   // LinkItem[]. Returns [] when the list is absent.
+  /** The site's `aliases`, which the build writes into the config attribute (board #3513). */
+  private configAliases(): Record<string, string> | undefined {
+    try {
+      const { aliases } = JSON.parse(this.config || '{}')
+      return aliases && typeof aliases === 'object' ? aliases : undefined
+    } catch {
+      return undefined
+    }
+  }
+
   private parseLinks(selector: string): LinkItem[] {
     const list = this.querySelector(selector)
     if (!list) return []
@@ -676,6 +686,7 @@ export class TosiDocSystem extends withAttributes({
     this.browser = createDocBrowser({
       docs: this.corpus,
       routing: memory ? 'memory' : 'path',
+      aliases: memory ? undefined : this.configAliases(),
       initialRoute: memory ? this.route || undefined : undefined,
       onRouteChange: memory
         ? (slug: string) => {

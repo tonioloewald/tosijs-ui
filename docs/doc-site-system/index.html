@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=55bbc24af4a4" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=c0b7a78ad403" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=f2d643df672b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=4dc85a72160f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -371,6 +371,11 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td><code>home</code></td>
 <td>README</td>
 <td>the page served at <code>/</code>, by slug or filename (<code>home: &#39;host&#39;</code> for a site that is an app). README then gets its own page at <code>/readme/</code>, and the nav, canonical links, sitemap, <code>llms.txt</code> and books follow. The build fails if it names no page, if it names a hidden one, or if a second doc claims the root. A doc can claim the root itself with <code>{&quot;home&quot;: true}</code></td>
+</tr>
+<tr>
+<td><code>aliases</code></td>
+<td>none</td>
+<td>extra paths a page is served at, <code>{ alias: slug }</code> (<code>&#39;&#39;</code> is the root page). <code>aliases: { readme: &#39;&#39; }</code> also writes the root page to <code>/readme/</code>. See <a href="#serving-a-page-at-a-second-path">Serving a page at a second path</a></td>
 </tr>
 <tr>
 <td><code>sectionsDir</code></td>
@@ -1011,6 +1016,20 @@ header, so such a page links back to the docs its own way. See <a href="/no-head
 <p><code>&quot;home&quot;: true</code> (or the site&#39;s <code>home</code> option) makes a page the site root, <code>/</code>. README then moves
 to <code>/readme/</code>, so <strong>README&#39;s URL and canonical link change</strong>: inbound links to <code>/</code> now reach
 the new home page, and anything that linked to README by its root URL needs <code>/readme/</code> (#225).</p>
+<h4 id="serving-a-page-at-a-second-path">Serving a page at a second path</h4>
+<p>To serve a page at another path as well as its own, name the path in <code>aliases</code>. An app at the
+root that still wants its README at <code>/readme/</code> writes <code>aliases: { readme: &#39;&#39; }</code>; a site that keeps
+an old address alive writes <code>aliases: { &#39;getting-started&#39;: &#39;guide&#39; }</code>.</p>
+<p>Each alias is a copy of the page written where it is served, because a page&#39;s stylesheet,
+bundle, <code>docs.json</code> and nav links are relative to where it sits (that is what lets one build
+work under any mount). A host rewrite from <code>/readme/</code> to the root page cannot work: it serves the
+root page&#39;s bytes one level down, those references 404, and the page renders but never
+hydrates. The browser is told about the aliases too, so <code>/readme/</code> opens as the README rather
+than as whichever doc comes first.</p>
+<p>An alias page&#39;s canonical link names the page&#39;s own path, and aliases stay out of the sitemap,
+the nav, <code>llms.txt</code> and books, so search engines see one page. Links from an alias page go to
+the pages&#39; own paths. The build fails on an alias that is more than one path segment, takes a
+page&#39;s own path, or names no page (#3513).</p>
 <h4 id="preview--deploy-the-built-site-to-a-host-you-control"><code>preview</code> — deploy the built site to a host you control</h4>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>
@@ -2395,6 +2414,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-2en1dn39.js"></script>
+  <script type="module" src="../hydrate-hkezaeyq.js"></script>
 </body>
 </html>
