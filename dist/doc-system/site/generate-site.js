@@ -16,6 +16,7 @@ import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wi
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, docDescription, } from '../render.js';
 import { bareNameLinks, deadInPageAnchors, missingWikilinks, misconfigured, } from './build-warnings.js';
+import { existsSync } from 'fs';
 const escapeAttr = (s) => s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -118,6 +119,7 @@ at = slugMap[doc.filename] ?? '') {
     // Functional URLs are emitted relative to THIS page's depth so the build is
     // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
     const depth = pageDepth(at);
+    const own = slugMap[doc.filename] ?? '';
     const localizedAttr = config.localizedStrings
         ? ` localized="${escapeAttr(relativeUrl(depth, localizedUrl))}"`
         : '';
@@ -144,7 +146,7 @@ at = slugMap[doc.filename] ?? '') {
     // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
     // static HTML is correct for no-JS readers and crawlers (the doc-browser also
     // does this client-side after hydration).
-    const body = rewriteDocLinks(await highlightHtml(renderDocMarkdown(doc.text, {
+    const rendered = rewriteDocLinks(await highlightHtml(renderDocMarkdown(doc.text, {
         bakes: bakes?.get(doc.filename),
         wikilinks,
     }), 
@@ -153,6 +155,11 @@ at = slugMap[doc.filename] ?? '') {
     config.liveExamples ?? 'auto'), (filename) => slugMap[filename] !== undefined
         ? relativeUrl(depth, pathForSlug(slugMap[filename]))
         : null);
+    // A copy at an alias: what the author wrote relative to the page's own path must still reach
+    // the same file (a README's `img/logo.png` is /img/logo.png, not /readme/img/logo.png).
+    const body = at === own
+        ? rendered
+        : rebaseRelativeRefs(rendered, pathForSlug(own), depth);
     const nav = navHtml(config.docs, slugMap, doc.filename, depth);
     const navbar = linkListHtml('doc-navbar', config.navbarLinks);
     const jsonLd = baseUrl
@@ -291,6 +298,19 @@ export function withStamp(url, stamp) {
         return url;
     return `${url}?v=${encodeURIComponent(stamp)}`;
 }
+/**
+ * Rewrite the relative `href`/`src` references in rendered page HTML, written for a page at
+ * `fromPath` ('/' or '/slug/'), so they reach the same files from a page at `depth`. Rooted
+ * (`/x`), external, `#`, `?` and `data:`-style references are left alone.
+ */
+export function rebaseRelativeRefs(html, fromPath, depth) {
+    return html.replace(/(\s(?:href|src|poster)=")([^"]*)"/g, (match, attr, ref) => {
+        if (!ref || /^(?:[a-z][a-z0-9+.-]*:|\/|#|\?)/i.test(ref))
+            return match;
+        const rooted = new URL(ref, `https://x${fromPath}`);
+        return `${attr}${relativeUrl(depth, rooted.pathname + rooted.search + rooted.hash)}"`;
+    });
+}
 export async function generateSite(config) {
     const { docs, outputDir } = config;
     const slugMap = buildSlugMap(docs);
@@ -363,12 +383,12 @@ export async function generateSite(config) {
     for (const [alias, target] of Object.entries(aliases)) {
         const doc = docs.find((d) => slugMap[d.filename] === target);
         const dir = `${outputDir}/${alias}`;
-        // A bare name works on the root page and not one level down, where the alias is.
-        const bare = target === ''
-            ? bareNameLinks(renderDocMarkdown(doc.text, { wikilinks }))
-            : [];
-        if (bare.length)
-            bareLinks.push(`    ${doc.path || doc.filename} (at /${alias}/): ${bare.join(', ')}`);
+        // The output folder starts empty, so anything already here is a static file or folder, or
+        // one the build wrote (`tjs/`, `_chunks/`): an alias must not write into it.
+        if (existsSync(dir)) {
+            throw new Error(`generate-site: the alias "${alias}" names /${alias}/, which the site already has ` +
+                `(a static file or folder, or one the build writes); choose another name`);
+        }
         await Bun.write(`${dir}/index.html`, await pageHtml(doc, config, slugMap, configAttr, wikilinks, alias));
         if (hasMarkdownPage(doc, config)) {
             await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n');

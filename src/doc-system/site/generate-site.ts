@@ -41,6 +41,8 @@ import {
   misconfigured,
 } from './build-warnings.js'
 
+import { existsSync } from 'fs'
+
 declare global {
   var Bun: any
 }
@@ -296,6 +298,7 @@ async function pageHtml(
   // Functional URLs are emitted relative to THIS page's depth so the build is
   // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
   const depth = pageDepth(at)
+  const own = slugMap[doc.filename] ?? ''
   const localizedAttr = config.localizedStrings
     ? ` localized="${escapeAttr(relativeUrl(depth, localizedUrl))}"`
     : ''
@@ -329,7 +332,7 @@ async function pageHtml(
   // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
   // static HTML is correct for no-JS readers and crawlers (the doc-browser also
   // does this client-side after hydration).
-  const body = rewriteDocLinks(
+  const rendered = rewriteDocLinks(
     await highlightHtml(
       renderDocMarkdown(doc.text, {
         bakes: bakes?.get(doc.filename),
@@ -344,6 +347,12 @@ async function pageHtml(
         ? relativeUrl(depth, pathForSlug(slugMap[filename]))
         : null
   )
+  // A copy at an alias: what the author wrote relative to the page's own path must still reach
+  // the same file (a README's `img/logo.png` is /img/logo.png, not /readme/img/logo.png).
+  const body =
+    at === own
+      ? rendered
+      : rebaseRelativeRefs(rendered, pathForSlug(own), depth)
   const nav = navHtml(config.docs, slugMap, doc.filename, depth)
   const navbar = linkListHtml('doc-navbar', config.navbarLinks)
 
@@ -505,6 +514,29 @@ export function withStamp(url: string, stamp?: string): string {
   return `${url}?v=${encodeURIComponent(stamp)}`
 }
 
+/**
+ * Rewrite the relative `href`/`src` references in rendered page HTML, written for a page at
+ * `fromPath` ('/' or '/slug/'), so they reach the same files from a page at `depth`. Rooted
+ * (`/x`), external, `#`, `?` and `data:`-style references are left alone.
+ */
+export function rebaseRelativeRefs(
+  html: string,
+  fromPath: string,
+  depth: number
+): string {
+  return html.replace(
+    /(\s(?:href|src|poster)=")([^"]*)"/g,
+    (match, attr: string, ref: string) => {
+      if (!ref || /^(?:[a-z][a-z0-9+.-]*:|\/|#|\?)/i.test(ref)) return match
+      const rooted = new URL(ref, `https://x${fromPath}`)
+      return `${attr}${relativeUrl(
+        depth,
+        rooted.pathname + rooted.search + rooted.hash
+      )}"`
+    }
+  )
+}
+
 export async function generateSite(
   config: GenerateSiteConfig
 ): Promise<number> {
@@ -599,15 +631,14 @@ export async function generateSite(
   for (const [alias, target] of Object.entries(aliases)) {
     const doc = docs.find((d) => slugMap[d.filename] === target)!
     const dir = `${outputDir}/${alias}`
-    // A bare name works on the root page and not one level down, where the alias is.
-    const bare =
-      target === ''
-        ? bareNameLinks(renderDocMarkdown(doc.text, { wikilinks }))
-        : []
-    if (bare.length)
-      bareLinks.push(
-        `    ${doc.path || doc.filename} (at /${alias}/): ${bare.join(', ')}`
+    // The output folder starts empty, so anything already here is a static file or folder, or
+    // one the build wrote (`tjs/`, `_chunks/`): an alias must not write into it.
+    if (existsSync(dir)) {
+      throw new Error(
+        `generate-site: the alias "${alias}" names /${alias}/, which the site already has ` +
+          `(a static file or folder, or one the build writes); choose another name`
       )
+    }
     await Bun.write(
       `${dir}/index.html`,
       await pageHtml(doc, config, slugMap, configAttr, wikilinks, alias)

@@ -87,8 +87,9 @@ export interface SiteConfig {
    * `aliases: { readme: '' }` the README (the root page) is also written to `/readme/`, with its
    * stylesheet, bundle and `docs.json` references computed for that depth, and the browser
    * opens it as the README. Each alias page's canonical link names the page's own path, and
-   * aliases stay out of the sitemap and the nav. The build fails on an alias that is more than
-   * one path segment, takes a page's own path, or names no page.
+   * aliases stay out of the sitemap and the nav; relative references in the page are rewritten
+   * to reach the same files. An alias is one lowercase path segment with no dot; the build fails
+   * on one that is not, that takes a page's own path or a static folder's, or that names no page.
    */
   aliases?: Record<string, string>
   /**

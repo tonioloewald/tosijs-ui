@@ -1,5 +1,10 @@
 import { describe, test, expect } from 'bun:test'
-import { pageDepth, relativeUrl, generateSite } from './generate-site.js'
+import {
+  pageDepth,
+  relativeUrl,
+  generateSite,
+  rebaseRelativeRefs,
+} from './generate-site.js'
 import { tmpdir } from 'os'
 
 describe('pageDepth', () => {
@@ -314,7 +319,7 @@ describe('aliases', () => {
       filename: 'README.md',
       title: 'Home',
       path: 'README.md',
-      text: '# Home\n\nHi.',
+      text: '# Home\n\nHi. ![logo](img/logo.png)',
     },
     {
       filename: 'guide.md',
@@ -361,7 +366,8 @@ describe('aliases', () => {
     // one canonical page: the alias names the root, and stays out of the sitemap
     expect(alias).toContain('<link rel="canonical" href="https://t.test/" />')
     expect(sitemap).not.toContain('/readme/')
-    expect(aliasMd).toBe('# Home\n\nHi.\n')
+    expect(aliasMd).toBe('# Home\n\nHi. ![logo](img/logo.png)\n')
+    expect(at(/<img src="([^"]+)"/)).toBe('/img/logo.png')
     // the browser is told, so it opens the README there and not the first doc
     expect(alias).toContain(
       '&quot;aliases&quot;:{&quot;readme&quot;:&quot;&quot;}'
@@ -381,6 +387,60 @@ describe('aliases', () => {
     await expect(build({ guide: '' })).rejects.toThrow(
       "already a page's own path"
     )
-    await expect(build({ 'a/b': '' })).rejects.toThrow('not one path segment')
+    await expect(build({ 'a/b': '' })).rejects.toThrow(
+      'not one lowercase path segment'
+    )
+    // the correctness review of 1.16.36: on macOS, Guide/ IS guide/, and replaced the page
+    await expect(build({ Guide: '' })).rejects.toThrow(
+      'not one lowercase path segment'
+    )
+    // every root file the build writes has a dot: sitemap.xml was written over the alias folder
+    await expect(build({ 'sitemap.xml': '' })).rejects.toThrow(
+      'not one lowercase path segment'
+    )
+  })
+
+  test('an alias over a static folder already in the output fails the build', async () => {
+    const dir = `${tmpdir()}/tosi-alias-static-${Math.floor(
+      performance.now() * 1000
+    )}`
+    await Bun.write(`${dir}/og/card.webp`, 'x')
+    try {
+      await expect(
+        generateSite({
+          docs: docs as any,
+          aliases: { og: '' },
+          outputDir: dir,
+        } as any)
+      ).rejects.toThrow('the alias "og" names /og/, which the site already has')
+      expect(await Bun.file(`${dir}/og/index.html`).exists()).toBe(false)
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  })
+})
+
+describe('rebaseRelativeRefs', () => {
+  test('a reference written for the page reaches the same file from its alias', () => {
+    const html =
+      '<img src="img/logo.png"> <a href="docs/spec.pdf#p2">s</a> <a href="guide">g</a>' +
+      ' <a href="/abs/">a</a> <a href="https://x.test/">x</a> <a href="#h">h</a>' +
+      ' <img src="data:image/png;base64,AA"> <a href="mailto:a@b">m</a>'
+    const out = rebaseRelativeRefs(html, '/', 1)
+    expect(out).toContain('src="../img/logo.png"')
+    expect(out).toContain('href="../docs/spec.pdf#p2"')
+    expect(out).toContain('href="../guide"')
+    for (const kept of [
+      'href="/abs/"',
+      'href="https://x.test/"',
+      'href="#h"',
+      'src="data:',
+      'href="mailto:',
+    ])
+      expect(out).toContain(kept)
+    // from one page's folder to another's at the same depth
+    expect(rebaseRelativeRefs('<img src="a.png">', '/guide/', 1)).toContain(
+      'src="../guide/a.png"'
+    )
   })
 })

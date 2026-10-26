@@ -171,20 +171,26 @@ export function filenameForPath(
 
 /**
  * Check a site's `aliases` against its slug map, and return the problems in words (empty when
- * there are none). An alias is one path segment, takes no page's own path, and names a page.
+ * there are none). An alias is one lowercase path segment with no dot, takes no page's own
+ * path, and names a page.
+ *
+ * Lowercase because on a case-insensitive filesystem (macOS, Windows) writing `Guide/` replaces
+ * `guide/`, and a crawler at `/guide/` then got another page. No dot because every file the
+ * build writes at the root has one (`docs.json`, `sitemap.xml`, `llms.txt`).
  */
 export function aliasProblems(
   aliases: Record<string, string>,
   slugMap: Record<string, string>
 ): string[] {
   const slugs = new Set(Object.values(slugMap))
+  const folded = new Set([...slugs].map((s) => s.toLowerCase()))
   const problems: string[] = []
   for (const [alias, target] of Object.entries(aliases)) {
-    if (!/^[a-z0-9][a-z0-9._-]*$/i.test(alias)) {
+    if (!/^[a-z0-9][a-z0-9_-]*$/.test(alias)) {
       problems.push(
-        `"${alias}" is not one path segment (letters, digits, ".", "_", "-")`
+        `"${alias}" is not one lowercase path segment (a-z, 0-9, "_", "-")`
       )
-    } else if (slugs.has(alias)) {
+    } else if (folded.has(alias)) {
       problems.push(`"${alias}" is already a page's own path`)
     }
     if (!slugs.has(target)) {

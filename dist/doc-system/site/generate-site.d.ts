@@ -132,4 +132,10 @@ export declare function pageDepth(slug: string): number;
  */
 export declare function relativeUrl(depth: number, p: string): string;
 export declare function withStamp(url: string, stamp?: string): string;
+/**
+ * Rewrite the relative `href`/`src` references in rendered page HTML, written for a page at
+ * `fromPath` ('/' or '/slug/'), so they reach the same files from a page at `depth`. Rooted
+ * (`/x`), external, `#`, `?` and `data:`-style references are left alone.
+ */
+export declare function rebaseRelativeRefs(html: string, fromPath: string, depth: number): string;
 export declare function generateSite(config: GenerateSiteConfig): Promise<number>;

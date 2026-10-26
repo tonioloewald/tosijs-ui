@@ -62,7 +62,12 @@ export declare function slugForPath(pathname: string): string;
 export declare function filenameForPath(pathname: string, slugMap: Record<string, string>, aliases?: Record<string, string>): string;
 /**
  * Check a site's `aliases` against its slug map, and return the problems in words (empty when
- * there are none). An alias is one path segment, takes no page's own path, and names a page.
+ * there are none). An alias is one lowercase path segment with no dot, takes no page's own
+ * path, and names a page.
+ *
+ * Lowercase because on a case-insensitive filesystem (macOS, Windows) writing `Guide/` replaces
+ * `guide/`, and a crawler at `/guide/` then got another page. No dot because every file the
+ * build writes at the root has one (`docs.json`, `sitemap.xml`, `llms.txt`).
  */
 export declare function aliasProblems(aliases: Record<string, string>, slugMap: Record<string, string>): string[];
 /** Turn a human name/title into a slug: 'Form Components' -> 'form-components'. */

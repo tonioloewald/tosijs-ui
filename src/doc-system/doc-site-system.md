@@ -837,8 +837,10 @@ than as whichever doc comes first.
 
 An alias page's canonical link names the page's own path, and aliases stay out of the sitemap,
 the nav, `llms.txt` and books, so search engines see one page. Links from an alias page go to
-the pages' own paths. The build fails on an alias that is more than one path segment, takes a
-page's own path, or names no page (#3513).
+the pages' own paths, and a relative reference in the page (a README's `img/logo.png`) is
+rewritten so it still reaches the same file. An alias is one lowercase path segment with no dot
+(`readme`, `getting-started`); the build fails on one that is not, that takes a page's own path,
+that names a static file or folder the site already has, or that names no page (#3513).
 
 #### `preview` — deploy the built site to a host you control
 

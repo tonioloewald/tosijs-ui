@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=4dc85a72160f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=e0809cada995" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1028,8 +1028,10 @@ hydrates. The browser is told about the aliases too, so <code>/readme/</code> op
 than as whichever doc comes first.</p>
 <p>An alias page&#39;s canonical link names the page&#39;s own path, and aliases stay out of the sitemap,
 the nav, <code>llms.txt</code> and books, so search engines see one page. Links from an alias page go to
-the pages&#39; own paths. The build fails on an alias that is more than one path segment, takes a
-page&#39;s own path, or names no page (#3513).</p>
+the pages&#39; own paths, and a relative reference in the page (a README&#39;s <code>img/logo.png</code>) is
+rewritten so it still reaches the same file. An alias is one lowercase path segment with no dot
+(<code>readme</code>, <code>getting-started</code>); the build fails on one that is not, that takes a page&#39;s own path,
+that names a static file or folder the site already has, or that names no page (#3513).</p>
 <h4 id="preview--deploy-the-built-site-to-a-host-you-control"><code>preview</code> — deploy the built site to a host you control</h4>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>
