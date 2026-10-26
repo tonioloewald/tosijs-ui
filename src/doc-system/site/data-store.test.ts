@@ -1,4 +1,12 @@
-import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
+import {
+  test,
+  expect,
+  describe,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+} from 'bun:test'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -188,7 +196,21 @@ describe('which files', () => {
 })
 
 describe('versions', () => {
-  beforeEach(() => {
+  /*
+  The starting repository is built ONCE and its .git copied into each test's fresh project
+  (the files are the same every time): seven git spawns per test were a quarter of this
+  file's run time.
+  */
+  let template: string
+  beforeAll(() => {
+    template = fs.mkdtempSync(path.join(os.tmpdir(), 'data-store-git-'))
+    const saved = root
+    root = template
+    write('static/levels/ocean.json', '{"name":"ocean"}')
+    write('static/levels/deep/trench.json')
+    write('static/levels/notes.txt', 'hi')
+    write('static/scenes/a.json')
+    write('package.json')
     git('init', '-q')
     git('config', 'user.email', 'test@example.com')
     git('config', 'user.name', 'Test')
@@ -197,6 +219,13 @@ describe('versions', () => {
     git('config', 'core.hooksPath', '.git/hooks')
     git('add', '.')
     git('commit', '-qm', 'start')
+    root = saved
+  })
+  afterAll(() => fs.rmSync(template, { recursive: true, force: true }))
+  beforeEach(() => {
+    fs.cpSync(path.join(template, '.git'), path.join(root, '.git'), {
+      recursive: true,
+    })
   })
 
   const versioned = () => store({ dirs: ['static/levels'], commit: true })

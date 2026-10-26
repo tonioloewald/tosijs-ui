@@ -18,6 +18,28 @@ test('Print opens with the cover when the build made one', () => {
   expect(html).toContain('alt="My &quot;Book&quot; cover"')
 })
 
+test('in print a live example is its code listing, with no toolbar', () => {
+  // The toolbar moved into a <tosi-affix> (1.16.32); print must still carry none of it.
+  const html = buildBookHtml(
+    [
+      {
+        filename: 'x.md',
+        title: 'X',
+        text: "# X\n\n```js\npreview.append('hello')\n```\n```html\n<b>hi</b>\n```\n",
+      },
+    ] as any,
+    { title: 'B' }
+  )
+  expect(html).toContain('preview.append(')
+  for (const live of [
+    '<tosi-example',
+    '<tosi-affix',
+    'exampleWidgets',
+    'run tests',
+  ])
+    expect(html).not.toContain(live)
+})
+
 test('no cover configured means no cover element', () => {
   expect(buildBookHtml(docs as any, { title: 'B' })).not.toContain(
     '<img class="book-cover"'

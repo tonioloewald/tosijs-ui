@@ -2120,7 +2120,9 @@ export class TosiTable extends withAttributes({
     }
     if (this._array !== array) this.forgetDetails(array || [])
     this._array = array || []
-    this._columns = columns || null
+    // Our own placeholder handed back (`table.value = { ...table.value, array }`) means
+    // "infer", not "no columns": storing it fixed the table at zero columns.
+    this._columns = columns && columns !== this._noColumns ? columns : null
     this._filter = filter || passThru
   }
 
@@ -2132,6 +2134,11 @@ export class TosiTable extends withAttributes({
 
   private _array: any[] = []
   private _columns: ColumnOptions[] | null = null
+  /*
+  What `columns` reads while there is nothing to infer from: one list per table rather than a
+  new [] on every read, and recognisably ours, so handing it back means "infer", not "none".
+  */
+  private _noColumns: ColumnOptions[] = []
   /*
   The columns the CURRENT DOM was built from — see `setColumnWidths`. Not `_columns`: that one
   changes the instant a caller assigns it, which is exactly the window this exists to cover.
@@ -2505,7 +2512,7 @@ export class TosiTable extends withAttributes({
       showed nothing, because the empty list it was asked about first was the only one it
       ever inferred from.
       */
-      if (!_array.length) return []
+      if (!_array.length) return this._noColumns
       this._columns = Object.keys(_array[0] || {}).map((prop: string) => {
         const width = defaultWidth(_array, prop, this.charWidth)
         return {
@@ -2525,7 +2532,7 @@ export class TosiTable extends withAttributes({
   }
 
   set columns(newColumns: ColumnOptions[]) {
-    this._columns = newColumns
+    this._columns = newColumns === this._noColumns ? null : newColumns
     this.queueRender()
   }
 

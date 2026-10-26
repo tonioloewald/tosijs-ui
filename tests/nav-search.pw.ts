@@ -55,6 +55,57 @@ test('Enter navigates to the chosen page and closes the palette', async ({
   await expect(page).toHaveURL(/\/select\/$/)
 })
 
+/*
+A section result deep-links: the page opens with the section's anchor in the URL, scrolled to
+that heading. When the reader keeps unsaved source edits (the confirm is dismissed), nothing
+moves at all — not the page, not the URL, not the scroll position (board #3484).
+*/
+const sectionResult = (page: any) =>
+  options(page)
+    .filter({ hasText: 'In month' })
+    .filter({ hasText: 'Form Integration' })
+    .first()
+
+test('a section result opens the page at that section', async ({ page }) => {
+  await trigger(page).click()
+  await query(page).fill('form integration')
+  await sectionResult(page).click()
+  await expect(dialog(page)).toBeHidden()
+  await expect(page).toHaveURL(/\/month\/#form-integration$/)
+  await expect(page.locator('article.doc-content h1')).toHaveText('month')
+  await expect(page.locator('#form-integration')).toBeInViewport()
+})
+
+test('a refused navigation leaves the URL and the page alone', async ({
+  page,
+}) => {
+  await page.locator('header button[title="settings"]').click()
+  await page.getByText('Source', { exact: true }).first().click()
+  await page.getByText('Edit page source', { exact: true }).last().click()
+  const editor = page.locator('tosi-code').first()
+  await expect(editor).toBeAttached()
+  await expect
+    .poll(() => editor.evaluate((el: any) => String(el.value ?? '').length))
+    .toBeGreaterThan(0)
+  await editor.evaluate((el: any) => {
+    el.value = `${el.value}\nunsaved`
+  })
+  const confirms: string[] = []
+  page.on('dialog', (d: any) => {
+    confirms.push(d.message())
+    d.dismiss()
+  })
+  const before = page.url()
+  await page.keyboard.press('ControlOrMeta+k')
+  await expect(dialog(page)).toBeVisible()
+  await query(page).fill('form integration')
+  await sectionResult(page).click()
+  await expect.poll(() => confirms.length).toBe(1)
+  expect(page.url()).toBe(before)
+  expect(new URL(page.url()).hash).toBe('')
+  await expect(editor).toBeAttached()
+})
+
 test('arrow keys move through results; Escape closes and returns focus', async ({
   page,
 }) => {

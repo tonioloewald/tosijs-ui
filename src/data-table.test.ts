@@ -420,3 +420,13 @@ test('columns inferred from an empty array are not remembered (data that arrives
   table.array = [{ name: 'Ada', role: 'admin' }]
   expect(table.columns.map((c) => c.prop)).toEqual(['name', 'role'])
 })
+
+test('with no data, columns is one stable empty list, and handing it back does not fix the table at zero columns', () => {
+  const table = tosiTable()
+  // the same list every time it is asked (no new array per render)
+  expect(table.columns).toBe(table.columns)
+  // A round trip of `value` while empty used to store that [] as the columns, so the data
+  // that followed was never inferred from.
+  table.value = { ...table.value, array: [{ name: 'Ada', role: 'admin' }] }
+  expect(table.columns.map((c) => c.prop)).toEqual(['name', 'role'])
+})

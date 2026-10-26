@@ -187,3 +187,55 @@ test('the clear button shows only when there is something to clear', () => {
   palette.close()
   palette.remove()
 })
+
+test('an unknown trigger falls back to the field, and says so once', () => {
+  const warn = console.warn
+  const warnings: string[] = []
+  console.warn = (message: string) => warnings.push(message)
+  try {
+    const palette = tosiPalette({ trigger: 'button' })
+    document.body.append(palette)
+    palette.render()
+    palette.render()
+    expect(palette.classList.contains('-no-trigger')).toBe(false)
+    expect(warnings.length).toBe(1)
+    expect(warnings[0]).toContain('"button"')
+    expect(warnings[0]).toContain('"field"')
+    palette.remove()
+  } finally {
+    console.warn = warn
+  }
+})
+
+test('setting value from code updates the field, closed or open', () => {
+  const palette = tosiPalette({
+    sources: [(q: string) => [{ title: `hit ${q}` }]],
+  })
+  document.body.append(palette)
+  palette.open()
+  palette.close()
+  const field = palette.querySelector<HTMLInputElement>('.palette-input')!
+  // closed: the field holds it, and open() searches for it
+  palette.value = 'apple'
+  expect(field.value).toBe('apple')
+  palette.open()
+  expect(palette.results.map((r) => r.title)).toEqual(['hit apple'])
+  // open: the field and the results follow
+  palette.value = 'pear'
+  expect(field.value).toBe('pear')
+  expect(palette.results.map((r) => r.title)).toEqual(['hit pear'])
+  expect(palette.value).toBe('pear')
+  palette.close()
+  palette.remove()
+})
+
+test('a value given to the creator is the query the field opens with', () => {
+  const palette = tosiPalette({ value: 'fig', sources: [() => []] })
+  document.body.append(palette)
+  palette.open()
+  expect(palette.querySelector<HTMLInputElement>('.palette-input')!.value).toBe(
+    'fig'
+  )
+  palette.close()
+  palette.remove()
+})

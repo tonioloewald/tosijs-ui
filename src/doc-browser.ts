@@ -890,8 +890,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return parent ? `${parent.title} › ${doc.title}` : String(doc.title)
   }
   const openDoc = (filename: string, anchor?: string) => {
-    go(filename)
-    if (!anchor) return
+    // go() refuses when the reader keeps unsaved source edits: then the URL and scroll
+    // position stay exactly where they were (#3484).
+    if (!go(filename) || !anchor) return
     if (!memoryRouting) {
       window.history.replaceState(
         { href: hrefFor(filename) },
@@ -1380,10 +1381,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // User-initiated navigation: record the new location (history for path/query,
   // the onRouteChange callback for memory) and then render the doc. Every nav
   // click funnels through here so memory mode never touches window.history.
-  const go = (filename: string) => {
+  const go = (filename: string): boolean => {
     // If the source editor is open with unsaved changes, confirm before leaving;
-    // on confirm it discards + closes, otherwise navigation is aborted.
-    if (!confirmLeaveEditor()) return
+    // on confirm it discards + closes, otherwise navigation is aborted (false).
+    if (!confirmLeaveEditor()) return false
     if (memoryRouting) {
       onRouteChange?.(slugFor(filename))
     } else {
@@ -1404,6 +1405,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       window.history[same ? 'replaceState' : 'pushState']({ href }, '', href)
     }
     navigateTo(filename)
+    return true
   }
 
   // Intercept clicks on internal doc links anywhere in the rendered content so

@@ -167,7 +167,7 @@ export class TosiSidenav extends withAttributes({
     this.releaseTransition()
   }
 
-  private observer: any
+  private observer: MutationObserver | null = null
   connectedCallback(): void {
     super.connectedCallback()
     this.contentVisible = this.parts.content.childNodes.length === 0
@@ -215,7 +215,8 @@ export class TosiSidenav extends withAttributes({
 
   disconnectedCallback() {
     super.disconnectedCallback()
-    this.observer.disconnect()
+    this.observer?.disconnect()
+    this.observer = null
   }
 
   render(): void {
