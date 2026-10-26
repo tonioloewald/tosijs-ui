@@ -941,7 +941,12 @@ It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW
   carries `PREVIEW_TOKEN` or `PREVIEW_EDIT_TOKEN` to your laptop, they never appear in your
   shell history, and they are redacted out of the diff before it is printed (the [global
   keys](#global-keys--one-link-for-every-workspace) are the one case where you copy them to a
-  machine yourself);
+  machine yourself). The redaction covers the keys the LIVE file holds too: after you rotate a
+  key, the diff's removed lines carry the previous one, so every value in a key position
+  (`tosi_preview=`, `tosi_edit=`, `query t=`) on either side is blanked, and so is every other
+  place that value appears. Through 1.16.34 only the current keys were, and a dry run after a
+  rotation printed the old key in clear: if you ran one, treat that key as seen by whatever kept
+  your terminal output;
 - **fills in an unknown value** for `__PREVIEW_EDIT_TOKEN__` when `PREVIEW_EDIT_TOKEN` is unset,
   so the edit key opens nothing, and refuses one shorter than 24 letters, digits, `-` or `_`,
   or one equal to `PREVIEW_TOKEN`;
@@ -955,6 +960,9 @@ It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW
 - **installs the file readable by Caddy and nobody else**, because it holds both keys: mode
   `640` with the group systemd runs Caddy as (`Group=` in the unit, or `User=`'s own group), or
   `600` when Caddy runs as root;
+- **takes group and other access off the preview access logs** (`/var/log/caddy/preview*.log*`)
+  that exist when you run `--go`, so only their owner (Caddy) and root read them. They record
+  short-link codes (see "What it costs" under short links, below);
 - **reloads Caddy, or starts it if it is stopped**, and if Caddy refuses the new config puts
   the previous one back (it stays in `/etc/caddy/Caddyfile.bak` either way) and exits non-zero.
   Versions 1.10.0 to 1.16.26 installed the file readable by root only, which a Caddy running as
@@ -963,6 +971,31 @@ It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW
   box serves anything else through Caddy, read that diff before `--go`.
 
 Bring your own template with `--template=./path/to/Caddyfile`; the same guards apply.
+
+**A template of your own does not pick up changes to the shipped one.** In particular it keeps
+whatever gate page it had, and `tosijs-tunnel` keeps saying "the box's Caddyfile does not serve
+short links yet" however often you re-run the installer, because short links need routes your
+template does not have. To get them, copy from `deploy/Caddyfile` (in
+`node_modules/tosijs-ui/deploy/`):
+
+- into the block that gates your previews (`preview_site` in the shipped file), the `@unauthed`
+  handler, so a browser without a cookie gets the page with the box for a link or a code:
+
+  ```text
+  handle @unauthed {
+  	header Content-Type "text/html; charset=utf-8"
+  	header Cache-Control "no-store"
+  	respond "__GATE_PAGE__" 401
+  }
+  ```
+
+- into your `{{PREVIEW_DOMAIN}} { … }` block, BEFORE its cookie gate (before `import
+  preview_site`), everything from `@codefile {` to the end of `handle @codequery { … }`: the
+  `_codes/` file server, its explicit 404, and the two routes that answer `/<CODE>` and `/?t=<code>`
+  with the gate page.
+
+The installer fills `__GATE_PAGE__` from `deploy/gate-page.html` in the package, and reads that
+file only when your template names it.
 
 You also want a wildcard DNS record (`*.dev.example.com`) pointing at the box, so a new
 project needs no registrar visit, and sshd running `GatewayPorts no`.
@@ -1310,8 +1343,13 @@ guesser can test codes there faster than at the workspace. At a sustained 2,000 
 second for a code's whole five minutes, the odds of hitting a given live code are about **1 in
 100,000**, against 1 in 18 million at the workspace. That was judged worth it for typing a short
 link on a headset (the maintainer's call, 1.16.33). Short-link codes appear in the box's
-access log as paths, unredacted; a code there is spent or expired within five minutes, but keep
-the log readable only by root and the Caddy user, as it is on a stock install.
+access log as paths, unredacted; a code there is spent or expired within five minutes. Keep the
+log readable only by root and the Caddy user. Caddy 2.6 (Debian's) has no setting for a log
+file's mode, so `tosijs-caddy-install --go` takes group and other access off every
+`/var/log/caddy/preview*.log*` that exists when it runs. That is what is guaranteed: the files
+present at install time. A log Caddy creates afterwards (the first one on a new box, or the next
+file when it rolls) gets whatever mode Caddy gives it, so check with `ls -l /var/log/caddy`, or
+re-run `--go` once Caddy has written the log.
 
 The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;

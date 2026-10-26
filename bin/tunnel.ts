@@ -32,7 +32,14 @@ always requires a session.
 
 import { $ } from 'bun'
 import {
-  planGlobalLinks,
+  askDevServer,
+  fetchText,
+  globalLinks as globalLinksFor,
+  sshTo,
+  startLinkLines,
+  type LinkKind,
+} from './tunnel-links.ts'
+import {
   previewBoxKeys,
   previewRootFor,
   readLocalSecret,
@@ -44,9 +51,7 @@ import {
   resolveSiteConfig,
   resolveTunnelLocalPort,
   parseArgv,
-  deviceRegistryLine,
   groupCode,
-  shortCodeScript,
   parseDeviceListing,
   DEVICE_LISTING_SEPARATOR,
   DEVICE_ID_PATTERN,
@@ -148,84 +153,11 @@ const publicUrl = flag('url') ?? preview?.tunnel?.url
 // Set by the registration step below; no public URL means there is no route to fail.
 let routed = true
 
-/** Ask the dev server (loopback only) for a link; `query` selects the kind. */
-async function askForLink(
-  query: string
-): Promise<{ url?: string; device?: string; error?: string }> {
-  const res =
-    await $`curl -sk --max-time 5 https://localhost:${localPort}/__devlink${query}`
-      .nothrow()
-      .quiet()
-  try {
-    return JSON.parse(res.stdout.toString())
-  } catch {
-    return {}
-  }
-}
-
 /*
-Single-use links that also give the browser the box's global key (see GlobalGrant in
-dev-auth.ts): one click opens this workspace, and from then on that browser opens every
-workspace holding the key, and the box's root list, for 30 days, across restarts. The link
-carries a one-use code, never the key. Offered only for keys this workspace accepts and the box
-holds too; `notes` says why any other is missing.
+The link logic lives in tunnel-links.ts, with everything that reaches the network passed in, so
+it can be tested without a box. These are the real ones.
 */
-async function globalLinks(
-  kinds: ('edit' | 'view')[] = ['edit', 'view']
-): Promise<{
-  links: { kind: 'edit' | 'view'; url: string; short?: string }[]
-  notes: string[]
-}> {
-  const local = resolveGlobalKeys(preview?.tunnel?.globalKeys, {
-    PREVIEW_TOKEN:
-      process.env.PREVIEW_TOKEN ?? readLocalSecret('PREVIEW_TOKEN'),
-    PREVIEW_EDIT_TOKEN:
-      process.env.PREVIEW_EDIT_TOKEN ?? readLocalSecret('PREVIEW_EDIT_TOKEN'),
-  })
-  const box =
-    local.keys.edit || local.keys.view ? await previewBoxKeys(host!) : {}
-  const plan = planGlobalLinks(local, box)
-  const links: { kind: 'edit' | 'view'; url: string; short?: string }[] = []
-  for (const kind of plan.kinds.filter((k) => kinds.includes(k))) {
-    const label = flag('label')
-    const answer = await askForLink(
-      `?global=${kind}&domain=${encodeURIComponent(plan.domain!)}${
-        label ? `&label=${encodeURIComponent(label)}` : ''
-      }`
-    )
-    if (answer.url && answer.device) {
-      // Recorded before the link is shown, so every pass in a browser is on the box's list.
-      const recorded = await registerDevice({
-        id: answer.device,
-        project: projectName,
-        // The links printed at start are recorded too, used or not; say which they were.
-        label: label ?? (has('link') ? '' : 'printed at tunnel start'),
-      })
-      if (!recorded) {
-        plan.notes.push(
-          `could not record device ${answer.device} on ${host}, so no ${kind} link: it could not be listed or revoked`
-        )
-        continue
-      }
-    }
-    if (answer.url) {
-      const short = await registerShortCode(answer.url, plan.domain!)
-      if (!short)
-        plan.notes.push(
-          `no short link (${
-            shortLinkProblem || `could not record it on ${host}`
-          }); the full link still works`
-        )
-      links.push({ kind, url: answer.url, short })
-    } else
-      plan.notes.push(
-        answer.error ??
-          `the dev server on :${localPort} did not answer, so no ${kind} link: start it (\`bun start\`), then \`tosijs-tunnel --link\``
-      )
-  }
-  return { links, notes: plan.notes }
-}
-let startLinks: Awaited<ReturnType<typeof globalLinks>> | undefined
+const askForLink = (query: string) => askDevServer(localPort, query)
 
 /*
 DEVICES (board #3416). Each --global edit link is a pass for one device. The box keeps the
@@ -239,55 +171,30 @@ const devicesRoot = () =>
     preview?.caddySitesDir
   )
 
-async function registerDevice(device: {
-  id: string
-  project: string
-  label: string
-}): Promise<boolean> {
-  const line = deviceRegistryLine({ ...device, issued: new Date() })
-  if (!line) return false
-  const root = devicesRoot()
-  const run =
-    await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host!} ${`mkdir -p ${root}/_devices && printf '%s\\n' '${line}' >> ${root}/_devices/registry.tsv`}`
-      .nothrow()
-      .quiet()
-  return run.exitCode === 0
-}
-
-/*
-SHORT LINKS (board #3504): record which workspace a code belongs to, so `https://<domain>/<CODE>`
-(or the code typed into the box on the gate and root pages) finds it. See shortCodeScript.
-Returns the short link, or undefined if it could not be recorded.
-*/
-let shortLinkProblem = ''
-async function registerShortCode(
-  url: string,
-  domain: string
-): Promise<string | undefined> {
-  const code = new URL(url).searchParams.get('t') ?? ''
-  const script = shortCodeScript(devicesRoot(), code, url)
-  if (!script) {
-    shortLinkProblem = `${url} is not a link the box can shorten`
-    return undefined
-  }
-  const run =
-    await $`ssh -o BatchMode=yes -o ConnectTimeout=10 ${host!} ${script}`
-      .nothrow()
-      .quiet()
-  if (run.exitCode !== 0) return undefined
-  // Read it back through Caddy: a box whose Caddyfile predates short links answers with its
-  // gate, and a short link printed over that would lead nowhere.
-  const served = await fetch(`https://${domain}/_codes/${code}`, {
-    signal: AbortSignal.timeout(5000),
-  })
-    .then((res) => (res.ok ? res.text() : ''))
-    .catch(() => '')
-  if (served.trim() !== url) {
-    shortLinkProblem = `the box's Caddyfile does not serve short links yet: run \`tosijs-caddy-install --go\``
-    return undefined
-  }
-  return `https://${domain}/${code}`
-}
+const globalLinks = (kinds?: LinkKind[]) =>
+  globalLinksFor(
+    {
+      host: host!,
+      root: devicesRoot(),
+      projectName,
+      localPort,
+      label: flag('label'),
+      onRequest: has('link'),
+      local: resolveGlobalKeys(preview?.tunnel?.globalKeys, {
+        PREVIEW_TOKEN:
+          process.env.PREVIEW_TOKEN ?? readLocalSecret('PREVIEW_TOKEN'),
+        PREVIEW_EDIT_TOKEN:
+          process.env.PREVIEW_EDIT_TOKEN ??
+          readLocalSecret('PREVIEW_EDIT_TOKEN'),
+      }),
+      boxKeys: () => previewBoxKeys(host!),
+      ssh: (command) => sshTo(host!, command),
+      askForLink,
+      fetchText,
+    },
+    kinds
+  )
+let startLinks: Awaited<ReturnType<typeof globalLinks>> | undefined
 
 /*
 Say where this is going, and where the address came from, BEFORE acting on it.
@@ -703,20 +610,8 @@ if (publicUrl) {
       ? `   ${publicUrl}`
       : `   ${publicUrl}  ⚠️  NOT routed — registration failed above; this URL will not reach here`
   )
-  if (startLinks?.links.length) {
-    console.log(
-      `\n   Single-use links: each opens this workspace, then keeps that browser in every` +
-        `\n   workspace on the box (and its root list) for 30 days:`
-    )
-    for (const { kind, url, short } of startLinks.links) {
-      const code = new URL(url).searchParams.get('t') ?? ''
-      console.log(
-        `   ${kind}: ${url}${kind === 'view' ? '  (read-only)' : ''}` +
-          (short ? `\n         ${short}   code ${groupCode(code)}` : '')
-      )
-    }
-  }
-  for (const note of startLinks?.notes ?? []) console.log(`   note: ${note}`)
+  if (startLinks)
+    for (const line of startLinkLines(startLinks)) console.log(line)
 }
 console.log(`   Ctrl-C to close.\n`)
 
