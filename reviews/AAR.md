@@ -879,3 +879,20 @@ gap, recorded rather than hidden.
 - **Publish:** approval inside the window; first run green. Published `dist/` identical to the
   tagged tree. The box's Caddyfile reinstall for 1.16.33's gate page was run by the maintainer
   (the classifier refused it twice); verified live afterwards.
+
+## 1.16.35 (2026-10-26)
+
+- **What it was:** the open board items from 1.16.32 and 1.16.33 (#3502, #3506, #3484) and the
+  remainder of #3416, where a plain tunnel link now survives a restart for 24 hours through a
+  signed pass. Three of the work streams were done in parallel by agents in worktrees and merged.
+- **The review caught:** a broken signing secret (permissions loosened, unreadable) made every
+  tunnel request fail and spent a redeemed link on an error page; and on a filesystem without
+  permissions (WSL on a Windows drive, FAT) the server would have refused every start after the
+  first link. Both now turn passes off with one warning. The new e2e was checked to fail with
+  the fix reverted.
+- **Process cost:** the agents' worktrees under `.claude/worktrees` made `format-check` scan
+  their trees; they are removed after merging now.
+- **One flake on the final run:** WebKit `/via-tag/` in `examples-show-something`; 4 of 4 on
+  repeat, recorded in the review.
+- **Publish:** approval came after the 60-minute window, so the stage run skipped verify and a
+  `verify_only` run was needed. Published `dist/` identical to the tagged tree.
