@@ -40,8 +40,9 @@ export declare const SESSION_TTL_MS: number;
 /**
  * A READ-ONLY session is shorter, because it belongs to someone else.
  *
- * A normal session is yours and dies with the process anyway — 30 days is really "until you
- * restart the dev server". A read-only session was handed to a colleague from a link in a chat
+ * A normal session is yours and dies with the process anyway (a link pass may mint a new one
+ * after a restart, for at most a day: LINK PASSES) — 30 days is really "until you restart the
+ * dev server". A read-only session was handed to a colleague from a link in a chat
  * log, so its horizon should be the demo, not the dev server's uptime. Seven days is long
  * enough that "look at this when you get a minute" works across a weekend and short enough
  * that it is not a standing grant nobody remembers issuing.

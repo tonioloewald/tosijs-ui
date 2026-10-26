@@ -22,7 +22,7 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, linkRejection, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantCookies, readPass, revokeDeviceSessions, mintDeviceId, cleanDeviceLabel, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, resolveGrantTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, keyedSessionTtlMs, linkPassCookie, readLinkPass, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, linkRejection, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantCookies, readPass, revokeDeviceSessions, mintDeviceId, cleanDeviceLabel, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, resolveGrantTtlMs, readCookie, LINK_PASS_COOKIE, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, keyedSessionTtlMs, linkPassCookie, readLinkPass, SESSION_COOKIE, } from './dev-auth.js';
 import { readLocalSecret } from './local-secrets.js';
 import { assertSecretNotServed, ensureSessionSecret, readSessionSecret, sessionSecretPath, } from './session-secret.js';
 import { revocationList, startRevocationSweep } from './device-revocation.js';
@@ -935,21 +935,52 @@ export async function devServer(config, opts = {}) {
     /*
     Link passes (dev-auth.ts, LINK PASSES): a redeemed plain link survives a restart for a day,
     signed with a per-project secret on disk (session-secret.ts). Only a tunnelled workspace issues
-    or reads them. Checked at launch, like lanTrust: a secret others can read, or one inside the
-    served folder, stops the server here rather than on the first request that needs it.
+    or reads them. A secret inside the served folder stops the server here, like lanTrust. A secret
+    others can read only turns passes off, with a warning (linkSecret below): on a filesystem that
+    keeps no modes it can never pass, and refusing to start bricked the workspace after its first
+    link (1.16.35 review).
     */
     const linkSecretFile = hasTunnel(config)
         ? sessionSecretPath(PROJECT_ROOT)
         : null;
-    if (linkSecretFile) {
+    if (linkSecretFile)
         assertSecretNotServed(linkSecretFile, PUBLIC);
-        readSessionSecret(linkSecretFile);
-    }
+    /*
+    The secret going bad while the server runs (its mode loosened, the disk unwritable, a
+    filesystem that keeps no modes) costs restart survival, not the workspace: a pass is then
+    refused (fail closed) and a redeemed link still gets its session, and the console says why,
+    once. Throwing here made every tunnelled request a 500, and made redemption a 500 after the
+    single-use code was already spent (1.16.35 review).
+    */
+    let linkSecretProblem = '';
+    const linkSecret = (use) => {
+        try {
+            return use(linkSecretFile);
+        }
+        catch (e) {
+            const why = e.message;
+            if (why !== linkSecretProblem) {
+                linkSecretProblem = why;
+                console.warn(`⚠️  link passes are off until this is fixed, so links will not survive a restart: ${why}`);
+            }
+            return null;
+        }
+    };
+    // At launch too, so a loose secret is reported before anyone needs it.
+    if (linkSecretFile)
+        linkSecret(readSessionSecret);
     /** This request's link pass, if it is good for the host it arrived on. Read per use, so
      * deleting the secret file ends every pass at once. */
-    const linkPassOf = (request) => linkSecretFile
-        ? readLinkPass(request.headers.get('cookie'), readSessionSecret(linkSecretFile), request.headers.get('host'), Date.now())
-        : null;
+    const linkPassOf = (request) => {
+        const header = request.headers.get('cookie');
+        // Most requests carry no pass: don't touch the disk for them.
+        if (!linkSecretFile || !readCookie(header, LINK_PASS_COOKIE))
+            return null;
+        const secret = linkSecret(readSessionSecret);
+        return secret
+            ? readLinkPass(header, secret, request.headers.get('host'), Date.now())
+            : null;
+    };
     // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
     const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT, config.outputDir ?? 'docs');
     if (dataStore?.commit && !isGitWorkTree(dataStore.root)) {
@@ -2130,8 +2161,11 @@ export async function devServer(config, opts = {}) {
                 browser (dev-auth.ts, LINK PASSES). Not for a granting link, whose key cookie already
                 outlasts restarts, and only over the tunnel, the one place a pass is read.
                 */
-                if (viaTunnel && linkSecretFile && !keyCookies.length)
-                    reply.append('Set-Cookie', linkPassCookie(auth.readOnly.has(session) ? 'view' : 'edit', request.headers.get('host') ?? '', ensureSessionSecret(linkSecretFile), arrivedAt));
+                const passSecret = viaTunnel && linkSecretFile && !keyCookies.length
+                    ? linkSecret(ensureSessionSecret)
+                    : null;
+                if (passSecret)
+                    reply.append('Set-Cookie', linkPassCookie(auth.readOnly.has(session) ? 'view' : 'edit', request.headers.get('host') ?? '', passSecret, arrivedAt));
                 console.log(keyCookies.length
                     ? `🔓 link redeemed — session issued, and the global ${grant.key} ${grant.device ? `pass (device ${grant.device})` : 'key'} set for ${grant.domain}`
                     : '🔓 edit link redeemed — session issued');

@@ -15,9 +15,9 @@ const LASTING_DAYS = Math.round(GLOBAL_KEY_COOKIE_MAX_AGE_S / 86400);
 function explain(rejection) {
     return rejection === 'stale'
         ? `<p><b>The dev server restarted, so your session ended with it.</b> ` +
-            `Sessions are held in memory. A link keeps its browser in across restarts for ` +
-            `24 hours after it was opened; yours is older than that, or the server's link ` +
-            `secret was rotated.</p>` +
+            `Sessions are held in memory. A link opened through the tunnel keeps its browser ` +
+            `in across restarts for 24 hours; yours is older than that, was opened another ` +
+            `way, or the server's link secret was rotated.</p>` +
             `<p>Ask for a fresh link:</p>`
         : `<p>Ask for a fresh one — invite links expire.</p>`;
 }

@@ -180,7 +180,8 @@ fi
 # and each current key, is then blanked wherever it appears, comments included (the installer's
 # substitution reaches the comments that name the placeholders), longest first so one key cannot
 # leave part of another showing. Finally anything still in a key position is blanked by shape.
-# The values travel in the environment, not argv, where \`ps\` would show them.
+# Here the values travel in the environment, not argv, where \`ps\` would show them. (The
+# install's own sed below still passes the keys in argv, for the moment it runs.)
 KEY_POSITION='(tosi_(preview|edit)=|query[[:space:]]+t=)'
 KEY_VALUE='[^[:space:];"()|*]+'
 key_values() {

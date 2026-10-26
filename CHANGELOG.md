@@ -20,8 +20,11 @@ prints old keys.
 - **What that costs.** Until now nothing about a link session outlived the process, so a
   stolen session cookie died with the server. A stolen pass now works for the rest of its 24
   hours, across restarts. To revoke every pass at once, delete
-  `.tosijs-dev/session-secret`. The secret is created 0600 in a 0700 folder, and the dev
-  server refuses to start if it is readable by others or sits inside the output folder.
+  `.tosijs-dev/session-secret`. The secret is created 0600 in a 0700 folder. The dev server
+  refuses to start if it sits inside the output folder; if group or others have any access to
+  it, links still open but stop surviving restarts, and the console says why. A filesystem that keeps no modes (a Windows
+  drive under WSL, FAT) cannot hold the secret: plain links there end on restart, as before.
+  Revoking a device does not end a link pass.
 - **The "dev server restarted" page** now says a link keeps its browser in for 24 hours,
   instead of claiming sessions are never written to disk.
 
@@ -34,9 +37,10 @@ prints old keys.
   blanked wherever it appears, comments included, and so is the refusal that names leftover
   placeholders.
 - **Access logs.** `--go` takes group and other access off the existing preview access logs
-  (`/var/log/caddy/preview*.log*`, symlinks skipped), which record short-link codes. Caddy 2.6
-  has no log mode, so a log Caddy creates after the install gets Caddy's own mode;
-  doc-site-system.md says exactly what is covered.
+  (`/var/log/caddy/preview*.log*`, symlinks skipped), which record short-link codes. A log
+  shipper that reads them through group membership loses access; give it root or the caddy
+  user. Caddy 2.6 has no log mode, so a log Caddy creates after the install gets Caddy's own
+  mode; doc-site-system.md says exactly what is covered.
 - **Paths with a space.** The installer found neither its template nor the gate page when the
   package lived under a path with a space (`new URL().pathname` kept `%20`).
 - **Gate page.** The installer reads `deploy/gate-page.html` only when the template names
@@ -50,8 +54,9 @@ prints old keys.
   `table.value = { ...table.value, array }` stored that `[]` as the columns, fixing the table
   at zero columns for the data that followed. The empty list is now one per table, and handing
   it back means "infer".
-- **`<tosi-palette>`.** An unknown `trigger` value falls back to `field` as before, but now
-  warns once per value, naming it and the fallback. Setting `value` from code was ignored once
+- **`<tosi-palette>`.** An unknown `trigger` value now behaves exactly as `field` (before, it
+  showed the full field but never compacted), and warns once per value, naming it and the
+  fallback. Setting `value` from code was ignored once
   the query field existed; it now updates the field, and searches again if the palette is
   open.
 - **Doc browser.** Choosing a palette section result while the source editor held unsaved

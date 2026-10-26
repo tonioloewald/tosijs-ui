@@ -276,7 +276,8 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 
 ## Closing a record, and narrow layouts
 
-An open record shows Save, Delete and **Close** under its form. Close (or `close()` from code)
+An open record shows Save and Delete (when its store can save and delete) and **Close** under
+its form. Close (or `close()` from code)
 puts the record away and goes back to the list: it clears the selection (and the `id` in the
 URL), and it drops any unsaved edits without asking, so call `save()` first if they matter.
 

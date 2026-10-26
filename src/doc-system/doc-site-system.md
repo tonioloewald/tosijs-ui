@@ -1269,11 +1269,15 @@ exactly as a global key is traded, so an unsaved edit is not lost to a reload.
   as long as the pass has left. Past that, a restart walls the browser and it needs a new link.
 - **The secret** is `.tosijs-dev/session-secret` in the project root: created on the first
   redeemed link with mode `0600` in a `0700` folder, with its own `.gitignore` so it is never
-  committed in any repo. The dev server refuses to start if that file can be read by anyone
-  else (`chmod 600` it) or if the output folder would contain it.
+  committed in any repo. The dev server refuses to start if the output folder would contain
+  it. If group or others have any access to it (`chmod 600` it), at launch or later, passes are
+  off: none is honoured, new links get a session but no pass, and the console says why. On a
+  filesystem that keeps no modes (a Windows drive under WSL, FAT, some network mounts) the file
+  can never pass that check, so plain links there end on restart, as they used to.
 - **Revoking**: delete the secret file. Every pass it signed stops opening anything on the next
   request, and the next redeemed link makes a new one. Sessions already open run on until the
-  next restart, as they always did.
+  next restart, as they always did. Revoking a device (`--revoke`) does not touch link passes:
+  a browser that also holds one keeps that link's access for the rest of its day.
 
 **What it costs.** Before link passes, nothing about a link session outlived the process: a
 stolen session cookie died with the server. A stolen link pass opens that workspace, with the

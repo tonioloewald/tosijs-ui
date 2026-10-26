@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures'
 import { spawn, type ChildProcess } from 'child_process'
 import {
+  chmodSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -643,4 +644,37 @@ test('a plain link session survives a restart, for the kind and host it was issu
   // Rotating the secret (deleting it) ends every pass at once, without a restart.
   rmSync(secretFile)
   expect((await navigate(edit.pass)).status).toBe(401)
+})
+
+// The 1.16.35 review: a secret that goes bad while the server runs cost every tunnelled request
+// a 500, and a redeemed link was spent and then answered 500. It now costs restart survival only.
+test('a secret gone bad turns link passes off, and nothing else', async () => {
+  const before = await redeemPlain()
+  const secretFile = path.join(dir, '.tosijs-dev/session-secret')
+  chmodSync(secretFile, 0o644)
+  try {
+    expect((await navigate('')).status).toBe(401)
+    expect((await navigate(before.pass)).status).toBe(401)
+    const redeemed = await navigate(
+      '',
+      `/?t=${codeOf((await devlink('')).body.url)}`
+    )
+    expect(redeemed.status).toBe(302)
+    const session = [redeemed.headers['set-cookie'] ?? []]
+      .flat()
+      .find((c) => c.startsWith('tosi_dev_session='))!
+      .split(';')[0]
+    expect(
+      linkPassFrom(redeemed),
+      'no pass without a sound secret'
+    ).toBeUndefined()
+    expect((await navigate(session)).status).toBe(200)
+    // A loose secret at launch is the same: the server starts (a filesystem that keeps no
+    // modes would otherwise never start again after its first link).
+    await stopServer()
+    await startServer()
+    expect((await navigate('')).status).toBe(401)
+  } finally {
+    chmodSync(secretFile, 0o600)
+  }
 })

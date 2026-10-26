@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=be9ebb410ce5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=f2d643df672b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="crud.ts">
 <h1 id="crud">crud</h1>
 <!--{ "parent": "Components" }-->
@@ -276,7 +276,8 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
 })
 </code></pre>
 <h2 id="closing-a-record-and-narrow-layouts">Closing a record, and narrow layouts</h2>
-<p>An open record shows Save, Delete and <strong>Close</strong> under its form. Close (or <code>close()</code> from code)
+<p>An open record shows Save and Delete (when its store can save and delete) and <strong>Close</strong> under
+its form. Close (or <code>close()</code> from code)
 puts the record away and goes back to the list: it clears the selection (and the <code>id</code> in the
 URL), and it drops any unsaved edits without asking, so call <code>save()</code> first if they matter.</p>
 <p>When the element is narrower than <code>TosiCrud.NARROW_WIDTH</code> (720px) it gets the class <code>-narrow</code>
