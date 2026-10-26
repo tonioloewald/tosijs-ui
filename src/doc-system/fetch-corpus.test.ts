@@ -1,4 +1,4 @@
-import { test, expect, afterEach } from 'bun:test'
+import { test, expect, afterEach, beforeEach } from 'bun:test'
 import { fetchCorpus, CORPUS_ATTEMPTS } from './doc-system'
 
 /*
@@ -11,8 +11,24 @@ asserted here is the restraint, not the retrying.
 */
 
 const realFetch = globalThis.fetch
+const realSetTimeout = globalThis.setTimeout
+
+/*
+The backoff is asserted from the delays fetchCorpus ASKS for, not by sleeping through them:
+waiting out real jittered backoff cost this file ~3s of the unit lane, and measuring wall-clock
+made the jitter test depend on machine load.
+*/
+let delays: number[] = []
+beforeEach(() => {
+  delays = []
+  globalThis.setTimeout = ((fn: () => void, ms = 0) => {
+    delays.push(ms)
+    return realSetTimeout(fn, 0)
+  }) as typeof setTimeout
+})
 afterEach(() => {
   globalThis.fetch = realFetch
+  globalThis.setTimeout = realSetTimeout
 })
 
 const stub = (responses: Array<() => any>) => {
@@ -98,9 +114,19 @@ test('REGRESSION: amplification is BOUNDED — a struggling server sees 3x, not 
 })
 
 test('a 429 is retried, and Retry-After is honoured', async () => {
-  const calls = stub([status(429, { 'retry-after': '0' }), ok([])])
+  const calls = stub([status(429, { 'retry-after': '2' }), ok([])])
   await fetchCorpus('/docs.json')
   expect(calls.count).toBe(2)
+  expect(delays).toContain(2000)
+})
+
+test('backoff grows exponentially and never exceeds its ceiling', async () => {
+  stub([status(503)])
+  await expect(fetchCorpus('/docs.json')).rejects.toThrow()
+  // one jittered wait before each retry: [0, 250) then [0, 500)
+  expect(delays.length).toBe(CORPUS_ATTEMPTS - 1)
+  expect(delays[0]).toBeLessThan(250)
+  expect(delays[1]).toBeLessThan(500)
 })
 
 test('backoff is JITTERED, so clients that fail together do not retry together', async () => {
@@ -110,13 +136,10 @@ test('backoff is JITTERED, so clients that fail together do not retry together',
   is what actually spreads the load, so two runs of the same failure should rarely take the
   same time.
   */
-  const timings: number[] = []
   for (let run = 0; run < 6; run++) {
     stub([networkError(), networkError(), ok([])])
-    const started = performance.now()
     await fetchCorpus('/docs.json')
-    timings.push(performance.now() - started)
   }
-  const distinct = new Set(timings.map((t) => Math.round(t / 10)))
-  expect(distinct.size).toBeGreaterThan(1)
+  expect(delays.length).toBe(12)
+  expect(new Set(delays.filter((_, i) => i % 2 === 0)).size).toBeGreaterThan(1)
 })
