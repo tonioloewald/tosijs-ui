@@ -437,7 +437,8 @@ that feed back into the resolution pipeline:
 - `spin_<dps><Icon>` — counter-clockwise (e.g. `spin_180Star`)
 
   The rotation is a CSS animation on an HTML wrapper, not on the `<svg>`, so the browser can
-  run it off the main thread and it keeps turning while the page is busy.
+  run it off the main thread and it keeps turning while the page is busy. Under
+  `prefers-reduced-motion: reduce` it does not turn.
 
 The overlay rules are just string rewrites — for example, `unFoo`
 becomes `slash25o$foo75s75o`. **Overlay icons should have a square

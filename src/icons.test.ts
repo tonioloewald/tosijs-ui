@@ -781,18 +781,19 @@ describe('icons', () => {
       const icon = icons.spin90Loader()
       const spin = icon.querySelector('.tosi-icon-spin') as HTMLElement
       expect(spin).toBeInstanceOf(HTMLSpanElement)
-      expect(spin.style.animation).toContain('tosi-icon-spin')
-      expect(spin.style.animation).toContain('4s')
-      expect(spin.style.animation).toContain('linear')
-      expect(spin.style.animation).toContain('infinite')
-      expect(spin.style.animation).toContain('normal')
+      const prop = (el: HTMLElement, name: string) =>
+        el.style.getPropertyValue(`--tosi-icon-spin-${name}`)
+      expect(prop(spin, 'duration')).toBe('4s')
+      expect(prop(spin, 'direction')).toBe('normal')
       const svg = icon.querySelector('svg') as SVGElement
       expect(svg.parentElement).toBe(spin)
       expect(svg.getAnimations().length).toBe(0)
       expect(
-        icons.spin_180Star().querySelector<HTMLElement>('.tosi-icon-spin')!
-          .style.animation
-      ).toContain('reverse')
+        prop(
+          icons.spin_180Star().querySelector<HTMLElement>('.tosi-icon-spin')!,
+          'direction'
+        )
+      ).toBe('reverse')
     })
 
     test('carries its own keyframes, so it spins in a shadow root and as a clone', () => {
@@ -801,12 +802,12 @@ describe('icons', () => {
         '@keyframes tosi-icon-spin'
       )
       const clone = icon.cloneNode(true) as HTMLElement
-      expect(clone.querySelector('style')!.textContent).toContain(
-        '@keyframes tosi-icon-spin'
+      const css = clone.querySelector('style')!.textContent!
+      expect(css).toContain('@keyframes tosi-icon-spin')
+      expect(css).toMatch(/\.tosi-icon-spin\{animation:tosi-icon-spin /)
+      expect(css).toMatch(
+        /prefers-reduced-motion:reduce\)\{\.tosi-icon-spin\{animation:none\}/
       )
-      expect(
-        clone.querySelector<HTMLElement>('.tosi-icon-spin')!.style.animation
-      ).toContain('tosi-icon-spin')
     })
   })
 

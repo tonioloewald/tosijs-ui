@@ -58,3 +58,21 @@ test('a spin icon turns, in the light DOM and in a shadow root', async ({
     expect(result.after[i]).not.toBe(state.angle)
   }
 })
+
+test('under prefers-reduced-motion a spin icon holds still', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/component/')
+  await page.waitForFunction(() => !!(window as any).xinjsui?.icons)
+  const state = await page.evaluate(() => {
+    const icon = (window as any).xinjsui.icons.spin360Loader()
+    document.body.append(icon)
+    const spin = icon.querySelector('.tosi-icon-spin')!
+    return {
+      name: getComputedStyle(spin).animationName,
+      running: spin.getAnimations().length,
+    }
+  })
+  expect(state).toEqual({ name: 'none', running: 0 })
+})

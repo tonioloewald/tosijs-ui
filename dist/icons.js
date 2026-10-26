@@ -439,7 +439,8 @@ that feed back into the resolution pipeline:
 - `spin_<dps><Icon>` — counter-clockwise (e.g. `spin_180Star`)
 
   The rotation is a CSS animation on an HTML wrapper, not on the `<svg>`, so the browser can
-  run it off the main thread and it keeps turning while the page is busy.
+  run it off the main thread and it keeps turning while the page is busy. Under
+  `prefers-reduced-motion: reduce` it does not turn.
 
 The overlay rules are just string rewrites — for example, `unFoo`
 becomes `slash25o$foo75s75o`. **Overlay icons should have a square
@@ -703,8 +704,14 @@ shadow-DOM components.
 The suffix transform (`spin90Loader40s_30x`) moves to a span OUTSIDE the rotation, so the
 icon still spins about its own centre, as it did when the rotation was appended to that
 transform, instead of orbiting the offset.
+
+Speed and direction are custom properties on the span, so the animation itself is a rule here
+and `prefers-reduced-motion` can stop it, as it stops the live-example spinner.
 */
-const SPIN_KEYFRAMES = '@keyframes tosi-icon-spin{to{transform:rotate(360deg)}}';
+const SPIN_CSS = '@keyframes tosi-icon-spin{to{transform:rotate(360deg)}}' +
+    '.tosi-icon-spin{animation:tosi-icon-spin var(--tosi-icon-spin-duration) linear ' +
+    'infinite var(--tosi-icon-spin-direction)}' +
+    '@media (prefers-reduced-motion:reduce){.tosi-icon-spin{animation:none}}';
 spinRule.apply = (baseName, match, parts) => {
     const dps = match[1].replace('_', '-');
     const duration = 360 / Math.abs(parseFloat(dps));
@@ -715,14 +722,10 @@ spinRule.apply = (baseName, match, parts) => {
     icon.style.transform = '';
     icon.style.transformOrigin = '';
     const keyframes = document.createElement('style');
-    keyframes.textContent = SPIN_KEYFRAMES;
-    let spun = elements.span({
-        class: 'tosi-icon-spin',
-        style: {
-            display: 'inline-flex',
-            animation: `tosi-icon-spin ${duration}s linear infinite ${direction}`,
-        },
-    }, icon);
+    keyframes.textContent = SPIN_CSS;
+    let spun = elements.span({ class: 'tosi-icon-spin', style: { display: 'inline-flex' } }, icon);
+    spun.style.setProperty('--tosi-icon-spin-duration', `${duration}s`);
+    spun.style.setProperty('--tosi-icon-spin-direction', direction);
     if (transform) {
         spun = elements.span({ style: { display: 'inline-flex', transform, transformOrigin } }, spun);
     }
