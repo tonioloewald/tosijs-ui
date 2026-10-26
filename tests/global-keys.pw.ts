@@ -3,7 +3,9 @@ import { spawn, type ChildProcess } from 'child_process'
 import {
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   realpathSync,
+  statSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -148,7 +150,7 @@ test.beforeAll(async ({ browserName }) => {
 })
 
 /** Start the dev server on the spec's ports; called again to restart it. */
-async function startServer() {
+async function startServer(tunnel: Record<string, unknown> = {}) {
   const config = {
     name: 'Keys Test',
     outputDir: 'docs',
@@ -156,7 +158,7 @@ async function startServer() {
     editableData: ['static/levels'],
     preview: {
       host: 'nobody@example.invalid',
-      tunnel: { url: `https://${HOST}`, localPort: tunnelPort },
+      tunnel: { url: `https://${HOST}`, localPort: tunnelPort, ...tunnel },
     },
   }
   server = spawn(
@@ -508,4 +510,137 @@ test('a restart costs a key holder nothing', async () => {
   expect(after).not.toBe(before)
   expect((await navigate(`${PASS}; ${after}`)).status).toBe(200)
   expect((await save(after, `https://${HOST}`)).status).toBe(200)
+})
+
+/*
+#3505 / board #3506: a refused code says whether it was mistyped, spent or expired, through the
+real request path (dev-server.ts, the refusal branch that calls linkRejection).
+*/
+const codeOf = (url: string) => new URL(url).searchParams.get('t')!
+/** The code with one letter changed, still a letter of the alphabet. */
+const typoOf = (code: string) => (code[0] === 'A' ? 'B' : 'A') + code.slice(1)
+
+test('a one-letter typo gets the code box back, with the typed code in it', async () => {
+  const code = codeOf((await devlink('')).body.url)
+  const typo = typoOf(code)
+  const refused = await navigate('', `/?t=${typo}`)
+  expect(refused.status).toBe(401)
+  expect(refused.body).toContain('No live link has the code')
+  expect(refused.body).toContain(`value="${typo}"`)
+  expect(refused.body).not.toContain('has been used')
+  // The real code still opens it.
+  expect((await navigate('', `/?t=${code}`)).status).toBe(302)
+})
+
+test('a single-use code redeemed twice says it has been used', async () => {
+  const { body } = await devlink('?global=view&domain=dev.example.test')
+  const code = codeOf(body.url)
+  expect((await navigate('', `/?t=${code}`)).status).toBe(302)
+  const again = await navigate('', `/?t=${code.toLowerCase()}`)
+  expect(again.status).toBe(401)
+  expect(again.body).toContain('That invite link has been used')
+  expect(again.body).not.toContain('No live link has the code')
+})
+
+test('a code past its window says it has expired', async () => {
+  // 0.02 minutes: a link that expires 1.2s after it is printed.
+  await stopServer()
+  await startServer({ linkTtlMinutes: 0.02 })
+  try {
+    const code = codeOf((await devlink('')).body.url)
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    const late = await navigate('', `/?t=${code}`)
+    expect(late.status).toBe(401)
+    expect(late.body).toContain('That invite link has expired')
+  } finally {
+    await stopServer()
+    await startServer()
+  }
+})
+
+/*
+#3416: a plain `--link` / `--share` session survives a restart for a day, through a signed link
+pass in a host-only cookie, signed with a per-project secret kept on disk.
+*/
+const linkPassFrom = (reply: Reply) => {
+  const set = [reply.headers['set-cookie'] ?? []].flat()
+  return set.find((c) => c.startsWith('__Host-tosi_link_pass='))
+}
+const redeemPlain = async (query = '') => {
+  const redeemed = await navigate(
+    '',
+    `/?t=${codeOf((await devlink(query)).body.url)}`
+  )
+  expect(redeemed.status).toBe(302)
+  const cookies = [redeemed.headers['set-cookie'] ?? []].flat()
+  const session = cookies
+    .find((c) => c.startsWith('tosi_dev_session='))!
+    .split(';')[0]
+  const pass = linkPassFrom(redeemed)
+  expect(pass, 'a link pass').toBeTruthy()
+  return { session, pass: pass!.split(';')[0], setCookie: pass! }
+}
+
+test('a plain link session survives a restart, for the kind and host it was issued for', async () => {
+  const edit = await redeemPlain()
+  expect(edit.setCookie).toContain(
+    '; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Lax'
+  )
+  expect(edit.setCookie).not.toContain('Domain=')
+  const share = await redeemPlain('?share=1')
+  // The secret: created on first use, owner-only, outside the output, ignoring itself.
+  const secretFile = path.join(dir, '.tosijs-dev/session-secret')
+  expect(statSync(secretFile).mode & 0o777).toBe(0o600)
+  expect(
+    readFileSync(path.join(dir, '.tosijs-dev/.gitignore'), 'utf8')
+  ).toContain('*')
+
+  await stopServer()
+  await startServer()
+
+  // Before #3416 this was the "dev server restarted" wall.
+  expect((await navigate(edit.session)).status).toBe(401)
+  const reloaded = await navigate(`${edit.pass}; ${edit.session}`)
+  expect(reloaded.status).toBe(302)
+  const renewed = [reloaded.headers['set-cookie'] ?? []]
+    .flat()
+    .find((c) => c.startsWith('tosi_dev_session='))!
+  // No longer than the pass has left: it does not stretch the day.
+  const maxAge = Number(/Max-Age=(\d+)/.exec(renewed)![1])
+  expect(maxAge).toBeLessThan(86400)
+  expect(maxAge).toBeGreaterThan(86000)
+  expect(linkPassFrom(reloaded), 'the pass is not re-issued').toBeUndefined()
+  const fresh = renewed.split(';')[0]
+  expect((await navigate(fresh)).status).toBe(200)
+  expect((await save(fresh, `https://${HOST}`)).status).toBe(200)
+
+  // A save from a page left open across the restart renews in place, as for a key holder.
+  await stopServer()
+  await startServer()
+  const inPlace = await save(`${edit.pass}; ${fresh}`, `https://${HOST}`)
+  expect(inPlace.status).toBe(200)
+
+  // The share link's pass comes back read-only.
+  const viewed = await navigate(`${share.pass}; ${share.session}`)
+  expect(viewed.status).toBe(302)
+  const viewSession = [viewed.headers['set-cookie'] ?? []]
+    .flat()
+    .find((c) => c.startsWith('tosi_dev_session='))!
+    .split(';')[0]
+  expect((await navigate(viewSession)).status).toBe(200)
+  expect((await save(viewSession, `https://${HOST}`)).status).toBe(403)
+
+  // Bound to its host: the same cookie, presented to another workspace name, is nothing.
+  const elsewhere = await viaTunnel('/', {
+    headers: {
+      host: 'other.edit.dev.example.test',
+      cookie: edit.pass,
+      'sec-fetch-mode': 'navigate',
+    },
+  })
+  expect(elsewhere.status).toBe(401)
+
+  // Rotating the secret (deleting it) ends every pass at once, without a restart.
+  rmSync(secretFile)
+  expect((await navigate(edit.pass)).status).toBe(401)
 })

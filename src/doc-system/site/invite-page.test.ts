@@ -40,8 +40,10 @@ test('#75: it is usable on a phone at all', () => {
 test('#114: a stale session says the server restarted', () => {
   const stale = invitePageHtml('stale', CMD)
   expect(stale).toContain('dev server restarted')
-  expect(stale, 'and says why that is by design').toContain(
-    'never written to disk'
+  // A link pass brings a browser back for a day (#3416), so a restart alone no longer explains
+  // it: the page says what does.
+  expect(stale, 'and why the restart was not survived').toContain(
+    'across restarts for 24 hours'
   )
 })
 

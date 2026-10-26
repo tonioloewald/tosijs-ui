@@ -33,7 +33,10 @@ import {
   trustLanRefusalHint,
   linkRejection,
   RETIRED_LINK_MEMORY_MS,
+  type AuthState,
 } from './dev-auth.js'
+import { readFileSync } from 'fs'
+import * as path from 'path'
 
 const NOW = 1_700_000_000_000
 
@@ -2146,5 +2149,237 @@ describe('#3505: a refused code says whether it was mistyped, spent or expired',
       'unknown'
     )
     expect(s.retired.size).toBe(0)
+  })
+})
+
+describe('#3506: a link code leaves AuthState.links only through dropLink', () => {
+  /*
+  A code removed without being retired reads as "unknown", which the invite page answers with
+  "check it for a typo". So a future revoke or delete path that touched `links` directly would
+  tell the holder of a deliberately killed code to retype it. `links` is a ReadonlyMap, which
+  stops that at compile time everywhere but through a cast; this holds the casts too.
+  */
+  const sources = () => {
+    const root = path.resolve(import.meta.dir, '../../..')
+    const files: { file: string; text: string }[] = []
+    for (const dir of ['src', 'bin']) {
+      for (const rel of new Bun.Glob('**/*.ts').scanSync(
+        path.join(root, dir)
+      )) {
+        if (rel.endsWith('.test.ts') || rel.endsWith('.d.ts')) continue
+        const file = `${dir}/${rel}`
+        files.push({ file, text: readFileSync(path.join(root, file), 'utf8') })
+      }
+    }
+    return files
+  }
+
+  test('nothing writes links except issueLink (set) and dropLink (delete)', () => {
+    const writes: string[] = []
+    const pattern =
+      /\.links\s*\.\s*(set|delete|clear)\s*\(|\blinks\s+as\s+(unknown|Map\b)|writableLinks\s*\(\s*\w+\s*\)\s*\.\s*(\w+)/g
+    for (const { file, text } of sources()) {
+      for (const m of text.matchAll(pattern)) {
+        const fn = [
+          ...text
+            .slice(0, m.index)
+            .matchAll(/\n(?:export )?(?:function|const) (\w+)/g),
+        ].pop()?.[1]
+        writes.push(`${file}:${fn}:${m[0].replace(/\s+/g, ' ')}`)
+      }
+    }
+    expect(writes.sort()).toEqual([
+      'src/doc-system/site/dev-auth.ts:dropLink:writableLinks(state).delete',
+      'src/doc-system/site/dev-auth.ts:issueLink:writableLinks(state).set',
+      'src/doc-system/site/dev-auth.ts:writableLinks:links as Map',
+    ])
+  })
+
+  test('every way a code leaves is remembered, so none of them reads as a typo', () => {
+    const grant = { key: 'view' as const, domain: 'dev.example.com' }
+    const routes: Array<
+      [string, (s: AuthState) => string, number, 'used' | 'expired']
+    > = [
+      [
+        'expired',
+        (s) => issueLink(s, NOW),
+        NOW + LINK_TOKEN_TTL_MS + 1,
+        'expired',
+      ],
+      [
+        'single-use',
+        (s) => {
+          const c = issueLink(s, NOW)
+          redeemLink(s, c, NOW, 'single-use')
+          return c
+        },
+        NOW + 1,
+        'used',
+      ],
+      [
+        'granting link',
+        (s) => {
+          const c = issueLink(s, NOW, LINK_TOKEN_TTL_MS, { grant })
+          redeemLink(s, c, NOW, 'window')
+          return c
+        },
+        NOW + 1,
+        'used',
+      ],
+    ]
+    for (const [name, leave, at, why] of routes) {
+      const s = createAuthState()
+      const code = leave(s)
+      expect(linkRejection(s, code, at), name).toBe(why)
+      expect(s.links.size, name).toBe(0)
+      expect(s.grants.size, name).toBe(0)
+      expect([...s.readOnly], name).not.toContain(code)
+    }
+  })
+})
+
+import {
+  keyedSessionTtlMs,
+  linkPassCookie,
+  readLinkPass,
+  signLinkPass,
+  LINK_PASS_COOKIE,
+  LINK_PASS_TTL_MS,
+  globalKeyExchange as exchangeForPass,
+  globalKeyRefresh as refreshForPass,
+  GLOBAL_KEY_SESSION_TTL_MS as KEY_SESSION_MS,
+  issueSession as mint,
+  type LinkPass,
+} from './dev-auth.js'
+
+describe('#3416: a link pass brings a plain link back after a restart, for a day', () => {
+  const SECRET = 'A'.repeat(43)
+  const OTHER = 'B'.repeat(43)
+  const HOST = 'proj.edit.dev.example.com'
+  const cookieOf = (setCookie: string) => setCookie.split(';')[0]
+  const passFor = (kind: 'edit' | 'view', secret = SECRET, at = NOW) =>
+    cookieOf(linkPassCookie(kind, HOST, secret, at))
+
+  test('the cookie is host-only, HttpOnly, Secure, and lasts a day', () => {
+    const set = linkPassCookie('edit', HOST, SECRET, NOW)
+    expect(set.startsWith(`${LINK_PASS_COOKIE}=`)).toBe(true)
+    expect(LINK_PASS_COOKIE.startsWith('__Host-')).toBe(true)
+    expect(set).toContain('; Path=/; Max-Age=86400; HttpOnly; Secure')
+    expect(set).not.toContain('Domain=')
+  })
+
+  test('carries its kind, for the host it was issued on, until it expires', () => {
+    for (const kind of ['edit', 'view'] as const) {
+      expect(readLinkPass(passFor(kind), SECRET, HOST, NOW + 1)).toEqual({
+        kind,
+        host: HOST,
+        exp: NOW + LINK_PASS_TTL_MS,
+      })
+    }
+    // Host as a request carries it: any case, a port.
+    expect(
+      readLinkPass(
+        passFor('edit'),
+        SECRET,
+        'PROJ.edit.dev.example.com:443',
+        NOW
+      )
+    ).not.toBeNull()
+    expect(
+      readLinkPass(passFor('edit'), SECRET, 'other.edit.dev.example.com', NOW)
+    ).toBeNull()
+    expect(
+      readLinkPass(passFor('edit'), SECRET, HOST, NOW + LINK_PASS_TTL_MS)
+    ).toBeNull()
+  })
+
+  test('a rotated or missing secret, a forged payload, or a claim of more than a day is no pass', () => {
+    expect(readLinkPass(passFor('edit'), OTHER, HOST, NOW)).toBeNull()
+    expect(readLinkPass(passFor('edit'), null, HOST, NOW)).toBeNull()
+    const [, signature] = passFor('view').split('=')[1].split('.')
+    const forged = Buffer.from(
+      JSON.stringify({ t: 'link', kind: 'edit', host: HOST, exp: NOW + 1000 })
+    ).toString('base64url')
+    expect(
+      readLinkPass(
+        `${LINK_PASS_COOKIE}=${forged}.${signature}`,
+        SECRET,
+        HOST,
+        NOW
+      )
+    ).toBeNull()
+    const long: LinkPass = {
+      kind: 'edit',
+      host: HOST,
+      exp: NOW + LINK_PASS_TTL_MS + 1,
+    }
+    expect(
+      readLinkPass(
+        `${LINK_PASS_COOKIE}=${signLinkPass(long, SECRET)}`,
+        SECRET,
+        HOST,
+        NOW
+      )
+    ).toBeNull()
+    // A device pass signed with the same value is not a link pass.
+    expect(
+      readLinkPass(
+        `${LINK_PASS_COOKIE}=${signPass(
+          { device: 'device0001', domain: HOST, label: '', exp: NOW + 1000 },
+          SECRET
+        )}`,
+        SECRET,
+        HOST,
+        NOW
+      )
+    ).toBeNull()
+  })
+
+  test('after a restart it becomes a session of its kind, like a key, and no longer than it has left', () => {
+    const auth = createAuthState()
+    const later = NOW + 60 * 60 * 1000
+    const opts = (cookie: string) => ({
+      auth,
+      keys: {},
+      now: later,
+      linkPass: readLinkPass(cookie, SECRET, HOST, later),
+    })
+    const page = (cookie: string) =>
+      new Request(`https://${HOST}/`, {
+        headers: { cookie, 'sec-fetch-mode': 'navigate' },
+      })
+    const edit = passFor('edit')
+    expect(
+      exchangeForPass(page(edit), { ...opts(edit), viaTunnel: true })
+    ).toBe('edit')
+    expect(
+      exchangeForPass(page(edit), { ...opts(edit), viaTunnel: false })
+    ).toBe(null)
+    const view = passFor('view')
+    expect(
+      exchangeForPass(page(view), { ...opts(view), viaTunnel: true })
+    ).toBe('view')
+    // The page's own save renews in place, as for a key.
+    const save = new Request(`https://${HOST}/__docstore/source`, {
+      method: 'POST',
+      headers: { cookie: edit, 'sec-fetch-site': 'same-origin' },
+    })
+    expect(
+      refreshForPass(save, { ...opts(edit), viaTunnel: true, host: HOST })
+    ).toBe('edit')
+    // The session does not outlive the pass.
+    expect(keyedSessionTtlMs('edit', edit, opts(edit))).toBe(
+      LINK_PASS_TTL_MS - 60 * 60 * 1000
+    )
+    // Already holding a writing session: nothing to add.
+    const held = sessionCookie(mint(auth, later, KEY_SESSION_MS, false)).split(
+      ';'
+    )[0]
+    expect(
+      exchangeForPass(page(`${edit}; ${held}`), {
+        ...opts(edit),
+        viaTunnel: true,
+      })
+    ).toBe(null)
   })
 })

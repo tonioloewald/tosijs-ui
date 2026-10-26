@@ -88,11 +88,13 @@ export type LinkPolicy = 'window' | 'single-use'
 /**
  * Sessions are the durable half — long enough that you are not re-linking daily.
  *
- * Durable WITHIN a process, which is the whole design and not an oversight: the credential's
- * lifetime should not outlive the process that granted it, and nothing about a session is ever
- * written to disk. What was wrong is that a stale cookie was indistinguishable from a forged
- * one, so a reader whose server had restarted was told "link required" and reasonably concluded
- * their cookies were expiring — the one explanation the evidence ruled out (tosijs-ui#114).
+ * The session itself is durable only WITHIN a process: the token lives in memory and is never
+ * written to disk. That used to be the whole story, argued as "a credential should not outlive
+ * the process that granted it" — but `bun start` restarts on any edit in its import graph, so in
+ * practice it meant a reader lost their session to the developer's own saves. A redeemed link now
+ * also sets a signed LINK PASS (see LINK PASSES) that mints a fresh session after a restart, for
+ * 24 hours from redemption. Past that, a restart still ends access, and a cookie from a previous
+ * run is told apart from a forged one so the page can say why (tosijs-ui#114).
  */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
@@ -241,8 +243,15 @@ export function safeEqual(a: string, b: string): boolean {
 }
 
 export interface AuthState {
-  /** unspent link tokens → when they expire */
-  links: Map<string, number>
+  /**
+   * unspent link tokens → when they expire.
+   *
+   * READ-ONLY on purpose: a code leaves only through `dropLink`, which records why in `retired`.
+   * A path that deleted one directly (a future revoke, say) would have its holders told "check
+   * for a typo" about a code that was killed on purpose (board #3506). `issueLink` and `dropLink`
+   * are the only writers; dev-auth.test.ts holds that.
+   */
+  links: ReadonlyMap<string, number>
   /** live session tokens → when they expire */
   sessions: Map<string, number>
   /**
@@ -302,12 +311,7 @@ export function createAuthState(): AuthState {
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
 export function prune(state: AuthState, now: number): void {
   for (const [t, exp] of state.links)
-    if (exp <= now) {
-      state.links.delete(t)
-      state.readOnly.delete(t)
-      state.grants.delete(t)
-      retire(state, t, 'expired', now)
-    }
+    if (exp <= now) dropLink(state, t, 'expired', now)
   for (const [t, { until }] of state.retired)
     if (until <= now) state.retired.delete(t)
   for (const [t, exp] of state.sessions)
@@ -336,7 +340,7 @@ export function issueLink(
 ): string {
   prune(state, now)
   const token = mintLinkToken()
-  state.links.set(token, now + ttlMs)
+  writableLinks(state).set(token, now + ttlMs)
   if (opts.readOnly) state.readOnly.add(token)
   if (opts.grant) state.grants.set(token, opts.grant)
   return token
@@ -423,12 +427,7 @@ export function redeemLink(
   if (matched === null) return null
   const readOnly = state.readOnly.has(matched)
   const grant = state.grants.get(matched)
-  if (policy === 'single-use' || grant) {
-    state.links.delete(matched)
-    state.readOnly.delete(matched)
-    state.grants.delete(matched)
-    retire(state, matched, 'used', now)
-  }
+  if (policy === 'single-use' || grant) dropLink(state, matched, 'used', now)
   /*
   The capability rides from the link to the session it mints, and so does the shorter horizon.
   Minting a full 30-day session from a read-only link would make the capability true and the
@@ -445,12 +444,22 @@ export function redeemLink(
   return session
 }
 
-function retire(
+/** `links` as the two functions allowed to change it see it. See AuthState.links. */
+const writableLinks = (state: AuthState) => state.links as Map<string, number>
+
+/**
+ * THE way a link code stops being live: it leaves `links` with what it carried, and is
+ * remembered in `retired` with why, so `linkRejection` can tell its holder the truth.
+ */
+function dropLink(
   state: AuthState,
   token: string,
   why: 'used' | 'expired',
   now: number
 ): void {
+  writableLinks(state).delete(token)
+  state.readOnly.delete(token)
+  state.grants.delete(token)
   state.retired.set(normalizeLinkToken(token), {
     why,
     until: now + RETIRED_LINK_MEMORY_MS,
@@ -605,8 +614,29 @@ const passSignature = (payload: string, key: string) =>
   createHmac('sha256', key).update(payload).digest('base64url')
 
 export function signPass(pass: DevicePass, key: string): string {
-  const payload = Buffer.from(JSON.stringify(pass)).toString('base64url')
+  return signPayload(pass, key)
+}
+
+function signPayload(value: object, key: string): string {
+  const payload = Buffer.from(JSON.stringify(value)).toString('base64url')
   return `${payload}.${passSignature(payload, key)}`
+}
+
+/** What a `<payload>.<hmac>` value says, if `key` signed it; else null. */
+function readSigned(
+  value: string | undefined,
+  key: string | null | undefined
+): any {
+  if (!key || !value) return null
+  const [payload, signature, extra] = value.split('.')
+  if (!payload || !signature || extra !== undefined) return null
+  if (!safeEqual(signature, passSignature(payload, key))) return null
+  try {
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
+  } catch {
+    // Unparseable is never a pass, signed or not.
+    return null
+  }
 }
 
 /** The pass in this cookie header, if it is signed with `key` and unexpired; else null. */
@@ -615,17 +645,7 @@ export function readPass(
   key: string | undefined,
   now: number
 ): DevicePass | null {
-  const value = readCookie(cookieHeader, GLOBAL_PASS_COOKIE)
-  if (!key || !value) return null
-  const [payload, signature, extra] = value.split('.')
-  if (!payload || !signature || extra !== undefined) return null
-  if (!safeEqual(signature, passSignature(payload, key))) return null
-  let pass: DevicePass
-  try {
-    pass = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
-  } catch {
-    return null
-  }
+  const pass = readSigned(readCookie(cookieHeader, GLOBAL_PASS_COOKIE), key)
   if (
     !pass ||
     typeof pass.device !== 'string' ||
@@ -637,7 +657,100 @@ export function readPass(
     pass.exp > now + GLOBAL_KEY_COOKIE_MAX_AGE_S * 1000
   )
     return null
-  return pass
+  return pass as DevicePass
+}
+
+/*
+LINK PASSES (board #3416; the maintainer, 2026-10-20: "A 24h expiry is acceptable for a signed
+pass; the problem to solve is that restarts reset sessions").
+
+A session is held in this process's memory, so a restart (and `bun start` restarts on any edit to
+a file in its import graph) used to end every session a plain `--link` or `--share` had started:
+the reader was walled and needed a new link. Key holders stopped paying that in 1.16.30, because
+their cookie can mint a new session; this gives a plain link the same, for a day.
+
+A link redeemed over the tunnel now also sets a LINK PASS: `{kind, host, exp}`, HMAC-signed with
+a per-project secret kept on disk (session-secret.ts), in a host-only `__Host-` cookie. After a
+restart the pass is traded for a fresh session exactly as a global key is (`globalKeyExchange` on
+a page load, `globalKeyRefresh` on the page's own requests), so every write gate is unchanged: a
+pass only ever becomes a session.
+
+- KIND: the link's. A share link's pass mints read-only sessions, never more.
+- HOST: the workspace host it was issued on. The browser sends a `__Host-` cookie only there and
+  no sibling host can set one, and the server checks the signed host against the request's.
+- EXPIRY: 24 hours from redemption, never extended. A session it mints lasts only as long as the
+  pass has left (`keyedSessionTtlMs`), so it does not stretch the day.
+- REVOCATION: rotate the secret (delete the file). Every pass it signed stops opening anything on
+  the next request; sessions already open in this process run on, as they always did.
+
+What it costs: before link passes nothing about a link session was written to disk, and a stolen
+session cookie died with the server. A stolen link pass opens the workspace for the rest of its
+day, across restarts, unless the secret is rotated. It is HttpOnly and Secure like the session
+cookie, so stealing one takes the same access to the browser.
+*/
+
+/** `__Host-`: the browser keeps it to the host that set it, and no sibling can set one. */
+export const LINK_PASS_COOKIE = '__Host-tosi_link_pass'
+export const LINK_PASS_TTL_MS = 24 * 60 * 60 * 1000
+
+export interface LinkPass {
+  kind: 'edit' | 'view'
+  host: string
+  /** ms since the epoch */
+  exp: number
+}
+
+/** A Host header as a pass records it: lowercase, no port, no trailing dot. */
+export function passHost(host: string | null | undefined): string {
+  return (host ?? '').toLowerCase().replace(/:\d+$/, '').replace(/\.$/, '')
+}
+
+export function signLinkPass(pass: LinkPass, secret: string): string {
+  // `t` keeps a link pass from ever being read as some other signed value.
+  return signPayload({ t: 'link', ...pass }, secret)
+}
+
+/** The Set-Cookie for a pass of `kind`, issued now on `host`. */
+export function linkPassCookie(
+  kind: LinkPass['kind'],
+  host: string,
+  secret: string,
+  now: number
+): string {
+  const value = signLinkPass(
+    { kind, host: passHost(host), exp: now + LINK_PASS_TTL_MS },
+    secret
+  )
+  return `${LINK_PASS_COOKIE}=${value}; Path=/; Max-Age=${Math.floor(
+    LINK_PASS_TTL_MS / 1000
+  )}; HttpOnly; Secure; SameSite=Lax`
+}
+
+/**
+ * The link pass on this request, if `secret` signed it for this `host` and it is unexpired;
+ * else null. A null secret (none created yet) means no pass can be good.
+ */
+export function readLinkPass(
+  cookieHeader: string | null | undefined,
+  secret: string | null | undefined,
+  host: string | null | undefined,
+  now: number
+): LinkPass | null {
+  const pass = readSigned(readCookie(cookieHeader, LINK_PASS_COOKIE), secret)
+  if (
+    !pass ||
+    pass.t !== 'link' ||
+    (pass.kind !== 'edit' && pass.kind !== 'view') ||
+    typeof pass.host !== 'string' ||
+    pass.host === '' ||
+    pass.host !== passHost(host) ||
+    typeof pass.exp !== 'number' ||
+    pass.exp <= now ||
+    // A pass claiming more than a day was not minted here.
+    pass.exp > now + LINK_PASS_TTL_MS
+  )
+    return null
+  return { kind: pass.kind, host: pass.host, exp: pass.exp }
 }
 
 /** End every session minted from a pass for a device that is now revoked. */
@@ -1269,8 +1382,9 @@ export function cookieMayWrite(
 GLOBAL KEYS: one visit to the preview host's root, and every workspace on it opens.
 
 The per-workspace link is tuned for handing ONE workspace to ONE device, and it costs a
-redemption per project per server run: sessions live in memory, so every restart walls every
-device again. With several projects tunnelled through one box that was the recurring pain.
+redemption per project (and, until LINK PASSES, per server run: sessions live in memory, so every
+restart walled every device again). With several projects tunnelled through one box that was the
+recurring pain.
 
 So the box can hold two machine-wide keys, the same pair on the box and on this machine:
 
@@ -1429,6 +1543,35 @@ interface KeyOpts {
   now: number
   /** See PassCheck: omitted or null, no edit pass is honoured. */
   revoked?: ReadonlySet<string> | null
+  /**
+   * The request's link pass, already checked with `readLinkPass` against this host (see LINK
+   * PASSES). It counts as a key of its kind.
+   */
+  linkPass?: LinkPass | null
+}
+
+/** Edit wins over view, view over nothing. */
+const widest = (
+  a: 'edit' | 'view' | null,
+  b: 'edit' | 'view' | null
+): 'edit' | 'view' | null => (a === 'edit' || b === 'edit' ? 'edit' : a ?? b)
+
+/**
+ * How long a session minted for `grant` lives: a day when a global key grants it, and no longer
+ * than the link pass has left when only the pass does, so a pass never stretches its own day.
+ */
+export function keyedSessionTtlMs(
+  grant: 'edit' | 'view',
+  header: string | null,
+  opts: KeyOpts
+): number {
+  const key = globalKeyAccess(header, opts.keys, {
+    now: opts.now,
+    revoked: opts.revoked ?? null,
+  })
+  if (key === 'edit' || key === grant || !opts.linkPass)
+    return GLOBAL_KEY_SESSION_TTL_MS
+  return Math.min(GLOBAL_KEY_SESSION_TTL_MS, opts.linkPass.exp - opts.now)
 }
 
 export function globalKeyExchange(
@@ -1444,10 +1587,13 @@ function keyAddsAccess(
   header: string | null,
   opts: KeyOpts
 ): 'edit' | 'view' | null {
-  const access = globalKeyAccess(header, opts.keys, {
-    now: opts.now,
-    revoked: opts.revoked ?? null,
-  })
+  const access = widest(
+    globalKeyAccess(header, opts.keys, {
+      now: opts.now,
+      revoked: opts.revoked ?? null,
+    }),
+    opts.linkPass?.kind ?? null
+  )
   if (!access) return null
   const held = readCookie(header, SESSION_COOKIE)
   if (validSessionCookie(opts.auth, held, opts.now)) {
