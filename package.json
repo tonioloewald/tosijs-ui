@@ -101,6 +101,7 @@
     "/bin/release-notes.ts",
     "/bin/resolve-site-config.ts",
     "/bin/tunnel.ts",
+    "/bin/tunnel-links.ts",
     "/deploy",
     "/dist",
     "/llms.txt",
