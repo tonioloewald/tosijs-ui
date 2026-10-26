@@ -36,6 +36,7 @@ Three deliberate properties:
 */
 
 import { existsSync, readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
 import {
   embedGatePage,
   parseArgv,
@@ -82,8 +83,14 @@ The template ships inside the package, so the default is resolved relative to TH
 rather than to the cwd — an adopter runs the bin from their own project, where `deploy/` is
 their business and not ours.
 */
+/*
+`fileURLToPath`, not `new URL(...).pathname`: the latter keeps percent-encoding, so a package
+installed under a path with a space (`/Users/me/My Projects/…`) resolved to `My%20Projects` and
+the shipped template was reported missing.
+*/
 const templatePath =
-  flag('template') ?? new URL('../deploy/Caddyfile', import.meta.url).pathname
+  flag('template') ??
+  fileURLToPath(new URL('../deploy/Caddyfile', import.meta.url))
 
 if (!existsSync(templatePath)) {
   console.error(
@@ -97,15 +104,26 @@ if (!existsSync(templatePath)) {
 /*
 `__GATE_PAGE__` is the page a browser without the preview cookie sees (deploy/gate-page.html,
 with its box for a link or a code). It is not a secret, so it is embedded here rather than on the
-box. A template of your own that names it gets the shipped page.
+box. A template of your own that names it gets the shipped page; one that does not never needs
+the file, so it is read only when named.
 */
-const template = embedGatePage(
-  readFileSync(templatePath, 'utf8'),
-  readFileSync(
-    new URL('../deploy/gate-page.html', import.meta.url).pathname,
-    'utf8'
+const rawTemplate = readFileSync(templatePath, 'utf8')
+let template = rawTemplate
+if (rawTemplate.includes('__GATE_PAGE__')) {
+  const gatePagePath = fileURLToPath(
+    new URL('../deploy/gate-page.html', import.meta.url)
   )
-)
+  if (!existsSync(gatePagePath)) {
+    console.error(
+      `\nNo gate page at ${gatePagePath}\n\n` +
+        `  ${templatePath} names __GATE_PAGE__, which is filled from that file.\n` +
+        `  The package ships it at node_modules/tosijs-ui/deploy/gate-page.html;\n` +
+        `  reinstall the package, or drop __GATE_PAGE__ from your template.\n`
+    )
+    process.exit(1)
+  }
+  template = embedGatePage(rawTemplate, readFileSync(gatePagePath, 'utf8'))
+}
 
 // The template is delivered inside a quoted heredoc, so it is copied verbatim with no shell
 // expansion. A template containing the delimiter would truncate the file silently — refuse
@@ -154,6 +172,39 @@ elif [ "$PREVIEW_EDIT_TOKEN" = "$PREVIEW_TOKEN" ]; then
   exit 1
 fi
 
+# Everything this script prints from a Caddyfile goes through \`redact <files>\`. Redacting only
+# the CURRENT keys was not enough: a dry-run diff's removed lines come from the live file, which
+# after a rotation holds the PREVIOUS keys (board #3502). So the values are harvested from every
+# position the template puts a key, in the files being shown: the cookie names in matchers and
+# Set-Cookie (\`tosi_preview=\`, \`tosi_edit=\`) and the link matchers (\`query t=\`). Each value,
+# and each current key, is then blanked wherever it appears, comments included (the installer's
+# substitution reaches the comments that name the placeholders), longest first so one key cannot
+# leave part of another showing. Finally anything still in a key position is blanked by shape.
+# The values travel in the environment, not argv, where \`ps\` would show them.
+KEY_POSITION='(tosi_(preview|edit)=|query[[:space:]]+t=)'
+KEY_VALUE='[^[:space:];"()|*]+'
+key_values() {
+  { grep -ohE "$KEY_POSITION$KEY_VALUE" "$@" || [ $? -eq 1 ]; } | sed -E "s/^$KEY_POSITION//"
+  printf '%s\\n' "$PREVIEW_TOKEN" "$PREVIEW_EDIT_TOKEN"
+}
+redact() {
+  REDACT_KEYS="$(key_values "$@" | sort -u | awk 'length { print length, $0 }' | sort -rn | cut -d' ' -f2-)" \\
+    awk 'BEGIN { n = split(ENVIRON["REDACT_KEYS"], key, "\\n") }
+      {
+        line = $0
+        for (i = 1; i <= n; i++) {
+          out = ""
+          while (key[i] != "" && (at = index(line, key[i])) > 0) {
+            out = out substr(line, 1, at - 1) "***REDACTED***"
+            line = substr(line, at + length(key[i]))
+          }
+          line = out line
+        }
+        print line
+      }' \\
+    | sed -E "s/$KEY_POSITION$KEY_VALUE/\\1***REDACTED***/g"
+}
+
 sed -e "s|__PREVIEW_TOKEN__|$PREVIEW_TOKEN|g" \\
     -e "s|__PREVIEW_EDIT_TOKEN__|$PREVIEW_EDIT_TOKEN|g" \\
     -e "s|{{ACME_EMAIL}}|$ACME_EMAIL|g" \\
@@ -162,7 +213,7 @@ sed -e "s|__PREVIEW_TOKEN__|$PREVIEW_TOKEN|g" \\
 
 if grep -qE '\\{\\{|__PREVIEW_(EDIT_)?TOKEN__' /etc/caddy/Caddyfile.new; then
   echo "Unsubstituted placeholders remain — refusing to install:" >&2
-  grep -nE '\\{\\{|__PREVIEW_(EDIT_)?TOKEN__' /etc/caddy/Caddyfile.new >&2
+  grep -nE '\\{\\{|__PREVIEW_(EDIT_)?TOKEN__' /etc/caddy/Caddyfile.new | redact /etc/caddy/Caddyfile.new >&2
   rm -f /etc/caddy/Caddyfile.new
   exit 1
 fi
@@ -195,6 +246,14 @@ if [ "${go ? '1' : '0'}" = "1" ]; then
   else
     chmod 600 /etc/caddy/Caddyfile.new
   fi
+  # The access log records short-link codes as paths, unredacted (a code is spent or expired within
+  # five minutes). Caddy 2.6 has no log \`mode\`, so take group and other access off the preview logs
+  # that exist; Caddy keeps owning them. \`-type f\` skips symlinks, so a link planted in a directory
+  # Caddy can write cannot point this chmod at another file. Done before the swap, so a failure
+  # here leaves the running config untouched, like every other refusal.
+  if [ -d /var/log/caddy ]; then
+    find /var/log/caddy -maxdepth 1 -type f -name 'preview*.log*' -exec chmod go-rwx {} +
+  fi
   mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
   # A stopped Caddy cannot reload. Start it instead, or a box left down by the bug above could
   # never be repaired by re-running this.
@@ -222,11 +281,11 @@ if [ "${go ? '1' : '0'}" = "1" ]; then
   echo "Installed /etc/caddy/Caddyfile (caddy: $verb)."
   echo "Previous config saved as /etc/caddy/Caddyfile.bak"
 else
-  echo "--- would change /etc/caddy/Caddyfile (token redacted) ---"
+  echo "--- would change /etc/caddy/Caddyfile (keys redacted) ---"
   if [ -f /etc/caddy/Caddyfile ]; then
-    diff -u /etc/caddy/Caddyfile /etc/caddy/Caddyfile.new \\
-      | sed -e "s|$PREVIEW_TOKEN|***REDACTED***|g" \\
-            -e "s|$PREVIEW_EDIT_TOKEN|***REDACTED***|g" || true
+    # diff exits 1 when the files differ, which is the expected case; 2 is a real failure.
+    { diff -u /etc/caddy/Caddyfile /etc/caddy/Caddyfile.new || [ $? -eq 1 ]; } \\
+      | redact /etc/caddy/Caddyfile /etc/caddy/Caddyfile.new
   else
     echo "(no existing /etc/caddy/Caddyfile — this would create it)"
   fi

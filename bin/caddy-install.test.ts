@@ -8,6 +8,7 @@ import {
   readFileSync,
   chmodSync,
   statSync,
+  symlinkSync,
 } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -31,13 +32,17 @@ const REPO = new URL('..', import.meta.url).pathname
 beforeEach(() => {
   sandbox = mkdtempSync(join(tmpdir(), 'caddy-install-'))
   mkdirSync(join(sandbox, 'etc-caddy'), { recursive: true })
+  mkdirSync(join(sandbox, 'var-log-caddy'), { recursive: true })
   bin = join(sandbox, 'bin')
   mkdirSync(bin)
 
   // `ssh` that runs the piped script locally against the sandbox instead of a real box.
   writeFileSync(
     join(bin, 'ssh'),
-    `#!/bin/sh\nsed "s|/etc/caddy|${join(sandbox, 'etc-caddy')}|g" | bash\n`
+    `#!/bin/sh\nsed -e "s|/etc/caddy|${join(
+      sandbox,
+      'etc-caddy'
+    )}|g" -e "s|/var/log/caddy|${join(sandbox, 'var-log-caddy')}|g" | bash\n`
   )
   // `caddy fmt --overwrite F` / `caddy validate --config F` — accept anything.
   writeFileSync(join(bin, 'caddy'), '#!/bin/sh\nexit 0\n')
@@ -99,11 +104,15 @@ exceeds THIS is a real defect.
 */
 const SPAWN_TIMEOUT = 20_000
 
-async function run(args: string[] = [], templatePath?: string) {
+async function run(
+  args: string[] = [],
+  templatePath?: string,
+  binPath = join(REPO, 'bin/caddy-install.ts')
+) {
   const proc = Bun.spawn(
     [
       'bun',
-      join(REPO, 'bin/caddy-install.ts'),
+      binPath,
       '--host=fake@box',
       ...(templatePath ? [`--template=${templatePath}`] : []),
       ...args,
@@ -540,9 +549,12 @@ test('a key link redirects only to a host under the preview domain', () => {
   expect(shipped).not.toContain('redir * / 302')
 })
 
-test('the access logs never record a link credential', () => {
+test('the access logs never record a credential from a query string', () => {
   // `t` carries a global key or a single-use code, `token` a link code. Caddy keeps cookies
   // out of its log already; the box's log held keys from every `?t=` visit until 1.16.28.
+  // Short-link codes (`/<CODE>`, `/_codes/<CODE>`) ARE logged, as paths, by design: they are
+  // spent or expired within five minutes, and the installer restricts who reads the log (see
+  // "the access log" below).
   const shipped = readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
   const logs = shipped.match(/\n\tlog \{[\s\S]*?\n\t\}/g) ?? []
   expect(logs.length).toBe(2)
@@ -580,4 +592,226 @@ test("Caddy's view cookie is the one a workspace's single-use link sets", async 
   expect(
     globalKeyCookie({ key: 'view', domain: 'dev.example.com' }, keys)
   ).toBe(fromCaddy('tosi_preview', '__PREVIEW_TOKEN__'))
+})
+
+describe('the dry run redacts keys it does not know (board #3502)', () => {
+  /*
+  The diff's removed lines come from the LIVE file. After a rotation that holds the PREVIOUS
+  keys, which the redaction keyed on preview.env's current values printed in clear. The window
+  between editing preview.env and `--go` is exactly when an operator runs the dry run, and if
+  the rotation is then abandoned the "old" key is still the live one.
+  */
+  const OLD_VIEW = 'old-view-key-A'
+  const OLD_EDIT = 'old-edit-key-A-long-enough-1234'
+  const NEW_VIEW = 'new-view-key-B'
+  const NEW_EDIT = 'new-edit-key-B-long-enough-5678'
+
+  /** The shipped template, substituted as an older install would have left it. */
+  const liveWith = (view: string, edit: string) =>
+    readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
+      .replaceAll('__PREVIEW_TOKEN__', view)
+      .replaceAll('__PREVIEW_EDIT_TOKEN__', edit)
+      .replaceAll('{{ACME_EMAIL}}', 'me@example.com')
+      .replaceAll('{{PREVIEW_DOMAIN}}', 'dev.example.com')
+      .replaceAll('__GATE_PAGE__', 'gate')
+      // Key positions earlier templates used, which a box may still be serving.
+      .concat(
+        `\n@editlink query t=${edit}\n`,
+        `@unauthed not header_regexp Cookie "tosi_preview=${view}"\n`,
+        `header Set-Cookie "tosi_edit=${edit}; Domain=.dev.example.com; Path=/"\n`
+      )
+
+  test(
+    'REGRESSION: neither the previous keys nor the current ones are printed',
+    async () => {
+      writeEnv(
+        `PREVIEW_TOKEN=${NEW_VIEW}\nPREVIEW_EDIT_TOKEN=${NEW_EDIT}\nACME_EMAIL=me@example.com\nPREVIEW_DOMAIN=dev.example.com\n`
+      )
+      writeFileSync(etc('Caddyfile'), liveWith(OLD_VIEW, OLD_EDIT))
+      const { code, out } = await run()
+      expect(code).toBe(0)
+      // There IS a diff, and it touches the key lines on both sides.
+      expect(out).toMatch(/^-.*tosi_preview=\*\*\*REDACTED\*\*\*/m)
+      expect(out).toMatch(/^\+.*tosi_preview=\*\*\*REDACTED\*\*\*/m)
+      expect(out).toMatch(/^-.*query t=\*\*\*REDACTED\*\*\*/m)
+      for (const key of [OLD_VIEW, OLD_EDIT, NEW_VIEW, NEW_EDIT])
+        expect(out, key).not.toContain(key)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a key-shaped value is redacted, and the wildcard matcher is left readable',
+    async () => {
+      writeEnv(FULL_ENV)
+      writeFileSync(etc('Caddyfile'), 'old config\n')
+      const tpl = join(sandbox, 'Shapes')
+      writeFileSync(
+        tpl,
+        [
+          '@q query t=some.other-key',
+          '@any query t=*',
+          'not header_regexp Cookie "(^|; *)tosi_edit=x.y+z(;|$)"',
+          'header Set-Cookie "tosi_preview=abc; Path=/"',
+          '',
+        ].join('\n')
+      )
+      const { code, out } = await run([], tpl)
+      expect(code).toBe(0)
+      expect(out).toContain('+@q query t=***REDACTED***')
+      expect(out).toContain('+@any query t=*')
+      expect(out).toContain('tosi_edit=***REDACTED***(;|$)')
+      expect(out).toContain('tosi_preview=***REDACTED***; Path=/')
+      for (const key of ['some.other-key', 'x.y+z', 'abc;'])
+        expect(out, key).not.toContain(key)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'the leftover-placeholder refusal does not print a key either',
+    async () => {
+      writeEnv(FULL_ENV)
+      const tpl = join(sandbox, 'Leftover')
+      writeFileSync(tpl, 'gate __PREVIEW_TOKEN__ {{UNSUBSTITUTED}}\n')
+      const { code, out } = await run(['--go'], tpl)
+      expect(code).not.toBe(0)
+      expect(out).toContain('UNSUBSTITUTED')
+      expect(out).not.toContain('s3cret-invite')
+    },
+    SPAWN_TIMEOUT
+  )
+})
+
+describe('the installed package, wherever it lives', () => {
+  /*
+  A copy of the bin in a directory with a space in its name, as an adopter's checkout may be.
+  `new URL(...).pathname` kept `%20`, so the shipped template was "missing" there.
+  */
+  function packageAt(opts: { gatePage: boolean }) {
+    const pkg = join(sandbox, 'My Projects', 'node_modules', 'tosijs-ui')
+    mkdirSync(join(pkg, 'bin'), { recursive: true })
+    mkdirSync(join(pkg, 'deploy'))
+    for (const f of ['caddy-install.ts', 'resolve-site-config.ts'])
+      writeFileSync(
+        join(pkg, 'bin', f),
+        readFileSync(join(REPO, 'bin', f), 'utf8')
+      )
+    symlinkSync(join(REPO, 'dist'), join(pkg, 'dist'))
+    writeFileSync(
+      join(pkg, 'deploy/Caddyfile'),
+      'x.{{PREVIEW_DOMAIN}} {\n  respond "__GATE_PAGE__" 401\n}\n'
+    )
+    if (opts.gatePage)
+      writeFileSync(
+        join(pkg, 'deploy/gate-page.html'),
+        readFileSync(join(REPO, 'deploy/gate-page.html'), 'utf8')
+      )
+    return join(pkg, 'bin/caddy-install.ts')
+  }
+
+  test(
+    'REGRESSION: finds the shipped template and gate page under a path with a space',
+    async () => {
+      writeEnv(FULL_ENV)
+      const { code, out } = await run(
+        ['--go'],
+        undefined,
+        packageAt({ gatePage: true })
+      )
+      expect(out).not.toContain('No Caddyfile template')
+      expect(code).toBe(0)
+      expect(readFileSync(etc('Caddyfile'), 'utf8')).toContain(
+        "const DOMAIN = 'dev.example.com'"
+      )
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a template that names __GATE_PAGE__ with no gate page is refused, plainly',
+    async () => {
+      writeEnv(FULL_ENV)
+      const { code, out } = await run(
+        [],
+        undefined,
+        packageAt({ gatePage: false })
+      )
+      expect(code).toBe(1)
+      expect(out).toContain('No gate page at')
+      expect(out).toContain('names __GATE_PAGE__')
+      // Refused before anything reached the box.
+      expect(existsSync(etc('Caddyfile.tpl'))).toBe(false)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a template of your own that does not name it never needs the gate page',
+    async () => {
+      writeEnv(FULL_ENV)
+      const tpl = join(sandbox, 'Ok')
+      writeFileSync(tpl, OK_TEMPLATE)
+      const { code } = await run(['--go'], tpl, packageAt({ gatePage: false }))
+      expect(code).toBe(0)
+      expect(readFileSync(etc('Caddyfile'), 'utf8')).toContain('respond "hi"')
+    },
+    SPAWN_TIMEOUT
+  )
+})
+
+describe('the access log', () => {
+  /*
+  It records short-link codes as paths, unredacted. Caddy 2.6 (the box) has no log `mode`, so
+  the installer takes group and other access off the preview logs that exist.
+  */
+  const log = (name: string) => join(sandbox, 'var-log-caddy', name)
+  const ROLLED = 'preview-2026-10-25T10-00-00.000.log'
+  const ROLLED_GZ = 'preview-2026-10-24T10-00-00.000.log.gz'
+
+  test(
+    '--go leaves the preview logs readable by their owner (Caddy) and root only',
+    async () => {
+      for (const name of ['preview.log', ROLLED, ROLLED_GZ, 'other.log']) {
+        writeFileSync(log(name), 'x\n')
+        chmodSync(log(name), 0o644)
+      }
+      const { code } = await installOver()
+      expect(code).toBe(0)
+      for (const name of ['preview.log', ROLLED, ROLLED_GZ])
+        expect(statSync(log(name)).mode & 0o777, name).toBe(0o600)
+      // Not ours to change.
+      expect(statSync(log('other.log')).mode & 0o777).toBe(0o644)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a symlink among the logs is not followed',
+    async () => {
+      const target = join(sandbox, 'elsewhere')
+      writeFileSync(target, 'x\n')
+      chmodSync(target, 0o755)
+      symlinkSync(target, log('preview.log'))
+      const { code } = await installOver()
+      expect(code).toBe(0)
+      expect(statSync(target).mode & 0o777).toBe(0o755)
+    },
+    SPAWN_TIMEOUT
+  )
+
+  test(
+    'a dry run changes no log',
+    async () => {
+      writeFileSync(log('preview.log'), 'x\n')
+      chmodSync(log('preview.log'), 0o644)
+      writeEnv(FULL_ENV)
+      const tpl = join(sandbox, 'Ok')
+      writeFileSync(tpl, OK_TEMPLATE)
+      const { code } = await run([], tpl)
+      expect(code).toBe(0)
+      expect(statSync(log('preview.log')).mode & 0o777).toBe(0o644)
+    },
+    SPAWN_TIMEOUT
+  )
 })

@@ -372,6 +372,20 @@ try {
     ].every((p) => templateText.includes(p)),
     'a placeholder was baked out — the install-time refusal guard would go quiet'
   )
+  /*
+  The shipped template names `__GATE_PAGE__`, which the installer fills from
+  deploy/gate-page.html beside it. Without the page, `tosijs-caddy-install` refuses to run.
+  */
+  const gatePage = path.join(path.dirname(caddyTemplate), 'gate-page.html')
+  const gatePageText = await Bun.file(gatePage)
+    .text()
+    .catch(() => '')
+  check(
+    'the gate page ships beside the Caddy template',
+    templateText.includes('__GATE_PAGE__') &&
+      /^<!doctype html>/i.test(gatePageText),
+    `missing ${gatePage} — check "files" includes /deploy`
+  )
 
   // ── the tunnel bin agrees with the server about ports ─────────────────────
   const tunnelShim = path.join(proj, 'node_modules', '.bin', 'tosijs-tunnel')
