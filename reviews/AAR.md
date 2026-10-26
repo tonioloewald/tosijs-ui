@@ -896,3 +896,18 @@ gap, recorded rather than hidden.
   repeat, recorded in the review.
 - **Publish:** approval came after the 60-minute window, so the stage run skipped verify and a
   `verify_only` run was needed. Published `dist/` identical to the tagged tree.
+
+## 1.16.36 (2026-10-26)
+
+- **What it was:** the site `aliases` option (#3513), so virta can serve its README at `/readme/`
+  as well as the root without a host rewrite that 404'd every asset one level down.
+- **The review caught:** a case-variant alias (`Guide`) replacing a page's own folder on a
+  case-insensitive filesystem, so a crawler at `/guide/` got another page; relative body refs
+  (a README's `img/logo.png`) 404ing under the alias; dotted and static-folder collisions. All
+  fixed with tests before tagging; the e2e was checked to fail with the client half removed.
+- **The guard earned its keep immediately:** while making the showcase screenshot, a rerun into
+  an uncleared scratch folder failed with the "site already has /about/" error rather than
+  writing into it.
+- **Publish:** approval again came after the 60-minute window; the `verify_only` run passed, and
+  published `dist/` is identical to the tagged tree. Second release in a row needing it, so the
+  window is shorter than the maintainer's approval loop, not an accident.
