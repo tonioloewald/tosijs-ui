@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.16.34
+
+Spinning icons keep spinning while the page is busy, which is the only time a loader is on
+screen. Nothing to change unless your CSS or script reaches inside a spin icon: see the last
+bullet.
+
+### Icons
+
+- **`spinN<Icon>` no longer freezes on a busy page** (board #3508). The rotation was started
+  with `el.animate()` on the `<svg>`, and WebKit animates an SVG transform on the main thread,
+  so on Safari and every iOS browser a loader stood still exactly while the page worked. It is
+  now a CSS animation on an HTML span around a static svg, which the browser can run off the
+  main thread.
+- **A spin icon turns as a clone and inside a shadow root.** The animation is in the markup
+  rather than started by script, so `cloneNode` and list templates keep it. Each spin icon
+  carries its own `@keyframes` in a one-line `<style>`, because a document-level one does not
+  reach a shadow root in Chromium or Firefox.
+- **Spin icons hold still under `prefers-reduced-motion: reduce`**, as the live-example spinner
+  already did. Shipped in a patch on the maintainer's call: it is an accessibility default, and
+  turning it back on is one CSS rule.
+- **The DOM inside a spin icon changed.** It was `span.tosi-icon-composite > svg`; it is now
+  `span.tosi-icon-composite > [style] + span.tosi-icon-spin > svg`, with one more span, carrying
+  the suffix transform, around the spinning one when the name has `s`/`x`/`y`/`r`/`f` suffixes
+  (`spin90Loader40s_30x`). That keeps an offset icon spinning about its own centre, as before.
+  Speed and direction are the `--tosi-icon-spin-duration` and `--tosi-icon-spin-direction`
+  custom properties on the spinning span.
+
 ## 1.16.33
 
 Typing a link on a headset gets much shorter, and a mistyped code no longer sends you off to mint
