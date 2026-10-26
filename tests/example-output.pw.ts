@@ -60,15 +60,33 @@ test('an example that renders keeps its preview; logs stay in the Console tab', 
 test('output steps aside the moment the example renders after all', async ({
   page,
 }) => {
+  /*
+  The example renders when the TEST says so, not after a timer, and the transition is
+  RECORDED rather than polled for. A 600ms timer made this load-sensitive by construction:
+  under load the output's visible window could close before the assertion looked for it, and
+  a late re-run of the example (render() re-runs it) could show the output again after it had
+  correctly stepped aside (board #3484).
+  */
   const ex = await example(
     page,
     'late',
-    `console.log('loading'); setTimeout(() => preview.append(Object.assign(document.createElement('b'), { textContent: 'arrived' })), 600)`
+    // the CURRENT preview: a re-run replaces the element this run was given
+    `console.log('loading'); window.__renderLate = () => document.querySelector('#late .preview').append(Object.assign(document.createElement('b'), { textContent: 'arrived' }))`
   )
   const output = ex.locator('[part="output"]')
   await expect(output).toBeVisible()
-  await expect(ex.locator('.preview b')).toHaveText('arrived')
-  await expect(output).toBeHidden()
+  await expect(output).toContainText('loading')
+  const hiddenAfterRender = await output.evaluate(async (out: HTMLElement) => {
+    const seen: boolean[] = []
+    const watch = new MutationObserver(() => seen.push(out.hidden))
+    watch.observe(out, { attributes: true, attributeFilter: ['hidden'] })
+    ;(window as any).__renderLate()
+    // MutationObserver callbacks are microtasks: one macrotask later they have all run.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    watch.disconnect()
+    return seen[0] ?? out.hidden
+  })
+  expect(hiddenAfterRender).toBe(true)
 })
 
 test('a line logged after the run settles still appears', async ({ page }) => {
