@@ -1016,3 +1016,46 @@ test('the test widget lives in the header, and floats only on a page without one
   await page.click('.nh-demo a')
   await expect.poll(async () => (await widgetPlace(page)).inHeader).toBe(true)
 })
+
+/*
+A pass used to fade the header widget to nothing, leaving an empty rectangle in the bar (the
+widget keeps its box). It settles into a muted, monochrome badge that is still there and still
+a button. Floating over a page with no header, it still fades: there is no gap to leave.
+*/
+test('a pass mutes the header test widget instead of blanking it', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  const settled = async () =>
+    page.evaluate(() => {
+      const widget = document.querySelector('.test-widget') as HTMLElement
+      document.body.classList.add('tests-enabled')
+      widget.hidden = false
+      widget.classList.remove('-running', '-failed')
+      widget.classList.add('-passed')
+      for (const a of widget.getAnimations()) a.finish()
+      const style = getComputedStyle(widget)
+      const r = widget.getBoundingClientRect()
+      const hit = document.elementFromPoint(
+        r.x + r.width / 2,
+        r.y + r.height / 2
+      )
+      return {
+        opacity: Number(style.opacity),
+        filter: style.filter,
+        clickable: !!hit && widget.contains(hit),
+      }
+    })
+
+  await page.goto('/documentation-system/')
+  await page.waitForFunction(() => !!document.querySelector('.test-widget'))
+  const header = await settled()
+  expect(header.opacity).toBeGreaterThan(0.4)
+  expect(header.opacity).toBeLessThan(1)
+  expect(header.filter).toContain('grayscale(1)')
+  expect(header.clickable).toBe(true)
+
+  await page.goto('/no-header-demo/')
+  await page.waitForFunction(() => !!document.querySelector('.test-widget'))
+  expect((await settled()).opacity).toBe(0)
+})

@@ -186,6 +186,15 @@ const testIndicatorStyleSpec = {
         '70%': { opacity: '1', transform: 'scale(1.1)' },
         '100%': { opacity: '0', transform: 'scale(0.9)', pointerEvents: 'none' },
     },
+    /*
+    A pass in the header settles into a muted, monochrome badge rather than fading out. Faded,
+    it left an empty rectangle in the bar (the widget keeps its box), and the result was gone
+    for anyone who looked a moment late. Muted, it reads as "nothing to see" and stays a button.
+    */
+    '@keyframes test-settle': {
+        '0%, 40%': { filter: 'none', opacity: '1' },
+        '100%': { filter: 'grayscale(1)', opacity: '0.55' },
+    },
     // Hide when tests disabled
     'body:not(.tests-enabled) .doc-link::after, body:not(.tests-enabled) .test-widget': {
         display: 'none !important',
@@ -240,7 +249,19 @@ const testIndicatorStyleSpec = {
     '.test-widget.-passed': {
         _testBg: testColor.pass,
         _testFg: testTextColor.pass,
+        animation: 'test-settle 3s ease-out forwards',
+    },
+    // Floating over the page (no header), it still gets out of the way: there is no gap to leave.
+    '.test-widget.-floating.-passed': {
         animation: 'test-fade 3s ease-out forwards',
+    },
+    '@media (prefers-reduced-motion: reduce)': {
+        '.test-widget.-passed': {
+            animation: 'none',
+            filter: 'grayscale(1)',
+            opacity: '0.55',
+        },
+        '.test-widget.-floating.-passed': { opacity: '0', pointerEvents: 'none' },
     },
     '.test-widget.-failed': {
         _testBg: testColor.fail,
@@ -1762,7 +1783,7 @@ export function createDocBrowser(options) {
             else {
                 testWidget.classList.add('-passed');
                 testWidget.classList.remove('-failed');
-                testWidget.hidden = false; // Show briefly before fade
+                testWidget.hidden = false; // settles into a muted badge (see `.test-widget.-passed`)
             }
         }
         updateTestWidgetDisplay();
