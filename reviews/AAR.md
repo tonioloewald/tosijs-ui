@@ -860,3 +860,22 @@ gap, recorded rather than hidden.
   The F1 wording reaches the box only when that runs.
 - **Publish:** approval came inside the 60-minute window, so the first run went green. The
   published `dist/` is identical to the tagged tree.
+
+## 1.16.34 (2026-10-26)
+
+- **Where it came from:** virta's board splash froze on the maintainer's iPhone (#3507 → #3508).
+  `spinN` icons were rotated with `el.animate()` on the `<svg>`; WebKit runs an SVG transform
+  animation on the main thread, so a loader stood still exactly while the page worked.
+- **Measured before building:** a document-level `@keyframes` does not reach a shadow root in
+  Chromium or Firefox (WebKit allows it), which decided where the styles live.
+- **The review caught:** a major the first cut introduced. The new wrapper stretched in a tall
+  flex container and the icon orbited. It also caught the per-icon `<style>` leaking CSS into
+  `textContent`. Both were fixed before the tag; the wobble test was checked to fail with the
+  fix reverted. The first version of that test used a `<button>`, which centres its content
+  and so never stretched: it passed against the bug.
+- **A flaky check, caught by repeating it:** sampling the rotation angle off the wall clock
+  failed 3 of 4 runs in WebKit while the animation itself was correct (progress 0.242 at
+  242 ms). The test now reads a paused quarter turn.
+- **Publish:** approval inside the window; first run green. Published `dist/` identical to the
+  tagged tree. The box's Caddyfile reinstall for 1.16.33's gate page was run by the maintainer
+  (the classifier refused it twice); verified live afterwards.
