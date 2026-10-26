@@ -25,7 +25,7 @@ test('a spin icon turns, in the light DOM and in a shadow root', async ({
     root.append(shadow)
     const angle = (icon: Element) => {
       const m = getComputedStyle(
-        icon.querySelector('.tosi-icon-spin')!
+        icon.querySelector('tosi-icon-spin')!
       ).transform
       const [a, b] = m
         .slice(m.indexOf('(') + 1)
@@ -36,7 +36,7 @@ test('a spin icon turns, in the light DOM and in a shadow root', async ({
         : Math.round((Math.atan2(b, a) * 180) / Math.PI)
     }
     const read = (icon: Element) => {
-      const spin = icon.querySelector('.tosi-icon-spin')!
+      const spin = icon.querySelector('tosi-icon-spin')!
       return {
         name: getComputedStyle(spin).animationName,
         running: spin.getAnimations().length,
@@ -46,16 +46,29 @@ test('a spin icon turns, in the light DOM and in a shadow root', async ({
       }
     }
     const before = [read(light), read(shadow)]
+    const started = [light, shadow].map(
+      (icon) => icon.querySelector('tosi-icon-spin')!.getAnimations()[0]
+    )
+    const t0 = started.map((a: Animation) => Number(a.currentTime))
     await new Promise((r) => setTimeout(r, 250))
-    return { before, after: [angle(light), angle(shadow)] }
+    // Advancing, then read at a fixed quarter turn: sampling the angle off the wall clock
+    // flaked in WebKit on a loaded machine.
+    const advanced = started.map(
+      (a: Animation, i: number) => Number(a.currentTime) > t0[i]
+    )
+    for (const a of started) {
+      a.pause()
+      a.currentTime = 250
+    }
+    return { before, advanced, quarter: [angle(light), angle(shadow)] }
   })
   for (const [i, state] of result.before.entries()) {
     expect(state.name).toBe('tosi-icon-spin')
     expect(state.running).toBe(1)
     expect(state.svgAnimations).toBe(0)
     expect(state.offset).toContain('translateX(-30%)')
-    expect(state.angle).not.toBeNull()
-    expect(result.after[i]).not.toBe(state.angle)
+    expect(result.advanced[i]).toBe(true)
+    expect(result.quarter[i]).toBe(90)
   }
 })
 
@@ -68,11 +81,46 @@ test('under prefers-reduced-motion a spin icon holds still', async ({
   const state = await page.evaluate(() => {
     const icon = (window as any).xinjsui.icons.spin360Loader()
     document.body.append(icon)
-    const spin = icon.querySelector('.tosi-icon-spin')!
+    const spin = icon.querySelector('tosi-icon-spin')!
     return {
       name: getComputedStyle(spin).animationName,
       running: spin.getAnimations().length,
     }
   })
   expect(state).toEqual({ name: 'none', running: 0 })
+})
+
+// The correctness review of 1.16.34: in a flex container taller than the icon, the spinning
+// box stretched while the svg did not, so the svg orbited the box's centre.
+test('a spin icon in a tall flex row turns in place, and so does a clone', async ({
+  page,
+}) => {
+  await page.goto('/component/')
+  await page.waitForFunction(() => !!(window as any).xinjsui?.icons)
+  const centres = await page.evaluate(async () => {
+    const { icons } = (window as any).xinjsui
+    // a div, not a button: a button centres its content, so nothing stretches the icon
+    const button = document.createElement('div')
+    button.style.cssText = 'display:flex;height:48px'
+    button.append(icons.spin360Loader(), 'Loading')
+    const clone = button.cloneNode(true) as HTMLElement
+    document.body.append(button, clone)
+    const at = (el: HTMLElement, turn: number) => {
+      for (const a of el.querySelector('tosi-icon-spin')!.getAnimations()) {
+        a.pause()
+        a.currentTime = turn * 1000
+      }
+      const r = el.querySelector('svg')!.getBoundingClientRect()
+      return [Math.round(r.x + r.width / 2), Math.round(r.y + r.height / 2)]
+    }
+    return {
+      text: button.textContent,
+      button: [0, 0.25, 0.5].map((t) => at(button, t)),
+      clone: [0, 0.25, 0.5].map((t) => at(clone, t)),
+    }
+  })
+  expect(centres.text).toBe('Loading')
+  for (const path of [centres.button, centres.clone]) {
+    for (const point of path) expect(point).toEqual(path[0])
+  }
 })

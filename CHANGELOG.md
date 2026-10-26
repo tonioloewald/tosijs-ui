@@ -11,21 +11,25 @@ bullet.
 - **`spinN<Icon>` no longer freezes on a busy page** (board #3508). The rotation was started
   with `el.animate()` on the `<svg>`, and WebKit animates an SVG transform on the main thread,
   so on Safari and every iOS browser a loader stood still exactly while the page worked. It is
-  now a CSS animation on an HTML span around a static svg, which the browser can run off the
+  now a CSS animation on an HTML element around a static svg, which the browser can run off the
   main thread.
 - **A spin icon turns as a clone and inside a shadow root.** The animation is in the markup
-  rather than started by script, so `cloneNode` and list templates keep it. Each spin icon
-  carries its own `@keyframes` in a one-line `<style>`, because a document-level one does not
-  reach a shadow root in Chromium or Firefox.
+  rather than started by script, so `cloneNode` and list templates keep it. The spinning
+  element is a `<tosi-icon-spin>`, which adds one shared stylesheet to the document or shadow
+  root it lands in, because a document-level `@keyframes` does not reach a shadow root in
+  Chromium or Firefox. Nothing is added inside the icon, so a button holding a spinner still
+  has its caption as its `textContent`.
 - **Spin icons hold still under `prefers-reduced-motion: reduce`**, as the live-example spinner
-  already did. Shipped in a patch on the maintainer's call: it is an accessibility default, and
-  turning it back on is one CSS rule.
+  already did. Shipped in a patch on the maintainer's call: it is an accessibility default. The
+  rules are wrapped in `:where()`, so a rule of yours that names `tosi-icon-spin` overrides
+  them; for an icon inside a component's shadow root, that rule has to be in the shadow root.
 - **The DOM inside a spin icon changed.** It was `span.tosi-icon-composite > svg`; it is now
-  `span.tosi-icon-composite > [style] + span.tosi-icon-spin > svg`, with one more span, carrying
-  the suffix transform, around the spinning one when the name has `s`/`x`/`y`/`r`/`f` suffixes
-  (`spin90Loader40s_30x`). That keeps an offset icon spinning about its own centre, as before.
-  Speed and direction are the `--tosi-icon-spin-duration` and `--tosi-icon-spin-direction`
-  custom properties on the spinning span.
+  `span.tosi-icon-composite > tosi-icon-spin > svg`, with a span carrying the suffix transform
+  around `<tosi-icon-spin>` when the name has `s`/`x`/`y`/`r`/`f` suffixes
+  (`spin90Loader40s_30x`). That keeps an offset icon spinning about its own centre, as before,
+  and both hold the svg's size in a taller flex container so the icon does not orbit. Speed
+  and direction are the `--tosi-icon-spin-duration` and `--tosi-icon-spin-direction` custom
+  properties on `<tosi-icon-spin>`.
 
 ## 1.16.33
 

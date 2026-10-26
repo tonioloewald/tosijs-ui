@@ -736,22 +736,63 @@ loader froze exactly while the page was busy: the one time a loader is on screen
 started with `el.animate()`, which lives in script rather than in the markup, so a clone of
 the icon (a list template, `cloneNode`) stood still.
 
-The keyframes travel inside the icon as a `<style>`: a document-level `@keyframes` does not
-reach an icon in a shadow root in Chromium or Firefox (measured), and icons are drawn inside
-shadow-DOM components.
+The spinning element is a `<tosi-icon-spin>`, which on connecting adds one shared stylesheet
+to whatever root it lands in. A document-level `@keyframes` does not reach an icon in a shadow
+root in Chromium or Firefox (measured), and icons are drawn inside shadow-DOM components. A
+`<style>` carried inside each icon did reach, but its CSS became part of the `textContent` of
+every button holding a spinner, which is what `toHaveText` and caption matching read.
 
 The suffix transform (`spin90Loader40s_30x`) moves to a span OUTSIDE the rotation, so the
 icon still spins about its own centre, as it did when the rotation was appended to that
-transform, instead of orbiting the offset.
+transform, instead of orbiting the offset. Both are `align-self: flex-start` so they stay the
+svg's size: stretched by a taller flex container, the rotation's centre left the svg's and
+the icon orbited.
 
-Speed and direction are custom properties on the span, so the animation itself is a rule here
-and `prefers-reduced-motion` can stop it, as it stops the live-example spinner.
+Speed and direction are custom properties on the element, so the animation is a rule and
+`prefers-reduced-motion` can stop it, as it stops the live-example spinner. The rules are in
+`:where()`, so any rule of an adopter's that names `tosi-icon-spin` overrides them.
 */
 const SPIN_CSS =
   '@keyframes tosi-icon-spin{to{transform:rotate(360deg)}}' +
-  '.tosi-icon-spin{animation:tosi-icon-spin var(--tosi-icon-spin-duration) linear ' +
+  ':where(tosi-icon-spin){animation:tosi-icon-spin var(--tosi-icon-spin-duration) linear ' +
   'infinite var(--tosi-icon-spin-direction)}' +
-  '@media (prefers-reduced-motion:reduce){.tosi-icon-spin{animation:none}}'
+  '@media (prefers-reduced-motion:reduce){:where(tosi-icon-spin){animation:none}}'
+
+const spinStyled = new WeakSet<Node>()
+let spinSheet: CSSStyleSheet | undefined
+
+function addSpinStyles(root: Node): void {
+  if (spinStyled.has(root)) return
+  // A document or a shadow root; a detached subtree's root is neither and gets styled on
+  // connecting.
+  const isDocument = root.nodeType === Node.DOCUMENT_NODE
+  if (!isDocument && !(root as ShadowRoot).host) return
+  const target = root as Document | ShadowRoot
+  spinStyled.add(root)
+  try {
+    if (!spinSheet) {
+      spinSheet = new CSSStyleSheet()
+      spinSheet.replaceSync(SPIN_CSS)
+    }
+    target.adoptedStyleSheets = [...target.adoptedStyleSheets, spinSheet]
+  } catch {
+    // No constructable stylesheets (Safari before 16.4): a <style> in the root, not the icon.
+    const style = document.createElement('style')
+    style.textContent = SPIN_CSS
+    ;(isDocument ? (target as Document).head : target).append(style)
+  }
+}
+
+class TosiIconSpin extends HTMLElement {
+  connectedCallback(): void {
+    addSpinStyles(this.getRootNode())
+  }
+}
+if (globalThis.customElements && !customElements.get('tosi-icon-spin')) {
+  customElements.define('tosi-icon-spin', TosiIconSpin)
+}
+
+const spinBox = { display: 'inline-flex', alignSelf: 'flex-start' }
 
 spinRule.apply = (baseName, match, parts) => {
   const dps = (match as RegExpMatchArray)[1].replace('_', '-')
@@ -762,21 +803,18 @@ spinRule.apply = (baseName, match, parts) => {
   const { transform, transformOrigin } = icon.style
   icon.style.transform = ''
   icon.style.transformOrigin = ''
-  const keyframes = document.createElement('style')
-  keyframes.textContent = SPIN_CSS
-  let spun: HTMLElement = elements.span(
-    { class: 'tosi-icon-spin', style: { display: 'inline-flex' } },
-    icon
-  )
+  let spun = document.createElement('tosi-icon-spin')
+  Object.assign(spun.style, spinBox)
   spun.style.setProperty('--tosi-icon-spin-duration', `${duration}s`)
   spun.style.setProperty('--tosi-icon-spin-direction', direction)
+  spun.append(icon)
   if (transform) {
     spun = elements.span(
-      { style: { display: 'inline-flex', transform, transformOrigin } },
+      { style: { ...spinBox, transform, transformOrigin } },
       spun
     )
   }
-  return wrapIcon(baseName, parts, keyframes, spun)
+  return wrapIcon(baseName, parts, spun)
 }
 
 let iconIdCounter = 0

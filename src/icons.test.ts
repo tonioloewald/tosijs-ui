@@ -378,7 +378,7 @@ describe('icons', () => {
       expect(icons['un:lock$shield']().children.length).toBe(2)
       const spun = icons['spin90:loader40s']()
       expect(spun.classList.contains('tosi-icon-composite')).toBe(true)
-      const scaled = spun.querySelector('.tosi-icon-spin')!
+      const scaled = spun.querySelector('tosi-icon-spin')!
         .parentElement as HTMLElement
       expect(scaled.style.transform).toContain('scale(0.4)')
     })
@@ -747,7 +747,7 @@ describe('icons', () => {
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
       // The transform suffixes sit OUTSIDE the rotation, so the icon spins about its own
       // centre rather than orbiting its offset; the rest stay on the svg.
-      const spin = icon.querySelector('.tosi-icon-spin') as HTMLElement
+      const spin = icon.querySelector('tosi-icon-spin') as HTMLElement
       expect((spin.parentElement as HTMLElement).style.transform).toContain(
         'scale(0.4)'
       )
@@ -779,8 +779,8 @@ describe('icons', () => {
     // while the page worked; and el.animate() did not survive a clone.
     test('spins an HTML span with a CSS animation, never the svg', () => {
       const icon = icons.spin90Loader()
-      const spin = icon.querySelector('.tosi-icon-spin') as HTMLElement
-      expect(spin).toBeInstanceOf(HTMLSpanElement)
+      const spin = icon.querySelector('tosi-icon-spin') as HTMLElement
+      expect(spin.localName).toBe('tosi-icon-spin')
       const prop = (el: HTMLElement, name: string) =>
         el.style.getPropertyValue(`--tosi-icon-spin-${name}`)
       expect(prop(spin, 'duration')).toBe('4s')
@@ -790,24 +790,36 @@ describe('icons', () => {
       expect(svg.getAnimations().length).toBe(0)
       expect(
         prop(
-          icons.spin_180Star().querySelector<HTMLElement>('.tosi-icon-spin')!,
+          icons.spin_180Star().querySelector<HTMLElement>('tosi-icon-spin')!,
           'direction'
         )
       ).toBe('reverse')
     })
 
-    test('carries its own keyframes, so it spins in a shadow root and as a clone', () => {
-      const icon = icons.spin90Loader()
-      expect(icon.querySelector('style')!.textContent).toContain(
-        '@keyframes tosi-icon-spin'
-      )
-      const clone = icon.cloneNode(true) as HTMLElement
-      const css = clone.querySelector('style')!.textContent!
-      expect(css).toContain('@keyframes tosi-icon-spin')
-      expect(css).toMatch(/\.tosi-icon-spin\{animation:tosi-icon-spin /)
-      expect(css).toMatch(
-        /prefers-reduced-motion:reduce\)\{\.tosi-icon-spin\{animation:none\}/
-      )
+    test('adds no text: a button holding a spinner reads as its caption', () => {
+      const button = document.createElement('button')
+      button.append(icons.spin90Loader(), 'Loading')
+      expect(button.textContent).toBe('Loading')
+    })
+
+    test('styles the root it lands in, a shadow root included, once', () => {
+      const host = document.createElement('div')
+      document.body.append(host)
+      const root = host.attachShadow({ mode: 'open' })
+      root.append(icons.spin90Loader(), icons.spin_180Star())
+      // Adopted where constructable sheets work (every engine the e2e lane runs); happy-dom
+      // takes the fallback, a <style> in the root. Either way exactly once, and never in the icon.
+      const css = [
+        ...root.adoptedStyleSheets.map((sheet) =>
+          [...sheet.cssRules].map((r) => r.cssText).join('\n')
+        ),
+        ...[...root.querySelectorAll('style')].map((el) => el.textContent),
+      ]
+      expect(css.length).toBe(1)
+      expect(css[0]).toContain('tosi-icon-spin')
+      expect(css[0]).toContain('prefers-reduced-motion')
+      expect(root.querySelector('tosi-icon-spin style')).toBeNull()
+      host.remove()
     })
   })
 
