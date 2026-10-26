@@ -2237,3 +2237,149 @@ describe('#3506: a link code leaves AuthState.links only through dropLink', () =
     }
   })
 })
+
+import {
+  keyedSessionTtlMs,
+  linkPassCookie,
+  readLinkPass,
+  signLinkPass,
+  LINK_PASS_COOKIE,
+  LINK_PASS_TTL_MS,
+  globalKeyExchange as exchangeForPass,
+  globalKeyRefresh as refreshForPass,
+  GLOBAL_KEY_SESSION_TTL_MS as KEY_SESSION_MS,
+  issueSession as mint,
+  type LinkPass,
+} from './dev-auth.js'
+
+describe('#3416: a link pass brings a plain link back after a restart, for a day', () => {
+  const SECRET = 'A'.repeat(43)
+  const OTHER = 'B'.repeat(43)
+  const HOST = 'proj.edit.dev.example.com'
+  const cookieOf = (setCookie: string) => setCookie.split(';')[0]
+  const passFor = (kind: 'edit' | 'view', secret = SECRET, at = NOW) =>
+    cookieOf(linkPassCookie(kind, HOST, secret, at))
+
+  test('the cookie is host-only, HttpOnly, Secure, and lasts a day', () => {
+    const set = linkPassCookie('edit', HOST, SECRET, NOW)
+    expect(set.startsWith(`${LINK_PASS_COOKIE}=`)).toBe(true)
+    expect(LINK_PASS_COOKIE.startsWith('__Host-')).toBe(true)
+    expect(set).toContain('; Path=/; Max-Age=86400; HttpOnly; Secure')
+    expect(set).not.toContain('Domain=')
+  })
+
+  test('carries its kind, for the host it was issued on, until it expires', () => {
+    for (const kind of ['edit', 'view'] as const) {
+      expect(readLinkPass(passFor(kind), SECRET, HOST, NOW + 1)).toEqual({
+        kind,
+        host: HOST,
+        exp: NOW + LINK_PASS_TTL_MS,
+      })
+    }
+    // Host as a request carries it: any case, a port.
+    expect(
+      readLinkPass(
+        passFor('edit'),
+        SECRET,
+        'PROJ.edit.dev.example.com:443',
+        NOW
+      )
+    ).not.toBeNull()
+    expect(
+      readLinkPass(passFor('edit'), SECRET, 'other.edit.dev.example.com', NOW)
+    ).toBeNull()
+    expect(
+      readLinkPass(passFor('edit'), SECRET, HOST, NOW + LINK_PASS_TTL_MS)
+    ).toBeNull()
+  })
+
+  test('a rotated or missing secret, a forged payload, or a claim of more than a day is no pass', () => {
+    expect(readLinkPass(passFor('edit'), OTHER, HOST, NOW)).toBeNull()
+    expect(readLinkPass(passFor('edit'), null, HOST, NOW)).toBeNull()
+    const [, signature] = passFor('view').split('=')[1].split('.')
+    const forged = Buffer.from(
+      JSON.stringify({ t: 'link', kind: 'edit', host: HOST, exp: NOW + 1000 })
+    ).toString('base64url')
+    expect(
+      readLinkPass(
+        `${LINK_PASS_COOKIE}=${forged}.${signature}`,
+        SECRET,
+        HOST,
+        NOW
+      )
+    ).toBeNull()
+    const long: LinkPass = {
+      kind: 'edit',
+      host: HOST,
+      exp: NOW + LINK_PASS_TTL_MS + 1,
+    }
+    expect(
+      readLinkPass(
+        `${LINK_PASS_COOKIE}=${signLinkPass(long, SECRET)}`,
+        SECRET,
+        HOST,
+        NOW
+      )
+    ).toBeNull()
+    // A device pass signed with the same value is not a link pass.
+    expect(
+      readLinkPass(
+        `${LINK_PASS_COOKIE}=${signPass(
+          { device: 'device0001', domain: HOST, label: '', exp: NOW + 1000 },
+          SECRET
+        )}`,
+        SECRET,
+        HOST,
+        NOW
+      )
+    ).toBeNull()
+  })
+
+  test('after a restart it becomes a session of its kind, like a key, and no longer than it has left', () => {
+    const auth = createAuthState()
+    const later = NOW + 60 * 60 * 1000
+    const opts = (cookie: string) => ({
+      auth,
+      keys: {},
+      now: later,
+      linkPass: readLinkPass(cookie, SECRET, HOST, later),
+    })
+    const page = (cookie: string) =>
+      new Request(`https://${HOST}/`, {
+        headers: { cookie, 'sec-fetch-mode': 'navigate' },
+      })
+    const edit = passFor('edit')
+    expect(
+      exchangeForPass(page(edit), { ...opts(edit), viaTunnel: true })
+    ).toBe('edit')
+    expect(
+      exchangeForPass(page(edit), { ...opts(edit), viaTunnel: false })
+    ).toBe(null)
+    const view = passFor('view')
+    expect(
+      exchangeForPass(page(view), { ...opts(view), viaTunnel: true })
+    ).toBe('view')
+    // The page's own save renews in place, as for a key.
+    const save = new Request(`https://${HOST}/__docstore/source`, {
+      method: 'POST',
+      headers: { cookie: edit, 'sec-fetch-site': 'same-origin' },
+    })
+    expect(
+      refreshForPass(save, { ...opts(edit), viaTunnel: true, host: HOST })
+    ).toBe('edit')
+    // The session does not outlive the pass.
+    expect(keyedSessionTtlMs('edit', edit, opts(edit))).toBe(
+      LINK_PASS_TTL_MS - 60 * 60 * 1000
+    )
+    // Already holding a writing session: nothing to add.
+    const held = sessionCookie(mint(auth, later, KEY_SESSION_MS, false)).split(
+      ';'
+    )[0]
+    expect(
+      exchangeForPass(page(`${edit}; ${held}`), {
+        ...opts(edit),
+        viaTunnel: true,
+      })
+    ).toBe(null)
+  })
+})

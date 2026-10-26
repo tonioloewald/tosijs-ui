@@ -1084,8 +1084,8 @@ omits them.
 
 #### Global keys — one link for every workspace
 
-The links above hand one workspace to one device, and sessions live in the dev server's
-memory, so every restart, and every extra project, means another redemption. With several
+The links above hand one workspace to one device, so every extra project means another
+redemption, and a link only brings its browser back after a restart for a day. With several
 projects tunnelled through one box, that is the recurring cost. The box can instead hold two
 machine-wide keys:
 
@@ -1150,7 +1150,7 @@ place, so an unsaved edit is never lost to a reload, and so does the haltija bri
 reconnection. "Own page" takes evidence: `Sec-Fetch-Site: same-origin`, or an `Origin` that is
 this host. A request from another workspace's page gets nothing though it carries the same
 cookie, and so does one with neither header (a script, `curl`). A session opened from a plain
-`--link` holds no key, so a restart still ends it. A session started from the view key can browse and never save, never
+`--link` holds no key, but it comes back the same way for a day: see "Restarts" below. A session started from the view key can browse and never save, never
 drive the page with an agent.
 
 **Use long keys.** The box compares them with no rate limit in front, unlike the link codes,
@@ -1216,6 +1216,38 @@ other value accepts neither key and says so at launch.
 (`/var/log/caddy/preview.log`), and Caddy keeps cookies out of it. Versions before 1.16.28
 logged them: if you ever visited `?t=<key>` on such a box, scrub or delete the old logs
 (`preview*.log*`), or rotate the key.
+
+#### Restarts: a link keeps its browser in for a day
+
+Sessions live in the dev server's memory and are never written to disk, and `bun start`
+restarts on any edit to a file in its import graph. So a plain `--link` or `--share` session
+used to end at the developer's next save, and the reader needed a new link. Now a link redeemed
+through the tunnel also sets a **link pass**: a cookie holding the link's kind (edit, or
+read-only for `--share`), the workspace host, and an expiry 24 hours later, HMAC-signed with a
+secret this project keeps on disk. After a restart the next page load, or the next request
+from the page that was open (a save, the haltija bridge), trades the pass for a fresh session,
+exactly as a global key is traded, so an unsaved edit is not lost to a reload.
+
+- **Kind**: the link's. A share link's pass only ever opens a read-only session.
+- **Host**: the workspace it was issued on. The cookie is `__Host-tosi_link_pass` (host-only,
+  `Secure`, `HttpOnly`, `Path=/`), so the browser sends it nowhere else and a sibling host
+  cannot set one, and the server checks the signed host against the request's.
+- **Expiry**: 24 hours after the link was opened, never extended. A session it mints lasts only
+  as long as the pass has left. Past that, a restart walls the browser and it needs a new link.
+- **The secret** is `.tosijs-dev/session-secret` in the project root: created on the first
+  redeemed link with mode `0600` in a `0700` folder, with its own `.gitignore` so it is never
+  committed in any repo. The dev server refuses to start if that file can be read by anyone
+  else (`chmod 600` it) or if the output folder would contain it.
+- **Revoking**: delete the secret file. Every pass it signed stops opening anything on the next
+  request, and the next redeemed link makes a new one. Sessions already open run on until the
+  next restart, as they always did.
+
+**What it costs.** Before link passes, nothing about a link session outlived the process: a
+stolen session cookie died with the server. A stolen link pass opens that workspace, with the
+link's kind, for the rest of its day, across restarts, until you delete the secret. It is as
+hard to steal as the session cookie beside it (`HttpOnly`, `Secure`); anyone who can read the
+secret file can sign passes of their own, which is why it is owner-only and outside the served
+folder. A granting (`--global`) link does not set one: its key cookie already outlasts restarts.
 
 #### The token is eight letters, and you can type it
 

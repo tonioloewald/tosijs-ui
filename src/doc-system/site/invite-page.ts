@@ -11,17 +11,18 @@ export type SessionRejection = 'none' | 'stale' | 'unknown'
 /**
  * Why they are here, said plainly.
  *
- * Sessions live in memory and die with the process — deliberately, since a credential should not
- * outlive the thing that granted it. But a cookie from a previous run and a cookie never seen
- * used to produce the identical page, so a reader whose server had restarted was told "invite
- * links expire" and concluded their cookie was expiring (tosijs-ui#114).
+ * Sessions live in memory and die with the process. A link opened through the tunnel brings its
+ * browser back after a restart for a day (a signed link pass, dev-auth.ts), so this page means
+ * that day is over, or the pass is missing or no longer valid. A cookie from a previous run and a
+ * cookie never seen used to produce the identical page, so a reader whose server had restarted
+ * was told "invite links expire" and concluded their cookie was expiring (tosijs-ui#114).
  */
 function explain(rejection: SessionRejection): string {
   return rejection === 'stale'
     ? `<p><b>The dev server restarted, so your session ended with it.</b> ` +
-        `Sessions are held in memory on purpose — they never outlive the process that ` +
-        `issued them, and they are never written to disk. Your browser still holds the ` +
-        `cookie; there is simply nothing on this side to match it to.</p>` +
+        `Sessions are held in memory. A link keeps its browser in across restarts for ` +
+        `24 hours after it was opened; yours is older than that, or the server's link ` +
+        `secret was rotated.</p>` +
         `<p>Ask for a fresh link:</p>`
     : `<p>Ask for a fresh one — invite links expire.</p>`
 }

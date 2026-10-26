@@ -109,3 +109,6 @@ docs/.epub-build/
 
 # personal Claude Code settings
 .claude/settings.local.json
+
+# the dev server's link-pass secret (it also ignores itself; see session-secret.ts)
+.tosijs-dev/
