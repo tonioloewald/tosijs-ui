@@ -102,6 +102,7 @@ import {
   SOURCE_ACCESS_HEADER,
   SOURCE_ENDPOINT_SNIPPET,
 } from '../../live-example/source-access.js'
+import { DEV_SERVER_SNIPPET } from '../../live-example/dev-served.js'
 
 /**
  * Every path the dev server watches for changes.
@@ -1660,6 +1661,9 @@ export async function devServer(
         : ''
       : HALTIJA_SNIPPET
     const extras =
+      // Tests on by default, every page, for whoever is looking through the dev server (the
+      // tunnel included); see dev-served.ts.
+      DEV_SERVER_SNIPPET +
       haltijaExtra +
       (testMode ? '' : statusSnippet(request, viaTunnel)) +
       // Tells a live example there is a source endpoint to ask (source-access.ts), so a

@@ -55,14 +55,6 @@ async function runTierAt(
       ;(globalThis as any).__tosiTestViewport = vp
     }, viewport)
   }
-  // Chromium + Firefox only. On WebKit the runner's per-page iframes never post their
-  // `tosi-tests-done` signal, so every page-with-tests waits out the runner's 45s
-  // per-page timeout — and each such page is now a recorded failure — so at ~45s × pages it blows past any
-  // sane CI budget. This is a pre-existing WebKit-specific issue in the iframe runner
-  // (the old haltija lane only ever drove one Chromium-based engine, so WebKit doc-tests
-  // never ran at all); it does NOT indicate a broken example — chromium+firefox run all
-  // of them green. Tracked in TODO.md. Two engines, including the inline-WASM guard, is
-  // a real gate; letting WebKit's runner quirk block it would be the tail wagging the dog.
   await page.goto(start)
   // The runner is localhost-gated and starts ~1s after load; `__docTestResults` is a
   // Promise that resolves once pagesTested >= pagesWithTests. Playwright awaits the
@@ -142,29 +134,17 @@ async function runTierAt(
 
 test('every inline doc test passes (the whole ```test tier)', async ({
   page,
-  browserName,
 }) => {
-  test.skip(
-    browserName === 'webkit',
-    'WebKit: iframe test-runner does not signal per-page completion — see TODO.md'
-  )
   test.setTimeout(180_000)
   await runTierAt(page, null) // the runner's own default, 800x600
 })
 
-test('the whole tier passes at phone width too', async ({
-  page,
-  browserName,
-}) => {
+test('the whole tier passes at phone width too', async ({ page }) => {
   /*
   The pass that would have caught 1.12.3's narrow-layout regression, and the reason the runner's
   viewport became overridable at all. 390x844 is a common phone logical size; the point is not
   the exact number but that it is below every breakpoint the doc system uses.
   */
-  test.skip(
-    browserName === 'webkit',
-    'WebKit: iframe test-runner does not signal per-page completion — see TODO.md'
-  )
   test.setTimeout(180_000)
   await runTierAt(page, { width: 390, height: 844 })
 })
@@ -180,12 +160,7 @@ require the same tests it reports when run in an iframe (1.16.8 review, M2).
 test('the page a run starts on reports ALL of its examples, as it does in an iframe', async ({
   page,
   context,
-  browserName,
 }) => {
-  test.skip(
-    browserName === 'webkit',
-    'WebKit: iframe test-runner does not signal per-page completion — see TODO.md'
-  )
   test.setTimeout(240_000)
   const PAGE = 'data-table.ts'
   const viaIframe = await runTierAt(page, null)

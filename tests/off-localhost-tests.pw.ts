@@ -1,4 +1,5 @@
 import { test, expect, chromium, isolateThirdParty } from './fixtures'
+import { DEV_SERVER_SNIPPET } from '../src/live-example/dev-served'
 
 /*
 Off localhost, tests are off until the reader turns them on from the menu, and then only the
@@ -11,9 +12,22 @@ for a page that never ran. So: arrive on a page with no tests, navigate in-app t
 them, turn tests on, and require that page's real results.
 
 A hostname is all that separates the two paths, so map a made-up one to the loopback address
-rather than standing up a tunnel.
+rather than standing up a tunnel. Through the tunnel itself tests now start on (the dev server
+marks its pages, see dev-served.ts), so this path is a DEPLOYED site off localhost: the spec
+strips the mark from each page, as a static host would never have it.
 */
 const HOST = 'tunnel.test'
+
+const asDeployed = async (page: import('@playwright/test').Page) =>
+  page.route(`https://${HOST}:*/**`, async (route) => {
+    if (route.request().resourceType() !== 'document') return route.fallback()
+    // the fetch is made from Node, which knows nothing of the host mapping
+    const response = await route.fetch({
+      url: route.request().url().replace(HOST, 'localhost'),
+    })
+    const body = (await response.text()).replace(DEV_SERVER_SNIPPET, '')
+    return route.fulfill({ response, body })
+  })
 
 test('off localhost, turning tests on runs the page showing now', async ({
   baseURL,
@@ -34,6 +48,7 @@ test('off localhost, turning tests on runs the page showing now', async ({
       viewport: { width: 1400, height: 900 },
     })
     await isolateThirdParty(page.context())
+    await asDeployed(page)
     await page.goto(`${origin}/`)
     await page.waitForFunction(() => !!(window as any).__docTestResults)
     expect(
@@ -87,6 +102,47 @@ test('off localhost, turning tests on runs the page showing now', async ({
       JSON.stringify(entry.tests.filter((t: any) => !t.passed))
     ).toBe(0)
     expect(results.failed).toBe(0)
+  } finally {
+    await browser.close()
+  }
+})
+
+/*
+Through the dev server off localhost (the tunnel), tests start on and the background runner
+checks other pages, as on localhost. Before, the tunnel was the one dev view where tests went
+quiet until you found the menu item, and then ran only the page on screen.
+*/
+test('through the dev server off localhost, tests start on and run in the background', async ({
+  baseURL,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'host mapping is a Chromium flag')
+  const origin = baseURL!.replace('localhost', HOST)
+  const browser = await chromium.launch({
+    args: [
+      `--host-resolver-rules=MAP ${HOST} 127.0.0.1`,
+      '--ignore-certificate-errors',
+    ],
+  })
+  try {
+    const page = await browser.newPage({ ignoreHTTPSErrors: true })
+    await isolateThirdParty(page.context())
+    await page.goto(`${origin}/rating/`)
+    await page.waitForFunction(() => !!(window as any).__docTestResults)
+    expect(
+      await page.evaluate(() =>
+        document.body.classList.contains('tests-enabled')
+      )
+    ).toBe(true)
+    // the background runner loads OTHER pages in hidden frames; off localhost it never did
+    await page.waitForFunction(
+      () =>
+        [...document.querySelectorAll('iframe')].some(
+          (f) => f.src && !new URL(f.src).pathname.startsWith('/rating')
+        ),
+      undefined,
+      { timeout: 20_000 }
+    )
   } finally {
     await browser.close()
   }

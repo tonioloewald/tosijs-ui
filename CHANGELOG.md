@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.16.37
+
+Doc-site test running, as a developer meets it. Nothing changes on a deployed site.
+
+- **Safari no longer stalls the background test run.** The runner loads each page with tests in
+  a hidden frame, and parked that frame off-screen; WebKit gives an off-screen frame no
+  animation frames, tosijs renders on them, so every page waited out its 45-second deadline and
+  the header read "Running 0" for the whole run. The frame now sits inside the viewport, clipped
+  so nothing paints. The doc-test gate runs in WebKit for the first time, and passes.
+- **Over the tunnel, tests run as they do on localhost.** They started off there, and turned on
+  ran only the page on screen; the dev server now marks the pages it serves, so any page it
+  served starts with tests on and runs the whole site in the background. A deployed site has no
+  mark and still defaults to off.
+- **A pass no longer blanks the header's test widget.** It faded to nothing and left an empty
+  rectangle in the bar. It now turns grey and then translucent, all as a CSS filter over the
+  pass colour, and stays readable and clickable. Floating over a page with no header it still
+  fades out.
+
 ## 1.16.36
 
 One additive site option. Nothing changes for a site that does not set it.

@@ -146,6 +146,7 @@ import { popMenu } from './menu.js'
 import { codeEditor, CodeEditor } from './code-editor.js'
 import { tosiDiff } from './diff.js'
 import { LAN_REFUSAL_ADVICE } from './live-example/source-access.js'
+import { servedForDevelopment } from './live-example/dev-served.js'
 
 /*
 Does this doc contain a REAL ` ```test ` block, as opposed to mentioning one?
@@ -274,10 +275,13 @@ const testIndicatorStyleSpec: XinStyleSheet = {
   A pass in the header settles into a muted, monochrome badge rather than fading out. Faded,
   it left an empty rectangle in the bar (the widget keeps its box), and the result was gone
   for anyone who looked a moment late. Muted, it reads as "nothing to see" and stays a button.
+  All of it is a filter over the pass colour, never a new colour. Grey first, then faded: fading
+  while still green put a washed-out green on the header's colour.
   */
   '@keyframes test-settle': {
-    '0%, 40%': { filter: 'none', opacity: '1' },
-    '100%': { filter: 'grayscale(1)', opacity: '0.55' },
+    '0%, 40%': { filter: 'grayscale(0) opacity(1)' },
+    '55%': { filter: 'grayscale(1) opacity(1)' },
+    '100%': { filter: 'grayscale(1) opacity(0.55)' },
   },
 
   // Hide when tests disabled
@@ -347,8 +351,7 @@ const testIndicatorStyleSpec: XinStyleSheet = {
   '@media (prefers-reduced-motion: reduce)': {
     '.test-widget.-passed': {
       animation: 'none',
-      filter: 'grayscale(1)',
-      opacity: '0.55',
+      filter: 'grayscale(1) opacity(0.55)',
     },
     '.test-widget.-floating.-passed': { opacity: '0', pointerEvents: 'none' },
   },
@@ -2382,9 +2385,15 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
     /*
     Create a hidden iframe that loads the full page. Keep a real layout size — layout-dependent
-    example tests need one — but park it off-screen rather than rely on opacity:0 over the
-    visible page: Chromium (and haltija on top of it) still composites a 0-opacity layer at 0,0,
-    which flashes as the frame navigates page to page.
+    example tests need one — and hide it with a clip that leaves nothing to paint, not opacity:
+    Chromium (and haltija on top of it) still composites a 0-opacity layer at 0,0, which flashes
+    as the frame navigates page to page.
+
+    INSIDE the viewport, though. It used to be parked at left:-10000px, and WebKit throttles a
+    frame outside the viewport: its animation frames never came, tosijs renders on animation
+    frames, so every page sat until its 45s deadline and Safari showed "Running 0" for the whole
+    run. That was the "WebKit's iframe runner never signals" of the e2e lane, and it reached
+    readers once the tunnel ran tests in the background.
 
     THE SIZE IS OVERRIDABLE, because 800x600 was the only width the inline tier had ever run at.
     A doc-system layout regression at phone width shipped in 1.12.3 and was found by a reader,
@@ -2405,7 +2414,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const vpWidth = Number(vp?.width) > 0 ? Number(vp?.width) : 800
     const vpHeight = Number(vp?.height) > 0 ? Number(vp?.height) : 600
     const testFrame = document.createElement('iframe')
-    testFrame.style.cssText = `position: fixed; left: -10000px; top: 0; width: ${vpWidth}px; height: ${vpHeight}px; opacity: 0; pointer-events: none;`
+    testFrame.style.cssText = `position: fixed; left: 0; top: 0; z-index: -1; clip-path: inset(100%); width: ${vpWidth}px; height: ${vpHeight}px; opacity: 0; pointer-events: none;`
     document.body.appendChild(testFrame)
 
     // Listen for test results posted from the iframe
@@ -2489,10 +2498,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     }
   }
 
-  // Run background tests when enabled (initially or when toggled on)
+  // Run background tests when enabled (initially or when toggled on). Every page where a
+  // developer is looking, the tunnel included; elsewhere only the page on screen.
   const startBackgroundTests = () => {
     if (!testManager.enabled.value) return
-    if (isLocalhost) {
+    if (servedForDevelopment()) {
       setTimeout(runBackgroundTests, 1000)
     } else {
       /*

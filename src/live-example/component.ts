@@ -803,6 +803,7 @@ import {
   sourceWritable,
   LAN_REFUSAL_ADVICE,
 } from './source-access.js'
+import { servedForDevelopment } from './dev-served.js'
 
 const { div, tosiSlot, style, button, pre, span, label, input, textarea } =
   elements
@@ -902,7 +903,7 @@ function ensureCompletionStyles(): void {
   })
 }
 
-// Test mode: controlled by localStorage, defaults to enabled on localhost
+// Test mode: controlled by localStorage, defaults to enabled where the dev server served the page
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled'
 
 const isLocalhost =
@@ -916,8 +917,8 @@ function getStoredTestsEnabled(): boolean {
   if (stored !== null) {
     return stored === 'true'
   }
-  // Default: enabled on localhost, disabled elsewhere
-  return isLocalhost
+  // Default: on where a developer is looking (localhost, or the dev server via the tunnel)
+  return servedForDevelopment()
 }
 
 // Test manager - observable state for test mode

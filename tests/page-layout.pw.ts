@@ -1033,7 +1033,17 @@ test('a pass mutes the header test widget instead of blanking it', async ({
       widget.hidden = false
       widget.classList.remove('-running', '-failed')
       widget.classList.add('-passed')
-      for (const a of widget.getAnimations()) a.finish()
+      // the filter partway through: it must turn grey BEFORE it fades (faded green on the
+      // header's colour is what the user objected to)
+      const midway: string[] = []
+      for (const a of widget.getAnimations()) {
+        a.pause()
+        for (const at of [0.2, 0.45, 0.5, 0.6, 0.8]) {
+          a.currentTime = 3000 * at
+          midway.push(getComputedStyle(widget).filter)
+        }
+        a.finish()
+      }
       const style = getComputedStyle(widget)
       const r = widget.getBoundingClientRect()
       const hit = document.elementFromPoint(
@@ -1043,6 +1053,7 @@ test('a pass mutes the header test widget instead of blanking it', async ({
       return {
         opacity: Number(style.opacity),
         filter: style.filter,
+        midway,
         clickable: !!hit && widget.contains(hit),
       }
     })
@@ -1050,9 +1061,15 @@ test('a pass mutes the header test widget instead of blanking it', async ({
   await page.goto('/documentation-system/')
   await page.waitForFunction(() => !!document.querySelector('.test-widget'))
   const header = await settled()
-  expect(header.opacity).toBeGreaterThan(0.4)
-  expect(header.opacity).toBeLessThan(1)
-  expect(header.filter).toContain('grayscale(1)')
+  // all of it is a filter over the pass colour: grey, and translucent so the header shows through
+  expect(header.opacity).toBe(1)
+  expect(header.filter).toBe('grayscale(1) opacity(0.55)')
+  for (const filter of header.midway) {
+    const [, grey, opacity] = filter.match(
+      /grayscale\(([\d.]+)\) opacity\(([\d.]+)\)/
+    )!
+    if (Number(opacity) < 1) expect(Number(grey), filter).toBe(1)
+  }
   expect(header.clickable).toBe(true)
 
   await page.goto('/no-header-demo/')
