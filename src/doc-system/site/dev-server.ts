@@ -76,7 +76,7 @@ import {
   SESSION_COOKIE,
 } from './dev-auth.js'
 import { readLocalSecret } from './local-secrets.js'
-import { revocationList, REVOCATION_FRESH_MS } from './device-revocation.js'
+import { revocationList, startRevocationSweep } from './device-revocation.js'
 import {
   resolveDataStore,
   resolveDataFile,
@@ -1142,10 +1142,12 @@ export async function devServer(
     }
   }
   if (revocations) {
-    setInterval(() => {
-      for (const domain of revocations.domains())
-        revocations.refresh(domain).then(endRevoked)
-    }, REVOCATION_FRESH_MS).unref()
+    startRevocationSweep({
+      list: revocations,
+      auth,
+      onEnded: (ended) =>
+        console.log(`🔒 ${ended} session(s) ended: device revoked`),
+    })
   }
   // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
   const dataStore = resolveDataStore(

@@ -5,7 +5,18 @@ import {
   parseRevoked,
   REVOCATION_FRESH_MS,
   REVOCATION_STALE_MS,
+  startRevocationSweep,
 } from './device-revocation.js'
+import {
+  createAuthState,
+  globalKeyExchange,
+  issueSession,
+  sessionCookie,
+  signPass,
+  sourceRequestAdmission,
+  GLOBAL_KEY_SESSION_TTL_MS,
+  GLOBAL_PASS_COOKIE,
+} from './dev-auth.js'
 
 /*
 The revoked-device list a workspace reads from the box before it honours a device pass. It must
@@ -130,4 +141,82 @@ test('a test may point the list elsewhere', () => {
   expect(parseRevoked('a\nabcdefghij\nABCDEFGHIJ\n')).toEqual(
     new Set(['abcdefghij'])
   )
+})
+
+/*
+#3484: a request that already holds a writing session never consults the revoked list (the dev
+server's withKeySession short-circuits it), so the once-a-minute sweep is the only thing that ends
+a revoked device's open session. Driven through the real pieces: the pass, the page-load
+exchange, the session tagged with its device, the sweep the dev server starts, and the write gate.
+*/
+test('the sweep ends a revoked device’s writing session, and its next write is refused', async () => {
+  const EDIT = 'the-edit-key-for-these-tests'
+  const HOST = 'proj.edit.dev.example.com'
+  const DOMAIN = 'dev.example.com'
+  const keys = { edit: EDIT, editGrants: 'edit' as const }
+  let clock = 1_000_000
+  const answers = [ok(''), ok('device0001\n')]
+  const list = revocationList({
+    editKey: EDIT,
+    now: () => clock,
+    fetch: async () => answers.shift()!(),
+  })
+  const auth = createAuthState()
+  const ticks: Array<() => void> = []
+  startRevocationSweep({
+    list,
+    auth,
+    every: (tick, ms) => {
+      expect(ms).toBe(REVOCATION_FRESH_MS)
+      ticks.push(tick)
+    },
+  })
+
+  // Grant: the device's pass, on a page load over the tunnel, becomes a writing session.
+  const pass = `${GLOBAL_PASS_COOKIE}=${signPass(
+    { device: 'device0001', domain: DOMAIN, label: '', exp: clock + 86400_000 },
+    EDIT
+  )}`
+  const revoked = await list.current(DOMAIN)
+  expect(revoked).toEqual(new Set())
+  const navigation = new Request(`https://${HOST}/`, {
+    headers: { cookie: pass, 'sec-fetch-mode': 'navigate' },
+  })
+  expect(
+    globalKeyExchange(navigation, {
+      viaTunnel: true,
+      auth,
+      keys,
+      now: clock,
+      revoked,
+    })
+  ).toBe('edit')
+  const session = issueSession(auth, clock, GLOBAL_KEY_SESSION_TTL_MS, false)
+  auth.sessionDevices.set(session, 'device0001')
+  const cookie = sessionCookie(session).split(';')[0]
+  const write = () =>
+    sourceRequestAdmission(
+      new Request(`https://${HOST}/__docstore/source`, {
+        method: 'POST',
+        headers: {
+          cookie: `${pass}; ${cookie}`,
+          origin: `https://${HOST}`,
+          'sec-fetch-site': 'same-origin',
+        },
+      }),
+      { viaTunnel: true, peer: '127.0.0.1', auth, now: clock }
+    )
+  expect(write()).toBe('session')
+
+  // Revoked on the box. Until a sweep runs the open session still writes: nothing on its
+  // request path asks the list.
+  clock += REVOCATION_FRESH_MS + 1
+  expect(write()).toBe('session')
+
+  expect(ticks).toHaveLength(1)
+  ticks[0]()
+  await new Promise((r) => setTimeout(r, 0))
+  expect(answers).toHaveLength(0)
+  expect(auth.sessionDevices.size).toBe(0)
+  expect(write()).toBeNull()
 })
