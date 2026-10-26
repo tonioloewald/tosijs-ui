@@ -127,7 +127,14 @@ test('through the dev server off localhost, tests start on and run in the backgr
   try {
     const page = await browser.newPage({ ignoreHTTPSErrors: true })
     await isolateThirdParty(page.context())
-    await page.goto(`${origin}/rating/`)
+    const response = await page.goto(`${origin}/rating/`)
+    // before every script, or a site on the iife path (a classic script, run as it is parsed)
+    // reads the default before the mark exists
+    const html = await response!.text()
+    const mark = html.indexOf(DEV_SERVER_SNIPPET)
+    expect(mark).toBeGreaterThan(-1)
+    expect(mark).toBeLessThan(html.indexOf('<script', mark + 1))
+    expect(html.slice(0, mark)).not.toContain('<script')
     await page.waitForFunction(() => !!(window as any).__docTestResults)
     expect(
       await page.evaluate(() =>

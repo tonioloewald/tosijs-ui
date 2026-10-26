@@ -605,3 +605,28 @@ test('a renewed session reaches a WebSocket handshake on its 101', async () => {
   ])
   expect(wrapped.requestIP!(r)).toEqual({ address: '127.0.0.1' })
 })
+
+import { injectFirst } from './dev-server.js'
+
+describe('injectFirst', () => {
+  const S = '<script>x</script>'
+  test('just inside <head>, attributes or not, before any script', () => {
+    expect(
+      injectFirst('<!doctype html><html><head><script src="a"></script>', S)
+    ).toBe(`<!doctype html><html><head>${S}<script src="a"></script>`)
+    expect(injectFirst('<html><HEAD data-x="1"><title>t</title>', S)).toBe(
+      `<html><HEAD data-x="1">${S}<title>t</title>`
+    )
+  })
+  test('with no <head>, after the doctype, never before it (quirks mode)', () => {
+    expect(injectFirst('<!DOCTYPE html>\n<p>hi</p>', S)).toBe(
+      `<!DOCTYPE html>${S}\n<p>hi</p>`
+    )
+    expect(injectFirst('<p>hi</p>', S)).toBe(`${S}<p>hi</p>`)
+  })
+  test('<header> is not <head>', () => {
+    expect(injectFirst('<!doctype html><header>h</header>', S)).toBe(
+      `<!doctype html>${S}<header>h</header>`
+    )
+  })
+})

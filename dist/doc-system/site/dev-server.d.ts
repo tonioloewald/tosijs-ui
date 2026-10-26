@@ -31,6 +31,11 @@ import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth.js';
  *
  * `root + sep` rather than a bare `startsWith`, or `/srv/docs-evil` counts as inside `/srv/docs`.
  */
+/**
+ * Put `snippet` before every script in `html`: just inside `<head>`, or else just after the
+ * doctype. Never before the doctype, which would put the page in quirks mode.
+ */
+export declare function injectFirst(html: string, snippet: string): string;
 export declare function isUnderRoot(root: string, candidate: string): boolean;
 export declare function resolveWatchPaths(config: {
     docPaths?: string[];

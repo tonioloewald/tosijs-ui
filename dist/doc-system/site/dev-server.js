@@ -60,6 +60,20 @@ import { DEV_SERVER_SNIPPET } from '../../live-example/dev-served.js';
  *
  * `root + sep` rather than a bare `startsWith`, or `/srv/docs-evil` counts as inside `/srv/docs`.
  */
+/**
+ * Put `snippet` before every script in `html`: just inside `<head>`, or else just after the
+ * doctype. Never before the doctype, which would put the page in quirks mode.
+ */
+export function injectFirst(html, snippet) {
+    const head = /<head(\s[^>]*)?>/i.exec(html);
+    if (head) {
+        const at = head.index + head[0].length;
+        return html.slice(0, at) + snippet + html.slice(at);
+    }
+    const doctype = /^\s*<!doctype[^>]*>/i.exec(html);
+    const at = doctype ? doctype[0].length : 0;
+    return html.slice(0, at) + snippet + html.slice(at);
+}
 export function isUnderRoot(root, candidate) {
     const base = path.resolve(root);
     const target = path.resolve(candidate);
@@ -1368,22 +1382,25 @@ export async function devServer(config, opts = {}) {
                     ? HALTIJA_TUNNEL_SNIPPET
                     : ''
                 : HALTIJA_SNIPPET;
-        const extras = 
-        // Tests on by default, every page, for whoever is looking through the dev server (the
-        // tunnel included); see dev-served.ts.
-        DEV_SERVER_SNIPPET +
-            haltijaExtra +
+        const extras = haltijaExtra +
             (testMode ? '' : statusSnippet(request, viaTunnel)) +
             // Tells a live example there is a source endpoint to ask (source-access.ts), so a
             // deployed static site, which has none, is never asked.
             (config.editableSources ? SOURCE_ENDPOINT_SNIPPET : '');
         const encoding = negotiateEncoding(request?.headers.get('accept-encoding') ?? null);
-        if ((extras || asRoot) && filePath.endsWith('.html')) {
+        if (filePath.endsWith('.html')) {
             const read = await Bun.file(filePath).text();
             const html = asRoot ? rootRelativeUrls(read) : read;
-            const injected = html.includes('</body>')
+            const withExtras = html.includes('</body>')
                 ? html.replace('</body>', `${extras}</body>`)
                 : html + extras;
+            /*
+            Tests on by default, every page, for whoever is looking through the dev server (the tunnel
+            included); see dev-served.ts. FIRST in <head>, unlike the extras: it is read when the
+            bundle evaluates, and on the iife path that is a classic script, which runs as it is
+            parsed, before anything at the end of <body> exists.
+            */
+            const injected = injectFirst(withExtras, DEV_SERVER_SNIPPET);
             // Injected HTML is built per request, so it is compressed but never cached — the
             // cache key would have to include the injected extras, and HTML is small anyway.
             const body = encoding

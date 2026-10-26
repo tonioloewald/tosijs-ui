@@ -1064,6 +1064,8 @@ test('a pass mutes the header test widget instead of blanking it', async ({
   // all of it is a filter over the pass colour: grey, and translucent so the header shows through
   expect(header.opacity).toBe(1)
   expect(header.filter).toBe('grayscale(1) opacity(0.55)')
+  // no animation sampled would make the loop below vacuous
+  expect(header.midway.length).toBeGreaterThan(0)
   for (const filter of header.midway) {
     const [, grey, opacity] = filter.match(
       /grayscale\(([\d.]+)\) opacity\(([\d.]+)\)/
