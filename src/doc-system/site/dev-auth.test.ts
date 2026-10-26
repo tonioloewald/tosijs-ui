@@ -33,7 +33,10 @@ import {
   trustLanRefusalHint,
   linkRejection,
   RETIRED_LINK_MEMORY_MS,
+  type AuthState,
 } from './dev-auth.js'
+import { readFileSync } from 'fs'
+import * as path from 'path'
 
 const NOW = 1_700_000_000_000
 
@@ -2146,5 +2149,91 @@ describe('#3505: a refused code says whether it was mistyped, spent or expired',
       'unknown'
     )
     expect(s.retired.size).toBe(0)
+  })
+})
+
+describe('#3506: a link code leaves AuthState.links only through dropLink', () => {
+  /*
+  A code removed without being retired reads as "unknown", which the invite page answers with
+  "check it for a typo". So a future revoke or delete path that touched `links` directly would
+  tell the holder of a deliberately killed code to retype it. `links` is a ReadonlyMap, which
+  stops that at compile time everywhere but through a cast; this holds the casts too.
+  */
+  const sources = () => {
+    const root = path.resolve(import.meta.dir, '../../..')
+    const files: { file: string; text: string }[] = []
+    for (const dir of ['src', 'bin']) {
+      for (const rel of new Bun.Glob('**/*.ts').scanSync(
+        path.join(root, dir)
+      )) {
+        if (rel.endsWith('.test.ts') || rel.endsWith('.d.ts')) continue
+        const file = `${dir}/${rel}`
+        files.push({ file, text: readFileSync(path.join(root, file), 'utf8') })
+      }
+    }
+    return files
+  }
+
+  test('nothing writes links except issueLink (set) and dropLink (delete)', () => {
+    const writes: string[] = []
+    const pattern =
+      /\.links\s*\.\s*(set|delete|clear)\s*\(|\blinks\s+as\s+(unknown|Map\b)|writableLinks\s*\(\s*\w+\s*\)\s*\.\s*(\w+)/g
+    for (const { file, text } of sources()) {
+      for (const m of text.matchAll(pattern)) {
+        const fn = [
+          ...text
+            .slice(0, m.index)
+            .matchAll(/\n(?:export )?(?:function|const) (\w+)/g),
+        ].pop()?.[1]
+        writes.push(`${file}:${fn}:${m[0].replace(/\s+/g, ' ')}`)
+      }
+    }
+    expect(writes.sort()).toEqual([
+      'src/doc-system/site/dev-auth.ts:dropLink:writableLinks(state).delete',
+      'src/doc-system/site/dev-auth.ts:issueLink:writableLinks(state).set',
+      'src/doc-system/site/dev-auth.ts:writableLinks:links as Map',
+    ])
+  })
+
+  test('every way a code leaves is remembered, so none of them reads as a typo', () => {
+    const grant = { key: 'view' as const, domain: 'dev.example.com' }
+    const routes: Array<
+      [string, (s: AuthState) => string, number, 'used' | 'expired']
+    > = [
+      [
+        'expired',
+        (s) => issueLink(s, NOW),
+        NOW + LINK_TOKEN_TTL_MS + 1,
+        'expired',
+      ],
+      [
+        'single-use',
+        (s) => {
+          const c = issueLink(s, NOW)
+          redeemLink(s, c, NOW, 'single-use')
+          return c
+        },
+        NOW + 1,
+        'used',
+      ],
+      [
+        'granting link',
+        (s) => {
+          const c = issueLink(s, NOW, LINK_TOKEN_TTL_MS, { grant })
+          redeemLink(s, c, NOW, 'window')
+          return c
+        },
+        NOW + 1,
+        'used',
+      ],
+    ]
+    for (const [name, leave, at, why] of routes) {
+      const s = createAuthState()
+      const code = leave(s)
+      expect(linkRejection(s, code, at), name).toBe(why)
+      expect(s.links.size, name).toBe(0)
+      expect(s.grants.size, name).toBe(0)
+      expect([...s.readOnly], name).not.toContain(code)
+    }
   })
 })

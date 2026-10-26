@@ -241,8 +241,15 @@ export function safeEqual(a: string, b: string): boolean {
 }
 
 export interface AuthState {
-  /** unspent link tokens → when they expire */
-  links: Map<string, number>
+  /**
+   * unspent link tokens → when they expire.
+   *
+   * READ-ONLY on purpose: a code leaves only through `dropLink`, which records why in `retired`.
+   * A path that deleted one directly (a future revoke, say) would have its holders told "check
+   * for a typo" about a code that was killed on purpose (board #3506). `issueLink` and `dropLink`
+   * are the only writers; dev-auth.test.ts holds that.
+   */
+  links: ReadonlyMap<string, number>
   /** live session tokens → when they expire */
   sessions: Map<string, number>
   /**
@@ -302,12 +309,7 @@ export function createAuthState(): AuthState {
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
 export function prune(state: AuthState, now: number): void {
   for (const [t, exp] of state.links)
-    if (exp <= now) {
-      state.links.delete(t)
-      state.readOnly.delete(t)
-      state.grants.delete(t)
-      retire(state, t, 'expired', now)
-    }
+    if (exp <= now) dropLink(state, t, 'expired', now)
   for (const [t, { until }] of state.retired)
     if (until <= now) state.retired.delete(t)
   for (const [t, exp] of state.sessions)
@@ -336,7 +338,7 @@ export function issueLink(
 ): string {
   prune(state, now)
   const token = mintLinkToken()
-  state.links.set(token, now + ttlMs)
+  writableLinks(state).set(token, now + ttlMs)
   if (opts.readOnly) state.readOnly.add(token)
   if (opts.grant) state.grants.set(token, opts.grant)
   return token
@@ -423,12 +425,7 @@ export function redeemLink(
   if (matched === null) return null
   const readOnly = state.readOnly.has(matched)
   const grant = state.grants.get(matched)
-  if (policy === 'single-use' || grant) {
-    state.links.delete(matched)
-    state.readOnly.delete(matched)
-    state.grants.delete(matched)
-    retire(state, matched, 'used', now)
-  }
+  if (policy === 'single-use' || grant) dropLink(state, matched, 'used', now)
   /*
   The capability rides from the link to the session it mints, and so does the shorter horizon.
   Minting a full 30-day session from a read-only link would make the capability true and the
@@ -445,12 +442,22 @@ export function redeemLink(
   return session
 }
 
-function retire(
+/** `links` as the two functions allowed to change it see it. See AuthState.links. */
+const writableLinks = (state: AuthState) => state.links as Map<string, number>
+
+/**
+ * THE way a link code stops being live: it leaves `links` with what it carried, and is
+ * remembered in `retired` with why, so `linkRejection` can tell its holder the truth.
+ */
+function dropLink(
   state: AuthState,
   token: string,
   why: 'used' | 'expired',
   now: number
 ): void {
+  writableLinks(state).delete(token)
+  state.readOnly.delete(token)
+  state.grants.delete(token)
   state.retired.set(normalizeLinkToken(token), {
     why,
     until: now + RETIRED_LINK_MEMORY_MS,
