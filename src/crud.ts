@@ -482,7 +482,7 @@ export class TosiCrud extends withAttributes({
   private _idle: Array<() => void> = []
   private _hash: HashState | null = null
   private _stopHash: (() => void) | null = null
-  private _searchTimer: any = null
+  private _searchTimer: ReturnType<typeof setTimeout> | undefined
   /** What the box says, before the debounce commits it to the URL. */
   private _pendingSearch = ''
 

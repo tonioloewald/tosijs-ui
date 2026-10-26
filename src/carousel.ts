@@ -147,8 +147,7 @@ export class TosiCarousel extends withAttributes({
   private realign = () => {
     if (!this.hydrated) return
     const { scroller } = this.parts as CarouselParts
-    cancelAnimationFrame(this.animationFrame)
-    this.animationFrame = null
+    this.cancelAnimation()
     scroller.scrollLeft = this.page * scroller.offsetWidth
   }
 
@@ -360,10 +359,14 @@ export class TosiCarousel extends withAttributes({
     }
   }
 
-  private snapTimer: any
-  private animationFrame: any
+  private snapTimer: ReturnType<typeof setTimeout> | undefined
+  private animationFrame: number | null = null
+  private cancelAnimation(): void {
+    if (this.animationFrame !== null) cancelAnimationFrame(this.animationFrame)
+    this.animationFrame = null
+  }
   animateScroll(position: number, startingPosition = -1, timestamp = 0) {
-    cancelAnimationFrame(this.animationFrame)
+    this.cancelAnimation()
     const { scroller } = this.parts
     if (startingPosition === -1) {
       startingPosition = scroller.scrollLeft
