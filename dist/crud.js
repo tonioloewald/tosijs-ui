@@ -274,6 +274,19 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 })
 ```
 
+## Closing a record, and narrow layouts
+
+An open record shows Save, Delete and **Close** under its form. Close (or `close()` from code)
+puts the record away and goes back to the list: it clears the selection (and the `id` in the
+URL), and it drops any unsaved edits without asking, so call `save()` first if they matter.
+
+When the element is narrower than `TosiCrud.NARROW_WIDTH` (720px) it gets the class `-narrow`
+and stacks into one column, and an open record **replaces** the list rather than squeezing in
+beside it; Close is the way back. The width is the element's own, measured with a
+`ResizeObserver`, not the window's, so a crud in a sidebar goes narrow on a wide screen.
+`NARROW_WIDTH` is a static property, so setting `TosiCrud.NARROW_WIDTH` moves the breakpoint
+for every instance; each one re-checks it the next time it is resized.
+
 ## Properties, methods, events
 
 - `store` — the adapter. Setting it re-lists.
@@ -283,7 +296,9 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 - `rows` — the records currently listed.
 - `value` — the selected record (the form's live model).
 - `table` / `form` — the composed elements.
-- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()` / `close()`
+- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()`
+- `close()` — put the open record away (unsaved edits are dropped); what the Close button does.
+- `TosiCrud.NARROW_WIDTH` — below this width (720) the layout is one column; see above.
 - `whenIdle()` — resolves when no store operation is in flight; for tests, mostly.
 - `change` — the selection or the saved record changed.
 - `error` — a store operation failed.
@@ -429,7 +444,7 @@ export class TosiCrud extends withAttributes({
     _idle = [];
     _hash = null;
     _stopHash = null;
-    _searchTimer = null;
+    _searchTimer;
     /** What the box says, before the debounce commits it to the URL. */
     _pendingSearch = '';
     get store() {

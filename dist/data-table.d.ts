@@ -338,6 +338,7 @@ export declare class TosiTable extends TosiTable_base {
     private rowData;
     private _array;
     private _columns;
+    private _noColumns;
     private _renderedCols;
     private _filter;
     private _sort?;

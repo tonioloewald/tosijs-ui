@@ -941,7 +941,12 @@ It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW
   carries `PREVIEW_TOKEN` or `PREVIEW_EDIT_TOKEN` to your laptop, they never appear in your
   shell history, and they are redacted out of the diff before it is printed (the [global
   keys](#global-keys--one-link-for-every-workspace) are the one case where you copy them to a
-  machine yourself);
+  machine yourself). The redaction covers the keys the LIVE file holds too: after you rotate a
+  key, the diff's removed lines carry the previous one, so every value in a key position
+  (`tosi_preview=`, `tosi_edit=`, `query t=`) on either side is blanked, and so is every other
+  place that value appears. Through 1.16.34 only the current keys were, and a dry run after a
+  rotation printed the old key in clear: if you ran one, treat that key as seen by whatever kept
+  your terminal output;
 - **fills in an unknown value** for `__PREVIEW_EDIT_TOKEN__` when `PREVIEW_EDIT_TOKEN` is unset,
   so the edit key opens nothing, and refuses one shorter than 24 letters, digits, `-` or `_`,
   or one equal to `PREVIEW_TOKEN`;
@@ -955,6 +960,9 @@ It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW
 - **installs the file readable by Caddy and nobody else**, because it holds both keys: mode
   `640` with the group systemd runs Caddy as (`Group=` in the unit, or `User=`'s own group), or
   `600` when Caddy runs as root;
+- **takes group and other access off the preview access logs** (`/var/log/caddy/preview*.log*`)
+  that exist when you run `--go`, so only their owner (Caddy) and root read them. They record
+  short-link codes (see "What it costs" under short links, below);
 - **reloads Caddy, or starts it if it is stopped**, and if Caddy refuses the new config puts
   the previous one back (it stays in `/etc/caddy/Caddyfile.bak` either way) and exits non-zero.
   Versions 1.10.0 to 1.16.26 installed the file readable by root only, which a Caddy running as
@@ -963,6 +971,31 @@ It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW
   box serves anything else through Caddy, read that diff before `--go`.
 
 Bring your own template with `--template=./path/to/Caddyfile`; the same guards apply.
+
+**A template of your own does not pick up changes to the shipped one.** In particular it keeps
+whatever gate page it had, and `tosijs-tunnel` keeps saying "the box's Caddyfile does not serve
+short links yet" however often you re-run the installer, because short links need routes your
+template does not have. To get them, copy from `deploy/Caddyfile` (in
+`node_modules/tosijs-ui/deploy/`):
+
+- into the block that gates your previews (`preview_site` in the shipped file), the `@unauthed`
+  handler, so a browser without a cookie gets the page with the box for a link or a code:
+
+  ```text
+  handle @unauthed {
+  	header Content-Type "text/html; charset=utf-8"
+  	header Cache-Control "no-store"
+  	respond "__GATE_PAGE__" 401
+  }
+  ```
+
+- into your `{{PREVIEW_DOMAIN}} { … }` block, BEFORE its cookie gate (before `import
+  preview_site`), everything from `@codefile {` to the end of `handle @codequery { … }`: the
+  `_codes/` file server, its explicit 404, and the two routes that answer `/<CODE>` and `/?t=<code>`
+  with the gate page.
+
+The installer fills `__GATE_PAGE__` from `deploy/gate-page.html` in the package, and reads that
+file only when your template names it.
 
 You also want a wildcard DNS record (`*.dev.example.com`) pointing at the box, so a new
 project needs no registrar visit, and sshd running `GatewayPorts no`.
@@ -1084,8 +1117,8 @@ omits them.
 
 #### Global keys — one link for every workspace
 
-The links above hand one workspace to one device, and sessions live in the dev server's
-memory, so every restart, and every extra project, means another redemption. With several
+The links above hand one workspace to one device, so every extra project means another
+redemption, and a link only brings its browser back after a restart for a day. With several
 projects tunnelled through one box, that is the recurring cost. The box can instead hold two
 machine-wide keys:
 
@@ -1150,7 +1183,7 @@ place, so an unsaved edit is never lost to a reload, and so does the haltija bri
 reconnection. "Own page" takes evidence: `Sec-Fetch-Site: same-origin`, or an `Origin` that is
 this host. A request from another workspace's page gets nothing though it carries the same
 cookie, and so does one with neither header (a script, `curl`). A session opened from a plain
-`--link` holds no key, so a restart still ends it. A session started from the view key can browse and never save, never
+`--link` holds no key, but it comes back the same way for a day: see "Restarts" below. A session started from the view key can browse and never save, never
 drive the page with an agent.
 
 **Use long keys.** The box compares them with no rate limit in front, unlike the link codes,
@@ -1216,6 +1249,38 @@ other value accepts neither key and says so at launch.
 (`/var/log/caddy/preview.log`), and Caddy keeps cookies out of it. Versions before 1.16.28
 logged them: if you ever visited `?t=<key>` on such a box, scrub or delete the old logs
 (`preview*.log*`), or rotate the key.
+
+#### Restarts: a link keeps its browser in for a day
+
+Sessions live in the dev server's memory and are never written to disk, and `bun start`
+restarts on any edit to a file in its import graph. So a plain `--link` or `--share` session
+used to end at the developer's next save, and the reader needed a new link. Now a link redeemed
+through the tunnel also sets a **link pass**: a cookie holding the link's kind (edit, or
+read-only for `--share`), the workspace host, and an expiry 24 hours later, HMAC-signed with a
+secret this project keeps on disk. After a restart the next page load, or the next request
+from the page that was open (a save, the haltija bridge), trades the pass for a fresh session,
+exactly as a global key is traded, so an unsaved edit is not lost to a reload.
+
+- **Kind**: the link's. A share link's pass only ever opens a read-only session.
+- **Host**: the workspace it was issued on. The cookie is `__Host-tosi_link_pass` (host-only,
+  `Secure`, `HttpOnly`, `Path=/`), so the browser sends it nowhere else and a sibling host
+  cannot set one, and the server checks the signed host against the request's.
+- **Expiry**: 24 hours after the link was opened, never extended. A session it mints lasts only
+  as long as the pass has left. Past that, a restart walls the browser and it needs a new link.
+- **The secret** is `.tosijs-dev/session-secret` in the project root: created on the first
+  redeemed link with mode `0600` in a `0700` folder, with its own `.gitignore` so it is never
+  committed in any repo. The dev server refuses to start if that file can be read by anyone
+  else (`chmod 600` it) or if the output folder would contain it.
+- **Revoking**: delete the secret file. Every pass it signed stops opening anything on the next
+  request, and the next redeemed link makes a new one. Sessions already open run on until the
+  next restart, as they always did.
+
+**What it costs.** Before link passes, nothing about a link session outlived the process: a
+stolen session cookie died with the server. A stolen link pass opens that workspace, with the
+link's kind, for the rest of its day, across restarts, until you delete the secret. It is as
+hard to steal as the session cookie beside it (`HttpOnly`, `Secure`); anyone who can read the
+secret file can sign passes of their own, which is why it is owner-only and outside the served
+folder. A granting (`--global`) link does not set one: its key cookie already outlasts restarts.
 
 #### The token is eight letters, and you can type it
 
@@ -1310,8 +1375,13 @@ guesser can test codes there faster than at the workspace. At a sustained 2,000 
 second for a code's whole five minutes, the odds of hitting a given live code are about **1 in
 100,000**, against 1 in 18 million at the workspace. That was judged worth it for typing a short
 link on a headset (the maintainer's call, 1.16.33). Short-link codes appear in the box's
-access log as paths, unredacted; a code there is spent or expired within five minutes, but keep
-the log readable only by root and the Caddy user, as it is on a stock install.
+access log as paths, unredacted; a code there is spent or expired within five minutes. Keep the
+log readable only by root and the Caddy user. Caddy 2.6 (Debian's) has no setting for a log
+file's mode, so `tosijs-caddy-install --go` takes group and other access off every
+`/var/log/caddy/preview*.log*` that exists when it runs. That is what is guaranteed: the files
+present at install time. A log Caddy creates afterwards (the first one on a new box, or the next
+file when it rolls) gets whatever mode Caddy gives it, so check with `ls -l /var/log/caddy`, or
+re-run `--go` once Caddy has written the log.
 
 The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;

@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=4cfbbcbad6d4" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=55bbc24af4a4" data-tosi-doc-system />
   <title>crud — tosijs-ui</title>
   <meta name="description" content="Search, list, edit — &lt;tosi-table&gt; and &lt;tosi-schema-form&gt; over a store you supply." />
   <link rel="canonical" href="https://ui.tosijs.net/crud/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=972f82bf05c1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=be9ebb410ce5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="crud.ts">
 <h1 id="crud">crud</h1>
 <!--{ "parent": "Components" }-->
@@ -275,6 +275,16 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
   expect(slow.querySelector(&#39;.crud-status&#39;).textContent).toBe(&#39;the server said no&#39;)
 })
 </code></pre>
+<h2 id="closing-a-record-and-narrow-layouts">Closing a record, and narrow layouts</h2>
+<p>An open record shows Save, Delete and <strong>Close</strong> under its form. Close (or <code>close()</code> from code)
+puts the record away and goes back to the list: it clears the selection (and the <code>id</code> in the
+URL), and it drops any unsaved edits without asking, so call <code>save()</code> first if they matter.</p>
+<p>When the element is narrower than <code>TosiCrud.NARROW_WIDTH</code> (720px) it gets the class <code>-narrow</code>
+and stacks into one column, and an open record <strong>replaces</strong> the list rather than squeezing in
+beside it; Close is the way back. The width is the element&#39;s own, measured with a
+<code>ResizeObserver</code>, not the window&#39;s, so a crud in a sidebar goes narrow on a wide screen.
+<code>NARROW_WIDTH</code> is a static property, so setting <code>TosiCrud.NARROW_WIDTH</code> moves the breakpoint
+for every instance; each one re-checks it the next time it is resized.</p>
 <h2 id="properties-methods-events">Properties, methods, events</h2>
 <ul>
 <li><code>store</code> — the adapter. Setting it re-lists.</li>
@@ -284,7 +294,9 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
 <li><code>rows</code> — the records currently listed.</li>
 <li><code>value</code> — the selected record (the form&#39;s live model).</li>
 <li><code>table</code> / <code>form</code> — the composed elements.</li>
-<li><code>refresh()</code> / <code>select(record)</code> / <code>save()</code> / <code>remove()</code> / <code>createNew()</code> / <code>close()</code></li>
+<li><code>refresh()</code> / <code>select(record)</code> / <code>save()</code> / <code>remove()</code> / <code>createNew()</code></li>
+<li><code>close()</code> — put the open record away (unsaved edits are dropped); what the Close button does.</li>
+<li><code>TosiCrud.NARROW_WIDTH</code> — below this width (720) the layout is one column; see above.</li>
 <li><code>whenIdle()</code> — resolves when no store operation is in flight; for tests, mostly.</li>
 <li><code>change</code> — the selection or the saved record changed.</li>
 <li><code>error</code> — a store operation failed.</li>
@@ -396,6 +408,6 @@ test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-r93rfmtm.js"></script>
+  <script type="module" src="../hydrate-2en1dn39.js"></script>
 </body>
 </html>

@@ -643,8 +643,9 @@ export function createDocBrowser(options) {
         return parent ? `${parent.title} › ${doc.title}` : String(doc.title);
     };
     const openDoc = (filename, anchor) => {
-        go(filename);
-        if (!anchor)
+        // go() refuses when the reader keeps unsaved source edits: then the URL and scroll
+        // position stay exactly where they were (#3484).
+        if (!go(filename) || !anchor)
             return;
         if (!memoryRouting) {
             window.history.replaceState({ href: hrefFor(filename) }, '', `${hrefFor(filename)}#${anchor}`);
@@ -1117,9 +1118,9 @@ export function createDocBrowser(options) {
     // click funnels through here so memory mode never touches window.history.
     const go = (filename) => {
         // If the source editor is open with unsaved changes, confirm before leaving;
-        // on confirm it discards + closes, otherwise navigation is aborted.
+        // on confirm it discards + closes, otherwise navigation is aborted (false).
         if (!confirmLeaveEditor())
-            return;
+            return false;
         if (memoryRouting) {
             onRouteChange?.(slugFor(filename));
         }
@@ -1140,6 +1141,7 @@ export function createDocBrowser(options) {
             window.history[same ? 'replaceState' : 'pushState']({ href }, '', href);
         }
         navigateTo(filename);
+        return true;
     };
     // Intercept clicks on internal doc links anywhere in the rendered content so
     // they navigate client-side instead of reloading the page. Plain left-clicks

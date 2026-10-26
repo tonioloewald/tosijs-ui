@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=4cfbbcbad6d4" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=55bbc24af4a4" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=972f82bf05c1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=be9ebb410ce5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1125,7 +1125,12 @@ tosijs-caddy-install <span class="token parameter variable">--go</span>
 carries <code>PREVIEW_TOKEN</code> or <code>PREVIEW_EDIT_TOKEN</code> to your laptop, they never appear in your
 shell history, and they are redacted out of the diff before it is printed (the <a href="#global-keys--one-link-for-every-workspace">global
 keys</a> are the one case where you copy them to a
-machine yourself);</li>
+machine yourself). The redaction covers the keys the LIVE file holds too: after you rotate a
+key, the diff&#39;s removed lines carry the previous one, so every value in a key position
+(<code>tosi_preview=</code>, <code>tosi_edit=</code>, <code>query t=</code>) on either side is blanked, and so is every other
+place that value appears. Through 1.16.34 only the current keys were, and a dry run after a
+rotation printed the old key in clear: if you ran one, treat that key as seen by whatever kept
+your terminal output;</li>
 <li><strong>fills in an unknown value</strong> for <code>__PREVIEW_EDIT_TOKEN__</code> when <code>PREVIEW_EDIT_TOKEN</code> is unset,
 so the edit key opens nothing, and refuses one shorter than 24 letters, digits, <code>-</code> or <code>_</code>,
 or one equal to <code>PREVIEW_TOKEN</code>;</li>
@@ -1139,6 +1144,9 @@ leaves the running site untouched;</li>
 <li><strong>installs the file readable by Caddy and nobody else</strong>, because it holds both keys: mode
 <code>640</code> with the group systemd runs Caddy as (<code>Group=</code> in the unit, or <code>User=</code>&#39;s own group), or
 <code>600</code> when Caddy runs as root;</li>
+<li><strong>takes group and other access off the preview access logs</strong> (<code>/var/log/caddy/preview*.log*</code>)
+that exist when you run <code>--go</code>, so only their owner (Caddy) and root read them. They record
+short-link codes (see &quot;What it costs&quot; under short links, below);</li>
 <li><strong>reloads Caddy, or starts it if it is stopped</strong>, and if Caddy refuses the new config puts
 the previous one back (it stays in <code>/etc/caddy/Caddyfile.bak</code> either way) and exits non-zero.
 Versions 1.10.0 to 1.16.26 installed the file readable by root only, which a Caddy running as
@@ -1147,6 +1155,28 @@ its own user cannot read: if you ran <code>--go</code> with one of those, re-run
 box serves anything else through Caddy, read that diff before <code>--go</code>.</li>
 </ul>
 <p>Bring your own template with <code>--template=./path/to/Caddyfile</code>; the same guards apply.</p>
+<p><strong>A template of your own does not pick up changes to the shipped one.</strong> In particular it keeps
+whatever gate page it had, and <code>tosijs-tunnel</code> keeps saying &quot;the box&#39;s Caddyfile does not serve
+short links yet&quot; however often you re-run the installer, because short links need routes your
+template does not have. To get them, copy from <code>deploy/Caddyfile</code> (in
+<code>node_modules/tosijs-ui/deploy/</code>):</p>
+<ul>
+<li><p>into the block that gates your previews (<code>preview_site</code> in the shipped file), the <code>@unauthed</code>
+handler, so a browser without a cookie gets the page with the box for a link or a code:</p>
+<pre><code class="language-text" data-highlighted>handle @unauthed {
+    header Content-Type "text/html; charset=utf-8"
+    header Cache-Control "no-store"
+    respond "__GATE_PAGE__" 401
+}
+</code></pre>
+</li>
+<li><p>into your <code>{{PREVIEW_DOMAIN}} { … }</code> block, BEFORE its cookie gate (before <code>import preview_site</code>), everything from <code>@codefile {</code> to the end of <code>handle @codequery { … }</code>: the
+<code>_codes/</code> file server, its explicit 404, and the two routes that answer <code>/&lt;CODE&gt;</code> and <code>/?t=&lt;code&gt;</code>
+with the gate page.</p>
+</li>
+</ul>
+<p>The installer fills <code>__GATE_PAGE__</code> from <code>deploy/gate-page.html</code> in the package, and reads that
+file only when your template names it.</p>
 <p>You also want a wildcard DNS record (<code>*.dev.example.com</code>) pointing at the box, so a new
 project needs no registrar visit, and sshd running <code>GatewayPorts no</code>.</p>
 <h4 id="linking-the-books-the-build-produces">Linking the books the build produces</h4>
@@ -1293,8 +1323,8 @@ omits them.</p>
 </tr>
 </tbody></table>
 <h4 id="global-keys--one-link-for-every-workspace">Global keys — one link for every workspace</h4>
-<p>The links above hand one workspace to one device, and sessions live in the dev server&#39;s
-memory, so every restart, and every extra project, means another redemption. With several
+<p>The links above hand one workspace to one device, so every extra project means another
+redemption, and a link only brings its browser back after a restart for a day. With several
 projects tunnelled through one box, that is the recurring cost. The box can instead hold two
 machine-wide keys:</p>
 <table>
@@ -1360,7 +1390,7 @@ place, so an unsaved edit is never lost to a reload, and so does the haltija bri
 reconnection. &quot;Own page&quot; takes evidence: <code>Sec-Fetch-Site: same-origin</code>, or an <code>Origin</code> that is
 this host. A request from another workspace&#39;s page gets nothing though it carries the same
 cookie, and so does one with neither header (a script, <code>curl</code>). A session opened from a plain
-<code>--link</code> holds no key, so a restart still ends it. A session started from the view key can browse and never save, never
+<code>--link</code> holds no key, but it comes back the same way for a day: see &quot;Restarts&quot; below. A session started from the view key can browse and never save, never
 drive the page with an agent.</p>
 <p><strong>Use long keys.</strong> The box compares them with no rate limit in front, unlike the link codes,
 so both must be at least 24 letters, digits, <code>-</code> or <code>_</code>; the installer refuses a shorter edit
@@ -1415,6 +1445,36 @@ other value accepts neither key and says so at launch.</p>
 (<code>/var/log/caddy/preview.log</code>), and Caddy keeps cookies out of it. Versions before 1.16.28
 logged them: if you ever visited <code>?t=&lt;key&gt;</code> on such a box, scrub or delete the old logs
 (<code>preview*.log*</code>), or rotate the key.</p>
+<h4 id="restarts-a-link-keeps-its-browser-in-for-a-day">Restarts: a link keeps its browser in for a day</h4>
+<p>Sessions live in the dev server&#39;s memory and are never written to disk, and <code>bun start</code>
+restarts on any edit to a file in its import graph. So a plain <code>--link</code> or <code>--share</code> session
+used to end at the developer&#39;s next save, and the reader needed a new link. Now a link redeemed
+through the tunnel also sets a <strong>link pass</strong>: a cookie holding the link&#39;s kind (edit, or
+read-only for <code>--share</code>), the workspace host, and an expiry 24 hours later, HMAC-signed with a
+secret this project keeps on disk. After a restart the next page load, or the next request
+from the page that was open (a save, the haltija bridge), trades the pass for a fresh session,
+exactly as a global key is traded, so an unsaved edit is not lost to a reload.</p>
+<ul>
+<li><strong>Kind</strong>: the link&#39;s. A share link&#39;s pass only ever opens a read-only session.</li>
+<li><strong>Host</strong>: the workspace it was issued on. The cookie is <code>__Host-tosi_link_pass</code> (host-only,
+<code>Secure</code>, <code>HttpOnly</code>, <code>Path=/</code>), so the browser sends it nowhere else and a sibling host
+cannot set one, and the server checks the signed host against the request&#39;s.</li>
+<li><strong>Expiry</strong>: 24 hours after the link was opened, never extended. A session it mints lasts only
+as long as the pass has left. Past that, a restart walls the browser and it needs a new link.</li>
+<li><strong>The secret</strong> is <code>.tosijs-dev/session-secret</code> in the project root: created on the first
+redeemed link with mode <code>0600</code> in a <code>0700</code> folder, with its own <code>.gitignore</code> so it is never
+committed in any repo. The dev server refuses to start if that file can be read by anyone
+else (<code>chmod 600</code> it) or if the output folder would contain it.</li>
+<li><strong>Revoking</strong>: delete the secret file. Every pass it signed stops opening anything on the next
+request, and the next redeemed link makes a new one. Sessions already open run on until the
+next restart, as they always did.</li>
+</ul>
+<p><strong>What it costs.</strong> Before link passes, nothing about a link session outlived the process: a
+stolen session cookie died with the server. A stolen link pass opens that workspace, with the
+link&#39;s kind, for the rest of its day, across restarts, until you delete the secret. It is as
+hard to steal as the session cookie beside it (<code>HttpOnly</code>, <code>Secure</code>); anyone who can read the
+secret file can sign passes of their own, which is why it is owner-only and outside the served
+folder. A granting (<code>--global</code>) link does not set one: its key cookie already outlasts restarts.</p>
 <h4 id="the-token-is-eight-letters-and-you-can-type-it">The token is eight letters, and you can type it</h4>
 <p><code>--link</code> prints the URL <strong>and the code on its own line</strong>, because on the device this exists
 for you are not pasting anything — you are reading characters off one screen and entering
@@ -1489,8 +1549,13 @@ guesser can test codes there faster than at the workspace. At a sustained 2,000 
 second for a code&#39;s whole five minutes, the odds of hitting a given live code are about <strong>1 in
 100,000</strong>, against 1 in 18 million at the workspace. That was judged worth it for typing a short
 link on a headset (the maintainer&#39;s call, 1.16.33). Short-link codes appear in the box&#39;s
-access log as paths, unredacted; a code there is spent or expired within five minutes, but keep
-the log readable only by root and the Caddy user, as it is on a stock install.</p>
+access log as paths, unredacted; a code there is spent or expired within five minutes. Keep the
+log readable only by root and the Caddy user. Caddy 2.6 (Debian&#39;s) has no setting for a log
+file&#39;s mode, so <code>tosijs-caddy-install --go</code> takes group and other access off every
+<code>/var/log/caddy/preview*.log*</code> that exists when it runs. That is what is guaranteed: the files
+present at install time. A log Caddy creates afterwards (the first one on a new box, or the next
+file when it rolls) gets whatever mode Caddy gives it, so check with <code>ls -l /var/log/caddy</code>, or
+re-run <code>--go</code> once Caddy has written the log.</p>
 <p>The <strong>session</strong> token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;
 only the half a human has to transcribe got shorter.</p>
@@ -2326,6 +2391,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-r93rfmtm.js"></script>
+  <script type="module" src="../hydrate-2en1dn39.js"></script>
 </body>
 </html>

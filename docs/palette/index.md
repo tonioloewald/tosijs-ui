@@ -102,11 +102,13 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
   search.
 - `timeout` — milliseconds before a slow source is abandoned (default 10000).
 - `sources`, `renderers`, `rank`, `quickLinks` — described above.
-- `value` — the query.
+- `value` — the query. Setting it from code puts it in the field (and searches, when the
+  palette is open), so `open()` after setting `value` starts from that query.
 
 - `trigger` — what shows on the page: `field` (default) the search-field pill, which shrinks
   to its icon when it has less than `compactWidth` pixels (160); `icon`, always just the icon;
-  `none`, nothing at all, for a palette opened from code or its `shortcut`.
+  `none`, nothing at all, for a palette opened from code or its `shortcut`. Any other value
+  falls back to `field`, with one console warning naming the value.
 
 `open()`, `close()` and `search(query)` drive it from code, so any button can open it. Pressing Enter with no result
 chosen fires `action` with `{ query }` as its detail, so a multiline prompt can be submitted.

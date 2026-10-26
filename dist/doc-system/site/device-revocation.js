@@ -13,7 +13,7 @@ cost of refusing is small and the alternative is honouring a pass that may be re
 
 A 404 is an empty list: a box that has never revoked anything has no file.
 */
-import { DEVICE_ID_PATTERN } from './dev-auth.js';
+import { DEVICE_ID_PATTERN, revokeDeviceSessions, } from './dev-auth.js';
 /** How long a fetched list is used before the next request fetches it again. */
 export const REVOCATION_FRESH_MS = 60 * 1000;
 /** How long the last good list is still trusted when a fetch fails. */
@@ -121,4 +121,37 @@ export function revocationList(opts) {
         refresh,
         domains: () => [...new Set([...cache.keys(), ...failedAt.keys()])],
     };
+}
+/*
+THE SWEEP is the only thing that ends a writing session a revoked device already holds. A request
+carrying a live writing session never consults the list (the dev server's `withKeySession`
+short-circuits it, because a key adds nothing to a session that can already write), so without
+this a revoked device would keep writing until its session expired or the server restarted.
+*/
+/**
+ * One sweep: refresh the list for every domain a pass has been checked for, and end the sessions
+ * of every device on a list that could be read. Resolves to how many sessions it ended.
+ */
+export async function sweepRevocations(list, auth) {
+    let ended = 0;
+    for (const revoked of await Promise.all(list.domains().map((domain) => list.refresh(domain)))) {
+        if (revoked)
+            ended += revokeDeviceSessions(auth, revoked);
+    }
+    return ended;
+}
+/**
+ * Sweep every `REVOCATION_FRESH_MS`. `every` is `setInterval` unless a test passes its own; the
+ * timer is unref'd so it never holds a process open.
+ */
+export function startRevocationSweep(opts) {
+    const every = opts.every ?? setInterval;
+    const timer = every(() => {
+        sweepRevocations(opts.list, opts.auth).then((ended) => {
+            if (ended)
+                opts.onEnded?.(ended);
+        });
+    }, REVOCATION_FRESH_MS);
+    if (timer && typeof timer.unref === 'function')
+        timer.unref();
 }

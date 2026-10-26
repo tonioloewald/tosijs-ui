@@ -103,11 +103,13 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
   search.
 - `timeout` — milliseconds before a slow source is abandoned (default 10000).
 - `sources`, `renderers`, `rank`, `quickLinks` — described above.
-- `value` — the query.
+- `value` — the query. Setting it from code puts it in the field (and searches, when the
+  palette is open), so `open()` after setting `value` starts from that query.
 
 - `trigger` — what shows on the page: `field` (default) the search-field pill, which shrinks
   to its icon when it has less than `compactWidth` pixels (160); `icon`, always just the icon;
-  `none`, nothing at all, for a palette opened from code or its `shortcut`.
+  `none`, nothing at all, for a palette opened from code or its `shortcut`. Any other value
+  falls back to `field`, with one console warning naming the value.
 
 `open()`, `close()` and `search(query)` drive it from code, so any button can open it. Pressing Enter with no result
 chosen fires `action` with `{ query }` as its detail, so a multiline prompt can be submitted.
@@ -147,6 +149,8 @@ const MODIFIER_ALIASES = {
     option: 'alt',
 };
 const warnedShortcuts = new Set();
+const TRIGGERS = ['field', 'icon', 'none'];
+const warnedTriggers = new Set();
 /** Does this keydown match a shortcut such as `mod+k` or `ctrl+shift+p`? */
 export function matchesShortcut(event, shortcut) {
     const parts = shortcut
@@ -511,7 +515,24 @@ export class TosiPalette extends withAttributes({
     renderers = {};
     rank = null;
     quickLinks = [];
-    value = '';
+    query = '';
+    /** The query. Setting it from code updates the field, and re-searches when open. */
+    get value() {
+        return this.query;
+    }
+    set value(query) {
+        query = String(query ?? '');
+        if (query === this.query)
+            return;
+        if (this.dialogElement?.open) {
+            this.search(query);
+        }
+        else {
+            this.query = query;
+            if (this.field)
+                this.field.value = query;
+        }
+    }
     /** What is listed now, in order. */
     results = [];
     active = -1;
@@ -690,7 +711,7 @@ export class TosiPalette extends withAttributes({
             this.field.replaceWith(field);
         else
             this.querySelector('.palette-field').append(field);
-        field.value = this.value;
+        field.value = this.query;
         this.field = field;
         return field;
     }
@@ -724,9 +745,11 @@ export class TosiPalette extends withAttributes({
     }
     /** Run every source for `query`, listing results as each answers. */
     search(query) {
-        if (this.field && this.field.value !== query)
+        if (this.field && this.field.value !== query) {
             this.field.value = query;
-        this.value = query;
+            this.grow();
+        }
+        this.query = query;
         const clear = this.querySelector('.palette-clear');
         if (clear)
             clear.hidden = query === '';
@@ -871,14 +894,26 @@ export class TosiPalette extends withAttributes({
     /** Enter with nothing chosen: hand the query itself to whoever listens. */
     submit() {
         this.dispatchEvent(new CustomEvent('action', {
-            detail: { query: this.value },
+            detail: { query: this.query },
             bubbles: true,
         }));
     }
+    /** `trigger`, or `field` (with one console warning per value) when it is not one we know. */
+    get triggerMode() {
+        const trigger = String(this.trigger);
+        if (TRIGGERS.includes(trigger))
+            return trigger;
+        if (!warnedTriggers.has(trigger)) {
+            warnedTriggers.add(trigger);
+            console.warn(`tosi-palette: unknown trigger "${trigger}"; using "field" (expected ${TRIGGERS.join(', ')})`);
+        }
+        return 'field';
+    }
     render() {
         super.render();
-        this.classList.toggle('-icon', this.trigger === 'icon' || (this.trigger === 'field' && this.compact));
-        this.classList.toggle('-no-trigger', this.trigger === 'none');
+        const mode = this.triggerMode;
+        this.classList.toggle('-icon', mode === 'icon' || (mode === 'field' && this.compact));
+        this.classList.toggle('-no-trigger', mode === 'none');
         const label = this.querySelector('.palette-trigger-label');
         if (label)
             label.textContent = this.placeholder;

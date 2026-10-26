@@ -1,3 +1,4 @@
+import { type AuthState } from './dev-auth.js';
 /** How long a fetched list is used before the next request fetches it again. */
 export declare const REVOCATION_FRESH_MS: number;
 /** How long the last good list is still trusted when a fetch fails. */
@@ -38,3 +39,20 @@ export declare function revocationList(opts: {
      */
     onChange?: (domain: string, problem: string | null) => void;
 }): RevocationList;
+/**
+ * One sweep: refresh the list for every domain a pass has been checked for, and end the sessions
+ * of every device on a list that could be read. Resolves to how many sessions it ended.
+ */
+export declare function sweepRevocations(list: RevocationList, auth: AuthState): Promise<number>;
+/**
+ * Sweep every `REVOCATION_FRESH_MS`. `every` is `setInterval` unless a test passes its own; the
+ * timer is unref'd so it never holds a process open.
+ */
+export declare function startRevocationSweep(opts: {
+    list: RevocationList;
+    auth: AuthState;
+    onEnded?: (sessions: number) => void;
+    every?: (tick: () => void, ms: number) => {
+        unref?: () => unknown;
+    } | void;
+}): void;

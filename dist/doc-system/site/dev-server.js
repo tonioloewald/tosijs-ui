@@ -22,9 +22,10 @@ import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { invitePageHtml } from './invite-page.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, linkRejection, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantCookies, readPass, revokeDeviceSessions, mintDeviceId, cleanDeviceLabel, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, resolveGrantTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, GLOBAL_KEY_SESSION_TTL_MS, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, linkRejection, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, globalKeyCookie, grantCookies, readPass, revokeDeviceSessions, mintDeviceId, cleanDeviceLabel, grantDomainFor, takeSessionGrant, outstandingGrants, MAX_OUTSTANDING_GRANTS, resolveShareTtlMs, resolveGrantTtlMs, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, sameOriginPath, isSameOriginRequest, validSessionCookie, sessionRejection, haltijaBridgeAdmission, isProxiedRequest, sourceRequestAdmission, trustLanRefusalHint, trustLanWriteRecord, resolveLanTrust, describeLanTrust, resolveGlobalKeys, globalKeyAccess, globalKeyExchange, globalKeyRefresh, liveProbeOrigin, issueSession, cookieMayWrite, keyedSessionTtlMs, linkPassCookie, readLinkPass, SESSION_COOKIE, } from './dev-auth.js';
 import { readLocalSecret } from './local-secrets.js';
-import { revocationList, REVOCATION_FRESH_MS } from './device-revocation.js';
+import { assertSecretNotServed, ensureSessionSecret, readSessionSecret, sessionSecretPath, } from './session-secret.js';
+import { revocationList, startRevocationSweep } from './device-revocation.js';
 import { resolveDataStore, resolveDataFile, dataContentProblem, listDataFiles, saveDataFile, dataHistory, readDataAt, isGitWorkTree, } from './data-store.js';
 import { SOURCE_ACCESS_HEADER, SOURCE_ENDPOINT_SNIPPET, } from '../../live-example/source-access.js';
 /**
@@ -768,9 +769,10 @@ export async function devServer(config, opts = {}) {
     a durable SESSION cookie that never appears in a URL. See dev-auth.ts for why that
     asymmetry is the whole design.
   
-    In memory on purpose: a dev server restart invalidating sessions is a feature, not a
-    gap — the credential's lifetime should not outlive the process that granted it, and
-    re-linking is one command.
+    Sessions are in memory and never written to disk. What survives a restart is a signed pass:
+    the global key's for a key holder, and since #3416 a day-long LINK PASS for a plain link
+    (see dev-auth.ts), each traded for a fresh session after the restart. Re-linking every time
+    `bun start` restarted on an edit was the cost the in-memory rule turned out to have.
     */
     const auth = createAuthState();
     /*
@@ -924,11 +926,30 @@ export async function devServer(config, opts = {}) {
         };
     };
     if (revocations) {
-        setInterval(() => {
-            for (const domain of revocations.domains())
-                revocations.refresh(domain).then(endRevoked);
-        }, REVOCATION_FRESH_MS).unref();
+        startRevocationSweep({
+            list: revocations,
+            auth,
+            onEnded: (ended) => console.log(`🔒 ${ended} session(s) ended: device revoked`),
+        });
     }
+    /*
+    Link passes (dev-auth.ts, LINK PASSES): a redeemed plain link survives a restart for a day,
+    signed with a per-project secret on disk (session-secret.ts). Only a tunnelled workspace issues
+    or reads them. Checked at launch, like lanTrust: a secret others can read, or one inside the
+    served folder, stops the server here rather than on the first request that needs it.
+    */
+    const linkSecretFile = hasTunnel(config)
+        ? sessionSecretPath(PROJECT_ROOT)
+        : null;
+    if (linkSecretFile) {
+        assertSecretNotServed(linkSecretFile, PUBLIC);
+        readSessionSecret(linkSecretFile);
+    }
+    /** This request's link pass, if it is good for the host it arrived on. Read per use, so
+     * deleting the secret file ends every pass at once. */
+    const linkPassOf = (request) => linkSecretFile
+        ? readLinkPass(request.headers.get('cookie'), readSessionSecret(linkSecretFile), request.headers.get('host'), Date.now())
+        : null;
     // Checked at launch, like lanTrust: a bad folder or format stops the server here (#3365).
     const dataStore = resolveDataStore(config.editableData, PROJECT_ROOT, config.outputDir ?? 'docs');
     if (dataStore?.commit && !isGitWorkTree(dataStore.root)) {
@@ -1802,20 +1823,25 @@ export async function devServer(config, opts = {}) {
             cookieMayWrite(auth, held))
             return handle(request, srv);
         const { device, revoked } = await passCheck(request.headers.get('cookie'));
-        const grant = globalKeyRefresh(request, {
-            viaTunnel: true,
-            host: request.headers.get('host') ?? '',
+        const keyOpts = {
             auth,
             keys: globalKeys.keys,
             now: Date.now(),
             revoked,
+            linkPass: linkPassOf(request),
+        };
+        const grant = globalKeyRefresh(request, {
+            ...keyOpts,
+            viaTunnel: true,
+            host: request.headers.get('host') ?? '',
         });
         if (!grant)
             return handle(request, srv);
-        const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
+        const ttlMs = keyedSessionTtlMs(grant, request.headers.get('cookie'), keyOpts);
+        const session = issueSession(auth, keyOpts.now, ttlMs, grant === 'view');
         if (device)
             auth.sessionDevices.set(session, device);
-        const setCookie = sessionCookie(session, GLOBAL_KEY_SESSION_TTL_MS);
+        const setCookie = sessionCookie(session, ttlMs);
         const headers = new Headers(request.headers);
         const others = (headers.get('cookie') ?? '')
             .split(';')
@@ -1825,7 +1851,7 @@ export async function devServer(config, opts = {}) {
         headers.set('cookie', [...others, setCookie.split(';')[0]].join('; '));
         if (!renewalLogged) {
             renewalLogged = true;
-            console.log(`🔓 global ${grant} key — session renewed after a restart`);
+            console.log(`🔓 ${grant} session renewed after a restart`);
         }
         const response = await handle(new Request(request, { headers }), srv && upgraderSettingCookie(srv, setCookie));
         // An accepted upgrade answers with nothing; its cookie went out on the 101.
@@ -1979,23 +2005,26 @@ export async function devServer(config, opts = {}) {
             const { device, revoked } = viaTunnel
                 ? await passCheck(request.headers.get('cookie'))
                 : { device: null, revoked: null };
-            const grant = globalKeyExchange(request, {
-                viaTunnel,
+            // A link pass is a key of its kind here (dev-auth.ts, LINK PASSES).
+            const keyOpts = {
                 auth,
                 keys: globalKeys.keys,
                 now: Date.now(),
                 revoked,
-            });
+                linkPass: viaTunnel ? linkPassOf(request) : null,
+            };
+            const grant = globalKeyExchange(request, { ...keyOpts, viaTunnel });
             if (grant) {
-                const session = issueSession(auth, Date.now(), GLOBAL_KEY_SESSION_TTL_MS, grant === 'view');
+                const ttlMs = keyedSessionTtlMs(grant, request.headers.get('cookie'), keyOpts);
+                const session = issueSession(auth, keyOpts.now, ttlMs, grant === 'view');
                 if (device)
                     auth.sessionDevices.set(session, device);
-                console.log(`🔓 global ${grant} key — session issued`);
+                console.log(`🔓 ${grant} session issued for a key or link pass`);
                 return new Response(null, {
                     status: 302,
                     headers: {
                         Location: sameOriginPath(request.url),
-                        'Set-Cookie': sessionCookie(session, GLOBAL_KEY_SESSION_TTL_MS),
+                        'Set-Cookie': sessionCookie(session, ttlMs),
                         'Referrer-Policy': 'no-referrer',
                         'Cache-Control': 'no-store',
                     },
@@ -2015,8 +2044,8 @@ export async function devServer(config, opts = {}) {
                 /*
                 SAY WHICH of the two happened.
         
-                Sessions live in memory and die with the process, deliberately: a credential should not
-                outlive the thing that granted it, and nothing about a session is ever written to disk.
+                Sessions live in memory and die with the process; a key or a link pass less than a day
+                old brings a reader back (above), so arriving here with a stale cookie means neither.
                 What was wrong is that a cookie from a previous run and a cookie we have never seen
                 produced the identical screen — so a reader whose server had restarted was told "invite
                 links expire" and reasonably concluded their COOKIE was expiring, which was the one
@@ -2096,6 +2125,13 @@ export async function devServer(config, opts = {}) {
                 // Revoking the device ends this session too.
                 if (keyCookies.length && grant?.device)
                     auth.sessionDevices.set(session, grant.device);
+                /*
+                A plain link also leaves a link pass, so a restart in the next 24 hours does not wall this
+                browser (dev-auth.ts, LINK PASSES). Not for a granting link, whose key cookie already
+                outlasts restarts, and only over the tunnel, the one place a pass is read.
+                */
+                if (viaTunnel && linkSecretFile && !keyCookies.length)
+                    reply.append('Set-Cookie', linkPassCookie(auth.readOnly.has(session) ? 'view' : 'edit', request.headers.get('host') ?? '', ensureSessionSecret(linkSecretFile), arrivedAt));
                 console.log(keyCookies.length
                     ? `🔓 link redeemed — session issued, and the global ${grant.key} ${grant.device ? `pass (device ${grant.device})` : 'key'} set for ${grant.domain}`
                     : '🔓 edit link redeemed — session issued');

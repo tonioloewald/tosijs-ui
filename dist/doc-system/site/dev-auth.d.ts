@@ -28,11 +28,13 @@ export type LinkPolicy = 'window' | 'single-use';
 /**
  * Sessions are the durable half — long enough that you are not re-linking daily.
  *
- * Durable WITHIN a process, which is the whole design and not an oversight: the credential's
- * lifetime should not outlive the process that granted it, and nothing about a session is ever
- * written to disk. What was wrong is that a stale cookie was indistinguishable from a forged
- * one, so a reader whose server had restarted was told "link required" and reasonably concluded
- * their cookies were expiring — the one explanation the evidence ruled out (tosijs-ui#114).
+ * The session itself is durable only WITHIN a process: the token lives in memory and is never
+ * written to disk. That used to be the whole story, argued as "a credential should not outlive
+ * the process that granted it" — but `bun start` restarts on any edit in its import graph, so in
+ * practice it meant a reader lost their session to the developer's own saves. A redeemed link now
+ * also sets a signed LINK PASS (see LINK PASSES) that mints a fresh session after a restart, for
+ * 24 hours from redemption. Past that, a restart still ends access, and a cookie from a previous
+ * run is told apart from a forged one so the page can say why (tosijs-ui#114).
  */
 export declare const SESSION_TTL_MS: number;
 /**
@@ -92,8 +94,15 @@ export declare function normalizeLinkToken(token: string): string;
 /** Constant-time compare that tolerates unequal lengths without throwing. */
 export declare function safeEqual(a: string, b: string): boolean;
 export interface AuthState {
-    /** unspent link tokens → when they expire */
-    links: Map<string, number>;
+    /**
+     * unspent link tokens → when they expire.
+     *
+     * READ-ONLY on purpose: a code leaves only through `dropLink`, which records why in `retired`.
+     * A path that deleted one directly (a future revoke, say) would have its holders told "check
+     * for a typo" about a code that was killed on purpose (board #3506). `issueLink` and `dropLink`
+     * are the only writers; dev-auth.test.ts holds that.
+     */
+    links: ReadonlyMap<string, number>;
     /** live session tokens → when they expire */
     sessions: Map<string, number>;
     /**
@@ -245,6 +254,25 @@ export declare function cleanDeviceLabel(label: unknown): string;
 export declare function signPass(pass: DevicePass, key: string): string;
 /** The pass in this cookie header, if it is signed with `key` and unexpired; else null. */
 export declare function readPass(cookieHeader: string | null | undefined, key: string | undefined, now: number): DevicePass | null;
+/** `__Host-`: the browser keeps it to the host that set it, and no sibling can set one. */
+export declare const LINK_PASS_COOKIE = "__Host-tosi_link_pass";
+export declare const LINK_PASS_TTL_MS: number;
+export interface LinkPass {
+    kind: 'edit' | 'view';
+    host: string;
+    /** ms since the epoch */
+    exp: number;
+}
+/** A Host header as a pass records it: lowercase, no port, no trailing dot. */
+export declare function passHost(host: string | null | undefined): string;
+export declare function signLinkPass(pass: LinkPass, secret: string): string;
+/** The Set-Cookie for a pass of `kind`, issued now on `host`. */
+export declare function linkPassCookie(kind: LinkPass['kind'], host: string, secret: string, now: number): string;
+/**
+ * The link pass on this request, if `secret` signed it for this `host` and it is unexpired;
+ * else null. A null secret (none created yet) means no pass can be good.
+ */
+export declare function readLinkPass(cookieHeader: string | null | undefined, secret: string | null | undefined, host: string | null | undefined, now: number): LinkPass | null;
 /** End every session minted from a pass for a device that is now revoked. */
 export declare function revokeDeviceSessions(state: AuthState, revoked: ReadonlySet<string>): number;
 /**
@@ -548,7 +576,17 @@ interface KeyOpts {
     now: number;
     /** See PassCheck: omitted or null, no edit pass is honoured. */
     revoked?: ReadonlySet<string> | null;
+    /**
+     * The request's link pass, already checked with `readLinkPass` against this host (see LINK
+     * PASSES). It counts as a key of its kind.
+     */
+    linkPass?: LinkPass | null;
 }
+/**
+ * How long a session minted for `grant` lives: a day when a global key grants it, and no longer
+ * than the link pass has left when only the pass does, so a pass never stretches its own day.
+ */
+export declare function keyedSessionTtlMs(grant: 'edit' | 'view', header: string | null, opts: KeyOpts): number;
 export declare function globalKeyExchange(request: {
     method: string;
     headers: {

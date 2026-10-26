@@ -145,7 +145,7 @@ export class TosiSidenav extends withAttributes({
         }
         this.releaseTransition();
     };
-    observer;
+    observer = null;
     connectedCallback() {
         super.connectedCallback();
         this.contentVisible = this.parts.content.childNodes.length === 0;
@@ -190,7 +190,8 @@ export class TosiSidenav extends withAttributes({
     transitionSuppressed = true;
     disconnectedCallback() {
         super.disconnectedCallback();
-        this.observer.disconnect();
+        this.observer?.disconnect();
+        this.observer = null;
     }
     render() {
         super.render();

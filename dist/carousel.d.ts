@@ -145,6 +145,7 @@ export declare class TosiCarousel extends TosiCarousel_base {
     handleDotClick: (event: Event) => void;
     private snapTimer;
     private animationFrame;
+    private cancelAnimation;
     animateScroll(position: number, startingPosition?: number, timestamp?: number): void;
     content: () => HTMLDivElement[];
     connectedCallback(): void;

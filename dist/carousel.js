@@ -134,8 +134,7 @@ export class TosiCarousel extends withAttributes({
         if (!this.hydrated)
             return;
         const { scroller } = this.parts;
-        cancelAnimationFrame(this.animationFrame);
-        this.animationFrame = null;
+        this.cancelAnimation();
         scroller.scrollLeft = this.page * scroller.offsetWidth;
     };
     _page = 0;
@@ -326,9 +325,14 @@ export class TosiCarousel extends withAttributes({
         }
     };
     snapTimer;
-    animationFrame;
+    animationFrame = null;
+    cancelAnimation() {
+        if (this.animationFrame !== null)
+            cancelAnimationFrame(this.animationFrame);
+        this.animationFrame = null;
+    }
     animateScroll(position, startingPosition = -1, timestamp = 0) {
-        cancelAnimationFrame(this.animationFrame);
+        this.cancelAnimation();
         const { scroller } = this.parts;
         if (startingPosition === -1) {
             startingPosition = scroller.scrollLeft;

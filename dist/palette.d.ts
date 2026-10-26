@@ -15,6 +15,7 @@ export type PaletteSource = (query: string, context: {
     palette: TosiPalette;
 }) => PaletteResult[] | null | undefined | Promise<PaletteResult[] | null | undefined>;
 export type PaletteRenderer = (result: PaletteResult, query: string) => Element;
+export type PaletteTrigger = 'field' | 'icon' | 'none';
 /** Does this keydown match a shortcut such as `mod+k` or `ctrl+shift+p`? */
 export declare function matchesShortcut(event: KeyboardEvent, shortcut: string): boolean;
 /** The shortcut as a person reads it: `mod+k` is ⌘K on a Mac, Ctrl K elsewhere. */
@@ -42,7 +43,10 @@ export declare class TosiPalette extends TosiPalette_base {
     renderers: Record<string, PaletteRenderer>;
     rank: ((results: PaletteResult[], query: string) => PaletteResult[]) | null;
     quickLinks: PaletteResult[];
-    value: string;
+    private query;
+    /** The query. Setting it from code updates the field, and re-searches when open. */
+    get value(): string;
+    set value(query: string);
     /** What is listed now, in order. */
     results: PaletteResult[];
     private active;
@@ -84,6 +88,8 @@ export declare class TosiPalette extends TosiPalette_base {
     choose(result: PaletteResult): void;
     /** Enter with nothing chosen: hand the query itself to whoever listens. */
     private submit;
+    /** `trigger`, or `field` (with one console warning per value) when it is not one we know. */
+    private get triggerMode();
     render(): void;
 }
 export declare const tosiPalette: ElementCreator<TosiPalette>;

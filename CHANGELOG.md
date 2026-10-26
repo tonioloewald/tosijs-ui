@@ -1,5 +1,65 @@
 # Changelog
 
+## 1.16.35
+
+Board follow-ups from 1.16.32 and 1.16.33, plus one tunnel feature. Nothing to change in an
+adopter's product. **Tunnel users:** a plain `--link` / `--share` now keeps its browser in
+across a dev-server restart for 24 hours, and the dev server writes a signing secret to
+`.tosijs-dev/` in your project (it gitignores itself). **Box operators:** re-run
+`tosijs-caddy-install --go` to tighten the access-log permissions; the dry run no longer
+prints old keys.
+
+### Tunnel
+
+- **A link survives a restart (#3416).** Redeeming a plain `--link` or `--share` link also
+  sets a signed pass (`__Host-tosi_link_pass`: kind, workspace host, expiry 24 hours after
+  redemption, HMAC-SHA256 with a per-project secret). After a restart, the next page load or
+  same-origin request trades it for a fresh session of the same kind, the way a `--global`
+  key is traded. A share link's pass stays read-only, a pass works only on the host it was
+  issued for, and a session it mints never outlives it.
+- **What that costs.** Until now nothing about a link session outlived the process, so a
+  stolen session cookie died with the server. A stolen pass now works for the rest of its 24
+  hours, across restarts. To revoke every pass at once, delete
+  `.tosijs-dev/session-secret`. The secret is created 0600 in a 0700 folder, and the dev
+  server refuses to start if it is readable by others or sits inside the output folder.
+- **The "dev server restarted" page** now says a link keeps its browser in for 24 hours,
+  instead of claiming sessions are never written to disk.
+
+### Preview box
+
+- **The dry run no longer prints old keys (#3502).** `tosijs-caddy-install` redacted only the
+  current keys from preview.env, but the diff's removed lines come from the live Caddyfile, so
+  after a rotation the previous `PREVIEW_TOKEN` / `PREVIEW_EDIT_TOKEN` printed in clear. Every
+  value in a key position (`tosi_preview=`, `tosi_edit=`, `query t=`) on either side is now
+  blanked wherever it appears, comments included, and so is the refusal that names leftover
+  placeholders.
+- **Access logs.** `--go` takes group and other access off the existing preview access logs
+  (`/var/log/caddy/preview*.log*`, symlinks skipped), which record short-link codes. Caddy 2.6
+  has no log mode, so a log Caddy creates after the install gets Caddy's own mode;
+  doc-site-system.md says exactly what is covered.
+- **Paths with a space.** The installer found neither its template nor the gate page when the
+  package lived under a path with a space (`new URL().pathname` kept `%20`).
+- **Gate page.** The installer reads `deploy/gate-page.html` only when the template names
+  `__GATE_PAGE__`, and refuses a missing one with a message instead of a stack trace.
+- **Custom templates.** doc-site-system.md now says a custom `--template` keeps its old gate
+  page and never serves short links, and lists the lines to copy from `deploy/Caddyfile`.
+
+### Components
+
+- **`<tosi-table>` with no data.** `columns` returned a new `[]` on every read, and
+  `table.value = { ...table.value, array }` stored that `[]` as the columns, fixing the table
+  at zero columns for the data that followed. The empty list is now one per table, and handing
+  it back means "infer".
+- **`<tosi-palette>`.** An unknown `trigger` value falls back to `field` as before, but now
+  warns once per value, naming it and the fallback. Setting `value` from code was ignored once
+  the query field existed; it now updates the field, and searches again if the palette is
+  open.
+- **Doc browser.** Choosing a palette section result while the source editor held unsaved
+  edits, and dismissing the confirm, still rewrote the URL to the target's `#anchor` and
+  scrolled. Now nothing moves when navigation is refused.
+- **`<tosi-crud>` docs** describe `close()`, the Close button, the one-column narrow layout and
+  `TosiCrud.NARROW_WIDTH`.
+
 ## 1.16.34
 
 Spinning icons keep spinning while the page is busy, which is the only time a loader is on
