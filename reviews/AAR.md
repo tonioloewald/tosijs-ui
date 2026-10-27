@@ -930,3 +930,22 @@ gap, recorded rather than hidden.
   then "a CSS filter"); a screenshot early would have saved two of them.
 - **Publish:** approved inside the 60-minute window for once; the workflow's own verify passed and
   the published `dist/` is identical to the tagged tree.
+
+## 1.16.38 (2026-10-27)
+
+- **What it was:** the ePub bound no local images (#3519), so every figure in a 732-figure book
+  was broken in every reader. Images are now copied into the book, listed once in the manifest, and
+  an unbindable one fails a `strict` build (the maintainer's call).
+- **Provenance:** the first commit came from the downstream book project's agent before it had
+  adopted the coding practices. Its message has no blank line after the subject, so its `[fix]`
+  bullet sat in the subject and `release-check` could not see it. The gate's miss is structural: it
+  trusts commit-body layout it does not check.
+- **The review caught:** the first cut matched `<img>` with a regex that missed entity-encoded,
+  unquoted and `srcset` sources, and could match `src=` inside another attribute. It also missed
+  relative srcs and left `.epub-build/` behind on a strict failure. All were fixed before tagging.
+- **The gate missed:** the ePub was not accessible either (no a11y metadata, empty alt everywhere).
+  The same downstream project filed that within hours (#3520–#3522), along with the theme asks (#3525,
+  #3526). A real adopter with a real book exercises the ePub path harder than this repo's corpus,
+  which has no images at all.
+- **Publish:** approved inside the window; the workflow verified, and the published `dist/` is
+  identical to the tagged tree.
