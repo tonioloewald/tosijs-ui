@@ -247,23 +247,39 @@ const IMAGE_MEDIA_TYPES = {
     '.svg': 'image/svg+xml',
     '.webp': 'image/webp',
 };
+/** The five entities an attribute value can carry, and numeric references. */
+function decodeAttr(value) {
+    return value.replace(/&(?:#(\d+)|#x([\da-f]+)|(amp|lt|gt|quot|apos));/gi, (match, dec, hex, name) => dec
+        ? String.fromCodePoint(Number(dec))
+        : hex
+            ? String.fromCodePoint(parseInt(hex, 16))
+            : { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[name.toLowerCase()] ?? match);
+}
+// An `<img>` tag, with `>` allowed inside quoted attribute values (`alt="a > b"`).
+const IMG_TAG = /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+// One attribute of a tag: name, then a double-, single- or un-quoted value.
+const ATTRIBUTE = /(\s)([^\s=>/"']+)(\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g;
 /**
- * Rewrite root-absolute `<img src>` to book-local paths, registering each file in
- * `images` (keyed by absolute source path, so a figure used twice is bound once).
- * Srcs that cannot be bound are added to `unbound` and left untouched.
+ * Rewrite the local images in `html` (`<img src>` and each `srcset` candidate) to book-local
+ * paths, registering each file in `images` (keyed by absolute source path, so a figure used
+ * twice is bound once). Root-absolute srcs have `basePath` stripped; relative ones resolve
+ * against `pagePath`, the page's own site path. Local srcs that cannot be bound are added to
+ * `unbound` and left untouched. Not handled: `<picture><source>` and SVG `<image>`.
  */
 export function embedLocalImages(html, webRoot, basePath, images, unbound = new Set(), 
 // the page's own site path, for relative srcs; '/' for the root page
 pagePath = '/') {
     const root = path.resolve(webRoot);
     const bp = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : '';
-    return html.replace(/<img\b[^>]*>/gi, (tag) => tag.replace(/(\ssrc\s*=\s*)(["'])(.*?)\2/i, (match, lead, quote, src) => {
+    // the book-local path for one src, or null to leave it as it is
+    const bind = (src) => {
         // remote (any scheme, or protocol-relative) and data: stay as they are
         if (!src || /^[a-z][a-z\d+.-]*:/i.test(src) || src.startsWith('//'))
-            return match;
+            return null;
+        const fragment = /#.*$/.exec(src)?.[0] ?? '';
         let p = src.replace(/[?#].*$/, '');
         if (!p)
-            return match;
+            return null;
         if (p.startsWith('/')) {
             if (bp && (p === bp || p.startsWith(bp + '/')))
                 p = p.slice(bp.length);
@@ -286,7 +302,7 @@ pagePath = '/') {
             !fs.existsSync(source) ||
             !fs.statSync(source).isFile()) {
             unbound.add(src);
-            return match;
+            return null;
         }
         let image = images.get(source);
         if (!image) {
@@ -305,7 +321,38 @@ pagePath = '/') {
             image = { file, mediaType, source };
             images.set(source, image);
         }
-        return `${lead}${quote}${image.file}${quote}`;
+        // A fragment names a part of the file (an SVG sprite), so it travels with it.
+        return image.file + fragment;
+    };
+    return html.replace(IMG_TAG, (tag) => tag.replace(ATTRIBUTE, (match, space, name, eq, dq, sq, bare) => {
+        const attr = name.toLowerCase();
+        if (attr !== 'src' && attr !== 'srcset')
+            return match;
+        const raw = dq ?? sq ?? bare ?? '';
+        const quote = dq !== undefined ? '"' : sq !== undefined ? "'" : '"';
+        const value = decodeAttr(raw);
+        let rewritten;
+        if (attr === 'src') {
+            rewritten = bind(value);
+        }
+        else {
+            // `url 2x, url 640w`: bind each candidate, keep its descriptor
+            let changed = false;
+            const candidates = value.split(',').map((candidate) => {
+                const [url, ...descriptor] = candidate.trim().split(/\s+/);
+                const bound = bind(url);
+                if (bound === null)
+                    return candidate.trim();
+                changed = true;
+                return [bound, ...descriptor].join(' ');
+            });
+            rewritten = changed ? candidates.join(', ') : null;
+        }
+        // decoded above, so escaped again: a fragment or an untouched srcset candidate may
+        // carry `&` or a quote
+        return rewritten === null
+            ? match
+            : `${space}${name}${eq}${quote}${escapeXml(rewritten)}${quote}`;
     }));
 }
 // `pageUrl` is the live-site URL of THIS doc (already including baseUrl, basePath
@@ -508,8 +555,10 @@ async function zipEpub(buildDir, outputAbs) {
     await $ `find . -exec touch -t 202001010000 {} +`.cwd(buildDir).quiet();
     // 1) mimetype first, stored (-0), no extra fields (-X)
     await $ `zip -X0 ${outputAbs} mimetype`.cwd(buildDir).quiet();
-    // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D)
-    await $ `zip -Xr9D ${outputAbs} META-INF OEBPS -x mimetype`
+    // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D).
+    // Images that are already compressed are stored (-n): deflating a book's worth of JPEGs on
+    // every rebuild costs time and saves nothing.
+    await $ `zip -Xr9D -n .jpg:.jpeg:.png:.gif:.webp ${outputAbs} META-INF OEBPS -x mimetype`
         .cwd(buildDir)
         .quiet();
 }
@@ -694,6 +743,10 @@ export function versionAnchoredDate(version, override) {
         .toISOString()
         .replace(/\.\d+Z$/, 'Z');
 }
+/**
+ * Build the ePub for `config`'s corpus and return its path. Under `config.strict`, throws
+ * {@link EpubImageError} when a local image cannot be bound into the book.
+ */
 export async function buildEpub(config, opts = {}) {
     const projectVersion = await Bun.file(`${process.cwd()}/package.json`)
         .json()
@@ -882,8 +935,11 @@ export async function buildEpub(config, opts = {}) {
                 .map((s) => `      ${s}`)
                 .join('\n') +
             (list.length > 10 ? `\n      … and ${list.length - 10} more` : '');
-        if (config.strict)
+        if (config.strict) {
+            // nothing of this book is kept: a stray build folder would land in the site output
+            fs.rmSync(buildDir, { recursive: true, force: true });
             throw new EpubImageError(report);
+        }
         console.warn(report);
     }
     // Cover (explicit image, or generated from the title + favicon).

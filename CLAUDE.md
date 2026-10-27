@@ -1008,6 +1008,12 @@ GHSA-834v-8h66-3h79, which has no fixed 20.x. Nothing an adopter ships to a brow
 it. A peer that reaches an adopter's product (tosijs, marked) crossing a major is still the
 maintainer's decision.
 
+**Ruled for 1.16.38 (the maintainer's call):** under `strict`, a local image the ePub cannot bind
+fails the whole site build, even one the web pages show (an image only the deployed host
+serves). The book is the broken artifact there, and `strict` exists to stop broken artifacts
+shipping: the same ground as 1.16.15. No per-image opt-out; a site with host-only images turns
+off `strict` or `epub`.
+
 **Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
 about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
 removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a

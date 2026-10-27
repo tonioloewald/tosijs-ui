@@ -369,10 +369,33 @@ export interface BookImage {
   source: string
 }
 
+/** The five entities an attribute value can carry, and numeric references. */
+function decodeAttr(value: string): string {
+  return value.replace(
+    /&(?:#(\d+)|#x([\da-f]+)|(amp|lt|gt|quot|apos));/gi,
+    (match, dec?: string, hex?: string, name?: string) =>
+      dec
+        ? String.fromCodePoint(Number(dec))
+        : hex
+        ? String.fromCodePoint(parseInt(hex, 16))
+        : ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" } as any)[
+            name!.toLowerCase()
+          ] ?? match
+  )
+}
+
+// An `<img>` tag, with `>` allowed inside quoted attribute values (`alt="a > b"`).
+const IMG_TAG = /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi
+// One attribute of a tag: name, then a double-, single- or un-quoted value.
+const ATTRIBUTE =
+  /(\s)([^\s=>/"']+)(\s*=\s*)(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/g
+
 /**
- * Rewrite root-absolute `<img src>` to book-local paths, registering each file in
- * `images` (keyed by absolute source path, so a figure used twice is bound once).
- * Srcs that cannot be bound are added to `unbound` and left untouched.
+ * Rewrite the local images in `html` (`<img src>` and each `srcset` candidate) to book-local
+ * paths, registering each file in `images` (keyed by absolute source path, so a figure used
+ * twice is bound once). Root-absolute srcs have `basePath` stripped; relative ones resolve
+ * against `pagePath`, the page's own site path. Local srcs that cannot be bound are added to
+ * `unbound` and left untouched. Not handled: `<picture><source>` and SVG `<image>`.
  */
 export function embedLocalImages(
   html: string,
@@ -385,56 +408,96 @@ export function embedLocalImages(
 ): string {
   const root = path.resolve(webRoot)
   const bp = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : ''
-  return html.replace(/<img\b[^>]*>/gi, (tag) =>
+
+  // the book-local path for one src, or null to leave it as it is
+  const bind = (src: string): string | null => {
+    // remote (any scheme, or protocol-relative) and data: stay as they are
+    if (!src || /^[a-z][a-z\d+.-]*:/i.test(src) || src.startsWith('//'))
+      return null
+    const fragment = /#.*$/.exec(src)?.[0] ?? ''
+    let p = src.replace(/[?#].*$/, '')
+    if (!p) return null
+    if (p.startsWith('/')) {
+      if (bp && (p === bp || p.startsWith(bp + '/'))) p = p.slice(bp.length)
+    } else {
+      // keep the raw percent-encoding: decoded once below, like a root-absolute src
+      p = new URL(p, `https://book.invalid${pagePath}`).pathname
+    }
+    let decoded: string
+    try {
+      decoded = decodeURIComponent(p)
+    } catch {
+      decoded = p
+    }
+    const source = path.join(root, decoded)
+    const mediaType = IMAGE_MEDIA_TYPES[path.extname(source).toLowerCase()]
+    if (
+      !source.startsWith(root + path.sep) ||
+      !mediaType ||
+      !fs.existsSync(source) ||
+      !fs.statSync(source).isFile()
+    ) {
+      unbound.add(src)
+      return null
+    }
+    let image = images.get(source)
+    if (!image) {
+      const rel = path
+        .relative(root, source)
+        .split(path.sep)
+        .map((seg) => seg.replace(/[^\w.-]/g, '_'))
+        .join('/')
+      // Sanitizing can make two sources collide (`a b.jpg`, `a_b.jpg`); keep both.
+      const taken = new Set([...images.values()].map((i) => i.file))
+      let file = `images/${rel}`
+      const ext = path.extname(file)
+      for (let n = 2; taken.has(file); n += 1) {
+        file = `images/${rel.slice(0, rel.length - ext.length)}-${n}${ext}`
+      }
+      image = { file, mediaType, source }
+      images.set(source, image)
+    }
+    // A fragment names a part of the file (an SVG sprite), so it travels with it.
+    return image.file + fragment
+  }
+
+  return html.replace(IMG_TAG, (tag) =>
     tag.replace(
-      /(\ssrc\s*=\s*)(["'])(.*?)\2/i,
-      (match, lead: string, quote: string, src: string) => {
-        // remote (any scheme, or protocol-relative) and data: stay as they are
-        if (!src || /^[a-z][a-z\d+.-]*:/i.test(src) || src.startsWith('//'))
-          return match
-        let p = src.replace(/[?#].*$/, '')
-        if (!p) return match
-        if (p.startsWith('/')) {
-          if (bp && (p === bp || p.startsWith(bp + '/'))) p = p.slice(bp.length)
+      ATTRIBUTE,
+      (
+        match,
+        space: string,
+        name: string,
+        eq: string,
+        dq?: string,
+        sq?: string,
+        bare?: string
+      ) => {
+        const attr = name.toLowerCase()
+        if (attr !== 'src' && attr !== 'srcset') return match
+        const raw = dq ?? sq ?? bare ?? ''
+        const quote = dq !== undefined ? '"' : sq !== undefined ? "'" : '"'
+        const value = decodeAttr(raw)
+        let rewritten: string | null
+        if (attr === 'src') {
+          rewritten = bind(value)
         } else {
-          // keep the raw percent-encoding: decoded once below, like a root-absolute src
-          p = new URL(p, `https://book.invalid${pagePath}`).pathname
+          // `url 2x, url 640w`: bind each candidate, keep its descriptor
+          let changed = false
+          const candidates = value.split(',').map((candidate) => {
+            const [url, ...descriptor] = candidate.trim().split(/\s+/)
+            const bound = bind(url)
+            if (bound === null) return candidate.trim()
+            changed = true
+            return [bound, ...descriptor].join(' ')
+          })
+          rewritten = changed ? candidates.join(', ') : null
         }
-        let decoded: string
-        try {
-          decoded = decodeURIComponent(p)
-        } catch {
-          decoded = p
-        }
-        const source = path.join(root, decoded)
-        const mediaType = IMAGE_MEDIA_TYPES[path.extname(source).toLowerCase()]
-        if (
-          !source.startsWith(root + path.sep) ||
-          !mediaType ||
-          !fs.existsSync(source) ||
-          !fs.statSync(source).isFile()
-        ) {
-          unbound.add(src)
-          return match
-        }
-        let image = images.get(source)
-        if (!image) {
-          const rel = path
-            .relative(root, source)
-            .split(path.sep)
-            .map((seg) => seg.replace(/[^\w.-]/g, '_'))
-            .join('/')
-          // Sanitizing can make two sources collide (`a b.jpg`, `a_b.jpg`); keep both.
-          const taken = new Set([...images.values()].map((i) => i.file))
-          let file = `images/${rel}`
-          const ext = path.extname(file)
-          for (let n = 2; taken.has(file); n += 1) {
-            file = `images/${rel.slice(0, rel.length - ext.length)}-${n}${ext}`
-          }
-          image = { file, mediaType, source }
-          images.set(source, image)
-        }
-        return `${lead}${quote}${image.file}${quote}`
+        // decoded above, so escaped again: a fragment or an untouched srcset candidate may
+        // carry `&` or a quote
+        return rewritten === null
+          ? match
+          : `${space}${name}${eq}${quote}${escapeXml(rewritten)}${quote}`
       }
     )
   )
@@ -695,8 +758,10 @@ async function zipEpub(buildDir: string, outputAbs: string): Promise<void> {
   await $`find . -exec touch -t 202001010000 {} +`.cwd(buildDir).quiet()
   // 1) mimetype first, stored (-0), no extra fields (-X)
   await $`zip -X0 ${outputAbs} mimetype`.cwd(buildDir).quiet()
-  // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D)
-  await $`zip -Xr9D ${outputAbs} META-INF OEBPS -x mimetype`
+  // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D).
+  // Images that are already compressed are stored (-n): deflating a book's worth of JPEGs on
+  // every rebuild costs time and saves nothing.
+  await $`zip -Xr9D -n .jpg:.jpeg:.png:.gif:.webp ${outputAbs} META-INF OEBPS -x mimetype`
     .cwd(buildDir)
     .quiet()
 }
@@ -938,6 +1003,10 @@ export function versionAnchoredDate(
     .replace(/\.\d+Z$/, 'Z')
 }
 
+/**
+ * Build the ePub for `config`'s corpus and return its path. Under `config.strict`, throws
+ * {@link EpubImageError} when a local image cannot be bound into the book.
+ */
 export async function buildEpub(
   config: SiteConfig,
   opts: BuildEpubOptions = {}
@@ -1171,7 +1240,11 @@ export async function buildEpub(
         .map((s) => `      ${s}`)
         .join('\n') +
       (list.length > 10 ? `\n      … and ${list.length - 10} more` : '')
-    if (config.strict) throw new EpubImageError(report)
+    if (config.strict) {
+      // nothing of this book is kept: a stray build folder would land in the site output
+      fs.rmSync(buildDir, { recursive: true, force: true })
+      throw new EpubImageError(report)
+    }
     console.warn(report)
   }
 

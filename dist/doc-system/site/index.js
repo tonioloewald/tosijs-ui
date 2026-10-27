@@ -20,7 +20,7 @@ export { auditDependencies, reportAudit, resolveAuditMode, } from './audit-guard
 export { openDevBrowser, buildOpenPlan } from './open-browser.js';
 export { extractDocs, saveDocsJSON } from './docs.js';
 export { generateSite } from './generate-site.js';
-export { buildEpub, DEFAULT_BOOK_CSS } from './epub.js';
+export { buildEpub, DEFAULT_BOOK_CSS, EpubImageError } from './epub.js';
 export { selectBookDocs } from '../book-manifest.js';
 export { placeInBook, bookTextOf } from '../book-target.js';
 // Insets and conditional text (#217): `extractDocs` applies these; exported for a consumer

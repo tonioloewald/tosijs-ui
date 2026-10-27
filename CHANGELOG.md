@@ -8,9 +8,15 @@
   badges; it made an illustrated book impossible. A local image is now copied into the ePub and
   listed in its manifest once, however many chapters use it. A `/images/fig.jpg` path (with or
   without `basePath`) is found in the built site, where your `staticDirs` are; a relative path is
-  resolved against the page's URL, as on the site. Remote and `data:` images are unchanged. One
-  that is missing, outside the site, or not JPEG/PNG/GIF/SVG/WebP is listed in a warning, and
-  fails a `strict` build.
+  resolved against the page's URL, as on the site. That covers `<img src>` and `srcset` in
+  markdown and raw HTML; `<picture><source>` and SVG `<image>` are not bound yet. Remote and
+  `data:` images are unchanged. One that is missing, outside the site, or not
+  JPEG/PNG/GIF/SVG/WebP is listed in a warning, and fails a `strict` build, including an image
+  only your host serves (a CDN rewrite, a proxied path): the page shows it, the book cannot.
+- **A book with images is bigger, and so is its rebuild.** The ePub now carries every figure,
+  and it is rebuilt on every dev-server rebuild; already-compressed images are stored, not
+  deflated again, so the cost is copying them. If you commit your output folder, the ePub in it
+  grows by the size of your images.
 
 ## 1.16.37
 

@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=6495d60f9938" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=62f762f3a78b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1947,7 +1947,8 @@ and checks the image loads first, so it prints from the title page as before whe
 is nothing to show: a site without <code>epub</code>, a build that wrote no cover, or a corpus
 where every doc names a volume (there is no default volume). Set
 <code>epub: { printCover: false }</code> to leave the cover out of Print and keep it in the ePub.</p>
-<p><strong>Images are bound into the book.</strong> A local <code>&lt;img&gt;</code> (or <code>![alt](…)</code>) is copied into the ePub,
+<p><strong>Images are bound into the book.</strong> A local image (<code>![alt](…)</code>, or <code>&lt;img src&gt;</code> and <code>srcset</code> in
+raw HTML) is copied into the ePub,
 listed in its manifest once however many chapters use it, and pointed at from each chapter.
 The file is the one the page shows: a path starting with <code>/</code> (<code>/images/fig.jpg</code>, with your
 <code>basePath</code> or without it) is looked up in the built site, which already holds your
@@ -1956,8 +1957,10 @@ as the browser resolves it on the site. Encode spaces in file names (<code>/imag
 as a URL needs anyway. Remote and <code>data:</code> images stay as they are, and a reader needs a network
 connection for a remote one. A local image that is missing, lies outside the site, or is not
 JPEG, PNG, GIF, SVG or WebP (the ePub core image types) is left as it was and listed in a
-warning; under <a href="#strict-builds-strict"><code>strict</code></a> it fails the build. Before 1.16.38 no image
-was bound, so every local figure was a broken image in every reader.</p>
+warning; under <a href="#strict-builds-strict"><code>strict</code></a> it fails the build, an image only your host
+serves (a CDN rewrite, a proxied path) included, since the book cannot reach it.
+<code>&lt;picture&gt;&lt;source&gt;</code> and SVG <code>&lt;image&gt;</code> are not bound. Before 1.16.38 no image was bound, so
+every local figure was a broken image in every reader.</p>
 <p>By default <strong>the book is the whole visible corpus</strong> — zero config. To emit a
 <em>subset</em> in a <em>curated order</em> (a library that also ships a book, a novel with
 front/back matter) add a <code>book</code> manifest. It shapes only the book artifact; the

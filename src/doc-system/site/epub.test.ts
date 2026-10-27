@@ -107,6 +107,38 @@ describe('embedLocalImages', () => {
       expect([...unbound]).toEqual(['images/fig%201.jpg'])
     }))
 
+  test('raw HTML: entities, unquoted values, srcset, fragments, and src= or > inside another attribute', () =>
+    withRoot((root) => {
+      fs.writeFileSync(path.join(root, 'images', 'Tom&Jerry.png'), 't')
+      fs.writeFileSync(path.join(root, 'images', 'sprite.svg'), '<svg/>')
+      const images = new Map<string, BookImage>()
+      const unbound = new Set<string>()
+      const out = embedLocalImages(
+        [
+          '<img src="/images/Tom&amp;Jerry.png">',
+          '<img src=/images/fig_1.jpg>',
+          `<img alt='a > b src="/nope.png"' src="/secret.png">`,
+          '<img src="/images/sprite.svg#icon-a">',
+          '<img src="/secret.png" srcset="/images/fig_1.jpg 1x, https://x.test/b.png 2x">',
+        ].join(''),
+        root,
+        undefined,
+        images,
+        unbound
+      )
+      expect(out).toBe(
+        [
+          '<img src="images/images/Tom_Jerry.png">',
+          '<img src="images/images/fig_1.jpg">',
+          `<img alt='a > b src="/nope.png"' src="images/secret.png">`,
+          '<img src="images/images/sprite.svg#icon-a">',
+          '<img src="images/secret.png" srcset="images/images/fig_1.jpg 1x, https://x.test/b.png 2x">',
+        ].join('')
+      )
+      // the src= inside alt is text, not an image: nothing to report
+      expect([...unbound]).toEqual([])
+    }))
+
   test('remote, data:, missing, unsupported and escaping srcs are left alone; local ones reported', () =>
     withRoot((root) => {
       const images = new Map<string, BookImage>()
@@ -212,6 +244,8 @@ test('a local image the book cannot bind fails a strict build, and only warns ot
     expect(strict.exitCode).toBe(EPUB_IMAGE_EXIT)
     expect(strict.stderr.toString()).toContain('/figs/missing.jpg')
     expect(fs.existsSync(path.join(dir, 'b-true.epub'))).toBe(false)
+    // nor its build folder, which would otherwise land in the site output
+    expect(fs.existsSync(path.join(dir, '.epub-build'))).toBe(false)
 
     const lenient = run(false)
     expect(lenient.exitCode).toBe(0)

@@ -18,7 +18,7 @@ export type { Doc } from './docs.js';
 export type { LibraryBundle } from './library-bundle.js';
 export { generateSite } from './generate-site.js';
 export type { GenerateSiteConfig } from './generate-site.js';
-export { buildEpub, DEFAULT_BOOK_CSS } from './epub.js';
+export { buildEpub, DEFAULT_BOOK_CSS, EpubImageError } from './epub.js';
 export type { BuildEpubOptions, BookMeta } from './epub.js';
 export { selectBookDocs } from '../book-manifest.js';
 export type { BookManifest } from '../book-manifest.js';

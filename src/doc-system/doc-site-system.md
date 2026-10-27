@@ -1820,7 +1820,8 @@ is nothing to show: a site without `epub`, a build that wrote no cover, or a cor
 where every doc names a volume (there is no default volume). Set
 `epub: { printCover: false }` to leave the cover out of Print and keep it in the ePub.
 
-**Images are bound into the book.** A local `<img>` (or `![alt](…)`) is copied into the ePub,
+**Images are bound into the book.** A local image (`![alt](…)`, or `<img src>` and `srcset` in
+raw HTML) is copied into the ePub,
 listed in its manifest once however many chapters use it, and pointed at from each chapter.
 The file is the one the page shows: a path starting with `/` (`/images/fig.jpg`, with your
 `basePath` or without it) is looked up in the built site, which already holds your
@@ -1829,8 +1830,10 @@ as the browser resolves it on the site. Encode spaces in file names (`/images/fi
 as a URL needs anyway. Remote and `data:` images stay as they are, and a reader needs a network
 connection for a remote one. A local image that is missing, lies outside the site, or is not
 JPEG, PNG, GIF, SVG or WebP (the ePub core image types) is left as it was and listed in a
-warning; under [`strict`](#strict-builds-strict) it fails the build. Before 1.16.38 no image
-was bound, so every local figure was a broken image in every reader.
+warning; under [`strict`](#strict-builds-strict) it fails the build, an image only your host
+serves (a CDN rewrite, a proxied path) included, since the book cannot reach it.
+`<picture><source>` and SVG `<image>` are not bound. Before 1.16.38 no image was bound, so
+every local figure was a broken image in every reader.
 
 By default **the book is the whole visible corpus** — zero config. To emit a
 _subset_ in a _curated order_ (a library that also ships a book, a novel with

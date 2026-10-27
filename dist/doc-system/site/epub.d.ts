@@ -90,13 +90,19 @@ export interface BookImage {
     source: string;
 }
 /**
- * Rewrite root-absolute `<img src>` to book-local paths, registering each file in
- * `images` (keyed by absolute source path, so a figure used twice is bound once).
- * Srcs that cannot be bound are added to `unbound` and left untouched.
+ * Rewrite the local images in `html` (`<img src>` and each `srcset` candidate) to book-local
+ * paths, registering each file in `images` (keyed by absolute source path, so a figure used
+ * twice is bound once). Root-absolute srcs have `basePath` stripped; relative ones resolve
+ * against `pagePath`, the page's own site path. Local srcs that cannot be bound are added to
+ * `unbound` and left untouched. Not handled: `<picture><source>` and SVG `<image>`.
  */
 export declare function embedLocalImages(html: string, webRoot: string, basePath: string | undefined, images: Map<string, BookImage>, unbound?: Set<string>, pagePath?: string): string;
 /**
  * Build an EPUB 3 book from the extracted corpus. Returns the output path.
  */
 export declare function versionAnchoredDate(version: string, override?: string): string;
+/**
+ * Build the ePub for `config`'s corpus and return its path. Under `config.strict`, throws
+ * {@link EpubImageError} when a local image cannot be bound into the book.
+ */
 export declare function buildEpub(config: SiteConfig, opts?: BuildEpubOptions): Promise<string>;
