@@ -12,7 +12,7 @@ the Bun.build note in orchestrator.ts.
 
 Build-time only. Never import this from browser code.
 */
-import { buildEpub } from './epub.js';
+import { buildEpub, EpubImageError, EPUB_IMAGE_EXIT } from './epub.js';
 import { BUILT_IN_DIALECTS, normalizeDialectNames, registerLiveLanguage, } from '../example-policy.js';
 const payloadPath = process.argv[2];
 if (!payloadPath) {
@@ -26,4 +26,15 @@ for (const name of normalizeDialectNames(config.dialects)) {
     if (!BUILT_IN_DIALECTS.has(name))
         registerLiveLanguage(name);
 }
-await buildEpub(config, opts ?? {});
+try {
+    await buildEpub(config, opts ?? {});
+}
+catch (error) {
+    // A distinct exit code, so the parent fails a `strict` build on THIS and still only warns
+    // about the ePub's other failures (it is otherwise a side artifact).
+    if (error instanceof EpubImageError) {
+        console.error(error.message);
+        process.exit(EPUB_IMAGE_EXIT);
+    }
+    throw error;
+}

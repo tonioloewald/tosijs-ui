@@ -29,7 +29,7 @@ export function registerSiteDialects(config) {
     }
 }
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
-import { attachCovers, listEpubVolumes, printCoverManifestUrl, VOLUME_MANIFEST, renderEpubDownloads, } from './epub-volumes.js';
+import { EPUB_IMAGE_EXIT, attachCovers, listEpubVolumes, printCoverManifestUrl, VOLUME_MANIFEST, renderEpubDownloads, } from './epub-volumes.js';
 import { buildSlugMap } from '../routing.js';
 import { assetStampInputs, computeAssetStamp, missingStampInputWarning, } from './asset-stamp.js';
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, } from 'fs';
@@ -88,6 +88,8 @@ async function buildEpubInChild(config, opts) {
             // the ePub's "run this example live" links count examples the way the page does, so it
             // must know the site's dialects too (1.16.3 review F3)
             dialects: config.dialects,
+            // an image the book cannot bind fails a strict build (EPUB_IMAGE_EXIT)
+            strict: config.strict,
         },
         opts,
     };
@@ -103,6 +105,9 @@ async function buildEpubInChild(config, opts) {
     }, EPUB_TIMEOUT_MS);
     try {
         const code = await child.exited;
+        if (code === EPUB_IMAGE_EXIT && config.strict) {
+            misconfigured(true, '⚠️  epub: a local image could not be bound into the book (listed above).');
+        }
         if (code !== 0) {
             console.warn(`⚠️  epub build failed (exit ${code}). The site is fine; the .epub may be stale.`);
         }

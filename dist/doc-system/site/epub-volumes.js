@@ -139,3 +139,9 @@ export function printCoverManifestUrl(config) {
         return undefined;
     return `${(config.basePath ?? '/').replace(/\/+$/, '')}/${VOLUME_MANIFEST}`;
 }
+/**
+ * epub-cli's exit code when a local image cannot be bound into the book. The build fails on it
+ * under `strict` and only warns otherwise. Here, not in epub.ts, so the orchestrator can read it
+ * without importing the ePub builder it runs in a child.
+ */
+export const EPUB_IMAGE_EXIT = 3;

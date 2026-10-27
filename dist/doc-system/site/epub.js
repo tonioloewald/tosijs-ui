@@ -21,7 +21,7 @@ import { highlightHtml } from '../highlight.js';
 import { buildSlugMap, pathForSlug, resolveParent, slugForPath, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree } from '../nav-tree.js';
 import { partitionByBook, placeInBook, bookTextOf, DEFAULT_BOOK, } from '../book-target.js';
-import { COVER_MEDIA_TYPES, coverStem, epubVolumeIdentity, } from './epub-volumes.js';
+import { COVER_MEDIA_TYPES, EPUB_IMAGE_EXIT, coverStem, epubVolumeIdentity, } from './epub-volumes.js';
 import { isLiveFence, languageOfClass } from '../example-policy.js';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify, } from '../book-html.js';
 import { selectBookDocs } from '../book-manifest.js';
@@ -224,13 +224,20 @@ does not exist inside the zip: the book carried no image files at all, so every 
 figure was a broken image in every reader. Fine for a library whose only images are remote
 README badges; fatal for a manual whose content IS its figures.
 
-A root-absolute src (the form the doc format asks for, since each page is served at
-`/slug/`) is resolved against the built web root — the output dir, which already holds the
-copied `staticDirs` — so the book embeds exactly the file the page shows. basePath is
-stripped first, as for links. Remote, `data:` and relative srcs are left alone; so is a
-file that is missing or not an EPUB core image type, with a warning, because a figure that
-silently vanishes from a book is worse than one that visibly fails.
+A root-absolute src (`/images/fig.jpg`) is resolved against the built web root — the output
+dir, which already holds the copied `staticDirs` — so the book embeds exactly the file the page
+shows. basePath is stripped first, as for links. A relative src (`img/fig.jpg`) is first
+resolved against the page's own path (`/slug/`), as a browser on the site resolves it, so it
+binds the same file the page shows. Remote and `data:` srcs are left alone. A local image that
+is missing, escapes the web root, or is not an EPUB core image type is left as-is and reported,
+because a figure that silently vanishes from a book is worse than one that visibly fails; under
+`strict` it fails the build.
 */
+export { EPUB_IMAGE_EXIT };
+/** Thrown by buildEpub under `strict` when a local image cannot be bound into the book. */
+export class EpubImageError extends Error {
+    name = 'EpubImageError';
+}
 /** EPUB 3 core media types for images, by extension. */
 const IMAGE_MEDIA_TYPES = {
     '.jpg': 'image/jpeg',
@@ -245,15 +252,26 @@ const IMAGE_MEDIA_TYPES = {
  * `images` (keyed by absolute source path, so a figure used twice is bound once).
  * Srcs that cannot be bound are added to `unbound` and left untouched.
  */
-export function embedLocalImages(html, webRoot, basePath, images, unbound = new Set()) {
+export function embedLocalImages(html, webRoot, basePath, images, unbound = new Set(), 
+// the page's own site path, for relative srcs; '/' for the root page
+pagePath = '/') {
     const root = path.resolve(webRoot);
     const bp = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : '';
     return html.replace(/<img\b[^>]*>/gi, (tag) => tag.replace(/(\ssrc\s*=\s*)(["'])(.*?)\2/i, (match, lead, quote, src) => {
-        if (!src.startsWith('/') || src.startsWith('//'))
+        // remote (any scheme, or protocol-relative) and data: stay as they are
+        if (!src || /^[a-z][a-z\d+.-]*:/i.test(src) || src.startsWith('//'))
             return match;
         let p = src.replace(/[?#].*$/, '');
-        if (bp && (p === bp || p.startsWith(bp + '/')))
-            p = p.slice(bp.length);
+        if (!p)
+            return match;
+        if (p.startsWith('/')) {
+            if (bp && (p === bp || p.startsWith(bp + '/')))
+                p = p.slice(bp.length);
+        }
+        else {
+            // keep the raw percent-encoding: decoded once below, like a root-absolute src
+            p = new URL(p, `https://book.invalid${pagePath}`).pathname;
+        }
         let decoded;
         try {
             decoded = decodeURIComponent(p);
@@ -829,7 +847,7 @@ export async function buildEpub(config, opts = {}) {
         highlighting cannot break the "Run this example live" links.
         */
         await highlightHtml(renderDocMarkdown(stripDocMeta(bookTextOf(doc)), { wikilinks }), 'none'), bookFiles, slugMap, config.basePath);
-        const html = embedLocalImages(linked, outDir, config.basePath, images, unboundImages);
+        const html = embedLocalImages(linked, outDir, config.basePath, images, unboundImages, pathForSlug(slugMap[doc.filename] ?? ''));
         // happy-dom occasionally throws on exotic content (e.g. an internal selector
         // bug); fall back to the regex pass for that doc rather than aborting.
         let bodyHtml;
@@ -857,13 +875,16 @@ export async function buildEpub(config, opts = {}) {
     }
     if (unboundImages.size) {
         const list = [...unboundImages];
-        console.warn(`epub: ${list.length} local image(s) not bound into the book (missing, or not ` +
-            `jpg/png/gif/svg/webp):\n` +
+        const report = `epub: ${list.length} local image(s) not bound into the book (missing, outside ` +
+            `the site, or not jpg/png/gif/svg/webp):\n` +
             list
                 .slice(0, 10)
                 .map((s) => `      ${s}`)
                 .join('\n') +
-            (list.length > 10 ? `\n      … and ${list.length - 10} more` : ''));
+            (list.length > 10 ? `\n      … and ${list.length - 10} more` : '');
+        if (config.strict)
+            throw new EpubImageError(report);
+        console.warn(report);
     }
     // Cover (explicit image, or generated from the title + favicon).
     const cover = await makeCover(config, opts, meta);

@@ -1,3 +1,4 @@
+import { EPUB_IMAGE_EXIT } from './epub-volumes.js';
 import type { SiteConfig } from './site-config.js';
 import { DEFAULT_BOOK_CSS, stripDocMeta } from '../book-html.js';
 export { DEFAULT_BOOK_CSS, stripDocMeta };
@@ -75,6 +76,11 @@ export declare function toXhtml(html: string): string;
  * untouched. `bookFiles` maps in-book slug → chapter filename.
  */
 export declare function rewriteInBookLinks(html: string, bookFiles: Map<string, string>, slugMap: Record<string, string>, basePath?: string): string;
+export { EPUB_IMAGE_EXIT };
+/** Thrown by buildEpub under `strict` when a local image cannot be bound into the book. */
+export declare class EpubImageError extends Error {
+    name: string;
+}
 /** An image bound into the book: where it lives in OEBPS, and where it came from. */
 export interface BookImage {
     /** path inside OEBPS, e.g. `images/figs/a.jpg` */
@@ -88,7 +94,7 @@ export interface BookImage {
  * `images` (keyed by absolute source path, so a figure used twice is bound once).
  * Srcs that cannot be bound are added to `unbound` and left untouched.
  */
-export declare function embedLocalImages(html: string, webRoot: string, basePath: string | undefined, images: Map<string, BookImage>, unbound?: Set<string>): string;
+export declare function embedLocalImages(html: string, webRoot: string, basePath: string | undefined, images: Map<string, BookImage>, unbound?: Set<string>, pagePath?: string): string;
 /**
  * Build an EPUB 3 book from the extracted corpus. Returns the output path.
  */

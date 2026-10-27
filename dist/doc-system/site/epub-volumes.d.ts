@@ -79,3 +79,9 @@ export declare function renderEpubDownloads(text: string, volumes: EpubVolume[])
  * `undefined` when it should not: no ePub is built, or `epub.printCover` is `false`.
  */
 export declare function printCoverManifestUrl(config: VolumeNamingConfig): string | undefined;
+/**
+ * epub-cli's exit code when a local image cannot be bound into the book. The build fails on it
+ * under `strict` and only warns otherwise. Here, not in epub.ts, so the orchestrator can read it
+ * without importing the ePub builder it runs in a child.
+ */
+export declare const EPUB_IMAGE_EXIT = 3;

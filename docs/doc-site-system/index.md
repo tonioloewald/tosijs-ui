@@ -1761,6 +1761,9 @@ exported from `tosijs-ui/site`, and the previous build output is restored):
   [`restampSite`](#bundles--live-examples-read-this) after replacing it. That one throws from
   `restampSite`, before it writes anything, so there is no build output to restore.
 
+- **A local image cannot be bound into the ePub** (missing, outside the site, or not an ePub
+  image type; see [the book](#the-book-epub--the-book-manifest)). The warning lists them.
+
 - **An in-page link points at nothing.** `[text](#some-heading)` where the page has no such
   id is a link that looks live and does nothing. The warning names the page and the anchor.
   Not checked: `#/route` and `#!…` (hash routers), `#top`, and `#example-2`, the number a
@@ -1816,6 +1819,18 @@ and checks the image loads first, so it prints from the title page as before whe
 is nothing to show: a site without `epub`, a build that wrote no cover, or a corpus
 where every doc names a volume (there is no default volume). Set
 `epub: { printCover: false }` to leave the cover out of Print and keep it in the ePub.
+
+**Images are bound into the book.** A local `<img>` (or `![alt](…)`) is copied into the ePub,
+listed in its manifest once however many chapters use it, and pointed at from each chapter.
+The file is the one the page shows: a path starting with `/` (`/images/fig.jpg`, with your
+`basePath` or without it) is looked up in the built site, which already holds your
+[`staticDirs`](#static-assets); a relative path is resolved against the page's own URL, `/slug/`,
+as the browser resolves it on the site. Encode spaces in file names (`/images/fig%201.jpg`),
+as a URL needs anyway. Remote and `data:` images stay as they are, and a reader needs a network
+connection for a remote one. A local image that is missing, lies outside the site, or is not
+JPEG, PNG, GIF, SVG or WebP (the ePub core image types) is left as it was and listed in a
+warning; under [`strict`](#strict-builds-strict) it fails the build. Before 1.16.38 no image
+was bound, so every local figure was a broken image in every reader.
 
 By default **the book is the whole visible corpus** — zero config. To emit a
 _subset_ in a _curated order_ (a library that also ships a book, a novel with

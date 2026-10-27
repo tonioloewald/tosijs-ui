@@ -14,7 +14,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=8f9c0a2181bc" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=cf98433a133d" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -30,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e0809cada995" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=6495d60f9938" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1895,6 +1895,9 @@ project root, for an editor of your own, is not reported.</p>
 <a href="#bundles--live-examples-read-this"><code>restampSite</code></a> after replacing it. That one throws from
 <code>restampSite</code>, before it writes anything, so there is no build output to restore.</p>
 </li>
+<li><p><strong>A local image cannot be bound into the ePub</strong> (missing, outside the site, or not an ePub
+image type; see <a href="#the-book-epub--the-book-manifest">the book</a>). The warning lists them.</p>
+</li>
 <li><p><strong>An in-page link points at nothing.</strong> <code>[text](#some-heading)</code> where the page has no such
 id is a link that looks live and does nothing. The warning names the page and the anchor.
 Not checked: <code>#/route</code> and <code>#!…</code> (hash routers), <code>#top</code>, and <code>#example-2</code>, the number a
@@ -1944,6 +1947,17 @@ and checks the image loads first, so it prints from the title page as before whe
 is nothing to show: a site without <code>epub</code>, a build that wrote no cover, or a corpus
 where every doc names a volume (there is no default volume). Set
 <code>epub: { printCover: false }</code> to leave the cover out of Print and keep it in the ePub.</p>
+<p><strong>Images are bound into the book.</strong> A local <code>&lt;img&gt;</code> (or <code>![alt](…)</code>) is copied into the ePub,
+listed in its manifest once however many chapters use it, and pointed at from each chapter.
+The file is the one the page shows: a path starting with <code>/</code> (<code>/images/fig.jpg</code>, with your
+<code>basePath</code> or without it) is looked up in the built site, which already holds your
+<a href="#static-assets"><code>staticDirs</code></a>; a relative path is resolved against the page&#39;s own URL, <code>/slug/</code>,
+as the browser resolves it on the site. Encode spaces in file names (<code>/images/fig%201.jpg</code>),
+as a URL needs anyway. Remote and <code>data:</code> images stay as they are, and a reader needs a network
+connection for a remote one. A local image that is missing, lies outside the site, or is not
+JPEG, PNG, GIF, SVG or WebP (the ePub core image types) is left as it was and listed in a
+warning; under <a href="#strict-builds-strict"><code>strict</code></a> it fails the build. Before 1.16.38 no image
+was bound, so every local figure was a broken image in every reader.</p>
 <p>By default <strong>the book is the whole visible corpus</strong> — zero config. To emit a
 <em>subset</em> in a <em>curated order</em> (a library that also ships a book, a novel with
 front/back matter) add a <code>book</code> manifest. It shapes only the book artifact; the
@@ -2416,6 +2430,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-vs6ew82f.js"></script>
+  <script type="module" src="../hydrate-2wffpv4f.js"></script>
 </body>
 </html>
