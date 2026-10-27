@@ -9,8 +9,136 @@ import {
   DEFAULT_BOOK_CSS,
   buildEpub,
   rewriteInBookLinks,
+  embedLocalImages,
 } from './epub.js'
+import type { BookImage } from './epub.js'
 import { attachCovers, epubVolumeIdentity } from './epub-volumes.js'
+
+// ── local images are bound into the book, not left pointing at site paths ─────
+
+describe('embedLocalImages', () => {
+  const withRoot = (fn: (root: string) => void) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-img-'))
+    try {
+      fs.mkdirSync(path.join(root, 'images'))
+      fs.writeFileSync(path.join(root, 'images', 'fig 1.jpg'), 'x')
+      fs.writeFileSync(path.join(root, 'images', 'fig_1.jpg'), 'y')
+      fs.writeFileSync(path.join(root, 'images', 'shot.tiff'), 'z')
+      fs.writeFileSync(path.join(root, 'secret.png'), 's')
+      fn(root)
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true })
+    }
+  }
+
+  test('a root-absolute src is rewritten to a book-local file and registered once', () =>
+    withRoot((root) => {
+      const images = new Map<string, BookImage>()
+      const html =
+        '<img src="/images/fig%201.jpg" alt="a"><p>x</p><img alt="b" src=\'/images/fig%201.jpg?v=2\'>'
+      expect(embedLocalImages(html, root, undefined, images)).toBe(
+        '<img src="images/images/fig_1.jpg" alt="a"><p>x</p><img alt="b" src=\'images/images/fig_1.jpg\'>'
+      )
+      expect([...images.values()]).toEqual([
+        {
+          file: 'images/images/fig_1.jpg',
+          mediaType: 'image/jpeg',
+          source: path.join(path.resolve(root), 'images', 'fig 1.jpg'),
+        },
+      ])
+    }))
+
+  test('sanitized names that collide stay distinct', () =>
+    withRoot((root) => {
+      const images = new Map<string, BookImage>()
+      embedLocalImages(
+        '<img src="/images/fig%201.jpg"><img src="/images/fig_1.jpg">',
+        root,
+        undefined,
+        images
+      )
+      expect([...images.values()].map((i) => i.file)).toEqual([
+        'images/images/fig_1.jpg',
+        'images/images/fig_1-2.jpg',
+      ])
+    }))
+
+  test('basePath is stripped before resolving', () =>
+    withRoot((root) => {
+      const images = new Map<string, BookImage>()
+      expect(
+        embedLocalImages('<img src="/repo/secret.png">', root, '/repo', images)
+      ).toBe('<img src="images/secret.png">')
+    }))
+
+  test('remote, data:, relative, missing, unsupported and escaping srcs are left alone and reported', () =>
+    withRoot((root) => {
+      const images = new Map<string, BookImage>()
+      const unbound = new Set<string>()
+      const html = [
+        '<img src="https://example.com/a.png">',
+        '<img src="//cdn.example.com/a.png">',
+        '<img src="data:image/png;base64,AAAA">',
+        '<img src="images/fig_1.jpg">',
+        '<img src="/images/nope.jpg">',
+        '<img src="/images/shot.tiff">',
+        '<img src="/../../etc/passwd.png">',
+      ].join('')
+      expect(embedLocalImages(html, root, undefined, images, unbound)).toBe(
+        html
+      )
+      expect(images.size).toBe(0)
+      expect([...unbound]).toEqual([
+        '/images/nope.jpg',
+        '/images/shot.tiff',
+        '/../../etc/passwd.png',
+      ])
+    }))
+})
+
+test('buildEpub binds local images into the zip and the manifest', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-img-book-'))
+  try {
+    fs.mkdirSync(path.join(dir, 'figs'))
+    fs.writeFileSync(path.join(dir, 'figs', 'mug.jpg'), 'jpeg-bytes')
+    const corpus = path.join(dir, 'docs.json')
+    fs.writeFileSync(
+      corpus,
+      JSON.stringify([
+        {
+          filename: 'README.md',
+          title: 'Home',
+          text: '# Home\n\n![a mug](/figs/mug.jpg)\n\n![again](/figs/mug.jpg)',
+          path: 'README.md',
+        },
+      ])
+    )
+    const out = path.join(dir, 'book.epub')
+    await buildEpub(
+      { name: 'Img Book', outputDir: dir, docsJson: corpus } as any,
+      { output: out }
+    )
+    const unzipped = path.join(dir, 'unzipped')
+    Bun.spawnSync(['unzip', '-o', '-q', out, '-d', unzipped])
+    expect(
+      fs.readFileSync(path.join(unzipped, 'OEBPS/images/figs/mug.jpg'), 'utf8')
+    ).toBe('jpeg-bytes')
+    const ch = fs.readFileSync(path.join(unzipped, 'OEBPS/index.xhtml'), 'utf8')
+    expect(ch).toContain('src="images/figs/mug.jpg"')
+    expect(ch).not.toContain('src="/figs/')
+    const opf = fs.readFileSync(
+      path.join(unzipped, 'OEBPS/package.opf'),
+      'utf8'
+    )
+    expect(
+      opf.match(
+        /<item id="img-\d+" href="images\/figs\/mug.jpg" media-type="image\/jpeg"\/>/g
+      )?.length
+    ).toBe(1)
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+})
 
 // ── #15: in-book cross-links (/slug/ and ?filename → <slug>.xhtml) ────────────
 

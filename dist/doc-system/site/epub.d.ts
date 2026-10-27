@@ -75,6 +75,20 @@ export declare function toXhtml(html: string): string;
  * untouched. `bookFiles` maps in-book slug → chapter filename.
  */
 export declare function rewriteInBookLinks(html: string, bookFiles: Map<string, string>, slugMap: Record<string, string>, basePath?: string): string;
+/** An image bound into the book: where it lives in OEBPS, and where it came from. */
+export interface BookImage {
+    /** path inside OEBPS, e.g. `images/figs/a.jpg` */
+    file: string;
+    mediaType: string;
+    /** absolute path of the source file */
+    source: string;
+}
+/**
+ * Rewrite root-absolute `<img src>` to book-local paths, registering each file in
+ * `images` (keyed by absolute source path, so a figure used twice is bound once).
+ * Srcs that cannot be bound are added to `unbound` and left untouched.
+ */
+export declare function embedLocalImages(html: string, webRoot: string, basePath: string | undefined, images: Map<string, BookImage>, unbound?: Set<string>): string;
 /**
  * Build an EPUB 3 book from the extracted corpus. Returns the output path.
  */

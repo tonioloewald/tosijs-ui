@@ -324,6 +324,102 @@ export function rewriteInBookLinks(
   })
 }
 
+/*
+Images bound INTO the book.
+
+A chapter's `<img src="/images/fig.jpg">` used to ship as-is, pointing at a site path that
+does not exist inside the zip: the book carried no image files at all, so every local
+figure was a broken image in every reader. Fine for a library whose only images are remote
+README badges; fatal for a manual whose content IS its figures.
+
+A root-absolute src (the form the doc format asks for, since each page is served at
+`/slug/`) is resolved against the built web root — the output dir, which already holds the
+copied `staticDirs` — so the book embeds exactly the file the page shows. basePath is
+stripped first, as for links. Remote, `data:` and relative srcs are left alone; so is a
+file that is missing or not an EPUB core image type, with a warning, because a figure that
+silently vanishes from a book is worse than one that visibly fails.
+*/
+
+/** EPUB 3 core media types for images, by extension. */
+const IMAGE_MEDIA_TYPES: Record<string, string> = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+}
+
+/** An image bound into the book: where it lives in OEBPS, and where it came from. */
+export interface BookImage {
+  /** path inside OEBPS, e.g. `images/figs/a.jpg` */
+  file: string
+  mediaType: string
+  /** absolute path of the source file */
+  source: string
+}
+
+/**
+ * Rewrite root-absolute `<img src>` to book-local paths, registering each file in
+ * `images` (keyed by absolute source path, so a figure used twice is bound once).
+ * Srcs that cannot be bound are added to `unbound` and left untouched.
+ */
+export function embedLocalImages(
+  html: string,
+  webRoot: string,
+  basePath: string | undefined,
+  images: Map<string, BookImage>,
+  unbound: Set<string> = new Set()
+): string {
+  const root = path.resolve(webRoot)
+  const bp = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : ''
+  return html.replace(/<img\b[^>]*>/gi, (tag) =>
+    tag.replace(
+      /(\ssrc\s*=\s*)(["'])(.*?)\2/i,
+      (match, lead: string, quote: string, src: string) => {
+        if (!src.startsWith('/') || src.startsWith('//')) return match
+        let p = src.replace(/[?#].*$/, '')
+        if (bp && (p === bp || p.startsWith(bp + '/'))) p = p.slice(bp.length)
+        let decoded: string
+        try {
+          decoded = decodeURIComponent(p)
+        } catch {
+          decoded = p
+        }
+        const source = path.join(root, decoded)
+        const mediaType = IMAGE_MEDIA_TYPES[path.extname(source).toLowerCase()]
+        if (
+          !source.startsWith(root + path.sep) ||
+          !mediaType ||
+          !fs.existsSync(source) ||
+          !fs.statSync(source).isFile()
+        ) {
+          unbound.add(src)
+          return match
+        }
+        let image = images.get(source)
+        if (!image) {
+          const rel = path
+            .relative(root, source)
+            .split(path.sep)
+            .map((seg) => seg.replace(/[^\w.-]/g, '_'))
+            .join('/')
+          // Sanitizing can make two sources collide (`a b.jpg`, `a_b.jpg`); keep both.
+          const taken = new Set([...images.values()].map((i) => i.file))
+          let file = `images/${rel}`
+          const ext = path.extname(file)
+          for (let n = 2; taken.has(file); n += 1) {
+            file = `images/${rel.slice(0, rel.length - ext.length)}-${n}${ext}`
+          }
+          image = { file, mediaType, source }
+          images.set(source, image)
+        }
+        return `${lead}${quote}${image.file}${quote}`
+      }
+    )
+  )
+}
+
 // `pageUrl` is the live-site URL of THIS doc (already including baseUrl, basePath
 // and the correct root for README → '/'); each example link just appends `#id`.
 function injectExampleLinks(
@@ -395,7 +491,8 @@ function containerXml(): string {
 function packageOpf(
   meta: BookMeta,
   chapters: Chapter[],
-  cover: Cover | null
+  cover: Cover | null,
+  images: BookImage[] = []
 ): string {
   const manifestItems = [
     `<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>`,
@@ -411,6 +508,12 @@ function packageOpf(
     ...chapters.map(
       (c) =>
         `<item id="${c.id}" href="${c.href}" media-type="application/xhtml+xml"/>`
+    ),
+    ...images.map(
+      (img, i) =>
+        `<item id="img-${i + 1}" href="${escapeXml(img.file)}" media-type="${
+          img.mediaType
+        }"/>`
     ),
   ]
   const spine = [
@@ -970,6 +1073,8 @@ export async function buildEpub(
   // example links back to its anchor on the live site.
   const baseUrl = config.baseUrl?.replace(/\/+$/, '')
   const chapters: Chapter[] = []
+  const images = new Map<string, BookImage>()
+  const unboundImages = new Set<string>()
   for (const node of flatten(roots)) {
     const doc = node.doc
     // The doc's live-site URL, matching generate-site's canonical link: README
@@ -983,7 +1088,7 @@ export async function buildEpub(
     is the same `highlightHtml` the static pages use, so a code block looks the same on the
     site, in the book and in print.
     */
-    const html = rewriteInBookLinks(
+    const linked = rewriteInBookLinks(
       /*
       `'none'` — an ePub has no live examples, so the live-fence skip that protects the web
       page buys nothing here and cost the reader 237 of 284 code blocks (js, html, css and
@@ -998,6 +1103,13 @@ export async function buildEpub(
       bookFiles,
       slugMap,
       config.basePath
+    )
+    const html = embedLocalImages(
+      linked,
+      outDir,
+      config.basePath,
+      images,
+      unboundImages
     )
     // happy-dom occasionally throws on exotic content (e.g. an internal selector
     // bug); fall back to the regex pass for that doc rather than aborting.
@@ -1023,6 +1135,24 @@ export async function buildEpub(
     })
   }
 
+  for (const img of images.values()) {
+    const dest = path.join(buildDir, 'OEBPS', img.file)
+    fs.mkdirSync(path.dirname(dest), { recursive: true })
+    fs.copyFileSync(img.source, dest)
+  }
+  if (unboundImages.size) {
+    const list = [...unboundImages]
+    console.warn(
+      `epub: ${list.length} local image(s) not bound into the book (missing, or not ` +
+        `jpg/png/gif/svg/webp):\n` +
+        list
+          .slice(0, 10)
+          .map((s) => `      ${s}`)
+          .join('\n') +
+        (list.length > 10 ? `\n      … and ${list.length - 10} more` : '')
+    )
+  }
+
   // Cover (explicit image, or generated from the title + favicon).
   const cover = await makeCover(config, opts, meta)
   if (cover) {
@@ -1035,7 +1165,7 @@ export async function buildEpub(
 
   fs.writeFileSync(
     path.join(buildDir, 'OEBPS', 'package.opf'),
-    packageOpf(meta, chapters, cover)
+    packageOpf(meta, chapters, cover, [...images.values()])
   )
   fs.writeFileSync(
     path.join(buildDir, 'OEBPS', 'contents.xhtml'),
@@ -1084,7 +1214,9 @@ export async function buildEpub(
   win?.close?.()
 
   console.log(
-    `epub: ${output} (${chapters.length} chapters)` +
+    `epub: ${output} (${chapters.length} chapters` +
+      (images.size ? `, ${images.size} images` : '') +
+      ')' +
       (coverPath ? `, cover ${path.basename(coverPath)}` : '')
   )
   return output
