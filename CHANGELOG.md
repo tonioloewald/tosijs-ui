@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.16.38
+
+- **The ePub carries its images (#3519).** Every local image went into the book as a site path
+  that does not exist inside the zip, and no image file was copied, so every figure was a broken
+  image in every reader. It never showed in a library's book, whose images are remote README
+  badges; it made an illustrated book impossible. A local image is now copied into the ePub and
+  listed in its manifest once, however many chapters use it. A `/images/fig.jpg` path (with or
+  without `basePath`) is found in the built site, where your `staticDirs` are; a relative path is
+  resolved against the page's URL, as on the site. Remote and `data:` images are unchanged. One
+  that is missing, outside the site, or not JPEG/PNG/GIF/SVG/WebP is listed in a warning, and
+  fails a `strict` build.
+
 ## 1.16.37
 
 Doc-site test running, as a developer meets it. On a deployed site, tests still start off; the

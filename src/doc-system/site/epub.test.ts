@@ -12,7 +12,11 @@ import {
   embedLocalImages,
 } from './epub.js'
 import type { BookImage } from './epub.js'
-import { attachCovers, epubVolumeIdentity } from './epub-volumes.js'
+import {
+  attachCovers,
+  epubVolumeIdentity,
+  EPUB_IMAGE_EXIT,
+} from './epub-volumes.js'
 
 // ── local images are bound into the book, not left pointing at site paths ─────
 
@@ -71,7 +75,39 @@ describe('embedLocalImages', () => {
       ).toBe('<img src="images/secret.png">')
     }))
 
-  test('remote, data:, relative, missing, unsupported and escaping srcs are left alone and reported', () =>
+  test('a relative src resolves against the page path, as the site resolves it', () =>
+    withRoot((root) => {
+      const images = new Map<string, BookImage>()
+      const html =
+        '<img src="../images/fig_1.jpg"><img src="images/fig%201.jpg">'
+      // from /guide/, ../images/ is /images/; from the root page, images/ is /images/
+      expect(
+        embedLocalImages(
+          '<img src="../images/fig_1.jpg">',
+          root,
+          undefined,
+          images,
+          new Set(),
+          '/guide/'
+        )
+      ).toBe('<img src="images/images/fig_1.jpg">')
+      expect(
+        embedLocalImages(
+          '<img src="images/fig%201.jpg">',
+          root,
+          undefined,
+          images,
+          new Set(),
+          '/'
+        )
+      ).toBe('<img src="images/images/fig_1-2.jpg">')
+      // and from /guide/ a bare images/ is /guide/images/, which is not there
+      const unbound = new Set<string>()
+      embedLocalImages(html, root, undefined, images, unbound, '/guide/')
+      expect([...unbound]).toEqual(['images/fig%201.jpg'])
+    }))
+
+  test('remote, data:, missing, unsupported and escaping srcs are left alone; local ones reported', () =>
     withRoot((root) => {
       const images = new Map<string, BookImage>()
       const unbound = new Set<string>()
@@ -79,7 +115,6 @@ describe('embedLocalImages', () => {
         '<img src="https://example.com/a.png">',
         '<img src="//cdn.example.com/a.png">',
         '<img src="data:image/png;base64,AAAA">',
-        '<img src="images/fig_1.jpg">',
         '<img src="/images/nope.jpg">',
         '<img src="/images/shot.tiff">',
         '<img src="/../../etc/passwd.png">',
@@ -139,6 +174,53 @@ test('buildEpub binds local images into the zip and the manifest', async () => {
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+/*
+A book whose figure is missing is a broken book: under `strict` that fails the build, through the
+real child entry point the build uses (#3519). Without `strict` it warns and the book is still made.
+*/
+test('a local image the book cannot bind fails a strict build, and only warns otherwise', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-img-strict-'))
+  try {
+    const corpus = path.join(dir, 'docs.json')
+    fs.writeFileSync(
+      corpus,
+      JSON.stringify([
+        {
+          filename: 'README.md',
+          title: 'Home',
+          text: '# Home\n\n![gone](/figs/missing.jpg)',
+          path: 'README.md',
+        },
+      ])
+    )
+    const run = (strict: boolean) => {
+      const payload = path.join(dir, `payload-${strict}.json`)
+      fs.writeFileSync(
+        payload,
+        JSON.stringify({
+          config: { name: 'B', outputDir: dir, docsJson: corpus, strict },
+          opts: { output: path.join(dir, `b-${strict}.epub`), author: 'T' },
+        })
+      )
+      return Bun.spawnSync(
+        ['bun', path.join(import.meta.dir, 'epub-cli.ts'), payload],
+        { stdout: 'pipe', stderr: 'pipe' }
+      )
+    }
+    const strict = run(true)
+    expect(strict.exitCode).toBe(EPUB_IMAGE_EXIT)
+    expect(strict.stderr.toString()).toContain('/figs/missing.jpg')
+    expect(fs.existsSync(path.join(dir, 'b-true.epub'))).toBe(false)
+
+    const lenient = run(false)
+    expect(lenient.exitCode).toBe(0)
+    expect(lenient.stderr.toString()).toContain('/figs/missing.jpg')
+    expect(fs.existsSync(path.join(dir, 'b-false.epub'))).toBe(true)
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true })
+  }
+}, 60000)
 
 // ── #15: in-book cross-links (/slug/ and ?filename → <slug>.xhtml) ────────────
 

@@ -38,6 +38,7 @@ export function registerSiteDialects(config: {
 }
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import {
+  EPUB_IMAGE_EXIT,
   attachCovers,
   listEpubVolumes,
   printCoverManifestUrl,
@@ -145,6 +146,8 @@ async function buildEpubInChild(
       // the ePub's "run this example live" links count examples the way the page does, so it
       // must know the site's dialects too (1.16.3 review F3)
       dialects: config.dialects,
+      // an image the book cannot bind fails a strict build (EPUB_IMAGE_EXIT)
+      strict: config.strict,
     },
     opts,
   }
@@ -165,6 +168,12 @@ async function buildEpubInChild(
   }, EPUB_TIMEOUT_MS)
   try {
     const code = await child.exited
+    if (code === EPUB_IMAGE_EXIT && config.strict) {
+      misconfigured(
+        true,
+        '⚠️  epub: a local image could not be bound into the book (listed above).'
+      )
+    }
     if (code !== 0) {
       console.warn(
         `⚠️  epub build failed (exit ${code}). The site is fine; the .epub may be stale.`

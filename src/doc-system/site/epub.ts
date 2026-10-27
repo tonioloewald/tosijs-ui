@@ -37,6 +37,7 @@ import {
 } from '../book-target.js'
 import {
   COVER_MEDIA_TYPES,
+  EPUB_IMAGE_EXIT,
   coverStem,
   epubVolumeIdentity,
 } from './epub-volumes.js'
@@ -332,13 +333,22 @@ does not exist inside the zip: the book carried no image files at all, so every 
 figure was a broken image in every reader. Fine for a library whose only images are remote
 README badges; fatal for a manual whose content IS its figures.
 
-A root-absolute src (the form the doc format asks for, since each page is served at
-`/slug/`) is resolved against the built web root — the output dir, which already holds the
-copied `staticDirs` — so the book embeds exactly the file the page shows. basePath is
-stripped first, as for links. Remote, `data:` and relative srcs are left alone; so is a
-file that is missing or not an EPUB core image type, with a warning, because a figure that
-silently vanishes from a book is worse than one that visibly fails.
+A root-absolute src (`/images/fig.jpg`) is resolved against the built web root — the output
+dir, which already holds the copied `staticDirs` — so the book embeds exactly the file the page
+shows. basePath is stripped first, as for links. A relative src (`img/fig.jpg`) is first
+resolved against the page's own path (`/slug/`), as a browser on the site resolves it, so it
+binds the same file the page shows. Remote and `data:` srcs are left alone. A local image that
+is missing, escapes the web root, or is not an EPUB core image type is left as-is and reported,
+because a figure that silently vanishes from a book is worse than one that visibly fails; under
+`strict` it fails the build.
 */
+
+export { EPUB_IMAGE_EXIT }
+
+/** Thrown by buildEpub under `strict` when a local image cannot be bound into the book. */
+export class EpubImageError extends Error {
+  name = 'EpubImageError'
+}
 
 /** EPUB 3 core media types for images, by extension. */
 const IMAGE_MEDIA_TYPES: Record<string, string> = {
@@ -369,7 +379,9 @@ export function embedLocalImages(
   webRoot: string,
   basePath: string | undefined,
   images: Map<string, BookImage>,
-  unbound: Set<string> = new Set()
+  unbound: Set<string> = new Set(),
+  // the page's own site path, for relative srcs; '/' for the root page
+  pagePath = '/'
 ): string {
   const root = path.resolve(webRoot)
   const bp = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : ''
@@ -377,9 +389,17 @@ export function embedLocalImages(
     tag.replace(
       /(\ssrc\s*=\s*)(["'])(.*?)\2/i,
       (match, lead: string, quote: string, src: string) => {
-        if (!src.startsWith('/') || src.startsWith('//')) return match
+        // remote (any scheme, or protocol-relative) and data: stay as they are
+        if (!src || /^[a-z][a-z\d+.-]*:/i.test(src) || src.startsWith('//'))
+          return match
         let p = src.replace(/[?#].*$/, '')
-        if (bp && (p === bp || p.startsWith(bp + '/'))) p = p.slice(bp.length)
+        if (!p) return match
+        if (p.startsWith('/')) {
+          if (bp && (p === bp || p.startsWith(bp + '/'))) p = p.slice(bp.length)
+        } else {
+          // keep the raw percent-encoding: decoded once below, like a root-absolute src
+          p = new URL(p, `https://book.invalid${pagePath}`).pathname
+        }
         let decoded: string
         try {
           decoded = decodeURIComponent(p)
@@ -1109,7 +1129,8 @@ export async function buildEpub(
       outDir,
       config.basePath,
       images,
-      unboundImages
+      unboundImages,
+      pathForSlug(slugMap[doc.filename] ?? '')
     )
     // happy-dom occasionally throws on exotic content (e.g. an internal selector
     // bug); fall back to the regex pass for that doc rather than aborting.
@@ -1142,15 +1163,16 @@ export async function buildEpub(
   }
   if (unboundImages.size) {
     const list = [...unboundImages]
-    console.warn(
-      `epub: ${list.length} local image(s) not bound into the book (missing, or not ` +
-        `jpg/png/gif/svg/webp):\n` +
-        list
-          .slice(0, 10)
-          .map((s) => `      ${s}`)
-          .join('\n') +
-        (list.length > 10 ? `\n      … and ${list.length - 10} more` : '')
-    )
+    const report =
+      `epub: ${list.length} local image(s) not bound into the book (missing, outside ` +
+      `the site, or not jpg/png/gif/svg/webp):\n` +
+      list
+        .slice(0, 10)
+        .map((s) => `      ${s}`)
+        .join('\n') +
+      (list.length > 10 ? `\n      … and ${list.length - 10} more` : '')
+    if (config.strict) throw new EpubImageError(report)
+    console.warn(report)
   }
 
   // Cover (explicit image, or generated from the title + favicon).
