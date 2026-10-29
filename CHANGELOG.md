@@ -23,8 +23,8 @@
   theme accent, an ePub cover) showed nothing until a source file changed, and nothing said the
   page was stale. If your script builds just before calling it, pass `initialBuild: false`. The
   config file itself is not watched: restart the server after editing it.
-- **A table has a margin (#3553).** It was the one block element without one, so a blockquote
-  straight after a table sat flush against it. The ePub was already right.
+- **A table has a margin (#3553).** Tables were the one block element without one, so a
+  blockquote after one sat flush against it. The ePub was already right.
 
 ## 1.16.38
 
