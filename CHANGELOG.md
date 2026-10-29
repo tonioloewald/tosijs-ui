@@ -14,8 +14,8 @@
   site config (or `createDocBrowser`) sets the hint in the header's search field, and the
   trigger's accessible name; the default was "Search documentation" (set
   `searchPlaceholder: 'Search documentation'` to keep it, and update any test that looks the
-  field up by that name). It is localized through the site's strings and follows the reader's
-  language. `<tosi-palette>` gained a `localizer` property for this: a function its placeholder
+  field up by that name). It is localized through the site's strings, and its placeholder
+  follows the locale the reader picks. `<tosi-palette>` gained a `localizer` property for this: a function its placeholder
   goes through, such as `localize`. It is a function rather than a `localized` attribute so the
   palette does not import the localization module, and `<tosi-select>` with it, wherever it is
   used.
