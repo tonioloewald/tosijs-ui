@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=1c9fd02c9f23" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=3dc90903a156" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -38,7 +38,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=d7314864cf00" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=cfa69e852d8a" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -424,8 +424,10 @@ the build under <code>strict</code>. This covers what the markdown report cannot
 of controls inside your live examples, ARIA on the components you embed.</p>
 <p>It needs <code>playwright</code> and <code>axe-core</code> installed in your project (<code>bun add -d playwright axe-core</code>, then <code>bunx playwright install chromium</code>). Without them the build says the audit did
 not run, and makes no claim about what it would have found. It runs on the first build in a
-process and never under a dev server: it takes a second or so per page, which is a release check,
-not an edit-loop one.</p>
+process and never under a dev server. Pages are audited four at a time, each once it has stopped
+adding elements: about half a second a page, measured on this site. To keep the mode on but skip the
+audit and the Ace check for one build, set <code>TOSIJS_A11Y_AUDIT=off</code>; the ePub then claims no
+conformance.</p>
 <p><strong>The ePub.</strong> In the mode the book&#39;s package document declares its accessibility, as EPUB
 Accessibility 1.1 asks (and the European Accessibility Act points e-books at): its access modes,
 which of them is sufficient alone, its features, its hazards and a summary. Each statement is
@@ -434,8 +436,10 @@ claimed only when every image in the volume has alt text or a caption. Override 
 hazards, or name who certified the book, with <code>epub: { accessibility: { summary, hazards, certifiedBy } }</code>.</p>
 <p>Conformance (<code>dcterms:conformsTo</code> &quot;EPUB Accessibility 1.1 - WCAG 2.2 Level AA&quot;) is claimed only
 when <a href="https://daisy.github.io/ace/">DAISY Ace</a> has checked the finished book and passed it. Ace
-runs on release builds when your project has it (<code>bun add -d @daisy/ace</code>); otherwise the build
-says no conformance is claimed and why. A claim nothing verified is worse than none: a
+runs on release builds when it is installed. Install it globally (<code>npm install -g @daisy/ace</code>):
+it brings Electron and Puppeteer, and in your project their advisories fail the build&#39;s own
+<a href="#dependency-audit-gate">dependency audit</a>. The build looks in the project&#39;s <code>node_modules/.bin</code>
+first, then on <code>PATH</code>. Without it the build says no conformance is claimed and why. A claim nothing verified is worse than none: a
 distributor takes it at face value.</p>
 <p><strong><code>altText</code></strong> fills the gap for a corpus with hundreds of undescribed images. It is called for
 each image the build would report, and what it returns becomes that image&#39;s alt text in the
@@ -479,7 +483,7 @@ something you review before it becomes authored text. Return nothing to leave an
 <tr>
 <td><code>sectionsDir</code></td>
 <td><code>&#39;src/docs&#39;</code></td>
-<td>where auto-created section docs + their <code>&lt;!-- toc --&gt;</code> blocks are written (must be inside a <code>docPath</code>, not named <code>docs</code>)</td>
+<td>where auto-created section docs + their <code>&lt;!-- toc --&gt;</code> blocks are written (must be inside a <code>docPath</code>, not named <code>docs</code>; outside every <code>docPath</code> the build warns and writes no stub). Stubs are created on the first build in a process, never on a watch rebuild</td>
 </tr>
 <tr>
 <td><code>docsJson</code></td>
@@ -592,7 +596,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>preview</code></td>
 <td>—</td>
-<td><code>{ host, path?, url?, tunnel? }</code> — deploy the built site, and optionally expose the live dev server; see <a href="#preview--deploy-the-built-site-to-a-host-you-control"><code>preview</code></a> and <a href="#previewtunnel--the-live-workspace"><code>preview.tunnel</code></a></td>
+<td><code>{ host?, path?, url?, tunnel? }</code> — deploy the built site, and optionally expose the live dev server; see <a href="#preview--deploy-the-built-site-to-a-host-you-control"><code>preview</code></a> and <a href="#previewtunnel--the-live-workspace"><code>preview.tunnel</code></a></td>
 </tr>
 </tbody></table>
 <h3 id="build-toggles--dev-server">Build toggles &amp; dev server</h3>
@@ -687,7 +691,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>preview</code></td>
 <td>—</td>
-<td>preview-host target for <code>bun run deploy</code> — <code>{ host, path?, url? }</code>. Only <code>host</code> is required; <code>path</code> defaults to <code>/srv/preview/&lt;name&gt;</code>. Deploying rsyncs the built site and self-registers its own route, so no shared server config and no DNS change (see below)</td>
+<td>preview-host target for <code>bun run deploy</code> — <code>{ host?, path?, url?, tunnel? }</code>, every field optional: keep <code>host</code> out of the repo and supply it from <code>PREVIEW_HOST</code>; <code>path</code> defaults to <code>/srv/preview/&lt;name&gt;</code>. Deploying rsyncs the built site and self-registers its own route, so no shared server config and no DNS change (see below)</td>
 </tr>
 <tr>
 <td><code>editableSources</code></td>
@@ -2526,6 +2530,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-ksthky95.js"></script>
+  <script type="module" src="../hydrate-neygvs59.js"></script>
 </body>
 </html>

@@ -64,40 +64,76 @@ catch (error) {
     server.stop(true);
     notRun(`Chromium could not be launched (bunx playwright install chromium): ${error.message.split('\n')[0]}`);
 }
-const violations = [];
+/*
+Pages are audited a few at a time, each in its own tab: one at a time took Learn 3D's 126 pages
+to ~73s (#3585). Results are kept in page order, so the report reads the same either way.
+*/
+const CONCURRENCY = 4;
+const perPage = [];
 try {
     const context = await browser.newContext();
-    const page = await context.newPage();
-    for (const pagePath of pages) {
-        await page.goto(`http://localhost:${server.port}${prefix}${pagePath}`, {
-            waitUntil: 'load',
-        });
-        // Audit the page a reader uses: hydrated when the bundle loads, static if it does not.
-        if (await page.$('tosi-doc-system'))
-            await page
-                .waitForFunction(() => customElements.get('tosi-doc-system'), null, {
-                timeout: 10_000,
-            })
-                .catch(() => undefined);
-        await page.waitForTimeout(300);
-        await page.addScriptTag({ path: axePath });
-        const found = await page.evaluate(async (tags) => {
-            const result = await window.axe.run(document, {
-                runOnly: { type: 'tag', values: tags },
+    /*
+    The page a reader gets: served from localhost, the doc browser would start its background test
+    runner, whose hidden frames and badges no deployed site has.
+    */
+    await context.addInitScript(() => localStorage.setItem('tosijs-ui-tests-enabled', 'false'));
+    let next = 0;
+    const worker = async () => {
+        const page = await context.newPage();
+        while (next < pages.length) {
+            const index = next++;
+            const pagePath = pages[index];
+            await page.goto(`http://localhost:${server.port}${prefix}${pagePath}`, {
+                waitUntil: 'networkidle',
             });
-            return result.violations.map((v) => ({
-                rule: v.id,
-                impact: v.impact,
-                help: v.help,
-                targets: v.nodes.map((n) => n.target.join(' ')),
+            // Audit the page a reader uses: hydrated when the bundle loads, static if it does not.
+            if (await page.$('tosi-doc-system'))
+                await page
+                    .waitForFunction(() => customElements.get('tosi-doc-system'), null, {
+                    timeout: 10_000,
+                })
+                    .catch(() => undefined);
+            /*
+            Then until no element has been added or removed for half a second (at most five): live examples render
+            after hydration, and a fixed pause audited a busy machine's pages half-built, so the
+            findings changed from run to run.
+            */
+            await page.evaluate(() => new Promise((resolve) => {
+                let timer = setTimeout(done, 500);
+                const deadline = setTimeout(done, 5000);
+                const observer = new MutationObserver(() => {
+                    clearTimeout(timer);
+                    timer = setTimeout(done, 500);
+                });
+                function done() {
+                    observer.disconnect();
+                    clearTimeout(timer);
+                    clearTimeout(deadline);
+                    resolve();
+                }
+                // Elements arriving, not attributes: an animation changes a style forever.
+                observer.observe(document, { subtree: true, childList: true });
             }));
-        }, AXE_TAGS);
-        for (const v of found)
-            violations.push({ page: pagePath, ...v });
-    }
+            await page.addScriptTag({ path: axePath });
+            const found = await page.evaluate(async (tags) => {
+                const result = await window.axe.run(document, {
+                    runOnly: { type: 'tag', values: tags },
+                });
+                return result.violations.map((v) => ({
+                    rule: v.id,
+                    impact: v.impact,
+                    help: v.help,
+                    targets: v.nodes.map((n) => n.target.join(' ')),
+                }));
+            }, AXE_TAGS);
+            perPage[index] = found.map((v) => ({ page: pagePath, ...v }));
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, pages.length) }, worker));
 }
 finally {
     await browser.close();
     server.stop(true);
 }
+const violations = perPage.flat();
 console.log(JSON.stringify({ violations }));

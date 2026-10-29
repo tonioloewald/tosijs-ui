@@ -26,11 +26,17 @@ export type AceResult = {
     ran: false;
     reason: string;
 };
+/** Why Ace did not run, when it is not installed anywhere. */
+export declare const ACE_NOT_INSTALLED = "DAISY Ace is not installed (npm install -g @daisy/ace, which keeps it out of your lockfile)";
 /**
- * Check a built `.epub` with DAISY Ace (`@daisy/ace`), resolved from the project's own
- * `node_modules/.bin`. It is the adopter's: never a dependency of tosijs-ui.
+ * Where `ace` is: the project's own `node_modules/.bin` first, then `PATH`. A global install is
+ * the one the docs recommend: Ace brings Electron and Puppeteer, whose advisories would otherwise
+ * fail the project's own dependency audit (#3577). It is the adopter's, never a dependency of
+ * tosijs-ui.
  */
-export declare function runAce(epubFile: string, projectDir?: string): Promise<AceResult>;
+export declare function findAce(projectDir?: string, searchPath?: string): string | null;
+/** Check a built `.epub` with DAISY Ace (`@daisy/ace`). */
+export declare function runAce(epubFile: string, projectDir?: string, searchPath?: string): Promise<AceResult>;
 /** Pass or fail, and the failing checks' titles, from an Ace `report.json`. */
 export declare function aceVerdict(report: any): {
     passed: boolean;

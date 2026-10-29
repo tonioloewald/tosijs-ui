@@ -536,6 +536,8 @@ let announcedClobber = false
 
 /** The axe audit runs once per process: it is a release check, not an edit-loop one (#3521). */
 let auditedAccessibility = false
+/** Section stubs are created on the first build in a process only (#3584). */
+let sectionStubsDone = false
 
 export async function buildSite(
   config: SiteConfig,
@@ -875,7 +877,11 @@ export async function buildSite(
         docsJsonPath: DOCS_JSON,
         sectionsDir: config.sectionsDir ?? 'src/docs',
         reExtract: extract,
+        docPaths,
+        // Stubs on the first build in a process only, never a watch rebuild (#3584).
+        createStubs: !sectionStubsDone,
       })
+      sectionStubsDone = true
 
       // Fail fast on any live example that can't build — a real syntax/import error,
       // or illustrative code mistakenly tagged executable (`js`/`ts`/…) instead of
@@ -1927,14 +1933,24 @@ export async function buildSite(
       // (otherwise a dev rebuild would silently drop it). Cheap (~0.4s).
       /*
       The accessibility mode's release checks (the axe audit, Ace on the ePub, #3521/#3522):
-      the first full build in a process, and never under a dev server.
+      the first full build in a process, never under a dev server, and not when
+      TOSIJS_A11Y_AUDIT=off asks a build to skip them while the mode stays on (#3585).
       */
       const lockHolder = currentHolder('.')
+      const a11yChecksOff =
+        process.env.TOSIJS_A11Y_AUDIT?.toLowerCase() === 'off'
       const accessibilityRelease =
         !!config.accessibility &&
         !opts.skipAudit &&
+        !a11yChecksOff &&
         !auditedAccessibility &&
         !(lockHolder?.pid === process.pid && lockHolder.role === 'dev-server')
+      if (config.accessibility && a11yChecksOff && !auditedAccessibility) {
+        auditedAccessibility = true
+        console.log(
+          '♿ TOSIJS_A11Y_AUDIT=off: no axe audit and no Ace check on this build, so the ePub claims no conformance'
+        )
+      }
       if (config.epub) {
         const epubOpts = typeof config.epub === 'object' ? config.epub : {}
         /*

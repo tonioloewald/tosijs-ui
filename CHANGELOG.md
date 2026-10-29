@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.17.0-beta.2
+
+> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
+> on 1.16.41. Fixes from Learn 3D's first run of beta.1.
+
+- **Accessibility mode: headings in a blockquote or list shift with the rest of the page
+  (#3576).** A sidebar's `> ####` under `###` sections stayed an `<h4>` under the new `<h2>`s, so
+  the build reported a skipped level and DAISY Ace failed the ePub on heading order. A heading
+  inside a blockquote still never becomes the page's title.
+- **DAISY Ace is found on `PATH` (#3577).** The docs said `bun add -d @daisy/ace`, which brings
+  Electron and Puppeteer into the project, and their advisories then failed the build's own
+  dependency audit. Install it globally (`npm install -g @daisy/ace`) instead; the build looks in
+  the project first, then on `PATH`.
+- **The axe audit is about twice as fast, and audits the page a reader gets (#3585).** Pages are
+  audited four at a time (this site: 80s to 43s). Each is audited once it stops adding elements,
+  rather than after a fixed 300ms, which on a busy machine caught pages half-built. And the
+  audit no longer starts the doc browser's background test runner, which runs on localhost and
+  never on a deployed site. `TOSIJS_A11Y_AUDIT=off` skips the audit and the Ace check for one
+  build while the mode stays on; the ePub then claims no conformance.
+- **Section stubs are not written where they cannot be read, or mid-edit (#3584).** A page whose
+  `parent` names a missing doc gets a stub section doc in `sectionsDir`. When `sectionsDir` is
+  outside every `docPaths` entry, the build now warns and writes nothing, since the stub would
+  never be read back. Stubs are created only on the first build in a process, so a parent that
+  disappears for a second during a rename no longer leaves files behind. Each stub written is
+  named in the build output.
+- **`preview.host` is optional, and the docs say so (#3586).** The type has allowed a config
+  with only `preview.tunnel` since 1.10.0, but the doc comment and the reference table still
+  said `host` was required. `as any` casts written for it can go.
+
 ## 1.17.0-beta.1
 
 > Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays

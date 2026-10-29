@@ -503,7 +503,8 @@ export interface SiteConfig {
      * control, so a phone, a client, or a reviewer can see it without your dev server
      * (or your laptop) being up.
      *
-     * Only `host` is required; everything else has a sensible default:
+     * Every field is optional; keep `host` out of the config and supply it from `PREVIEW_HOST`
+     * (below). Committed, it looks like this:
      *
      * ```ts
      * preview: { host: 'root@203.0.113.10' }

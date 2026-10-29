@@ -1,11 +1,13 @@
 import { test, expect } from 'bun:test'
-import { mkdtempSync, rmSync } from 'fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import {
   accessibilityMetadata,
   aceVerdict,
   runAce,
+  findAce,
+  ACE_NOT_INSTALLED,
   EPUB_A11Y_CONFORMANCE,
 } from './epub-a11y.js'
 
@@ -93,14 +95,30 @@ test('aceVerdict reads the outcome and names the failing checks, nested ones inc
   })
 })
 
-test('without Ace in the project it did not run, and says why', async () => {
+test('without Ace in the project or on PATH it did not run, and says why', async () => {
   const project = mkdtempSync(path.join(tmpdir(), 'tosijs-noace-'))
   try {
-    expect(await runAce('book.epub', project)).toEqual({
+    expect(await runAce('book.epub', project, project)).toEqual({
       ran: false,
-      reason:
-        'DAISY Ace is not installed in this project (bun add -d @daisy/ace)',
+      reason: ACE_NOT_INSTALLED,
     })
+  } finally {
+    rmSync(project, { recursive: true, force: true })
+  }
+})
+
+test('Ace is found on PATH when the project does not have it (#3577)', () => {
+  const project = mkdtempSync(path.join(tmpdir(), 'tosijs-ace-path-'))
+  const bin = path.join(project, 'global-bin')
+  try {
+    mkdirSync(bin)
+    writeFileSync(path.join(bin, 'ace'), '#!/bin/sh\n', { mode: 0o755 })
+    expect(findAce(project, bin)).toBe(path.join(bin, 'ace'))
+    // the project's own copy wins
+    mkdirSync(path.join(project, 'node_modules', '.bin'), { recursive: true })
+    const local = path.join(project, 'node_modules', '.bin', 'ace')
+    writeFileSync(local, '#!/bin/sh\n', { mode: 0o755 })
+    expect(findAce(project, bin)).toBe(local)
   } finally {
     rmSync(project, { recursive: true, force: true })
   }

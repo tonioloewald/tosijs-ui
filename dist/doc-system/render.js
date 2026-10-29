@@ -87,8 +87,24 @@ function withFigures(tokens) {
     }
     return out;
 }
+// Every heading, including those in blockquotes and lists: a sidebar's `> ####` shifts with the
+// page's own headings, or it lands a level too deep (#3576).
+function allHeadings(tokens, out = []) {
+    for (const t of tokens) {
+        if (t.type === 'heading')
+            out.push(t);
+        else if (t.type === 'blockquote')
+            allHeadings(t.tokens ?? [], out);
+        else if (t.type === 'list')
+            for (const item of t.items ?? [])
+                allHeadings(item.tokens ?? [], out);
+    }
+    return out;
+}
 function withOneTitle(tokens, title) {
+    // Only a top-level heading can be the page's title.
     const headings = tokens.filter((t) => t.type === 'heading');
+    const nested = allHeadings(tokens);
     /*
     A page with no `#` takes its title from its first heading, whatever its level, so that
     heading IS the title: promote it rather than print the same words twice.
@@ -99,13 +115,13 @@ function withOneTitle(tokens, title) {
             ? lead
             : undefined);
     // The shift comes from the sub-headings as written; a demoted `#` is not one of them.
-    const below = headings
+    const below = nested
         .filter((h) => h !== first && h.depth > 1)
         .map((h) => h.depth);
     const shift = below.length ? Math.min(...below) - 2 : 0;
     if (first)
         first.depth = 1;
-    for (const h of headings) {
+    for (const h of nested) {
         if (h === first)
             continue;
         if (h.depth === 1)

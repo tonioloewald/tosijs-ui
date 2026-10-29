@@ -100,21 +100,33 @@ export type AceResult =
   | { ran: true; passed: boolean; failures: string[] }
   | { ran: false; reason: string }
 
+/** Why Ace did not run, when it is not installed anywhere. */
+export const ACE_NOT_INSTALLED =
+  'DAISY Ace is not installed (npm install -g @daisy/ace, which keeps it out of your lockfile)'
+
 /**
- * Check a built `.epub` with DAISY Ace (`@daisy/ace`), resolved from the project's own
- * `node_modules/.bin`. It is the adopter's: never a dependency of tosijs-ui.
+ * Where `ace` is: the project's own `node_modules/.bin` first, then `PATH`. A global install is
+ * the one the docs recommend: Ace brings Electron and Puppeteer, whose advisories would otherwise
+ * fail the project's own dependency audit (#3577). It is the adopter's, never a dependency of
+ * tosijs-ui.
  */
+export function findAce(
+  projectDir = process.cwd(),
+  searchPath = process.env.PATH ?? ''
+): string | null {
+  const local = path.join(projectDir, 'node_modules', '.bin', 'ace')
+  if (existsSync(local)) return local
+  return Bun.which('ace', { PATH: searchPath }) ?? null
+}
+
+/** Check a built `.epub` with DAISY Ace (`@daisy/ace`). */
 export async function runAce(
   epubFile: string,
-  projectDir = process.cwd()
+  projectDir = process.cwd(),
+  searchPath = process.env.PATH ?? ''
 ): Promise<AceResult> {
-  const bin = path.join(projectDir, 'node_modules', '.bin', 'ace')
-  if (!existsSync(bin))
-    return {
-      ran: false,
-      reason:
-        'DAISY Ace is not installed in this project (bun add -d @daisy/ace)',
-    }
+  const bin = findAce(projectDir, searchPath)
+  if (!bin) return { ran: false, reason: ACE_NOT_INSTALLED }
   const out = mkdtempSync(path.join(tmpdir(), 'tosijs-ace-'))
   try {
     const child = spawn(

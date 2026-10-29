@@ -32,6 +32,27 @@ export interface EnsureSectionsOptions {
   sectionsDir: string
   /** re-run doc extraction so docsJsonPath reflects on-disk changes */
   reExtract: () => void
+  /**
+   * The site's `docPaths`. A stub outside all of them would never be read back, so none is
+   * written there (#3584).
+   */
+  docPaths?: string[]
+  /**
+   * Whether this build may create stubs. A watch rebuild may not: a parent that is missing for
+   * a second, mid-rename, is not a missing parent (#3584). Default true.
+   */
+  createStubs?: boolean
+  /** where warnings and the list of created files go (default console.warn) */
+  log?: (message: string) => void
+}
+
+/** True when `dir` is one of `docPaths`, or inside one. */
+export function insideDocPaths(dir: string, docPaths: string[]): boolean {
+  const target = path.resolve(dir)
+  return docPaths.some((p) => {
+    const root = path.resolve(p)
+    return target === root || target.startsWith(root + path.sep)
+  })
 }
 
 function readDocs(p: string): Doc[] {
@@ -40,23 +61,48 @@ function readDocs(p: string): Doc[] {
 
 export function ensureSections(opts: EnsureSectionsOptions): void {
   const { docsJsonPath, sectionsDir, reExtract } = opts
+  const log = opts.log ?? ((message: string) => console.warn(message))
   let docs = readDocs(docsJsonPath)
   let slugMap = buildSlugMap(docs)
 
   // 1. Auto-create a stub .md for any referenced-but-missing parent.
-  let created = false
-  for (const ref of new Set(
-    docs.map((d) => d.parent).filter(Boolean) as string[]
-  )) {
-    if (resolveParent(ref, docs, slugMap)) continue // already exists
-    const file = path.join(sectionsDir, slugify(ref) + '.md')
-    if (existsSync(file)) continue
-    mkdirSync(sectionsDir, { recursive: true })
-    // Heading first so the doc title is clean; empty TOC block filled below.
-    writeFileSync(file, `# ${ref}\n\n<!-- toc -->\n<!-- /toc -->\n`, 'utf8')
-    created = true
+  const missing = [
+    ...new Set(docs.map((d) => d.parent).filter(Boolean) as string[]),
+  ].filter(
+    (ref) =>
+      !resolveParent(ref, docs, slugMap) &&
+      !existsSync(path.join(sectionsDir, slugify(ref) + '.md'))
+  )
+  const readable = !opts.docPaths || insideDocPaths(sectionsDir, opts.docPaths)
+  const created: string[] = []
+  if (missing.length && opts.createStubs === false) {
+    // Said, not written: the next full build creates them if they are still missing.
+  } else if (missing.length && !readable) {
+    log(
+      `⚠️  ${
+        missing.length
+      } page(s) name a parent that does not exist (${missing
+        .map((ref) => `"${ref}"`)
+        .join(', ')}). No section doc was created for ${
+        missing.length === 1 ? 'it' : 'them'
+      }: sectionsDir "${sectionsDir}" is outside every docPath, so the build would never read ` +
+        `it back. Set sectionsDir to a folder inside docPaths, or fix the parent names.`
+    )
+  } else {
+    for (const ref of missing) {
+      const file = path.join(sectionsDir, slugify(ref) + '.md')
+      mkdirSync(sectionsDir, { recursive: true })
+      // Heading first so the doc title is clean; empty TOC block filled below.
+      writeFileSync(file, `# ${ref}\n\n<!-- toc -->\n<!-- /toc -->\n`, 'utf8')
+      created.push(file)
+    }
   }
-  if (created) {
+  if (created.length) {
+    log(
+      `📄 created ${
+        created.length
+      } section doc(s) for parents that had none: ${created.join(', ')}`
+    )
     reExtract()
     docs = readDocs(docsJsonPath)
     slugMap = buildSlugMap(docs)
