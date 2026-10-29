@@ -25,11 +25,11 @@
   never be read back. Stubs are created only on the first build in a process, so a parent that
   disappears for a second during a rename no longer leaves files behind. Each stub written is
   named in the build output.
-- **`preview.host` is optional, and the docs say so (#3586).** The type has allowed a config
-  with only `preview.tunnel` since 1.10.0, but the doc comment and the reference table still
-  said `host` was required. `as any` casts written for it can go.
+- **`preview.host` is optional, and the preview docs no longer say `host` is required (#3586).**
+  The type has allowed a config with only `preview.tunnel` since 1.10.0, but the doc comment and
+  the reference table still said so. `as any` casts written for it can go.
 
-## 1.17.0-beta.1
+### 1.17.0-beta.1 (prerelease detail)
 
 > Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
 > on 1.16.41. It carries the accessibility half of 1.17.0; the SEO work and #245/#246 follow.
