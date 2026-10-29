@@ -366,9 +366,9 @@ export class TosiPalette extends withAttributes({
     },
     // The trigger's shortcut hint is plain text: an outline inside the field's own outline
     // read as a second control. The hints in the open palette keep theirs.
+    // No fade either: the hint is text, and must stay as readable as the label (AA, #3520).
     ':host > .palette-trigger > kbd': {
       boxShadow: 'none',
-      opacity: 0.75,
     },
     ':host > .palette-trigger > .palette-trigger-label': {
       flex: '1 1 auto',
