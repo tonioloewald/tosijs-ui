@@ -155,6 +155,8 @@ export function buildBookHtml(docs, opts) {
     const chapters = flatten(roots)
         .map((node) => `<section class="chapter" id="${slugify(node.doc.filename)}">\n${renderDocMarkdown(stripDocMeta(bookTextOf(node.doc)), {
         wikilinks,
+        accessible: opts.accessible,
+        title: node.doc.title,
     })}\n</section>`)
         .join('\n');
     return `<!DOCTYPE html>

@@ -899,7 +899,11 @@ export async function buildEpub(config, opts = {}) {
         `injectExampleLinks` matches on the `language-*` class, never on the code text, so
         highlighting cannot break the "Run this example live" links.
         */
-        await highlightHtml(renderDocMarkdown(stripDocMeta(bookTextOf(doc)), { wikilinks }), 'none'), bookFiles, slugMap, config.basePath);
+        await highlightHtml(renderDocMarkdown(stripDocMeta(bookTextOf(doc)), {
+            wikilinks,
+            accessible: !!config.accessibility,
+            title: doc.title,
+        }), 'none'), bookFiles, slugMap, config.basePath);
         const html = embedLocalImages(linked, outDir, config.basePath, images, unboundImages, pathForSlug(slugMap[doc.filename] ?? ''));
         // happy-dom occasionally throws on exotic content (e.g. an internal selector
         // bug); fall back to the regex pass for that doc rather than aborting.

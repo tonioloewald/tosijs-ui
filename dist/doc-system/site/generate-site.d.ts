@@ -1,6 +1,6 @@
 import type { Doc } from './docs.js';
 import type { ProjectLinks, LinkItem } from '../../doc-browser.js';
-import { type ExampleBakes } from '../render.js';
+import { type AccessibilityMode, type ExampleBakes } from '../render.js';
 declare global {
     var Bun: any;
 }
@@ -10,6 +10,8 @@ export interface GenerateSiteConfig {
     aliases?: Record<string, string>;
     /** `SiteConfig.searchPlaceholder` */
     searchPlaceholder?: string;
+    /** `SiteConfig.accessibility` (#3521) */
+    accessibility?: AccessibilityMode;
     /**
      * Mirrors `SiteConfig.liveExamples`. The static highlighter needs it so it skips the
      * fences that will become live examples — a highlighted block hands the example markup

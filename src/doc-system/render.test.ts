@@ -187,3 +187,74 @@ test('#115: handles attributes and whitespace', () => {
   expect(out).not.toContain('<p>')
   expect(out).toContain('data-x="1"')
 })
+
+// ── the accessibility mode (#3521) ───────────────────────────────────────────
+
+const a11y = (text: string, title?: string) =>
+  renderDocMarkdown(text, { accessible: true, title })
+
+test('an image followed by an italic paragraph is a figure with that caption', () => {
+  const html = a11y('![](cube.png)\n\n*A cube, lit from the left.*\n\nAfter.')
+  expect(html).toContain(
+    '<figure><img src="cube.png" alt=""><figcaption>A cube, lit from the left.</figcaption></figure>'
+  )
+  expect(html).toContain('<p>After.</p>')
+})
+
+test('the caption may sit on the very next line', () => {
+  const html = a11y('![](cube.png)\n_A cube._')
+  expect(html).toContain('<figcaption>A cube.</figcaption>')
+  expect(html).not.toContain('<p>')
+})
+
+test('figures inside a blockquote, and the image alt is kept', () => {
+  const html = a11y('> ![A cube](cube.png)\n>\n> *Figure 1*')
+  expect(html).toContain('<blockquote>')
+  expect(html).toContain(
+    '<figure><img src="cube.png" alt="A cube"><figcaption>Figure 1</figcaption></figure>'
+  )
+})
+
+test('not a figure: an image with prose, a lone image, a caption with more than italics', () => {
+  for (const text of [
+    'Look: ![](a.png)\n\n*caption*',
+    '![](a.png)\n\nPlain text.',
+    '![](a.png)\n\n*caption* and more',
+    '![](a.png)',
+  ])
+    expect(a11y(text)).not.toContain('<figure>')
+})
+
+test('off by default: the same markdown renders as it always did', () => {
+  const text = '## Part\n\n![](cube.png)\n\n*A cube.*'
+  expect(renderDocMarkdown(text)).toBe(renderDocMarkdown(text, {}))
+  expect(renderDocMarkdown(text)).not.toContain('<figure>')
+  expect(renderDocMarkdown(text, { title: 'T' })).not.toContain('<h1')
+})
+
+test('a page with no # heading gets its title as the one <h1>', () => {
+  const html = a11y('## Lights\n\ntext', 'Lighting <a scene>')
+  expect(html).toMatch(
+    /^<h1 id="lighting-a-scene">Lighting &lt;a scene&gt;<\/h1>\n<h2 id="lights">/
+  )
+})
+
+test('a page whose title came from its first heading has that heading promoted, not repeated', () => {
+  const html = a11y('## Three lights\n\n### Key\n\n### Fill', 'Three lights')
+  expect(html).toBe(
+    '<h1 id="three-lights">Three lights</h1>\n<h2 id="key">Key</h2>\n<h2 id="fill">Fill</h2>\n'
+  )
+})
+
+test('a later # is demoted, and levels shift so the first below the title is ##', () => {
+  const html = a11y('# Title\n\n### A\n\n#### B\n\n# Again', 'Title')
+  expect(html.match(/<h1/g)).toHaveLength(1)
+  expect(html).toContain('<h2 id="a">A</h2>')
+  expect(html).toContain('<h3 id="b">B</h3>')
+  expect(html).toContain('<h2 id="again">Again</h2>')
+})
+
+test('a skipped level is left as written (the build reports it)', () => {
+  const html = a11y('# T\n\n## A\n\n#### Deep')
+  expect(html).toContain('<h4 id="deep">Deep</h4>')
+})

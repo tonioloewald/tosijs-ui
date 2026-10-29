@@ -152,6 +152,54 @@ describe('docs.json cache-busting', () => {
     await expect(page({ docs, strict: true })).rejects.toThrow(/#unreal/)
   })
 
+  test('the accessibility mode renders figures and one <h1>, and reaches the page config', async () => {
+    const docs = [
+      {
+        filename: 'README.md',
+        title: 'Lighting',
+        path: 'README.md',
+        text: '## Three lights\n\n![](key.png)\n\n*The key light.*',
+      },
+    ]
+    const html = await page({ docs, accessibility: 'wcag22-aa' })
+    expect(html).toContain('<h1 id="lighting">Lighting</h1>')
+    expect(html).toContain('<figcaption>The key light.</figcaption>')
+    // the hydrated browser renders the same way, so it must be told
+    expect(html).toContain('&quot;accessibility&quot;:&quot;wcag22-aa&quot;')
+    const off = await page({ docs })
+    expect(off).not.toContain('<figure>')
+    expect(off).not.toContain('accessibility')
+  })
+
+  test('accessibility findings warn with file and line, and fail the build under strict', async () => {
+    const docs = [
+      {
+        filename: 'README.md',
+        title: 'Home',
+        path: 'README.md',
+        text: '# Home\n\n![](bare.png)',
+      },
+    ]
+    const warned: string[] = []
+    const warn = console.warn
+    console.warn = (...args: unknown[]) => void warned.push(args.join(' '))
+    try {
+      await page({ docs, accessibility: 'wcag22-aa' })
+      await page({ docs })
+    } finally {
+      console.warn = warn
+    }
+    const said = warned.join('\n')
+    // README.md is read for the line; this repo's README has no such image, so file only
+    expect(said).toContain(
+      'README.md  ![](bare.png) has no alt text and no caption'
+    )
+    expect(said.match(/Accessibility/g)).toHaveLength(1) // off: no report
+    await expect(
+      page({ docs, accessibility: 'wcag22-aa', strict: true })
+    ).rejects.toThrow(/bare\.png/)
+  })
+
   test('docsStamp is applied to the corpus URL', async () => {
     const html = await page({ docsStamp: 'deadbeef', assetStamp: '9.9.9' })
     expect(html).toContain('docs.json?v=deadbeef')

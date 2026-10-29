@@ -32,8 +32,10 @@ import { buildNavTree, navOpenPath, NavNode } from '../nav-tree.js'
 import {
   renderDocMarkdown,
   docDescription,
+  type AccessibilityMode,
   type ExampleBakes,
 } from '../render.js'
+import { accessibilityFindings, findingLine } from './a11y-report.js'
 import {
   bareNameLinks,
   deadInPageAnchors,
@@ -53,6 +55,8 @@ export interface GenerateSiteConfig {
   aliases?: Record<string, string>
   /** `SiteConfig.searchPlaceholder` */
   searchPlaceholder?: string
+  /** `SiteConfig.accessibility` (#3521) */
+  accessibility?: AccessibilityMode
   /**
    * Mirrors `SiteConfig.liveExamples`. The static highlighter needs it so it skips the
    * fences that will become live examples — a highlighted block hands the example markup
@@ -362,6 +366,8 @@ async function pageHtml(
       renderDocMarkdown(doc.text, {
         bakes: bakes?.get(doc.filename),
         wikilinks,
+        accessible: !!config.accessibility,
+        title: doc.title,
       }),
       // The SAME policy the client will apply, so the build and the browser agree about
       // which blocks are live examples and which are static code to highlight.
@@ -620,6 +626,7 @@ export async function generateSite(
       bookVolumes: config.bookVolumes,
       ebooks: config.ebooks,
       searchPlaceholder: config.searchPlaceholder,
+      accessibility: config.accessibility,
     })
   )
 
@@ -630,10 +637,15 @@ export async function generateSite(
   const deadAnchors: string[] = []
   const bareLinks: string[] = []
   const danglingWikilinks: string[] = []
+  const a11yFindings: string[] = []
   for (const doc of docs) {
     const slug = slugMap[doc.filename]
     const dir = slug === '' ? outputDir : `${outputDir}/${slug}`
-    const rendered = renderDocMarkdown(doc.text, { wikilinks })
+    const rendered = renderDocMarkdown(doc.text, {
+      wikilinks,
+      accessible: !!config.accessibility,
+      title: doc.title,
+    })
     const dead = deadInPageAnchors(rendered)
     // On the root page (`/`) a bare name resolves to `/name`, which works; elsewhere it does not.
     const bare = slug === '' ? [] : bareNameLinks(rendered)
@@ -644,6 +656,24 @@ export async function generateSite(
           .map((t) => `[[${t}]]`)
           .join(', ')}`
       )
+    if (config.accessibility) {
+      const found = accessibilityFindings(doc.text, doc.title)
+      if (found.length) {
+        const file = doc.path || doc.filename
+        let source = ''
+        try {
+          source = doc.path ? await Bun.file(doc.path).text() : ''
+        } catch {
+          // a doc with no readable source is still reported, by file only
+        }
+        for (const finding of found) {
+          const line = source && findingLine(source, finding.raw)
+          a11yFindings.push(
+            `    ${file}${line ? `:${line}` : ''}  ${finding.message}`
+          )
+        }
+      }
+    }
     if (bare.length)
       bareLinks.push(`    ${doc.path || doc.filename}: ${bare.join(', ')}`)
     if (dead.length)
@@ -702,6 +732,15 @@ export async function generateSite(
       `\n⚠️  Links written as a bare page name. Every page is served at /slug/, so these\n` +
         `    resolve under the page they are on and reach nothing; write /name/ instead:\n` +
         `${bareLinks.join('\n')}\n`
+    )
+  }
+  if (a11yFindings.length) {
+    misconfigured(
+      config.strict,
+      `\n⚠️  Accessibility (${config.accessibility}): what the build cannot fix for you. An\n` +
+        `    image needs alt text, or an italic caption paragraph straight after it; a\n` +
+        `    heading goes one level below the one before; a link's text names where it goes:\n` +
+        `${a11yFindings.join('\n')}\n`
     )
   }
   if (deadAnchors.length) {

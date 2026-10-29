@@ -1186,7 +1186,11 @@ export async function buildEpub(
       highlighting cannot break the "Run this example live" links.
       */
       await highlightHtml(
-        renderDocMarkdown(stripDocMeta(bookTextOf(doc)), { wikilinks }),
+        renderDocMarkdown(stripDocMeta(bookTextOf(doc)), {
+          wikilinks,
+          accessible: !!config.accessibility,
+          title: doc.title,
+        }),
         'none'
       ),
       bookFiles,

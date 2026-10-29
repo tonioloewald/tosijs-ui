@@ -312,6 +312,60 @@ The same `logo` is accepted by `createDocBrowser({ logo })` and by an embedded
 build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (default
 10px).
 
+### Accessibility (opt-in)
+
+| field           | default | purpose                                                         |
+| --------------- | ------- | --------------------------------------------------------------- |
+| `accessibility` | —       | `'wcag22-aa'` builds to WCAG 2.2 AA as far as a build can       |
+| `altText`       | —       | asked for alt text for each image that has none (needs the mode) |
+
+The site's own frame meets WCAG 2.2 AA whether or not you set anything, and the Playwright lane
+holds it there with an axe scan. Your content is a different matter: the build cannot know what
+an image shows. `accessibility: 'wcag22-aa'` makes the build do what it can decide on its own,
+and report what it cannot.
+
+What it changes, on the site, in print and in the ePub alike:
+
+- **Figures.** An image alone in its paragraph, followed by a paragraph that is only italic text
+  (on the next line, or after a blank one), becomes a `<figure>` with that text as its
+  `<figcaption>`. The caption is then tied to the image, which is what makes an empty alt right
+  for an image the caption describes:
+
+  ```markdown:static
+  ![](key-light.png)
+
+  *The key light, at 45° to the subject.*
+  ```
+
+- **One `<h1>` per page, its title.** A page with no `#` heading has its first heading promoted
+  if that heading is where its title came from, and gets its title as an `<h1>` otherwise. A
+  later `#` becomes `##`, and the other headings shift so the first level below the title is
+  `##`. A page that starts at `###` comes out starting at `##`.
+
+What it reports, by file and line, and fails the build on under `strict`:
+
+- an image with no alt text and no caption, a linked image with no alt text (the link then has
+  no name), and a raw `<img>` with no `alt` attribute (`alt=""` is taken as deliberate);
+- a heading that skips a level (an `<h4>` straight under an `<h2>`), as rendered;
+- a link whose whole text is "here", "click here", "read more" and the like, which says nothing
+  in a screen reader's list of links.
+
+It does not judge whether a caption or an alt text is any good; that stays yours.
+
+**`altText`** fills the gap for a corpus with hundreds of undescribed images. It is called for
+each image the build would report, and what it returns becomes that image's alt text in the
+built site, `docs.json` and the ePub. It never writes a source file, so generated text stays
+something you review before it becomes authored text. Return nothing to leave an image reported.
+
+```ts:static
+altText: async ({ src, title, doc }) => {
+  // a relative src resolves from doc.path, the source file the image appears in
+  return cache[src] ??= await describeImage(path.resolve(path.dirname(doc.path!), src))
+},
+```
+
+It runs on every build, watch rebuilds included, so cache anything slow or paid by `src`.
+
 ### Doc sources
 
 | field         | default                | purpose                                                                                                                                       |

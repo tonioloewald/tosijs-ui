@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.17.0 (in progress)
+
+- **An opt-in accessibility mode for doc sites (#3521).** `accessibility: 'wcag22-aa'` in the
+  site config makes the build do what it can decide on its own and report what it cannot, on the
+  site, in print and in the ePub:
+  - an image alone in its paragraph, followed by an italic-only paragraph, renders as a
+    `<figure>` with that text as its `<figcaption>`;
+  - every page has exactly one `<h1>`, its title: a page's first heading is promoted when its
+    title came from it, a later `#` becomes `##`, and the rest shift to start at `##`;
+  - the build lists, by file and line, each image with no alt text and no caption, each heading
+    that skips a level, and each link named "here" or the like, and fails on them under `strict`.
+
+  Off by default; a site that does not set it renders exactly as before.
+- **`altText`: a hook that supplies alt text for undescribed images.** With the mode on, it is
+  called for each image the build would report, and its answer becomes that image's alt text in
+  the built site, `docs.json` and the ePub. It never writes a source file. It runs on every
+  build, so cache anything slow by `src`.
+- **The header's site name is no longer a heading.** It was an `<h2>` above every page's own
+  `<h1>`, so it was each page's first heading. It is now `<span class="site-name">` and looks the
+  same; site CSS that styled `header h2` should target `header .site-name`.
+
 ## 1.16.41
 
 - **A `noindex` page is left out of `llms.txt`.** The sitemap and the markdown copies already

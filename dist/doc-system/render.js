@@ -10,13 +10,131 @@ give that example a stable anchor — see the docMarked renderer below.
 */
 import { Marked, Renderer } from 'marked';
 import { parseFenceInfo } from './example-policy.js';
-import { HeadingIds, headingSlug } from './heading-id.js';
+import { HeadingIds, headingSlug, headingText } from './heading-id.js';
 import { pathForSlug, slugify } from './routing.js';
 const baseRenderer = new Renderer();
 let currentBakes;
 let currentWikilinks;
 // Per-parse, reset in `preprocess` below (same pattern as the footnote state).
 let headingIds = new HeadingIds();
+let currentA11y;
+const isBlank = (t) => (t.type === 'text' && !String(t.raw).trim()) || t.type === 'br';
+/** The image token of a paragraph whose only content is one image, else undefined. */
+function loneImage(tokens) {
+    const content = tokens.filter((t) => !isBlank(t));
+    return content.length === 1 && content[0].type === 'image'
+        ? content[0]
+        : undefined;
+}
+/** The em token of a paragraph whose only content is italic text, else undefined. */
+function loneEmphasis(tokens) {
+    const content = tokens.filter((t) => !isBlank(t));
+    return content.length === 1 && content[0].type === 'em'
+        ? content[0]
+        : undefined;
+}
+function figureFrom(paragraph) {
+    // `![…](…)` and `*caption*` on consecutive lines are one paragraph to marked.
+    const content = paragraph.tokens.filter((t) => !isBlank(t));
+    if (content.length === 2 &&
+        content[0].type === 'image' &&
+        content[1].type === 'em')
+        return {
+            type: 'figure',
+            raw: paragraph.raw,
+            image: content[0],
+            caption: content[1],
+        };
+    return undefined;
+}
+function withFigures(tokens) {
+    const out = [];
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        if (token.type === 'blockquote' && Array.isArray(token.tokens)) {
+            token.tokens = withFigures(token.tokens);
+        }
+        if (token.type !== 'paragraph') {
+            out.push(token);
+            continue;
+        }
+        const joined = figureFrom(token);
+        if (joined) {
+            out.push(joined);
+            continue;
+        }
+        const image = loneImage(token.tokens);
+        let next = i + 1;
+        while (tokens[next]?.type === 'space')
+            next += 1;
+        const caption = image &&
+            tokens[next]?.type === 'paragraph' &&
+            loneEmphasis(tokens[next].tokens);
+        if (caption) {
+            out.push({
+                type: 'figure',
+                raw: tokens
+                    .slice(i, next + 1)
+                    .map((t) => t.raw)
+                    .join(''),
+                image,
+                caption,
+            });
+            i = next;
+            continue;
+        }
+        out.push(token);
+    }
+    return out;
+}
+function withOneTitle(tokens, title) {
+    const headings = tokens.filter((t) => t.type === 'heading');
+    /*
+    A page with no `#` takes its title from its first heading, whatever its level, so that
+    heading IS the title: promote it rather than print the same words twice.
+    */
+    const lead = headings[0];
+    const first = headings.find((t) => t.depth === 1) ??
+        (lead && title && headingText(lead).trim() === title.trim()
+            ? lead
+            : undefined);
+    // The shift comes from the sub-headings as written; a demoted `#` is not one of them.
+    const below = headings
+        .filter((h) => h !== first && h.depth > 1)
+        .map((h) => h.depth);
+    const shift = below.length ? Math.min(...below) - 2 : 0;
+    if (first)
+        first.depth = 1;
+    for (const h of headings) {
+        if (h === first)
+            continue;
+        if (h.depth === 1)
+            h.depth = 2;
+        else if (shift > 0)
+            h.depth -= shift;
+    }
+    if (!first && title)
+        return [
+            {
+                type: 'heading',
+                raw: '',
+                depth: 1,
+                text: title,
+                tokens: [
+                    { type: 'text', raw: title, text: escapeHtml(title), escaped: true },
+                ],
+            },
+            ...tokens,
+        ];
+    return tokens;
+}
+/**
+ * The accessibility mode's token rewrites (#3521), exported so the build's report reads exactly
+ * the structure the page renders.
+ */
+export function accessibleTokens(tokens, title) {
+    return withOneTitle(withFigures(tokens), title);
+}
 const docMarked = new Marked();
 docMarked.use({
     renderer: {
@@ -86,6 +204,13 @@ let footnoteDefs = new Map();
 let footnoteOrder = [];
 docMarked.use({
     hooks: {
+        processAllTokens(tokens) {
+            if (!currentA11y)
+                return tokens;
+            const rewritten = accessibleTokens([...tokens], currentA11y.title);
+            // A TokensList carries `links` (reference definitions); keep it.
+            return Object.assign(rewritten, { links: tokens.links });
+        },
         preprocess(markdown) {
             footnoteDefs = new Map();
             footnoteOrder = [];
@@ -106,6 +231,15 @@ docMarked.use({
         },
     },
     extensions: [
+        {
+            // Built only by `accessibleTokens` above; there is no syntax of its own to tokenize.
+            name: 'figure',
+            renderer(token) {
+                const image = this.parser.parseInline([token.image]);
+                const caption = this.parser.parseInline(token.caption.tokens);
+                return `<figure>${image}<figcaption>${caption}</figcaption></figure>\n`;
+            },
+        },
         {
             // [[slug]] / [[slug|label]] → link to /slug/. Not matched inside code spans
             // (Marked tokenizes those first). Given the corpus's `wikilinkTargets`, a target is
@@ -209,13 +343,23 @@ export function unwrapLoneCustomElements(html) {
 export function renderDocMarkdown(text, opts = {}) {
     currentBakes = opts.bakes;
     currentWikilinks = opts.wikilinks;
+    currentA11y = opts.accessible ? { title: opts.title } : undefined;
     try {
         return unwrapLoneCustomElements(docMarked.parse(text));
     }
     finally {
         currentBakes = undefined;
         currentWikilinks = undefined;
+        currentA11y = undefined;
     }
+}
+/**
+ * A doc's tokens as the accessibility mode renders them, for the build's report: the same
+ * lexer and the same rewrites as `renderDocMarkdown`, so the report and the page cannot
+ * disagree about what is a figure or which heading is the `<h1>`.
+ */
+export function accessibleDocTokens(text, title) {
+    return accessibleTokens([...docMarked.lexer(text)], title);
 }
 /**
  * Derive a clean <meta name="description"> from a doc's first prose paragraph.

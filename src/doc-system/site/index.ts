@@ -5,6 +5,8 @@ browser code. See ./README is at ../doc-site-system.md and the repo docs.
 */
 
 export { defineSiteConfig } from './site-config.js'
+export type { AccessibilityMode } from '../render.js'
+export type { AltTextHook, AltTextRequest } from './alt-text.js'
 export type {
   SiteConfig,
   SiteHost,

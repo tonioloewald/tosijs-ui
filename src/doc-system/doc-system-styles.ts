@@ -449,9 +449,13 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       margin: `${vars.spacing} 0 ${vars.spacing200}`,
       padding: 0,
     },
-    'header h2': {
+    'header .site-name': {
       color: vars.brandTextColor,
       whiteSpace: 'nowrap',
+      fontWeight: '700',
+      fontSize: 'calc(var(--font-size) * var(--h2-scale))',
+      lineHeight: 'calc(var(--line-height) * var(--h2-scale))',
+      margin: 'calc(var(--spacing) * var(--h2-scale)) 0',
     },
     h2: {
       color: vars.brandColor,

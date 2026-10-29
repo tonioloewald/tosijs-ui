@@ -24,7 +24,7 @@ Slow (pack + install + build), so it is NOT part of `bun test`. Run it before a 
 */
 
 import { $ } from 'bun'
-import { mkdtempSync, rmSync, existsSync, copyFileSync } from 'fs'
+import { mkdtempSync, rmSync, existsSync, copyFileSync, readdirSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 
@@ -761,6 +761,91 @@ try {
   } else {
     check('build emitted docs/version.json', false)
   }
+
+  /*
+  The accessibility mode through the INSTALLED buildSite (#3521). The `altText` hook is a
+  function in the site config, its answers are written into the corpus in this process and
+  handed to the ePub child as a patched copy, and none of that is visible to a unit test:
+  only a real build shows the alt text reaching the page, `docs.json` and the book while the
+  source stays as written.
+  */
+  console.log('♿ building with the accessibility mode …')
+  const a11y = `${proj}/a11y`
+  // a 1x1 PNG, so the ePub has a real image to bind
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+    'base64'
+  )
+  await Bun.write(`${a11y}/pages/key.png`, png)
+  await Bun.write(`${a11y}/pages/fill.png`, png)
+  const lighting =
+    '## Three lights\n\n![](key.png)\n\n*The key light.*\n\n![](fill.png)\n'
+  await Bun.write(`${a11y}/pages/lighting.md`, lighting)
+  await Bun.write(
+    `${a11y}/package.json`,
+    JSON.stringify({ name: 'a11y-smoke', version: '1.0.0', private: true })
+  )
+  await Bun.write(
+    `${a11y}/build.ts`,
+    `import { buildSite, defineSiteConfig } from 'tosijs-ui/site'\n` +
+      `const config = defineSiteConfig({\n` +
+      `  name: 'a11y-smoke',\n` +
+      `  docPaths: ['pages'],\n` +
+      `  outputDir: 'out',\n` +
+      `  audit: false,\n` +
+      `  epub: true,\n` +
+      `  accessibility: 'wcag22-aa',\n` +
+      `  altText: ({ src }) => src === 'fill.png' ? 'The fill light, from the right' : undefined,\n` +
+      `})\n` +
+      `process.exit((await buildSite(config)) ? 0 : 1)\n`
+  )
+  const a11yBuild = await $`bun build.ts`.cwd(a11y).nothrow().quiet()
+  const a11yOut = a11yBuild.stdout.toString() + a11yBuild.stderr.toString()
+  check(
+    'an accessibility-mode build succeeds',
+    a11yBuild.exitCode === 0,
+    a11yOut.slice(-400)
+  )
+  const lightingPage = existsSync(`${a11y}/out/lighting/index.html`)
+    ? await Bun.file(`${a11y}/out/lighting/index.html`).text()
+    : ''
+  check(
+    'the page has its title as <h1> and a figure with its caption',
+    // its title comes from its first heading, which is promoted rather than repeated
+    lightingPage.includes('<h1 id="three-lights">Three lights</h1>') &&
+      !lightingPage.includes('<h2 id="three-lights">') &&
+      lightingPage.includes('<figcaption>The key light.</figcaption>')
+  )
+  check(
+    'altText answers reach the page and docs.json, and the build says so',
+    lightingPage.includes('alt="The fill light, from the right"') &&
+      existsSync(`${a11y}/out/docs.json`) &&
+      (await Bun.file(`${a11y}/out/docs.json`).text()).includes(
+        'The fill light, from the right'
+      ) &&
+      a11yOut.includes('altText: 1 of 1 image(s)'),
+    a11yOut.slice(-400)
+  )
+  check(
+    'altText never writes a source file',
+    (await Bun.file(`${a11y}/pages/lighting.md`).text()) === lighting
+  )
+  const epubFile = existsSync(`${a11y}/out`)
+    ? readdirSync(`${a11y}/out`).find((f) => f.endsWith('.epub'))
+    : undefined
+  const chapters = epubFile
+    ? (
+        await $`unzip -p ${`${a11y}/out/${epubFile}`} '*.xhtml'`
+          .nothrow()
+          .quiet()
+      ).stdout.toString()
+    : ''
+  check(
+    'the ePub carries the figure and the altText answer',
+    chapters.includes('<figcaption>The key light.</figcaption>') &&
+      chapters.includes('alt="The fill light, from the right"'),
+    epubFile ? '' : 'no .epub was built'
+  )
 } finally {
   rmSync(work, { recursive: true, force: true })
 }

@@ -27,6 +27,8 @@ export interface BookHtmlOptions {
     /** full stylesheet (defaults to DEFAULT_BOOK_CSS + PRINT_CSS) */
     css?: string;
     lang?: string;
+    /** `SiteConfig.accessibility`: figures and one `<h1>` per chapter (#3521) */
+    accessible?: boolean;
     /** inject a script that opens the print dialog once the page has loaded */
     autoPrint?: boolean;
 }

@@ -103,7 +103,7 @@ import { elements, vars, varDefault, bindings, getListItem, tosi, StyleSheet, } 
 import { buildSlugMap, pathForSlug, filenameForPath, homeDoc, wikilinkTargets, } from './doc-system/routing.js';
 import { buildNavTree } from './doc-system/nav-tree.js';
 import { navSectionStyleSpec } from './doc-system/nav-styles.js';
-import { renderDocMarkdown } from './doc-system/render.js';
+import { renderDocMarkdown, } from './doc-system/render.js';
 import { pageTitle } from './doc-system/doc-title.js';
 import { unsettledExamples, tallyExamples, closePage, } from './doc-system/test-completion.js';
 import { LiveExample, testManager, pageTestCount, enableTests, disableTests, } from './live-example.js';
@@ -149,7 +149,7 @@ export const hasTestBlock = (text, policy = 'auto') => typeof text === 'string' 
     // Cheap reject first: lexing every doc in a large corpus is not free.
     text.includes('test') &&
     collectCodeTokens(text).some((t) => t.lang === 'test' && isLiveFence('test', t.mode, policy));
-const { div, span, a, header, button, template, h2, img, ul, li } = elements;
+const { div, span, a, header, button, template, img, ul, li } = elements;
 /*
 Test colors, and the text color that goes ON each — because contrast is a PAIR.
 
@@ -395,7 +395,7 @@ let docBrowserSeq = 0;
 // Likewise for the nav's aria-controls ids.
 let navIdCounter = 0;
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, aliases = {}, onRouteChange, searchShortcut = 'mod+k', searchPlaceholder = 'Search', navbarLinks, contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, aliases = {}, onRouteChange, searchShortcut = 'mod+k', searchPlaceholder = 'Search', accessibility, navbarLinks, contentElement, } = options;
     // Memory routing is fully self-contained: it never reads or writes
     // window.history/location, so an embedded or nested browser can't hijack the
     // host page's URL (or recurse into it).
@@ -906,7 +906,10 @@ export function createDocBrowser(options) {
                 alignItems: 'center',
                 borderBottom: 'none',
             },
-        }, logoMark(logo, projectLinks), h2(projectName)));
+        }, logoMark(logo, projectLinks), 
+        // Not a heading: the site name above every page made it each page's first heading,
+        // an <h2> ahead of the page's own <h1> (#3521).
+        span({ class: 'site-name' }, projectName)));
     }
     headerContent.push(span({ class: 'elastic' }), searchBox);
     // A header link renders as an icon (if `icon` names a known icon) or its label.
@@ -1054,6 +1057,8 @@ export function createDocBrowser(options) {
             docContent.innerHTML = renderDocMarkdown(doc.text, {
                 bakes: doc.bakes ? new Map(doc.bakes) : undefined,
                 wikilinks,
+                accessible: !!accessibility,
+                title: doc.title,
             });
         }
         /*
@@ -1345,7 +1350,7 @@ export function createDocBrowser(options) {
             return;
         editUI.view = view;
         if (view === 'preview') {
-            docContent.innerHTML = renderDocMarkdown(docMarkdownFromSource(editUI.editor.value, editUI.doc.path), { wikilinks });
+            docContent.innerHTML = renderDocMarkdown(docMarkdownFromSource(editUI.editor.value, editUI.doc.path), { wikilinks, accessible: !!accessibility, title: editUI.doc.title });
             rewriteContentLinks();
             LiveExample.insertExamples(docContent, context, editUI.doc.path || undefined);
             focusableCodeBlocks(docContent);

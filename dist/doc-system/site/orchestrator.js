@@ -36,6 +36,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, } from 'f
 import { tmpdir } from 'os';
 import { $, spawn } from 'bun';
 import { extractDocs } from './docs.js';
+import { applyAltText } from './alt-text.js';
 import { relocateSourcemaps } from './sourcemap-relocate.js';
 import { bundleBuildArgs, bundleDeclarationArgs, extensionlessImports, } from './library-bundle.js';
 import { checkExamples, formatExampleProblems, } from './check-examples.js';
@@ -90,6 +91,8 @@ async function buildEpubInChild(config, opts) {
             dialects: config.dialects,
             // an image the book cannot bind fails a strict build (EPUB_IMAGE_EXIT)
             strict: config.strict,
+            // figures and one <h1> per chapter, as on the site (#3521)
+            accessibility: config.accessibility,
         },
         opts,
     };
@@ -1485,11 +1488,30 @@ export async function buildSite(config, opts = {}) {
             Cheap, and available here because the file is already being read.
             */
             const docsJsonText = await Bun.file(DOCS_JSON).text();
+            let docs = JSON.parse(docsJsonText);
+            /*
+            Generated alt text (#3521) goes into the corpus the build renders from, never a source
+            file. The stamp hashes the patched corpus, so a changed answer reaches readers who have
+            the old `docs.json` cached; the ePub child reads a patched copy, written below.
+            */
+            let altTextCorpus = '';
+            if (config.altText && !config.accessibility) {
+                misconfigured(config.strict, `\n⚠️  altText is set but accessibility is not, so it is never called. Set\n` +
+                    `    accessibility: 'wcag22-aa' to use it.\n`);
+            }
+            else if (config.altText) {
+                const patched = await applyAltText(docs, config.altText);
+                docs = patched.docs;
+                console.log(`♿ altText: ${patched.supplied} of ${patched.asked} image(s) given alt text`);
+                if (patched.supplied) {
+                    altTextCorpus = path.join(tmpdir(), `tosijs-alt-corpus-${process.pid}.json`);
+                    await Bun.write(altTextCorpus, JSON.stringify(docs));
+                }
+            }
             const docsStamp = new Bun.CryptoHasher('sha256')
-                .update(docsJsonText)
+                .update(altTextCorpus ? JSON.stringify(docs) : docsJsonText)
                 .digest('hex')
                 .slice(0, 12);
-            const docs = JSON.parse(docsJsonText);
             // Declared dialects are live fences at build time too, so the static highlighter
             // leaves their source alone (#2463). Idempotent: a watch rebuild re-adds the same names.
             registerSiteDialects(config);
@@ -1498,6 +1520,7 @@ export async function buildSite(config, opts = {}) {
                 docs,
                 aliases: config.aliases,
                 searchPlaceholder: config.searchPlaceholder,
+                accessibility: config.accessibility,
                 outputDir: PUBLIC,
                 projectName: config.name,
                 bookVolumes: printCoverManifestUrl(config),
@@ -1621,7 +1644,7 @@ export async function buildSite(config, opts = {}) {
                     console.warn(`⚠️  epub: no documents in any volume — skipping. (Every doc is hidden or \`book: "none"\`.)`);
                 }
                 for (const bookTarget of volumes) {
-                    await buildEpubInChild(config, {
+                    await buildEpubInChild(altTextCorpus ? { ...config, docsJson: altTextCorpus } : config, {
                         // `modified` is NOT set here. `buildEpub` defaults and validates it, so every
                         // path — this one, `bun book`, and any adopter calling the public export —
                         // gets the same behaviour. A second assembly here is what made them differ.

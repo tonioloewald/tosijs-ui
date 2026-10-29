@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=add4927f39de" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=126514884ae2" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -38,7 +38,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=12145c220122" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=b96c38c8e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -367,6 +367,66 @@ The same <code>logo</code> is accepted by <code>createDocBrowser({ logo })</code
 (<code>.logo-mark</code>), so retune them with one CSS variable each rather than editing the
 build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-mark-gap</code> (default
 10px).</p>
+<h3 id="accessibility-opt-in">Accessibility (opt-in)</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>accessibility</code></td>
+<td>—</td>
+<td><code>&#39;wcag22-aa&#39;</code> builds to WCAG 2.2 AA as far as a build can</td>
+</tr>
+<tr>
+<td><code>altText</code></td>
+<td>—</td>
+<td>asked for alt text for each image that has none (needs the mode)</td>
+</tr>
+</tbody></table>
+<p>The site&#39;s own frame meets WCAG 2.2 AA whether or not you set anything, and the Playwright lane
+holds it there with an axe scan. Your content is a different matter: the build cannot know what
+an image shows. <code>accessibility: &#39;wcag22-aa&#39;</code> makes the build do what it can decide on its own,
+and report what it cannot.</p>
+<p>What it changes, on the site, in print and in the ePub alike:</p>
+<ul>
+<li><p><strong>Figures.</strong> An image alone in its paragraph, followed by a paragraph that is only italic text
+(on the next line, or after a blank one), becomes a <code>&lt;figure&gt;</code> with that text as its
+<code>&lt;figcaption&gt;</code>. The caption is then tied to the image, which is what makes an empty alt right
+for an image the caption describes:</p>
+<pre data-example-mode="static"><code class="language-markdown" data-highlighted>![](key-light.png)
+
+<span class="token italic"><span class="token punctuation">*</span><span class="token content">The key light, at 45° to the subject.</span><span class="token punctuation">*</span></span>
+</code></pre>
+</li>
+<li><p><strong>One <code>&lt;h1&gt;</code> per page, its title.</strong> A page with no <code>#</code> heading has its first heading promoted
+if that heading is where its title came from, and gets its title as an <code>&lt;h1&gt;</code> otherwise. A
+later <code>#</code> becomes <code>##</code>, and the other headings shift so the first level below the title is
+<code>##</code>. A page that starts at <code>###</code> comes out starting at <code>##</code>.</p>
+</li>
+</ul>
+<p>What it reports, by file and line, and fails the build on under <code>strict</code>:</p>
+<ul>
+<li>an image with no alt text and no caption, a linked image with no alt text (the link then has
+no name), and a raw <code>&lt;img&gt;</code> with no <code>alt</code> attribute (<code>alt=&quot;&quot;</code> is taken as deliberate);</li>
+<li>a heading that skips a level (an <code>&lt;h4&gt;</code> straight under an <code>&lt;h2&gt;</code>), as rendered;</li>
+<li>a link whose whole text is &quot;here&quot;, &quot;click here&quot;, &quot;read more&quot; and the like, which says nothing
+in a screen reader&#39;s list of links.</li>
+</ul>
+<p>It does not judge whether a caption or an alt text is any good; that stays yours.</p>
+<p><strong><code>altText</code></strong> fills the gap for a corpus with hundreds of undescribed images. It is called for
+each image the build would report, and what it returns becomes that image&#39;s alt text in the
+built site, <code>docs.json</code> and the ePub. It never writes a source file, so generated text stays
+something you review before it becomes authored text. Return nothing to leave an image reported.</p>
+<pre data-example-mode="static"><code class="language-ts" data-highlighted><span class="token function-variable function">altText</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> src<span class="token punctuation">,</span> title<span class="token punctuation">,</span> doc <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">{</span>
+  <span class="token comment">// a relative src resolves from doc.path, the source file the image appears in</span>
+  <span class="token keyword">return</span> cache<span class="token punctuation">[</span>src<span class="token punctuation">]</span> <span class="token operator">??=</span> <span class="token keyword">await</span> <span class="token function">describeImage</span><span class="token punctuation">(</span>path<span class="token punctuation">.</span><span class="token function">resolve</span><span class="token punctuation">(</span>path<span class="token punctuation">.</span><span class="token function">dirname</span><span class="token punctuation">(</span>doc<span class="token punctuation">.</span>path<span class="token operator">!</span><span class="token punctuation">)</span><span class="token punctuation">,</span> src<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">,</span>
+</code></pre>
+<p>It runs on every build, watch rebuilds included, so cache anything slow or paid by <code>src</code>.</p>
 <h3 id="doc-sources">Doc sources</h3>
 <table>
 <thead>
@@ -2446,6 +2506,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-x1120e4m.js"></script>
+  <script type="module" src="../hydrate-9c4xmjvk.js"></script>
 </body>
 </html>

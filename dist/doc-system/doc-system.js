@@ -332,11 +332,13 @@ export class TosiDocSystem extends withAttributes({
                 let projectName = '';
                 let bookVolumes;
                 let ebooks;
+                let accessible = false;
                 try {
                     const parsed = JSON.parse(this.config || '{}');
                     projectName = parsed.projectName || '';
                     bookVolumes = parsed.bookVolumes || undefined;
                     ebooks = parsed.ebooks;
+                    accessible = !!parsed.accessibility;
                 }
                 catch {
                     // ignore — fall through to document.title
@@ -372,6 +374,7 @@ export class TosiDocSystem extends withAttributes({
                             title: bookTitle,
                             cover: bookCover,
                             autoPrint: false,
+                            accessible,
                         }));
                         win.document.close();
                         /*
@@ -609,6 +612,7 @@ export class TosiDocSystem extends withAttributes({
             logo: config.logo,
             navbarLinks: navbarLinks.length ? navbarLinks : undefined,
             searchPlaceholder: config.searchPlaceholder,
+            accessibility: config.accessibility,
             contentElement,
         });
         // Add the settings (theme + language) menu — except in a nested demo, where

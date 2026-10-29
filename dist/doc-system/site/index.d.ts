@@ -1,4 +1,6 @@
 export { defineSiteConfig } from './site-config.js';
+export type { AccessibilityMode } from '../render.js';
+export type { AltTextHook, AltTextRequest } from './alt-text.js';
 export type { SiteConfig, SiteHost, LibraryBuildContext, } from './site-config.js';
 export { buildSite } from './orchestrator.js';
 export { restampSite } from './restamp.js';

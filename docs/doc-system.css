@@ -226,9 +226,13 @@ h1 {
   padding: 0px;
 }
 
-header h2 {
+header .site-name {
   color: var(--brand-text-color);
   white-space: nowrap;
+  font-weight: 700;
+  font-size: calc(var(--font-size) * var(--h2-scale));
+  line-height: calc(var(--line-height) * var(--h2-scale));
+  margin: calc(var(--spacing) * var(--h2-scale)) 0;
 }
 
 h2 {

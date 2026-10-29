@@ -15,6 +15,7 @@ import { highlightHtml } from '../highlight.js';
 import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, docDescription, } from '../render.js';
+import { accessibilityFindings, findingLine } from './a11y-report.js';
 import { bareNameLinks, deadInPageAnchors, missingWikilinks, misconfigured, } from './build-warnings.js';
 import { existsSync } from 'fs';
 const escapeAttr = (s) => s
@@ -161,6 +162,8 @@ at = slugMap[doc.filename] ?? '') {
     const rendered = rewriteDocLinks(await highlightHtml(renderDocMarkdown(doc.text, {
         bakes: bakes?.get(doc.filename),
         wikilinks,
+        accessible: !!config.accessibility,
+        title: doc.title,
     }), 
     // The SAME policy the client will apply, so the build and the browser agree about
     // which blocks are live examples and which are static code to highlight.
@@ -369,6 +372,7 @@ export async function generateSite(config) {
         bookVolumes: config.bookVolumes,
         ebooks: config.ebooks,
         searchPlaceholder: config.searchPlaceholder,
+        accessibility: config.accessibility,
     }));
     // The theme stylesheet (config.stylesUrl) is written separately by
     // ./generate-css.ts; pages here just <link> to it.
@@ -376,10 +380,15 @@ export async function generateSite(config) {
     const deadAnchors = [];
     const bareLinks = [];
     const danglingWikilinks = [];
+    const a11yFindings = [];
     for (const doc of docs) {
         const slug = slugMap[doc.filename];
         const dir = slug === '' ? outputDir : `${outputDir}/${slug}`;
-        const rendered = renderDocMarkdown(doc.text, { wikilinks });
+        const rendered = renderDocMarkdown(doc.text, {
+            wikilinks,
+            accessible: !!config.accessibility,
+            title: doc.title,
+        });
         const dead = deadInPageAnchors(rendered);
         // On the root page (`/`) a bare name resolves to `/name`, which works; elsewhere it does not.
         const bare = slug === '' ? [] : bareNameLinks(rendered);
@@ -388,6 +397,23 @@ export async function generateSite(config) {
             danglingWikilinks.push(`    ${doc.path || doc.filename}: ${dangling
                 .map((t) => `[[${t}]]`)
                 .join(', ')}`);
+        if (config.accessibility) {
+            const found = accessibilityFindings(doc.text, doc.title);
+            if (found.length) {
+                const file = doc.path || doc.filename;
+                let source = '';
+                try {
+                    source = doc.path ? await Bun.file(doc.path).text() : '';
+                }
+                catch {
+                    // a doc with no readable source is still reported, by file only
+                }
+                for (const finding of found) {
+                    const line = source && findingLine(source, finding.raw);
+                    a11yFindings.push(`    ${file}${line ? `:${line}` : ''}  ${finding.message}`);
+                }
+            }
+        }
         if (bare.length)
             bareLinks.push(`    ${doc.path || doc.filename}: ${bare.join(', ')}`);
         if (dead.length)
@@ -431,6 +457,12 @@ export async function generateSite(config) {
         misconfigured(config.strict, `\n⚠️  Links written as a bare page name. Every page is served at /slug/, so these\n` +
             `    resolve under the page they are on and reach nothing; write /name/ instead:\n` +
             `${bareLinks.join('\n')}\n`);
+    }
+    if (a11yFindings.length) {
+        misconfigured(config.strict, `\n⚠️  Accessibility (${config.accessibility}): what the build cannot fix for you. An\n` +
+            `    image needs alt text, or an italic caption paragraph straight after it; a\n` +
+            `    heading goes one level below the one before; a link's text names where it goes:\n` +
+            `${a11yFindings.join('\n')}\n`);
     }
     if (deadAnchors.length) {
         misconfigured(config.strict, `\n⚠️  In-page links that point at nothing on their page. A heading's id is its text,\n` +

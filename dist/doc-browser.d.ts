@@ -1,3 +1,4 @@
+import { type AccessibilityMode } from './doc-system/render.js';
 import { TestResults } from './live-example/test-harness.js';
 import { type ExamplePolicy } from './doc-system/example-policy.js';
 export declare const hasTestBlock: (text: string | undefined, policy?: ExamplePolicy) => boolean;
@@ -123,6 +124,11 @@ export interface DocBrowserOptions {
      * strings, like every other piece of the doc system's own text.
      */
     searchPlaceholder?: string;
+    /**
+     * `SiteConfig.accessibility` (#3521): render figures with captions and exactly one `<h1>`
+     * per page, as the static build does, so a hydrated page matches it.
+     */
+    accessibility?: AccessibilityMode;
     /**
      * Header-bar links. When provided, these replace the legacy `projectLinks` icon
      * set in the header (each renders as an icon if `icon` names a known icon, else

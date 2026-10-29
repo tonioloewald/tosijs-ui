@@ -82,6 +82,7 @@ import { docSystemStyleSpec } from './doc-system-styles.js'
 import { icons } from '../icons.js'
 import { popMenu } from '../menu.js'
 import { i18n, setLocale, initLocalization } from '../localize.js'
+import type { AccessibilityMode } from './render.js'
 // Side-effect: register <tosi-css-var-editor> so doc pages can drop the live CSS-var
 // tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
 import './css-var-editor.js'
@@ -98,6 +99,8 @@ interface DocSystemConfig {
   ebooks?: Ebook[]
   /** `SiteConfig.searchPlaceholder` */
   searchPlaceholder?: string
+  /** `SiteConfig.accessibility` (#3521) */
+  accessibility?: AccessibilityMode
 }
 
 export interface Ebook {
@@ -406,11 +409,13 @@ export class TosiDocSystem extends withAttributes({
           let projectName = ''
           let bookVolumes: string | undefined
           let ebooks: Ebook[] | undefined
+          let accessible = false
           try {
             const parsed = JSON.parse(this.config || '{}')
             projectName = parsed.projectName || ''
             bookVolumes = parsed.bookVolumes || undefined
             ebooks = parsed.ebooks
+            accessible = !!parsed.accessibility
           } catch {
             // ignore — fall through to document.title
           }
@@ -448,6 +453,7 @@ export class TosiDocSystem extends withAttributes({
                   title: bookTitle,
                   cover: bookCover,
                   autoPrint: false,
+                  accessible,
                 })
               )
               win.document.close()
@@ -717,6 +723,7 @@ export class TosiDocSystem extends withAttributes({
       logo: config.logo,
       navbarLinks: navbarLinks.length ? navbarLinks : undefined,
       searchPlaceholder: config.searchPlaceholder,
+      accessibility: config.accessibility,
       contentElement,
     })
 

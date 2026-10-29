@@ -19,6 +19,8 @@ import type { PreflightMode } from './preflight.js'
 import type { AuditConfig } from './audit-guard.js'
 import type { EditableDataOptions } from './data-store.js'
 import type { BookManifest } from '../book-manifest.js'
+import type { AccessibilityMode } from '../render.js'
+import type { AltTextHook } from './alt-text.js'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 
@@ -97,6 +99,25 @@ export interface SiteConfig {
    * of the doc system's own text, so a site with translations can translate it.
    */
   searchPlaceholder?: string
+  /**
+   * Opt in to building to WCAG 2.2 AA, as far as a build can (#3521). Off by default. With
+   * `'wcag22-aa'`:
+   * - an image alone in its paragraph, followed by an italic-only paragraph, renders as a
+   *   `<figure>` with that text as its `<figcaption>` (site, print and ePub);
+   * - every page has exactly one `<h1>`, its title: a page with no `#` heading gets one, a later
+   *   `#` becomes `##`, and the rest shift so the first level below the title is `##`;
+   * - the build reports what it cannot fix (an image with no alt text and no caption, a
+   *   skipped heading level, a link named "here"), and fails on it under `strict`.
+   */
+  accessibility?: AccessibilityMode
+  /**
+   * With `accessibility` on, asked for a text alternative for each markdown image that has no
+   * alt text and no caption (#3521). Return the text, or nothing to leave the image reported.
+   * The answer goes into the built site, `docs.json` and the ePub, never into a source file.
+   * It is called on every build, watch rebuilds included, so cache anything expensive (a
+   * vision model) by `src`.
+   */
+  altText?: AltTextHook
   /**
    * Directories to skip while scanning `docPaths` — by basename (skipped wherever it
    * appears) or by path (skipped only at that location). Added to the built-in

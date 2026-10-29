@@ -119,7 +119,10 @@ import {
 } from './doc-system/routing.js'
 import { buildNavTree, NavNode } from './doc-system/nav-tree.js'
 import { navSectionStyleSpec } from './doc-system/nav-styles.js'
-import { renderDocMarkdown } from './doc-system/render.js'
+import {
+  renderDocMarkdown,
+  type AccessibilityMode,
+} from './doc-system/render.js'
 import { pageTitle } from './doc-system/doc-title.js'
 import {
   unsettledExamples,
@@ -218,7 +221,7 @@ declare global {
   }
 }
 
-const { div, span, a, header, button, template, h2, img, ul, li } = elements
+const { div, span, a, header, button, template, img, ul, li } = elements
 
 /*
 Test colors, and the text color that goes ON each — because contrast is a PAIR.
@@ -470,6 +473,11 @@ export interface DocBrowserOptions {
    */
   searchPlaceholder?: string
   /**
+   * `SiteConfig.accessibility` (#3521): render figures with captions and exactly one `<h1>`
+   * per page, as the static build does, so a hydrated page matches it.
+   */
+  accessibility?: AccessibilityMode
+  /**
    * Header-bar links. When provided, these replace the legacy `projectLinks` icon
    * set in the header (each renders as an icon if `icon` names a known icon, else
    * as its text label). `projectLinks` is still used for the logo and view-source.
@@ -606,6 +614,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     onRouteChange,
     searchShortcut = 'mod+k',
     searchPlaceholder = 'Search',
+    accessibility,
     navbarLinks,
     contentElement,
   } = options
@@ -1165,7 +1174,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           },
         },
         logoMark(logo, projectLinks),
-        h2(projectName)
+        // Not a heading: the site name above every page made it each page's first heading,
+        // an <h2> ahead of the page's own <h1> (#3521).
+        span({ class: 'site-name' }, projectName)
       )
     )
   }
@@ -1319,6 +1330,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       docContent.innerHTML = renderDocMarkdown(doc.text, {
         bakes: doc.bakes ? new Map(doc.bakes) : undefined,
         wikilinks,
+        accessible: !!accessibility,
+        title: doc.title,
       })
     }
     /*
@@ -1632,7 +1645,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (view === 'preview') {
       docContent.innerHTML = renderDocMarkdown(
         docMarkdownFromSource(editUI.editor.value, editUI.doc.path),
-        { wikilinks }
+        { wikilinks, accessible: !!accessibility, title: editUI.doc.title }
       )
       rewriteContentLinks()
       LiveExample.insertExamples(
