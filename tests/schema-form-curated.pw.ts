@@ -106,7 +106,12 @@ test('a custom editor writes again after the value is changed from outside', asy
   const result = await page.evaluate(async () => {
     const form = document.querySelector('#curated') as any
     const rating = form.querySelector('[data-plugin="priority"]') as any
-    const tick = () => new Promise((r) => setTimeout(r, 60))
+    // Wait for the outside value to reach the editor, not for a fixed time: under load (seen
+    // in Firefox) 60ms was not enough, the editor still read 5, and writing 5 again was no edit.
+    const shows = async (n: number) => {
+      for (let i = 0; i < 100 && Number(rating.value) !== n; i++)
+        await new Promise((r) => setTimeout(r, 20))
+    }
     const edit = (n: number) => {
       rating.value = n
       rating.dispatchEvent(new Event('change', { bubbles: true }))
@@ -114,10 +119,10 @@ test('a custom editor writes again after the value is changed from outside', asy
     let changes = 0
     form.addEventListener('change', () => (changes += 1))
     form.value = { ...form.value, priority: 3 }
-    await tick()
+    await shows(3)
     edit(5)
     form.value = { ...form.value, priority: 3 }
-    await tick()
+    await shows(3)
     edit(5)
     return { priority: form.value.priority, changes, hidden: form.value.hidden }
   })
