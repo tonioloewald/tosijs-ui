@@ -254,6 +254,21 @@ test('a later # is demoted, and levels shift so the first below the title is ##'
   expect(html).toContain('<h2 id="again">Again</h2>')
 })
 
+test('headings in a blockquote or list shift with the page, and never become the title (#3576)', () => {
+  // Learn 3D's shape: sections at ###, a sidebar at > ####.
+  const html = a11y(
+    '### Why\n\n> #### Non-Destructive?\n\n- # In a list',
+    'Why'
+  )
+  expect(html).toContain('<h1 id="why">Why</h1>')
+  expect(html).toContain('<h2 id="non-destructive">Non-Destructive?</h2>')
+  expect(html).toContain('<h2 id="in-a-list">In a list</h2>')
+  expect(html.match(/<h1/g)).toHaveLength(1)
+  const report = a11y('# T\n\n### A\n\n> #### Sidebar', 'T')
+  expect(report).toContain('<h2 id="a">A</h2>')
+  expect(report).toContain('<h3 id="sidebar">Sidebar</h3>')
+})
+
 test('a skipped level is left as written (the build reports it)', () => {
   const html = a11y('# T\n\n## A\n\n#### Deep')
   expect(html).toContain('<h4 id="deep">Deep</h4>')

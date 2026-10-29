@@ -61,3 +61,12 @@ test('findingLine locates a block in its source file', () => {
   expect(findingLine(source, finding.raw)).toBe(6)
   expect(findingLine(source, 'not there')).toBeUndefined()
 })
+
+test('a blockquote heading is judged at its shifted level, not as written (#3576)', () => {
+  expect(
+    messages('### Why\n\n### Sections\n\n> #### Non-Destructive?\n', 'Why')
+  ).toEqual([])
+  expect(messages('# T\n\n## A\n\n> #### Deep\n', 'T')).toEqual([
+    '"Deep" is an <h4> directly under an <h2>',
+  ])
+})
