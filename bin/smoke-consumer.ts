@@ -826,6 +826,14 @@ try {
       a11yOut.includes('altText: 1 of 1 image(s)'),
     a11yOut.slice(-400)
   )
+  // No playwright or axe-core here, as in most adopters' projects: the build must say the
+  // audit did not run, never print a pass it did not earn.
+  check(
+    'without playwright the axe audit says it did not run',
+    a11yOut.includes('the axe audit did not run') &&
+      !a11yOut.includes('no WCAG 2.2 AA failures'),
+    a11yOut.slice(-400)
+  )
   check(
     'altText never writes a source file',
     (await Bun.file(`${a11y}/pages/lighting.md`).text()) === lighting

@@ -30,7 +30,7 @@ export function registerSiteDialects(config) {
 }
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
 import { EPUB_IMAGE_EXIT, attachCovers, listEpubVolumes, printCoverManifestUrl, VOLUME_MANIFEST, renderEpubDownloads, } from './epub-volumes.js';
-import { buildSlugMap } from '../routing.js';
+import { buildSlugMap, pathForSlug } from '../routing.js';
 import { assetStampInputs, computeAssetStamp, missingStampInputWarning, } from './asset-stamp.js';
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, } from 'fs';
 import { tmpdir } from 'os';
@@ -48,7 +48,8 @@ import { generateSite } from './generate-site.js';
 import { servedBundleProblem } from './restamp.js';
 import { codemirrorCopies, duplicateCodemirrorWarning, tosijsUiDir, } from './codemirror-copies.js';
 import { findOutputDirOverlap, resolveBundleDir } from './output-guard.js';
-import { acquireBuildLock, describeHolder } from './build-lock.js';
+import { acquireBuildLock, currentHolder, describeHolder, } from './build-lock.js';
+import { auditBuiltSite, formatAxeFindings } from './a11y-audit.js';
 import { sourcemapWarning } from './sourcemap-check.js';
 import { basePathDoubling, firebasePublicMismatch } from './host-preset.js';
 import { preflight } from './preflight.js';
@@ -392,6 +393,8 @@ whether or not the dependency audit ran — it was gated on `!opts.skipAudit`, w
 "interactive", so it never appeared under `bun start`: the workflow the report came from.
 */
 let announcedClobber = false;
+/** The axe audit runs once per process: it is a release check, not an edit-loop one (#3521). */
+let auditedAccessibility = false;
 export async function buildSite(config, opts = {}) {
     // Look at the machine before adding load to it. Runs on every build, including each
     // watch rebuild, because the danger is not present at launch and then absent — it
@@ -1657,6 +1660,41 @@ export async function buildSite(config, opts = {}) {
                 const manifest = `${PUBLIC}/${VOLUME_MANIFEST}`;
                 if (existsSync(manifest)) {
                     await Bun.write(manifest, JSON.stringify(attachCovers(JSON.parse(await Bun.file(manifest).text()), readdirSync(PUBLIC), config.basePath), null, 2));
+                }
+            }
+            /*
+            The axe audit (#3521): the first full build in a process, never under a dev server, and
+            never a pass it did not earn. See a11y-audit.ts.
+            */
+            if (config.accessibility && !opts.skipAudit && !auditedAccessibility) {
+                auditedAccessibility = true;
+                const holder = currentHolder('.');
+                if (holder?.pid === process.pid && holder.role === 'dev-server') {
+                    // a dev server's first build: the release build audits
+                }
+                else {
+                    const corpus = JSON.parse(await Bun.file(`${PUBLIC}/docs.json`).text());
+                    const slugs = buildSlugMap(corpus);
+                    const pages = corpus
+                        .filter((doc) => !doc.hidden)
+                        .map((doc) => pathForSlug(slugs[doc.filename]));
+                    console.log(`♿ axe: auditing ${pages.length} page(s) …`);
+                    const audit = await auditBuiltSite({
+                        outputDir: PUBLIC,
+                        basePath: config.basePath,
+                        pages,
+                    });
+                    if (!audit.ran) {
+                        console.warn(`\n⚠️  Accessibility: the axe audit did not run, so this build makes no claim\n` +
+                            `    about what it would find. ${audit.reason}\n`);
+                    }
+                    else if (audit.violations.length) {
+                        misconfigured(config.strict, `\n⚠️  Accessibility: axe found ${audit.violations.length} WCAG 2.2 AA failure(s) in the built pages:\n` +
+                            `${formatAxeFindings(audit.violations)}\n`);
+                    }
+                    else {
+                        console.log(`♿ axe: no WCAG 2.2 AA failures in ${pages.length} page(s)`);
+                    }
                 }
             }
             console.timeEnd('build');

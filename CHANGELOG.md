@@ -13,6 +13,10 @@
     that skips a level, and each link named "here" or the like, and fails on them under `strict`.
 
   Off by default; a site that does not set it renders exactly as before.
+- **The mode audits the built site with axe.** A full build opens every page in Chromium and runs
+  axe-core's WCAG 2.2 AA rules, listing each failure by page, rule and element and failing under
+  `strict`. It needs `playwright` and `axe-core` in your project; without them the build says the
+  audit did not run rather than reporting a pass. Never under a dev server.
 - **`altText`: a hook that supplies alt text for undescribed images.** With the mode on, it is
   called for each image the build would report, and its answer becomes that image's alt text in
   the built site, `docs.json` and the ePub. It never writes a source file. It runs on every
