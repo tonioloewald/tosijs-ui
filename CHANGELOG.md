@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.16.40
+
+- **An example with no script runs under a strict CSP (#245, #246).** A pure-HTML example still
+  built an `AsyncFunction` from its empty script, and a dialect that runs its own source (`run`)
+  had one built before its `run` was called. Under a Content Security Policy without
+  `'unsafe-eval'` (`script-src 'self'`) the constructor throws, so each such example showed an
+  error and filed a violation report every time it ran. Neither now constructs a function at
+  all, so HTML examples, and `run` dialects that only sanitize and bind markup, work on a
+  CSP-protected host. Script examples still need `'unsafe-eval'`; a CSP-compatible path for
+  them, and an HTML-only example mode, are planned for 1.17.0.
+- **The doc header's search says "Search", and a site can set it.** `searchPlaceholder` in the
+  site config (or `createDocBrowser`) sets the hint in the header's search field; the default
+  was "Search documentation". It is localized through the site's strings, and
+  `<tosi-palette localized>` now localizes its placeholder and follows the locale, as
+  `<tosi-select localized>` does.
+- **The ⌘K hint in the search field has no outline.** An outline inside the field's own outline
+  read as a second control. The hints inside the open palette keep theirs.
+
 ## 1.16.39
 
 - **The doc-site frame passes WCAG 2.2 AA where an axe scan said it did not (#3520).** An

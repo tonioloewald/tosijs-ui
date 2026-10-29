@@ -163,6 +163,19 @@ Ctor, context, body) {
     }
 }
 /**
+ * True when an example has no script of its own to run: an empty source, or `compiledJs: ''`,
+ * which is what a dialect that runs its source itself (`run`) is handed.
+ *
+ * Such an example must not construct a function at all (tosijs-ui#245, #246). Building one from
+ * an empty body did nothing useful and was not free: under a strict CSP (`script-src 'self'`,
+ * no `'unsafe-eval'`) the `AsyncFunction` constructor throws, so a pure-HTML example, or one
+ * whose dialect only sanitizes and binds markup, showed an error and filed a CSP violation
+ * report every time it ran.
+ */
+export function nothingToRun(js, compiledJs) {
+    return compiledJs === undefined ? !js.trim() : !compiledJs.trim();
+}
+/**
  * Execute code inline (directly in the page)
  */
 export async function executeInline(options) {
@@ -177,6 +190,8 @@ export async function executeInline(options) {
     else {
         exampleElement.insertBefore(preview, widgetsElement);
     }
+    if (nothingToRun(js, compiledJs))
+        return preview;
     try {
         assertContextProvided(js, context);
         const transformedCode = compiledJs ??
@@ -285,6 +300,9 @@ export async function executeInIframe(options) {
         console.error('Could not find preview element in iframe');
         return null;
     }
+    // No script: not even the iframe's `eval` that fetches its AsyncFunction (see nothingToRun).
+    if (nothingToRun(js, compiledJs))
+        return preview;
     try {
         assertContextProvided(js, context);
         const transformedCode = compiledJs ??

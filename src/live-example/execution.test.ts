@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { executeInline } from './execution.js'
+import { executeInline, nothingToRun } from './execution.js'
 
 // A transform that MUST NOT be called on the bake path. If it runs, the test fails
 // loudly instead of silently transpiling — proving the transpiler stays untouched.
@@ -58,5 +58,41 @@ describe('executeInline with a build-time bake', () => {
     })
     expect(called).toBe(true)
     expect(preview.querySelector('#t')?.textContent).toBe('y')
+  })
+})
+
+/*
+tosijs-ui#245/#246: an example with no script of its own constructs no function, so a pure-HTML
+example, or a `run` dialect (handed `compiledJs: ''`), works under a CSP without
+`unsafe-eval`. tests/live-example-csp.pw.ts holds that against a real policy.
+*/
+describe('nothingToRun', () => {
+  test('no source and no bake: nothing to run', () => {
+    expect(nothingToRun('')).toBe(true)
+    expect(nothingToRun('  \n ')).toBe(true)
+  })
+  test('a run dialect is handed an empty bake: nothing to run, whatever its source', () => {
+    expect(nothingToRun('<p>{{name}}</p>', '')).toBe(true)
+  })
+  test('a source, or a non-empty bake, runs', () => {
+    expect(nothingToRun('preview.append(1)')).toBe(false)
+    expect(nothingToRun('ignored', 'preview.append(1)')).toBe(false)
+  })
+  test('an html-only example still shows its markup', async () => {
+    const { exampleElement, styleElement, widgetsElement } = harness()
+    const preview = await executeInline({
+      html: '<p id="m">markup</p>',
+      css: '',
+      js: '',
+      context: {},
+      transform: forbiddenTransform,
+      exampleElement,
+      styleElement,
+      widgetsElement,
+      onError: (e) => {
+        throw e
+      },
+    })
+    expect(preview.querySelector('#m')?.textContent).toBe('markup')
   })
 })
