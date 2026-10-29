@@ -979,3 +979,17 @@ gap, recorded rather than hidden.
 - **Publish:** approved inside the window; the workflow verified, and the published `dist/` is
   identical to the tagged tree. #245 and #246 got comments saying what shipped and what is left
   for 1.17.0; both stay open.
+
+## 1.16.41 (2026-10-29)
+
+- **Shipped:** written descriptions and fuller `<title>`s for 63 pages of ui.tosijs.net, `noindex`
+  on three demo pages, and `llms.txt` leaving out `noindex` pages (#3566).
+- **What worked:** writing the practice first (tosijs-coding-practices #3561), then applying it as
+  one mapping, with a script that refused any description outside 70–155 characters.
+- **The gate caught:** a Playwright test pinned the table page's old `<title>`, which showed the
+  `headTitle` reaches client-side navigation too.
+- **Process slip:** running the haltija, consumer and Playwright lanes in parallel failed two of
+  them, because one build rewrote `dist/` while another was packing it. Run the lanes one at a
+  time; the build lock said so plainly.
+- **Publish:** approved inside the window; the workflow verified, and the published `dist/` is
+  identical to the tagged tree.
