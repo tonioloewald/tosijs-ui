@@ -854,6 +854,30 @@ try {
       chapters.includes('alt="The fill light, from the right"'),
     epubFile ? '' : 'no .epub was built'
   )
+  const opf = epubFile
+    ? (
+        await $`unzip -p ${`${a11y}/out/${epubFile}`} OEBPS/package.opf`
+          .nothrow()
+          .quiet()
+      ).stdout.toString()
+    : ''
+  const nav = epubFile
+    ? (
+        await $`unzip -p ${`${a11y}/out/${epubFile}`} OEBPS/nav.xhtml`
+          .nothrow()
+          .quiet()
+      ).stdout.toString()
+    : ''
+  // Every image is described (a caption, and the altText answer), and no Ace is installed.
+  check(
+    'the ePub declares its accessibility, and claims no conformance nothing verified',
+    opf.includes('schema:accessibilityFeature">alternativeText<') &&
+      opf.includes('schema:accessModeSufficient">textual<') &&
+      !opf.includes('dcterms:conformsTo') &&
+      a11yOut.includes('no conformance claimed') &&
+      nav.includes('epub:type="landmarks"'),
+    opf.slice(0, 400)
+  )
 } finally {
   rmSync(work, { recursive: true, force: true })
 }

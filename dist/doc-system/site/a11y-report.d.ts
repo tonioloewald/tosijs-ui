@@ -1,4 +1,6 @@
 export interface A11yFinding {
+    /** what the problem is about: an image's description, the heading outline, a link's text */
+    kind: 'image' | 'heading' | 'link';
     /** a short description of the problem, naming the offending markup */
     message: string;
     /** the block's markdown, for locating it in the source file */

@@ -17,6 +17,18 @@
   axe-core's WCAG 2.2 AA rules, listing each failure by page, rule and element and failing under
   `strict`. It needs `playwright` and `axe-core` in your project; without them the build says the
   audit did not run rather than reporting a pass. Never under a dev server.
+- **Accessible ePubs (#3522).** In the mode, the book's package document declares its access
+  modes, features, hazards and a summary (EPUB Accessibility 1.1), derived from the build: it
+  claims alternative text only when every image has alt text or a caption. Conformance to WCAG
+  2.2 AA is claimed only when DAISY Ace, installed in your project, has checked the finished book
+  and passed it. `epub: { accessibility: { summary, hazards, certifiedBy } }` overrides the
+  defaults. Checked against real Ace: this site's own book passes.
+- **Every ePub, mode or not: the right language, readable links, landmarks.** Each chapter, the
+  nav, the contents and the cover said `xml:lang="en"` whatever the book's language, and the
+  package said none, so a reading system pronounced a French book as English. Links were
+  `#0088cc` (3.9:1 on white) and marked by colour alone; they are now 6.6:1 and underlined.
+  The nav gains a landmarks list (cover, contents, start of the text) and its table of contents
+  `role="doc-toc"`.
 - **`altText`: a hook that supplies alt text for undescribed images.** With the mode on, it is
   called for each image the build would report, and its answer becomes that image's alt text in
   the built site, `docs.json` and the ePub. It never writes a source file. It runs on every

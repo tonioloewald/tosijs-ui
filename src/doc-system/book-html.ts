@@ -40,7 +40,8 @@ h1 { font-size: 1.8em; }
 h2 { font-size: 1.4em; }
 h3 { font-size: 1.2em; }
 p { margin: 0.6em 0; }
-a { color: #08c; text-decoration: none; }
+/* 6.6:1 on white, and underlined: colour alone does not mark a link in running text (#3522, DAISY Ace) */
+a { color: #0a5bb5; text-decoration: underline; text-underline-offset: 0.15em; }
 ul, ol { margin: 0.6em 0; padding-left: 1.4em; }
 blockquote {
   margin: 0.8em 0;
@@ -108,7 +109,7 @@ ol.toc li { margin: 0.3em 0; }
 ol.toc > li > a { font-weight: bold; }
 /* per-example "run this live" deep link */
 .example-live-link { margin: 0.6em 0 0; font-size: 0.85em; }
-.example-live-link a { color: #08c; font-weight: bold; }
+.example-live-link a { color: #0a5bb5; font-weight: bold; }
 /* footnotes / endnotes + wikilinks */
 sup.footnote-ref { font-size: 0.7em; line-height: 0; }
 sup.footnote-ref a { text-decoration: none; }

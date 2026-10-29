@@ -43,6 +43,7 @@ function walkInline(tokens, block, out) {
     for (const t of tokens ?? []) {
         if (t.type === 'image' && !String(t.text).trim()) {
             out.push({
+                kind: 'image',
                 message: `![](${t.href}) has no alt text and no caption`,
                 raw: block,
                 image: { href: t.href, title: t.title, raw: t.raw },
@@ -52,6 +53,7 @@ function walkInline(tokens, block, out) {
             const images = (t.tokens ?? []).filter((c) => c.type === 'image');
             if (images.length && !hasText(t.tokens)) {
                 out.push({
+                    kind: 'image',
                     message: `a linked image (to ${t.href}) has no alt text, so the link has no name`,
                     raw: block,
                 });
@@ -60,6 +62,7 @@ function walkInline(tokens, block, out) {
             const text = plain(t);
             if (AMBIGUOUS_LINK_TEXT.has(text)) {
                 out.push({
+                    kind: 'link',
                     message: `a link named "${text}" (to ${t.href}) says nothing out of context`,
                     raw: block,
                 });
@@ -70,7 +73,11 @@ function walkInline(tokens, block, out) {
         }
         else if (t.type === 'html') {
             for (const img of String(t.raw).match(IMG_WITHOUT_ALT) ?? [])
-                out.push({ message: `${img} has no alt attribute`, raw: block });
+                out.push({
+                    kind: 'image',
+                    message: `${img} has no alt attribute`,
+                    raw: block,
+                });
         }
         else if (Array.isArray(t.tokens)) {
             walkInline(t.tokens, block, out);
@@ -84,6 +91,7 @@ function walkBlocks(tokens, out, state) {
         if (t.type === 'heading') {
             if (state.depth && t.depth > state.depth + 1) {
                 out.push({
+                    kind: 'heading',
                     message: `"${headingText(t)}" is an <h${t.depth}> directly under an <h${state.depth}>`,
                     raw: t.raw,
                 });

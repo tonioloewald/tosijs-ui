@@ -85,7 +85,7 @@ This is not a style preference; it is the only form that can be right. Measured 
 project's own table, `localize('Sort') + ' ' + localize('Ascending')` was wrong in every
 language checked, in three different ways:
 
-| | joined fragments | correct |
+| language | joined fragments | correct |
 | --- | --- | --- |
 | German | `Sortieren Aufsteigend` | `Aufsteigend sortieren` — verb goes last |
 | Korean | `정렬 오름차순` | `오름차순 정렬` — modifier first |

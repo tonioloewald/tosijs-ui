@@ -1925,6 +1925,16 @@ export async function buildSite(
       // Emit the ePub into the output dir on every build, so it stays in sync with
       // the corpus and survives the `rm -rf <outputDir>` at the top of the NEXT build
       // (otherwise a dev rebuild would silently drop it). Cheap (~0.4s).
+      /*
+      The accessibility mode's release checks (the axe audit, Ace on the ePub, #3521/#3522):
+      the first full build in a process, and never under a dev server.
+      */
+      const lockHolder = currentHolder('.')
+      const accessibilityRelease =
+        !!config.accessibility &&
+        !opts.skipAudit &&
+        !auditedAccessibility &&
+        !(lockHolder?.pid === process.pid && lockHolder.role === 'dev-server')
       if (config.epub) {
         const epubOpts = typeof config.epub === 'object' ? config.epub : {}
         /*
@@ -1976,6 +1986,7 @@ export async function buildSite(
               // gets the same behaviour. A second assembly here is what made them differ.
               ...epubOpts,
               bookTarget,
+              verifyAccessibility: accessibilityRelease,
             }
           )
         }
@@ -2002,40 +2013,35 @@ export async function buildSite(
       The axe audit (#3521): the first full build in a process, never under a dev server, and
       never a pass it did not earn. See a11y-audit.ts.
       */
-      if (config.accessibility && !opts.skipAudit && !auditedAccessibility) {
+      if (accessibilityRelease) {
         auditedAccessibility = true
-        const holder = currentHolder('.')
-        if (holder?.pid === process.pid && holder.role === 'dev-server') {
-          // a dev server's first build: the release build audits
+        const corpus: Array<{ filename: string; hidden?: boolean }> =
+          JSON.parse(await Bun.file(`${PUBLIC}/docs.json`).text())
+        const slugs = buildSlugMap(corpus)
+        const pages = corpus
+          .filter((doc) => !doc.hidden)
+          .map((doc) => pathForSlug(slugs[doc.filename]))
+        console.log(`♿ axe: auditing ${pages.length} page(s) …`)
+        const audit = await auditBuiltSite({
+          outputDir: PUBLIC,
+          basePath: config.basePath,
+          pages,
+        })
+        if (!audit.ran) {
+          console.warn(
+            `\n⚠️  Accessibility: the axe audit did not run, so this build makes no claim\n` +
+              `    about what it would find. ${audit.reason}\n`
+          )
+        } else if (audit.violations.length) {
+          misconfigured(
+            config.strict,
+            `\n⚠️  Accessibility: axe found ${audit.violations.length} WCAG 2.2 AA failure(s) in the built pages:\n` +
+              `${formatAxeFindings(audit.violations)}\n`
+          )
         } else {
-          const corpus: Array<{ filename: string; hidden?: boolean }> =
-            JSON.parse(await Bun.file(`${PUBLIC}/docs.json`).text())
-          const slugs = buildSlugMap(corpus)
-          const pages = corpus
-            .filter((doc) => !doc.hidden)
-            .map((doc) => pathForSlug(slugs[doc.filename]))
-          console.log(`♿ axe: auditing ${pages.length} page(s) …`)
-          const audit = await auditBuiltSite({
-            outputDir: PUBLIC,
-            basePath: config.basePath,
-            pages,
-          })
-          if (!audit.ran) {
-            console.warn(
-              `\n⚠️  Accessibility: the axe audit did not run, so this build makes no claim\n` +
-                `    about what it would find. ${audit.reason}\n`
-            )
-          } else if (audit.violations.length) {
-            misconfigured(
-              config.strict,
-              `\n⚠️  Accessibility: axe found ${audit.violations.length} WCAG 2.2 AA failure(s) in the built pages:\n` +
-                `${formatAxeFindings(audit.violations)}\n`
-            )
-          } else {
-            console.log(
-              `♿ axe: no WCAG 2.2 AA failures in ${pages.length} page(s)`
-            )
-          }
+          console.log(
+            `♿ axe: no WCAG 2.2 AA failures in ${pages.length} page(s)`
+          )
         }
       }
 

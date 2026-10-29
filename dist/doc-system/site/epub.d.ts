@@ -1,6 +1,7 @@
 import { EPUB_IMAGE_EXIT } from './epub-volumes.js';
 import type { SiteConfig } from './site-config.js';
 import { DEFAULT_BOOK_CSS, stripDocMeta } from '../book-html.js';
+import { type EpubAccessibilityOptions } from './epub-a11y.js';
 export { DEFAULT_BOOK_CSS, stripDocMeta };
 declare global {
     var Bun: any;
@@ -60,6 +61,16 @@ export interface BuildEpubOptions {
      * volume's cover. The ePub's own cover is unaffected.
      */
     printCover?: boolean;
+    /**
+     * With the site's `accessibility` mode on (#3522): what the package metadata says about the
+     * book beyond what the build derives. A summary is generated and hazards default to none.
+     */
+    accessibility?: EpubAccessibilityOptions;
+    /**
+     * Check the finished book with DAISY Ace, when the project has it, and claim conformance only
+     * if it passes. `buildSite` sets it on release builds (never under a dev server).
+     */
+    verifyAccessibility?: boolean;
 }
 export declare function escapeXml(s: string): string;
 /**

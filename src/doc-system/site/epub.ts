@@ -51,6 +51,12 @@ import {
   slugify,
 } from '../book-html.js'
 import { selectBookDocs } from '../book-manifest.js'
+import { accessibilityFindings } from './a11y-report.js'
+import {
+  accessibilityMetadata,
+  runAce,
+  type EpubAccessibilityOptions,
+} from './epub-a11y.js'
 
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).
 export { DEFAULT_BOOK_CSS, stripDocMeta }
@@ -115,6 +121,16 @@ export interface BuildEpubOptions {
    * volume's cover. The ePub's own cover is unaffected.
    */
   printCover?: boolean
+  /**
+   * With the site's `accessibility` mode on (#3522): what the package metadata says about the
+   * book beyond what the build derives. A summary is generated and hazards default to none.
+   */
+  accessibility?: EpubAccessibilityOptions
+  /**
+   * Check the finished book with DAISY Ace, when the project has it, and claim conformance only
+   * if it passes. `buildSite` sets it on release builds (never under a dev server).
+   */
+  verifyAccessibility?: boolean
 }
 
 // ── XML / XHTML helpers ─────────────────────────────────────────────────────
@@ -537,10 +553,19 @@ function injectExampleLinks(
   }
 }
 
-function xhtmlPage(title: string, bodyHtml: string): string {
+/*
+Every document carries the book's language. It was hard-coded "en", so a French book told a
+screen reader to read every chapter with English pronunciation (#3522).
+*/
+function langAttrs(language: string): string {
+  const lang = escapeXml(language)
+  return `xml:lang="${lang}" lang="${lang}"`
+}
+
+function xhtmlPage(title: string, bodyHtml: string, language = 'en'): string {
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" ${langAttrs(language)}>
 <head>
   <meta charset="utf-8"/>
   <title>${escapeXml(title)}</title>
@@ -575,7 +600,9 @@ function packageOpf(
   meta: BookMeta,
   chapters: Chapter[],
   cover: Cover | null,
-  images: BookImage[] = []
+  images: BookImage[] = [],
+  /** `<meta>` lines from `accessibilityMetadata`, or '' (#3522) */
+  accessibility = ''
 ): string {
   const manifestItems = [
     `<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>`,
@@ -609,13 +636,17 @@ function packageOpf(
     ? `\n    <meta name="cover" content="cover-image"/>`
     : ''
   return `<?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id" xml:lang="${escapeXml(
+    meta.language
+  )}">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
     <dc:identifier id="book-id">${escapeXml(meta.identifier)}</dc:identifier>
     <dc:title>${escapeXml(meta.title)}</dc:title>
     <dc:language>${escapeXml(meta.language)}</dc:language>
     <dc:creator>${escapeXml(meta.author)}</dc:creator>
-    <meta property="dcterms:modified">${meta.modified}</meta>${coverMeta}
+    <meta property="dcterms:modified">${
+      meta.modified
+    }</meta>${coverMeta}${accessibility}
   </metadata>
   <manifest>
     ${manifestItems.join('\n    ')}
@@ -652,31 +683,60 @@ function renderNavList(
  */
 function tocPageXhtml(
   roots: NavNode<Doc>[],
-  hrefFor: (d: Doc) => string
+  hrefFor: (d: Doc) => string,
+  language = 'en'
 ): string {
   const body = `<h1 class="toc-title">Contents</h1>
 <ol class="toc">
 ${renderNavList(roots, hrefFor)}
 </ol>`
-  return xhtmlPage('Contents', body)
+  return xhtmlPage('Contents', body, language)
+}
+
+/*
+The landmarks nav tells a reading system where the cover, the contents and the text begin, so
+"go to start" skips the front matter (#3522). Hidden: it is for the reading system, not a page.
+*/
+function landmarksNav(
+  hasCover: boolean,
+  firstChapter: string | undefined
+): string {
+  const items = [
+    hasCover && `<li><a epub:type="cover" href="cover.xhtml">Cover</a></li>`,
+    `<li><a epub:type="toc" href="contents.xhtml">Contents</a></li>`,
+    firstChapter &&
+      `<li><a epub:type="bodymatter" href="${escapeXml(
+        firstChapter
+      )}">Start of content</a></li>`,
+  ].filter(Boolean)
+  return `
+  <nav epub:type="landmarks" id="landmarks" hidden="hidden">
+    <h2>Landmarks</h2>
+    <ol>
+      ${items.join('\n      ')}
+    </ol>
+  </nav>`
 }
 
 function navXhtml(
   meta: BookMeta,
   roots: NavNode<Doc>[],
-  hrefFor: (d: Doc) => string
+  hrefFor: (d: Doc) => string,
+  landmarks = ''
 ): string {
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" ${langAttrs(
+    meta.language
+  )}>
 <head><meta charset="utf-8"/><title>${escapeXml(meta.title)}</title></head>
 <body>
-  <nav epub:type="toc" id="toc">
+  <nav epub:type="toc" role="doc-toc" id="toc">
     <h1>${escapeXml(meta.title)}</h1>
     <ol>
 ${renderNavList(roots, hrefFor)}
     </ol>
-  </nav>
+  </nav>${landmarks}
 </body>
 </html>
 `
@@ -857,10 +917,14 @@ function coverSvg(
 }
 
 /** Cover page (first in spine) showing the cover image full-bleed. */
-function coverPageXhtml(title: string, coverFile: string): string {
+function coverPageXhtml(
+  title: string,
+  coverFile: string,
+  language = 'en'
+): string {
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" ${langAttrs(language)}>
 <head>
   <meta charset="utf-8"/>
   <title>Cover</title>
@@ -1164,8 +1228,18 @@ export async function buildEpub(
   const chapters: Chapter[] = []
   const images = new Map<string, BookImage>()
   const unboundImages = new Set<string>()
+  // What the accessibility metadata may claim, from the same report the site build prints.
+  let hasImages = false
+  let imagesDescribed = true
   for (const node of flatten(roots)) {
     const doc = node.doc
+    if (
+      config.accessibility &&
+      accessibilityFindings(stripDocMeta(bookTextOf(doc)), doc.title).some(
+        (f) => f.kind === 'image'
+      )
+    )
+      imagesDescribed = false
     // The doc's live-site URL, matching generate-site's canonical link: README
     // maps to '/' (not '/index/'), others to '/slug/', with basePath applied.
     const pageUrl =
@@ -1197,6 +1271,7 @@ export async function buildEpub(
       slugMap,
       config.basePath
     )
+    hasImages ||= /<img\b/i.test(linked)
     const html = embedLocalImages(
       linked,
       outDir,
@@ -1220,7 +1295,7 @@ export async function buildEpub(
     const file = fileFor(doc)
     fs.writeFileSync(
       path.join(buildDir, 'OEBPS', file),
-      xhtmlPage(doc.title, bodyHtml)
+      xhtmlPage(doc.title, bodyHtml, meta.language)
     )
     chapters.push({
       id: `ch-${slugMap[doc.filename] || 'index'}`,
@@ -1258,21 +1333,34 @@ export async function buildEpub(
     fs.writeFileSync(path.join(buildDir, 'OEBPS', cover.file), cover.data)
     fs.writeFileSync(
       path.join(buildDir, 'OEBPS', 'cover.xhtml'),
-      coverPageXhtml(meta.title, cover.file)
+      coverPageXhtml(meta.title, cover.file, meta.language)
     )
   }
 
-  fs.writeFileSync(
-    path.join(buildDir, 'OEBPS', 'package.opf'),
-    packageOpf(meta, chapters, cover, [...images.values()])
-  )
+  const writeOpf = (verified: boolean) =>
+    fs.writeFileSync(
+      path.join(buildDir, 'OEBPS', 'package.opf'),
+      packageOpf(
+        meta,
+        chapters,
+        cover,
+        [...images.values()],
+        config.accessibility
+          ? accessibilityMetadata(
+              { hasImages, imagesDescribed, verified },
+              opts.accessibility
+            )
+          : ''
+      )
+    )
+  writeOpf(false)
   fs.writeFileSync(
     path.join(buildDir, 'OEBPS', 'contents.xhtml'),
-    tocPageXhtml(roots, fileFor)
+    tocPageXhtml(roots, fileFor, meta.language)
   )
   fs.writeFileSync(
     path.join(buildDir, 'OEBPS', 'nav.xhtml'),
-    navXhtml(meta, roots, fileFor)
+    navXhtml(meta, roots, fileFor, landmarksNav(!!cover, chapters[0]?.href))
   )
   fs.writeFileSync(
     path.join(buildDir, 'OEBPS', 'toc.ncx'),
@@ -1294,6 +1382,30 @@ export async function buildEpub(
       )
   )
   await zipEpub(buildDir, output)
+  /*
+  Conformance is claimed only for a book a checker passed (#3522). Ace reads the book as built,
+  so it is checked first and the claim is added after; the claim itself changes nothing Ace
+  checks.
+  */
+  if (config.accessibility && opts.verifyAccessibility) {
+    const ace = await runAce(output)
+    if (!ace.ran) {
+      console.warn(
+        `⚠️  epub: no conformance claimed, because nothing verified it. ${ace.reason}`
+      )
+    } else if (!ace.passed) {
+      console.warn(
+        `⚠️  epub: DAISY Ace found problems, so no conformance is claimed:\n` +
+          ace.failures.map((f) => `    ${f}`).join('\n')
+      )
+    } else {
+      writeOpf(true)
+      await zipEpub(buildDir, output)
+      console.log(
+        `♿ epub: DAISY Ace passed; conformance to WCAG 2.2 AA claimed`
+      )
+    }
+  }
   // The same cover, as a plain file beside the ePub, so Print can open with it. The site
   // build reads the name back from the output dir (`attachCovers`); nothing predicts it.
   const coverPath = cover

@@ -364,6 +364,20 @@ not run, and makes no claim about what it would have found. It runs on the first
 process and never under a dev server: it takes a second or so per page, which is a release check,
 not an edit-loop one.
 
+**The ePub.** In the mode the book's package document declares its accessibility, as EPUB
+Accessibility 1.1 asks (and the European Accessibility Act points e-books at): its access modes,
+which of them is sufficient alone, its features, its hazards and a summary. Each statement is
+derived from the build, so it cannot say more than the build knows: "alternative text" is
+claimed only when every image in the volume has alt text or a caption. Override the summary and
+hazards, or name who certified the book, with `epub: { accessibility: { summary, hazards,
+certifiedBy } }`.
+
+Conformance (`dcterms:conformsTo` "EPUB Accessibility 1.1 - WCAG 2.2 Level AA") is claimed only
+when [DAISY Ace](https://daisy.github.io/ace/) has checked the finished book and passed it. Ace
+runs on release builds when your project has it (`bun add -d @daisy/ace`); otherwise the build
+says no conformance is claimed and why. A claim nothing verified is worse than none: a
+distributor takes it at face value.
+
 **`altText`** fills the gap for a corpus with hundreds of undescribed images. It is called for
 each image the build would report, and what it returns becomes that image's alt text in the
 built site, `docs.json` and the ePub. It never writes a source file, so generated text stays

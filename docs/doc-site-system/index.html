@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=75ad44aeb70f" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a422e2572135" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -38,7 +38,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=2835b5574090" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=d7314864cf00" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -426,6 +426,17 @@ of controls inside your live examples, ARIA on the components you embed.</p>
 not run, and makes no claim about what it would have found. It runs on the first build in a
 process and never under a dev server: it takes a second or so per page, which is a release check,
 not an edit-loop one.</p>
+<p><strong>The ePub.</strong> In the mode the book&#39;s package document declares its accessibility, as EPUB
+Accessibility 1.1 asks (and the European Accessibility Act points e-books at): its access modes,
+which of them is sufficient alone, its features, its hazards and a summary. Each statement is
+derived from the build, so it cannot say more than the build knows: &quot;alternative text&quot; is
+claimed only when every image in the volume has alt text or a caption. Override the summary and
+hazards, or name who certified the book, with <code>epub: { accessibility: { summary, hazards, certifiedBy } }</code>.</p>
+<p>Conformance (<code>dcterms:conformsTo</code> &quot;EPUB Accessibility 1.1 - WCAG 2.2 Level AA&quot;) is claimed only
+when <a href="https://daisy.github.io/ace/">DAISY Ace</a> has checked the finished book and passed it. Ace
+runs on release builds when your project has it (<code>bun add -d @daisy/ace</code>); otherwise the build
+says no conformance is claimed and why. A claim nothing verified is worse than none: a
+distributor takes it at face value.</p>
 <p><strong><code>altText</code></strong> fills the gap for a corpus with hundreds of undescribed images. It is called for
 each image the build would report, and what it returns becomes that image&#39;s alt text in the
 built site, <code>docs.json</code> and the ePub. It never writes a source file, so generated text stays
@@ -2515,6 +2526,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-m9rgrg5v.js"></script>
+  <script type="module" src="../hydrate-91ed7je5.js"></script>
 </body>
 </html>
