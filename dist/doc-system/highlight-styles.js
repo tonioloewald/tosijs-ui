@@ -1,4 +1,4 @@
-/*{ "parent": "Documentation System", "order": 80 }*/
+/*{ "parent": "Documentation System", "order": 80, "description": "The syntax-highlighting token colours as a stylesheet you can import and retheme, for code highlighted outside <tosi-highlight>." }*/
 /*#
 # highlight-styles
 

@@ -144,7 +144,7 @@ interface FilterMaker {
 ```
 */
 
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "<tosi-filter> builds array filter functions from a Finder-style query editor, with extensible filter types and a state you can save as JSON." }*/
 
 import {
   Component as WebComponent,

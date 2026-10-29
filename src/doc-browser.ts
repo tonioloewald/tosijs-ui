@@ -98,7 +98,7 @@ The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that o
 or embeds more than one browser, passes `searchShortcut: ''` (or another key in
 `<tosi-palette>`'s `shortcut` form).
 */
-/*{ "parent": "Documentation System", "order": 50 }*/
+/*{ "parent": "Documentation System", "order": 50, "description": "createDocBrowser() renders a documentation corpus as a searchable browser with live, self-testing examples: a lighter alternative to Storybook." }*/
 
 import {
   elements,

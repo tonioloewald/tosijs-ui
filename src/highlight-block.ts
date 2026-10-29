@@ -1,4 +1,4 @@
-/*{ "parent": "Documentation System", "order": 70 }*/
+/*{ "parent": "Documentation System", "order": 70, "description": "<tosi-highlight> syntax-highlights code that arrives at runtime, such as a fetched snippet or a chat message, without loading a code editor." }*/
 /*#
 # highlight-block
 

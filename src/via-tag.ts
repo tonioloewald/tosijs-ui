@@ -70,7 +70,7 @@ Using `styleSheet`:
 This is awaitable, if you care. The stylesheet `<link>` will only be inserted _once_.
 */
 
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "scriptTag() and styleSheet() load a classic script or stylesheet from a CDN and return a promise, much like import() for older libraries." }*/
 
 import { elements } from 'tosijs'
 

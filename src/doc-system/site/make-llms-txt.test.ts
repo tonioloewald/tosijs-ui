@@ -25,11 +25,12 @@ const corpus = [
   },
   { filename: 'secret.md', title: 'Secret', text: 'hidden', hidden: true },
   { filename: 'untitled.md', title: '', text: 'no title here' },
+  { filename: 'demo.md', title: 'Demo', text: 'a fixture', noindex: true },
 ]
 
-test('indexes every titled, non-hidden doc — .md AND .ts — sorted by title', () => {
+test('indexes every titled, non-hidden, indexable doc — .md AND .ts — sorted by title', () => {
   const entries = entriesFromCorpus(corpus, { baseUrl: 'https://x.dev' })
-  // hidden + untitled excluded; .md docs included (the old src/*.ts scan missed these)
+  // hidden, noindex and untitled excluded; .md docs included (the old src/*.ts scan missed these)
   expect(entries.map((e) => e.title)).toEqual(['button', 'Guide', 'Home'])
 })
 

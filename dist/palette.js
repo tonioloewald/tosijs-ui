@@ -138,7 +138,7 @@ query)` the default row, and `highlight(text, query)` the row's title with each 
 `<mark>`, as nodes, never HTML. `matchesShortcut(event, shortcut)` and
 `describeShortcut(shortcut)` (⌘K on a Mac, Ctrl K elsewhere) are the shortcut rules.
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-palette> is a command palette: a search field that opens a keyboard-driven modal of ranked results from sources you supply." }*/
 import { elements, vars, varDefault, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { findHighestZ } from './track-drag.js';

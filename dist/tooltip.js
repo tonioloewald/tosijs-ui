@@ -37,7 +37,7 @@ initTooltips({
 })
 ```
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "Replace native title tooltips with styled ones that render markdown: call initTooltips() once, then use data-tooltip or title." }*/
 import { elements, StyleSheet, varDefault } from 'tosijs';
 import { marked } from 'marked';
 import { popFloat } from './pop-float.js';

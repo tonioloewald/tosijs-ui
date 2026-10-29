@@ -247,7 +247,7 @@ preview.append(button(
 
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "popFloat() pops a floating element up beside a target, placing it to stay on screen, for popovers, pickers and other one-off overlays." }*/
 
 import { ElementPart } from 'tosijs'
 import { tosiFloat, TosiFloat } from './float.js'

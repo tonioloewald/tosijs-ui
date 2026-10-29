@@ -1378,7 +1378,7 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 ```
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-schema-form> builds an editable, validated form from a JSON Schema, keeping its value, not the inputs, as the source of truth." }*/
 
 import { ElementCreator, elements, withAttributes } from 'tosijs'
 import type { JSONSchema } from './schema-form/json-schema.js'

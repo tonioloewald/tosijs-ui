@@ -66,7 +66,7 @@ Similarly `EditableRect.snapAngle === true` or the shift-key will snap rotation 
 After an element's position, size, or rotation are adjusted a `change` event is triggered on the element.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-editable> adds handles to an absolutely positioned element to move, resize and rotate it, with optional grid and angle snapping." }*/
 
 import { elements, vars, withAttributes } from 'tosijs'
 import { icons } from './icons.js'

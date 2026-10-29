@@ -430,7 +430,7 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "Localize an interface: localize() for strings, <tosi-localized> for markup, and <tosi-locale-picker> so readers can choose the language." }*/
 
 import { tosi, tosiValue, elements, bindings, withAttributes } from 'tosijs'
 import { makeSorter } from './make-sorter.js'

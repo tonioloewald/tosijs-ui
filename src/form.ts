@@ -402,7 +402,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
 ```
 */
 
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "<tosi-form> and <tosi-field> build forms with native client-side validation and a submit callback that receives the form's values." }*/
 
 import {
   Component as XinComponent,

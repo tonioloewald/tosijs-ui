@@ -84,7 +84,7 @@ test('internal content links navigate client-side without reload', async ({
   await contentLink.click()
 
   await page.waitForFunction(() => location.pathname === '/data-table/')
-  await expect(page).toHaveTitle('table — tosijs-ui')
+  await expect(page).toHaveTitle('<tosi-table> virtual data table — tosijs-ui')
   await expect(page.locator('article.doc-content h1')).toHaveText('table')
   // same document — no full reload happened
   expect(await page.evaluate(() => (window as any).__noReload)).toBe(true)

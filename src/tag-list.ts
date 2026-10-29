@@ -162,7 +162,7 @@ If `editable`, an input field is provided for entering tags directly.
 Placeholder shown on input field.
 */
 
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "An editable list of tags with suggestions, built on standard inputs and form-associated, so it submits like any other field." }*/
 
 import {
   elements,

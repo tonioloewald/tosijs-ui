@@ -132,7 +132,7 @@ test('css canary: Color math (inverseLuminance) yields a distinct valid color', 
 ```
 */
 
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "A live theme editor: adjust tosijs-ui theme colours and watch every component update instantly, then read or set the values from code." }*/
 
 import {
   Color,

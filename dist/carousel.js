@@ -68,7 +68,7 @@ This is a minimalist carousel component that supports the usual stuff.
 
 <tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor>
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "A minimal carousel with optional arrows and dots, several items per page, looping, and auto-advance that holds still while someone is looking." }*/
 import { elements, vars, withAttributes } from 'tosijs';
 import { icons } from './icons.js';
 import { prefersReducedMotion } from './reduced-motion.js';

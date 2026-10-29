@@ -1,4 +1,4 @@
-# tosijs-ui v1.16.40
+# tosijs-ui v1.16.41
 
 Simple, robust web-components for use with tosijs or anything else.
 
@@ -24,152 +24,146 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
 ## Pages
 
 - https://ui.tosijs.net/babylon-3d/ — 3d
-  A [babylonjs](https://www.babylonjs.com/) wrapper.
+  Deprecated: <tosi-3d> is a thin Babylon.js wrapper kept for compatibility. New 3D work should use the tosijs-3d package.
 - https://ui.tosijs.net/ab-test/ — ab-test
-  `<tosi-ab>` provides a simple method for implementing A|B-testing.
+  <tosi-ab> shows or hides content by condition, so you can run A/B tests or feature flags by setting AbTest.conditions.
 - https://ui.tosijs.net/adopting-the-doc-system/ — Adopting the doc system
   A first hour with tosijs-ui/site: the minimum that works, how to tell it is actually working, and the four things that fail silently while the site still serves 200s.
 - https://ui.tosijs.net/affix/ — affix
-  `<tosi-affix>` fixes a **fixture** — a toolbar, a badge, a caption — to one edge of its
+  <tosi-affix> attaches a toolbar, badge or caption to one edge of its content, laid out beside it rather than floated, so it never covers it.
 - https://ui.tosijs.net/appendices/ — Appendices
-  Upgrading and release tooling.
+  Upgrading tosijs-ui across breaking releases, and the release-notes tool that builds its changelog from commit messages.
 - https://ui.tosijs.net/carousel/ — carousel
-  This is a minimalist carousel component that supports the usual stuff.
+  A minimal carousel with optional arrows and dots, several items per page, looping, and auto-advance that holds still while someone is looking.
 - https://ui.tosijs.net/code-editor/ — code
-  A [CodeMirror 6](https://codemirror.net/) wrapper.
+  <tosi-code> embeds a CodeMirror 6 editor for JavaScript, TypeScript, CSS, HTML and Markdown, with undo, a diff view and a change event.
 - https://ui.tosijs.net/color-input/ — color input field
-  This is a color input field that supports opacity
+  <tosi-color> is a colour input that also edits opacity, so it can produce translucent colours that the native colour picker cannot.
 - https://ui.tosijs.net/components/ — Components
-  The goal of this library is not to replace HTML elements that already work very well, such as `<input>`, `<textarea>`...
+  Custom elements for what HTML lacks or does badly: menus, selects, data tables, dialogs, tabs, code editors and more, built on web standards.
 - https://ui.tosijs.net/crud/ — crud
-  Search, list, edit — [`<tosi-table>`](/data-table/) and
+  <tosi-crud> pairs a searchable table with a schema-driven form over a store you supply (REST, IndexedDB or an array) for list-and-edit screens.
 - https://ui.tosijs.net/data-client/ — data client
-  For an editor running on a dev-server page (a level editor, a scene editor) to open and save
+  Open and save a project's data files from a dev-server page, for in-browser tools such as level or scene editors, optionally committing each save.
 - https://ui.tosijs.net/dialog/ — dialog
-  `<tosi-dialog>` is a simple wrapper around the standard HTML `<dialog>` element designed
+  <tosi-dialog> wraps the native <dialog> element with an OK button, a footer slot, and promise-based alert, confirm and prompt helpers.
 - https://ui.tosijs.net/diff/ — diff
-  `<tosi-diff>` renders a unified, line-by-line diff between two strings — the kind
+  <tosi-diff> shows a unified, line-by-line diff between two strings, with removed and added lines marked, as in a code review.
 - https://ui.tosijs.net/doc-browser/ — doc-browser
-  `createDocBrowser()` renders a documentation corpus as a browsable, searchable testbed with
+  createDocBrowser() renders a documentation corpus as a searchable browser with live, self-testing examples: a lighter alternative to Storybook.
 - https://ui.tosijs.net/doc-site-system/ — Doc-Site System
   How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.
 - https://ui.tosijs.net/doc-system/ — doc-system
-  `<tosi-doc-system>` turns a folder of pre-rendered, statically-served pages into a
+  <tosi-doc-system> hydrates pre-rendered static doc pages into a fast single-page doc browser, keeping full HTML for search engines and no-JS readers.
 - https://ui.tosijs.net/docs/ — docs
-  `extractDocs` collects documentation from markdown files and `/*#` comment blocks in source
+  extractDocs() collects markdown files and doc comments from source code into one docs.json corpus, the input to the doc browser and static site.
 - https://ui.tosijs.net/documentation-system/ — Documentation System
   tosijs-ui/site: turn markdown and doc comments into a static, pre-rendered documentation site with live, self-testing examples, an ePub and print.
 - https://ui.tosijs.net/drag-and-drop/ — drag & drop
-  A lightweight library that leverages HTML5 drag and drop behavior.
+  Make HTML5 drag and drop usable: one init() call highlights compatible drop zones as a drag starts, including zones added mid-drag.
 - https://ui.tosijs.net/editable-rect/ — editable-rect
-  `<tosi-editable>` (`editableRect` is the `ElementCreator` and `EditableRect` is the class) is an element
+  <tosi-editable> adds handles to an absolutely positioned element to move, resize and rotate it, with optional grid and angle snapping.
 - https://ui.tosijs.net/component/ — example
-  `<tosi-example>` makes it easy to insert interactive code examples in a web page. It
+  <tosi-example> turns code blocks into live, editable examples with a preview, a console and inline tests, in JavaScript, TypeScript, HTML or CSS.
 - https://ui.tosijs.net/filter-builder/ — filter
-  Automatically creates `ArrayFilter` functions `(a: any[]) => any[]` based on the query you build using its
+  <tosi-filter> builds array filter functions from a Finder-style query editor, with extensible filter types and a state you can save as JSON.
 - https://ui.tosijs.net/float/ — float
-  A floating, potentially draggable user interface element.
+  <tosi-float> is a minimally styled floating element that can be dragged, and that hides, stays or is removed when the window resizes.
 - https://ui.tosijs.net/form-components/ — Form Components
   Form-associated custom elements — inputs, selects, and editors that participate
 - https://ui.tosijs.net/form/ — forms
-  `<tosi-form>` and `<tosi-field>` can be used to quickly create forms complete with
-- https://ui.tosijs.net/full-screen-demo/ — Full-screen layout
-  A page using layout: full-screen — no reading measure, no nav, the content is the viewport.
+  <tosi-form> and <tosi-field> build forms with native client-side validation and a submit callback that receives the form's values.
 - https://ui.tosijs.net/gamepad/ — gamepads
-  A couple of utility functions for dealing with gamepads and XRInputs.
+  Read gamepad and WebXR controller state in a compact form (buttons, triggers, thumbsticks and touch) for games and XR scenes.
 - https://ui.tosijs.net/hash-state/ — hash-state
   Key-value state in the page's URL hash: shareable, bookmarkable, and back/forward work
 - https://ui.tosijs.net/header/ — header
-  A simple flex header. Compose it with `elastic()` and `spacer()` from
+  <tosi-header> is a flex header bar; compose it with elastic() and spacer() to place a title, links and menus where you want them.
 - https://ui.tosijs.net/helper-libraries/ — Helper Libraries
   General purpose utilities and behaviors — routing, theming, localization, sorting, drag-and-drop, and other building ...
 - https://ui.tosijs.net/highlight-block/ — highlight-block
-  `<tosi-highlight>` pretty-prints a static code sample. It is **not** an editor — for that
+  <tosi-highlight> syntax-highlights code that arrives at runtime, such as a fetched snippet or a chat message, without loading a code editor.
 - https://ui.tosijs.net/highlight-styles/ — highlight-styles
-  The syntax-highlighting token palette, on its own. The package ships no CSS files (every
+  The syntax-highlighting token colours as a stylesheet you can import and retheme, for code highlighted outside <tosi-highlight>.
 - https://ui.tosijs.net/icon-composition/ — Icon Composition
-  This is a toy for playing with the icon composition language introduced in tosijs-ui 1.5.10. It's documented [here](/...
+  Experiment with the icon composition language: stack, recolour, rotate, scale and offset icons with short suffixes on their names.
 - https://ui.tosijs.net/icons/ — icons
-  `icons` is a proxy that generates an `ElementCreator` for a given icon on demand,
+  SVG icons as element creators (icons.chevronDown()), themeable with CSS variables, with a small language for composing new icons from old.
 - https://ui.tosijs.net/icon-svg/ — iconSvg — icon markup without a DOM
-  (The subpath `tosijs-ui/icon-svg` is the DOM-free entry point — import it that way in a
-- https://ui.tosijs.net/kitchen-sink/ — kitchen sink
-  This is a testbed for checking styles
+  iconSvg() returns an icon's SVG markup as a string and iconNames() lists them, with no DOM, for build scripts, server templates and ePubs.
 - https://ui.tosijs.net/layout/ — layout
-  Thin structural layout components that wrap CSS flexbox and grid.
+  <tosi-row>, <tosi-column> and <tosi-grid>: thin custom elements over CSS flexbox and grid for structural page layout.
 - https://ui.tosijs.net/live-theme/ — live-theme
-  A live theme editor that lets you tweak theme colors in real time.
+  A live theme editor: adjust tosijs-ui theme colours and watch every component update instantly, then read or set the values from code.
 - https://ui.tosijs.net/localize/ — localize
-  `tosijs-ui` provides support for localization via the `localize` method and the `<tosi-locale-picker>`
+  Localize an interface: localize() for strings, <tosi-localized> for markup, and <tosi-locale-picker> so readers can choose the language.
 - https://ui.tosijs.net/bodymovin-player/ — lottie / bodymovin
-  A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
+  <tosi-lottie> plays Lottie (bodymovin) animations like an <img>: set src or json, and use the bodymovin API through its animation property.
 - https://ui.tosijs.net/make-icon-data/ — make-icon-data
-  Ingests SVG files from icon directories and generates an icon-data module
+  A build tool that turns folders of SVG files into the icon-data module behind the tosijs-ui icon system, optimizing the paths as it goes.
 - https://ui.tosijs.net/make-sorter/ — makeSorter
-  I'm always confusing myself when writing sort functions, so I wrote `makeSorter()`. It's
+  Build an array sort callback from a function that returns the keys to sort by, with a direction per key, so a multi-key sort is one line.
 - https://ui.tosijs.net/mapbox/ — map
-  A [mapboxgl](https://docs.mapbox.com/mapbox-gl-js/api/) wrapper.
+  Embed an interactive Mapbox GL map as a custom element: set the token, style and coordinates as attributes, and use the map object for the rest.
 - https://ui.tosijs.net/markdown-viewer/ — markdown
-  `<tosi-md>` renders markdown using [marked](https://www.npmjs.com/package/marked).
+  <tosi-md> renders markdown from a src URL or from its own text, sanitizing the HTML by default, so you can show markdown anywhere on a page.
 - https://ui.tosijs.net/menu/ — menu
-  Being able to pop a menu up anywhere is just so nice, and `tosijs-ui` allows menus
+  Pop up a menu anywhere with popMenu() or <tosi-menu>: nested submenus, icons, keyboard shortcuts, and drop menus that accept drags.
 - https://ui.tosijs.net/migrating/ — Migrating from older versions
-  Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.21's tosijs floor, 1.16.19's throwing iconSvg, 1.16.17's tjs-lang 0.14, 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename.
+  Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release.
 - https://ui.tosijs.net/month/ — month
-  This is a component for displaying a month and selecting days within that month.
+  <tosi-month> shows a calendar month and, when selectable, lets readers pick a date or a date range: a friendlier date picker.
 - https://ui.tosijs.net/natural-compare/ — naturalCompare
   Comparing values the way a reader expects, for sorting tables, navs and lists.
 - https://ui.tosijs.net/notifications/ — notifications
-  `TosiNotification` provides a singleton custom `<tosi-notification>` element that manages
+  postNotification() shows stacked toast notifications: info, success, warning, error or progress, timed or persistent, newest on top.
 - https://ui.tosijs.net/one-source-every-artifact/ — One Source
-  How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files.
-- https://ui.tosijs.net/no-header-demo/ — Page without the header
-  A page using header: false with layout: full-screen — no site chrome at all, for an app page with its own toolbar.
+  How one corpus of doc comments and markdown becomes a static SEO site, a live playground, an ePub, a PDF and llms.txt from a single build.
 - https://ui.tosijs.net/palette/ — palette
-  `<tosi-palette>` looks like a small search field. Click it (or press its shortcut) and it
+  <tosi-palette> is a command palette: a search field that opens a keyboard-driven modal of ranked results from sources you supply.
 - https://ui.tosijs.net/password-strength/ — password strength
-  Just wrap a `<tosi-password-strength>` element around an `<input>`
+  Wrap an <input> in <tosi-password-strength> to rate a password as it is typed and securely check whether it appears in known breaches.
 - https://ui.tosijs.net/pocket-bar/ — pocket bar
   A **pocket toolbar**: a single icon at rest that expands into a bar of your controls
 - https://ui.tosijs.net/pop-float/ — popFloat
-  There are so many cases in user-interfaces where it's useful to pop-up a floating
+  popFloat() pops a floating element up beside a target, placing it to stay on screen, for popovers, pickers and other one-off overlays.
 - https://ui.tosijs.net/rating/ — rating
-  `TosiRating` / `<tosi-rating>` provides a drop-in replacement for an `<input>`
+  <tosi-rating> is a form-associated rating input drawn with icons, with half steps, custom icons and sizes, that behaves like an <input>.
 - https://ui.tosijs.net/release-notes/ — release-notes
-  Assembles a CHANGELOG section from **annotations in commit messages**, so release notes
+  tosijs-release-notes builds CHANGELOG sections from tagged bullets in commit messages, and fails a release when one is left unwritten.
 - https://ui.tosijs.net/rich-text/ — rich text
-  `<tosi-rich-text>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
+  <tosi-rich-text> is a small, extensible WYSIWYG editor with a customizable toolbar, editing its own contents or a value you set.
 - https://ui.tosijs.net/router/ — router
-  A lightweight client-side router for single-page applications. Supports
+  A lightweight client-side router for single-page apps, with named parameters, hash routing, and several named views per route.
 - https://ui.tosijs.net/schema-form/ — schema-form
-  A form generated from a [JSON Schema](https://json-schema.org/), with validation.
+  <tosi-schema-form> builds an editable, validated form from a JSON Schema, keeping its value, not the inputs, as the source of truth.
 - https://ui.tosijs.net/via-tag/ — scriptTag & styleSheet
-  If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
+  scriptTag() and styleSheet() load a classic script or stylesheet from a CDN and return a promise, much like import() for older libraries.
 - https://ui.tosijs.net/search-field/ — search-field
-  `<tosi-search-field>` is a search box that suggests **refinements** as you type, in the
+  <tosi-search-field> suggests refinements as you type and turns them into tags, for Finder-style searches with power operators.
 - https://ui.tosijs.net/segmented/ — segmented select
-  This is a fairly general-purpose segmented select control.
+  <tosi-segmented> is a form-associated segmented control for choosing one value or several, with icons and labels.
 - https://ui.tosijs.net/select/ — select
-  `<tosi-select>` (`tosiSelect` is the `ElementCreator`) is a replacement for the lamentable
+  <tosi-select> replaces <select> with a styleable menu that supports icons, separators, submenus, editable values and missing options.
 - https://ui.tosijs.net/side-nav/ — sidebar
-  The default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small
+  <tosi-sidenav> shows a sidebar beside the content when there is room and hides it behind a toggle on small screens, as iPad apps do.
 - https://ui.tosijs.net/size-break/ — size-break
-  `<tosi-sizebreak>` shows different content at different sizes, for example a row of buttons
+  <tosi-sizebreak> swaps content by available size, such as a row of buttons that becomes a menu when space runs out.
 - https://ui.tosijs.net/sizer/ — sizer
-  This is a super-simple component that you can put in a fixed size element allowing it to be resized
+  <tosi-sizer> adds a bottom-right resize handle to a fixed-size element, so readers can drag it to a new size.
 - https://ui.tosijs.net/data-table/ — table
-  A virtual data-table, configurable via a `columns` array (which will automatically be generated if not provided),
+  A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail.
 - https://ui.tosijs.net/tab-selector/ — tabs
-  `<tosi-tabs>` creates a `tabpanel` for its children, creating a `tab` for each based on its
+  <tosi-tabs> builds a tab panel from its children's name attributes, with closeable tabs and methods to add or remove tabs.
 - https://ui.tosijs.net/tag-list/ — tag-list
-  Building a tag-list from standard HTML elements is a bit of a nightmare.
+  An editable list of tags with suggestions, built on standard inputs and form-associated, so it submits like any other field.
 - https://ui.tosijs.net/theme/ — theme
-  The theme system provides consistent CSS variables across all tosijs-ui components,
+  The tosijs-ui theme: CSS variables for spacing, colour and type shared by every component, with dark mode computed from your colours.
 - https://ui.tosijs.net/tooltip/ — tooltip
-  Automatic tooltips for any element with `data-tooltip` or `title` attributes.
+  Replace native title tooltips with styled ones that render markdown: call initTooltips() once, then use data-tooltip or title.
 - https://ui.tosijs.net/ — tosijs-ui
   A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.
 - https://ui.tosijs.net/track-drag/ — trackDrag
-  Sometimes you want to track a mouse-drag or touch-drag operation without messing around.
+  trackDrag() follows a mouse or touch drag with one callback that reports the offset, for resize handles, sliders and draggable parts.
 - https://ui.tosijs.net/value-renderer/ — valueRenderer
-  `valueRenderer(type)` turns a compact **type string** into a reusable renderer for
+  valueRenderer() turns a short type string into a formatter for numbers, currency, bytes or booleans, each with a default alignment.

@@ -96,7 +96,7 @@ const sorter = makeSorter(
 )
 ```
 */
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "Build an array sort callback from a function that returns the keys to sort by, with a direction per key, so a multi-key sort is one line." }*/
 export function makeSorter(sortValuator, ascending = true) {
     return (p, q) => {
         const pSort = sortValuator(p);

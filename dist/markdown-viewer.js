@@ -130,7 +130,7 @@ Oh, and nested templates {{nested}}.
 </tosi-md>
 ```
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-md> markdown viewer — tosijs-ui", "description": "<tosi-md> renders markdown from a src URL or from its own text, sanitizing the HTML by default, so you can show markdown anywhere on a page." }*/
 function populate(basePath, source) {
     if (source == null) {
         source = '';

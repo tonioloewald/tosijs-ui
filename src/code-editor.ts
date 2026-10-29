@@ -112,7 +112,7 @@ view. The language, lint and search packages are internal composition details; a
 one exposed.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-code> CodeMirror 6 code editor — tosijs-ui", "description": "<tosi-code> embeds a CodeMirror 6 editor for JavaScript, TypeScript, CSS, HTML and Markdown, with undo, a diff view and a change event." }*/
 
 import {
   ElementCreator,

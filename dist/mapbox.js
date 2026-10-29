@@ -173,7 +173,7 @@ form.addEventListener('submit', (e) => {
 })
 ```
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-map> Mapbox GL map — tosijs-ui", "description": "Embed an interactive Mapbox GL map as a custom element: set the token, style and coordinates as attributes, and use the map object for the rest." }*/
 import { elements, withAttributes } from 'tosijs';
 import { styleSheet, scriptTag } from './via-tag.js';
 const { div } = elements;

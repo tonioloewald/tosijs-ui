@@ -157,7 +157,7 @@ found in Weakpass's database (and spit out extra info to the console).
 `digest(s: string, method="sha-1"): Promise<string>` is just a nice wrapper for `crypto.digest`.
 */
 
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "Wrap an <input> in <tosi-password-strength> to rate a password as it is typed and securely check whether it appears in known breaches." }*/
 
 import { elements, vars, varDefault, withAttributes } from 'tosijs'
 

@@ -143,7 +143,7 @@ and `describePlacement({ position, inside })` convert between the attribute and
 placement takes.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-affix> attaches a toolbar, badge or caption to one edge of its content, laid out beside it rather than floated, so it never covers it." }*/
 
 import { Component, ElementCreator, elements, PartsMap } from 'tosijs'
 

@@ -168,7 +168,7 @@ test('form renders', () => {
 This is simply a wrapper for `TosiNotification.post()`.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "postNotification() shows stacked toast notifications: info, success, warning, error or progress, timed or persistent, newest on top." }*/
 
 import { Component, elements, vars, varDefault } from 'tosijs'
 import { icons } from './icons.js'

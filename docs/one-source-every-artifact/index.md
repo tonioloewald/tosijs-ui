@@ -1,4 +1,4 @@
-<!--{"parent":"Documentation System","order":20,"title":"One Source","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files."}-->
+<!--{ "parent": "Documentation System", "order": 20, "title": "One Source", "description": "How one corpus of doc comments and markdown becomes a static SEO site, a live playground, an ePub, a PDF and llms.txt from a single build." }-->
 
 # One Source
 

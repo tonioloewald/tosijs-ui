@@ -1,4 +1,4 @@
-/*{ "parent": "icons", "order": 20 }*/
+/*{ "parent": "icons", "order": 20, "description": "iconSvg() returns an icon's SVG markup as a string and iconNames() lists them, with no DOM, for build scripts, server templates and ePubs." }*/
 /*#
 # `iconSvg` — icon markup without a DOM
 

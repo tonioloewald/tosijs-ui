@@ -101,7 +101,7 @@ and writable if you want to drive it yourself. Resolutions **reset when either t
 changes** — decisions belong to the diff they were made about.
 
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-diff> shows a unified, line-by-line diff between two strings, with removed and added lines marked, as in a code review." }*/
 import { elements, vars, varDefault, withAttributes, } from 'tosijs';
 const { div, span, button } = elements;
 /** Group a line diff into context runs and change blocks, in display order. */

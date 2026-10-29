@@ -24,7 +24,7 @@ from the bottom-right.
 <tosi-css-var-editor element-selector="tosi-sizer"></tosi-css-var-editor>
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-sizer> adds a bottom-right resize handle to a fixed-size element, so readers can drag it to a new size." }*/
 
 import { Component as XinComponent, ElementCreator, vars } from 'tosijs'
 import { icons } from './icons.js'

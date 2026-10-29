@@ -111,7 +111,7 @@ Only `@codemirror/state` and `@codemirror/view` are re-exported — the two you 
 view. The language, lint and search packages are internal composition details; ask if you need
 one exposed.
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-code> CodeMirror 6 code editor — tosijs-ui", "description": "<tosi-code> embeds a CodeMirror 6 editor for JavaScript, TypeScript, CSS, HTML and Markdown, with undo, a diff view and a change event." }*/
 import { elements, varDefault, withAttributes, } from 'tosijs';
 import { tosiDiff } from './diff.js';
 const { div } = elements;

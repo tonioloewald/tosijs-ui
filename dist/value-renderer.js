@@ -45,7 +45,7 @@ preview.append(
 )
 ```
 */
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "valueRenderer() turns a short type string into a formatter for numbers, currency, bytes or booleans, each with a default alignment." }*/
 import { i18n } from './localize.js';
 import { icons } from './icons.js';
 /** Parse `base(arg1, arg2)` — the type-string mini-syntax. */

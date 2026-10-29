@@ -305,7 +305,7 @@ for every instance; each one re-checks it the next time it is resized.
 - `error` — a store operation failed.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-crud> pairs a searchable table with a schema-driven form over a store you supply (REST, IndexedDB or an array) for list-and-edit screens." }*/
 
 import { ElementCreator, elements, withAttributes } from 'tosijs'
 import type { JSONSchema } from './schema-form/json-schema.js'

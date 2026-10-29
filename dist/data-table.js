@@ -1241,7 +1241,7 @@ As well as any column names you want localized — these are also used as the ac
 (`aria-label`) of each editable cell, so an editable table wants them present even if you are
 happy with the untranslated headers.
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-table> virtual data table — tosijs-ui", "description": "A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail." }*/
 import { elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, withAttributes, } from 'tosijs';
 import { trackDrag } from './track-drag.js';
 import { naturalSorter } from './natural-compare.js';

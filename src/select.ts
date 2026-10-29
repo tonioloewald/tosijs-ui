@@ -207,7 +207,7 @@ preview.append(
 ```
 */
 
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "<tosi-select> replaces <select> with a styleable menu that supports icons, separators, submenus, editable values and missing options." }*/
 
 import {
   ElementCreator,

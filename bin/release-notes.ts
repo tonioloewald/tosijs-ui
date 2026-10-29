@@ -60,7 +60,7 @@ commit whose diff never touched the file it named. Cheap to detect, and the fail
 catches is expensive.
 */
 
-/*{ "parent": "Appendices" }*/
+/*{ "parent": "Appendices", "description": "tosijs-release-notes builds CHANGELOG sections from tagged bullets in commit messages, and fails a release when one is left unwritten." }*/
 
 import { $ } from 'bun'
 import {

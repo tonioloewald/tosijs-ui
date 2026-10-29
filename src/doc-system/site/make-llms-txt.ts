@@ -14,6 +14,7 @@ interface CorpusDoc {
   text?: string
   description?: string
   hidden?: boolean
+  noindex?: boolean
 }
 
 interface LlmsEntry {
@@ -101,15 +102,20 @@ export function entriesFromCorpus(
 ): LlmsEntry[] {
   const slugMap = buildSlugMap(corpus)
   const base = (meta.baseUrl ?? '').replace(/\/$/, '')
-  return corpus
-    .filter((doc) => doc.title && !doc.hidden)
-    .map((doc) => ({
-      title: doc.title as string,
-      description:
-        doc.description?.trim() || extractDescription(doc.text ?? ''),
-      link: base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename])),
-    }))
-    .sort((a, b) => a.title.localeCompare(b.title))
+  return (
+    corpus
+      // A noindex page is one the author asked not to be found; the sitemap and the markdown
+      // copies already leave it out, and an index for agents is no different.
+      .filter((doc) => doc.title && !doc.hidden && !doc.noindex)
+      .map((doc) => ({
+        title: doc.title as string,
+        description:
+          doc.description?.trim() || extractDescription(doc.text ?? ''),
+        link:
+          base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename])),
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title))
+  )
 }
 
 /**
@@ -161,7 +167,7 @@ export function markdownExample(
 ): string | undefined {
   const slugMap = buildSlugMap(corpus)
   for (const doc of corpus) {
-    if (!doc.title || doc.hidden || (doc as { noindex?: boolean }).noindex) {
+    if (!doc.title || doc.hidden || doc.noindex) {
       continue
     }
     const pagePath = pathForSlug(slugMap[doc.filename])

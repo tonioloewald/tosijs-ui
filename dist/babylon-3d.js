@@ -220,7 +220,7 @@ be used to load `.glb` files. Setting `src` calls this for you on connect.
 
 `<tosi-3d>.loadUI(options: B3dUIOptions)` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-3d> Babylon.js wrapper (deprecated) — tosijs-ui", "description": "Deprecated: <tosi-3d> is a thin Babylon.js wrapper kept for compatibility. New 3D work should use the tosijs-3d package." }*/
 import { elements, withAttributes } from 'tosijs';
 import { scriptTag } from './via-tag.js';
 import { icons, svg2DataUrl } from './icons.js';

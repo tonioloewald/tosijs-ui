@@ -144,7 +144,7 @@ preview.append(
 
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-dialog> wraps the native <dialog> element with an OK button, a footer slot, and promise-based alert, confirm and prompt helpers." }*/
 import { Component, PartsMap, elements, on, vars, varDefault } from 'tosijs'
 import { findHighestZ } from './track-drag.js'
 

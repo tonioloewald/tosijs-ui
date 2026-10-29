@@ -152,7 +152,7 @@ navigate('page/1')
 ```
 */
 
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "A lightweight client-side router for single-page apps, with named parameters, hash routing, and several named views per route." }*/
 
 import { ElementCreator, tosi, withAttributes } from 'tosijs'
 

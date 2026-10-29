@@ -285,7 +285,7 @@ scripted demos.
 How many hints are currently listed (0 when the list is closed).
 */
 
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "<tosi-search-field> suggests refinements as you type and turns them into tags, for Finder-style searches with power operators." }*/
 
 import {
   elements,

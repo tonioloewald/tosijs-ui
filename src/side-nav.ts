@@ -27,7 +27,7 @@ named state rather than a `minSize` no viewport can reach, because the second on
 reads as a bug.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-sidenav> responsive sidebar — tosijs-ui", "description": "<tosi-sidenav> shows a sidebar beside the content when there is room and hides it behind a toggle on small screens, as iPad apps do." }*/
 
 import { ElementCreator, elements, varDefault, withAttributes } from 'tosijs'
 

@@ -1,4 +1,4 @@
-<!--{ "layout": "full-screen", "header": false, "parent": "Documentation System", "order": 95, "title": "Page without the header", "description": "A page using header: false with layout: full-screen — no site chrome at all, for an app page with its own toolbar." }-->
+<!--{ "layout": "full-screen", "header": false, "parent": "Documentation System", "order": 95, "title": "Page without the header", "description": "A page using header: false with layout: full-screen — no site chrome at all, for an app page with its own toolbar.", "noindex": true }-->
 
 <div class="nh-demo">
   <p>

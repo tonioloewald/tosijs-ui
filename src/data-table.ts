@@ -1242,7 +1242,7 @@ As well as any column names you want localized — these are also used as the ac
 happy with the untranslated headers.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-table> virtual data table — tosijs-ui", "description": "A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail." }*/
 
 import {
   ElementCreator,

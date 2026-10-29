@@ -291,7 +291,7 @@ preview.append(
 > `data-drop` in this example.
 )
 */
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "Make HTML5 drag and drop usable: one init() call highlights compatible drop zones as a drag starts, including zones added mid-drag." }*/
 const dragInProgress = () => !!document.querySelector('.drag-source');
 export const isTypeAllowed = (allowedTypes, type) => {
     if (!allowedTypes) {

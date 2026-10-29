@@ -145,7 +145,7 @@ form.addEventListener('reset', () => {
 ```
 
 */
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "<tosi-month> shows a calendar month and, when selectable, lets readers pick a date or a date range: a friendlier date picker." }*/
 import { elements, varDefault, withAttributes } from 'tosijs';
 import { tosiSelect } from './select.js';
 import { icons } from './icons.js';

@@ -1,4 +1,4 @@
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "SVG icons as element creators (icons.chevronDown()), themeable with CSS variables, with a small language for composing new icons from old." }*/
 /*#
 # icons
 

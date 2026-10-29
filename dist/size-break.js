@@ -70,7 +70,7 @@ the window's `resize` events and its own (via `ResizeObserver`).
 of the slots if you like. The demo site uses them to hide the
 [jsdelivr](https://www.jsdelivr.com/) badge when space is tight.
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-sizebreak> swaps content by available size, such as a row of buttons that becomes a menu when space runs out." }*/
 export class SizeBreak extends withAttributes({
     minWidth: 0,
     minHeight: 0,

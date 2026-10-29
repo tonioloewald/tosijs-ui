@@ -727,7 +727,7 @@ context = {
 ```
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-example> live code examples — tosijs-ui", "description": "<tosi-example> turns code blocks into live, editable examples with a preview, a console and inline tests, in JavaScript, TypeScript, HTML or CSS." }*/
 
 import {
   ElementCreator,

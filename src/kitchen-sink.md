@@ -1,6 +1,6 @@
 # kitchen sink
 
-<!--{ "parent": "Documentation System", "order": 100, "book": "none" }-->
+<!--{ "parent": "Documentation System", "order": 100, "book": "none", "noindex": true }-->
 
 This is a testbed for checking styles
 

@@ -139,7 +139,7 @@ query)` the default row, and `highlight(text, query)` the row's title with each 
 `describeShortcut(shortcut)` (⌘K on a Mac, Ctrl K elsewhere) are the shortcut rules.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-palette> is a command palette: a search field that opens a keyboard-driven modal of ranked results from sources you supply." }*/
 
 import {
   elements,

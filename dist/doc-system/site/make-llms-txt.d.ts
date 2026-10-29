@@ -6,6 +6,7 @@ interface CorpusDoc {
     text?: string;
     description?: string;
     hidden?: boolean;
+    noindex?: boolean;
 }
 interface LlmsEntry {
     title: string;

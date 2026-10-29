@@ -101,7 +101,7 @@ And of course just access the element's `animation` property to [use the bodymov
 
 Also see the [documentation for advanced interactions](https://lottiefiles.github.io/lottie-docs/advanced_interactions/)
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-lottie> Lottie animation player — tosijs-ui", "description": "<tosi-lottie> plays Lottie (bodymovin) animations like an <img>: set src or json, and use the bodymovin API through its animation property." }*/
 import { withAttributes } from 'tosijs';
 import { scriptTag } from './via-tag.js';
 export class BodymovinPlayer extends withAttributes({

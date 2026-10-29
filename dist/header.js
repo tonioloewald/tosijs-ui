@@ -87,7 +87,7 @@ preview.append(
 }
 ```
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-header> is a flex header bar; compose it with elastic() and spacer() to place a title, links and menus where you want them." }*/
 import { Component, elements, varDefault } from 'tosijs';
 import { icons } from './icons.js';
 const { a } = elements;

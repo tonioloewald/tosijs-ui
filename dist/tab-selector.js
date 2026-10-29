@@ -134,7 +134,7 @@ initTooltips()
 }
 ```
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-tabs> tab panel — tosijs-ui", "description": "<tosi-tabs> builds a tab panel from its children's name attributes, with closeable tabs and methods to add or remove tabs." }*/
 import { elements, vars, withAttributes, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize.js';
 import { icons } from './icons.js';

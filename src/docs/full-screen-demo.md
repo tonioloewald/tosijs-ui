@@ -1,4 +1,4 @@
-<!--{ "layout": "full-screen", "parent": "Documentation System", "order": 90, "title": "Full-screen layout", "description": "A page using layout: full-screen — no reading measure, no nav, the content is the viewport." }-->
+<!--{ "layout": "full-screen", "parent": "Documentation System", "order": 90, "title": "Full-screen layout", "description": "A page using layout: full-screen — no reading measure, no nav, the content is the viewport.", "noindex": true }-->
 
 <div class="fs-demo">
   <p>

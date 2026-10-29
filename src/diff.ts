@@ -102,7 +102,7 @@ changes** — decisions belong to the diff they were made about.
 
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-diff> shows a unified, line-by-line diff between two strings, with removed and added lines marked, as in a code review." }*/
 
 import {
   ElementCreator,

@@ -107,7 +107,7 @@ console warning about handlers that delay scrolling, and that warning only ever 
 matching `selector`.
 */
 
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Helper Libraries", "description": "trackDrag() follows a mouse or touch drag with one callback that reports the offset, for resize handles, sliders and draggable parts." }*/
 const TRACKER = elements.div({
   style: {
     content: ' ',

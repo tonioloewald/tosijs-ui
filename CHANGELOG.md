@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.16.41
+
+- **A `noindex` page is left out of `llms.txt`.** The sitemap and the markdown copies already
+  left it out, but `llms.txt` still listed it, so an agent reading the index was sent to pages
+  the author had asked not to be found.
+- **Every page on ui.tosijs.net has a written description, and the terse titles say what the
+  component is.** 63 pages described themselves with whatever their first paragraph said ("A
+  mapboxgl wrapper.", sentences cut off at 155 characters), which is what search results, link
+  previews and `llms.txt` showed. Short nav labels such as "map" and "table" keep their place in
+  the nav and get a fuller `<title>` through `headTitle`. The kitchen sink and the two layout
+  demo pages are `noindex`. The practice behind the rewrite is proposed for the shared coding
+  practices (tosijs-coding-practices #3561).
+
 ## 1.16.40
 
 - **An example with no script runs under a strict CSP (#245, #246).** A pure-HTML example still

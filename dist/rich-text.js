@@ -121,7 +121,7 @@ form.addEventListener('submit', (e) => {
 })
 ```
 */
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "<tosi-rich-text> is a small, extensible WYSIWYG editor with a customizable toolbar, editing its own contents or a value you set." }*/
 import { elements, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { tosiSelect, TosiSelect } from './select.js';

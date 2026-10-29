@@ -90,7 +90,7 @@ moment it opened. A float with no anchor still reacts to any scroll outside itse
 To prevent dragging for an interior element (e.g. if you want a floating palette with buttons or input fields)
 just add the `no-drag` class to an element or its container.
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "<tosi-float> is a minimally styled floating element that can be dragged, and that hides, stays or is removed when the window resizes." }*/
 import { elements, withAttributes } from 'tosijs';
 import { trackDrag, bringToFront } from './track-drag.js';
 const { slot } = elements;

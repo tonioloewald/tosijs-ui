@@ -26,7 +26,7 @@ how the doc-system's `layout: "full-screen"` pages give the content the whole vi
 named state rather than a `minSize` no viewport can reach, because the second one works and
 reads as a bug.
 */
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "headTitle": "<tosi-sidenav> responsive sidebar — tosijs-ui", "description": "<tosi-sidenav> shows a sidebar beside the content when there is room and hides it behind a toggle on small screens, as iPad apps do." }*/
 import { elements, varDefault, withAttributes } from 'tosijs';
 const { slot } = elements;
 export class TosiSidenav extends withAttributes({

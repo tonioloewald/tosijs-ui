@@ -35,7 +35,7 @@ showing active inputs with their flags (P=pressed, T=touched), analog values,
 and axis positions.
 */
 
-/*{ "parent": "Components" }*/
+/*{ "parent": "Components", "description": "Read gamepad and WebXR controller state in a compact form (buttons, triggers, thumbsticks and touch) for games and XR scenes." }*/
 
 export interface TosiButton {
   index: number

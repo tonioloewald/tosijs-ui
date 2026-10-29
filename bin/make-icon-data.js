@@ -86,7 +86,7 @@ byte-identical files, so it never shows up as spurious diff noise.
 > your prettier config, which it now honours) — not the output.
 */
 
-/*{ "parent": "icons", "order": 30 }*/
+/*{ "parent": "icons", "order": 30, "description": "A build tool that turns folders of SVG files into the icon-data module behind the tosijs-ui icon system, optimizing the paths as it goes." }*/
 
 import fs from 'fs'
 import path from 'path'

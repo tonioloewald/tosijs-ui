@@ -28,7 +28,7 @@ colorInput.addEventListener('change', () => {
 <tosi-css-var-editor element-selector="tosi-color"></tosi-css-var-editor>
 */
 
-/*{ "parent": "Form Components" }*/
+/*{ "parent": "Form Components", "description": "<tosi-color> is a colour input that also edits opacity, so it can produce translucent colours that the native colour picker cannot." }*/
 
 import {
   Component,

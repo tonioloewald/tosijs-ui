@@ -1,6 +1,6 @@
 # Migrating from older versions
 
-<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.21's tosijs floor, 1.16.19's throwing iconSvg, 1.16.17's tjs-lang 0.14, 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release." }-->
 
 Notices for releases you may be upgrading *past*. If you are starting fresh, none of
 this applies — go to the [Quick Start](/) instead.
