@@ -28,6 +28,7 @@ export declare function rankResults(results: PaletteResult[]): PaletteResult[];
 export declare function defaultPaletteRow(result: PaletteResult, query: string): Element;
 declare const TosiPalette_base: import("tosijs").WithAttributes<{
     placeholder: string;
+    localized: boolean;
     shortcut: string;
     multiline: boolean;
     timeout: number;
@@ -71,6 +72,9 @@ export declare class TosiPalette extends TosiPalette_base {
     private resizeObserver;
     private compact;
     private handleResize;
+    /** The placeholder as shown: localized when `localized` is set. */
+    get hint(): string;
+    localeChanged: () => void;
     connectedCallback(): void;
     disconnectedCallback(): void;
     /** The query field: a text box when `multiline`, re-made when that changes. */

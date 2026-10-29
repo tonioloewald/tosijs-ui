@@ -298,6 +298,7 @@ for the authoritative typed definition.
 | `projectLinks`     | —       | view-source links; `tosijs` key also gates the default logo           |
 | `logo`             | —       | brand mark left of the title: icon name, image URL, or inline `<svg>` |
 | `navbarLinks`      | —       | header-bar icon links                                                 |
+| `searchPlaceholder` | `'Search'` | the hint in the header's search field; localized through `localizedStrings` |
 | `theme`            | —       | base colors (palette derived from `accent`)                           |
 | `localizedStrings` | —       | TSV table for the language picker                                     |
 

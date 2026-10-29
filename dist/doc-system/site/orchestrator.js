@@ -1497,6 +1497,7 @@ export async function buildSite(config, opts = {}) {
                 liveExamples: config.liveExamples,
                 docs,
                 aliases: config.aliases,
+                searchPlaceholder: config.searchPlaceholder,
                 outputDir: PUBLIC,
                 projectName: config.name,
                 bookVolumes: printCoverManifestUrl(config),

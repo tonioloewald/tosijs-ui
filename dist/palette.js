@@ -93,6 +93,8 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 ## Properties
 
 - `placeholder` — the hint in the field, and in the trigger.
+- `localized` — localize `placeholder` through the site's strings, and follow the locale when
+  it changes (as `<tosi-select localized>` does).
 - `shortcut` — a key that opens it from anywhere on the page, such as `mod+k` (`mod` is ⌘ on a
   Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.
   The modifiers are `mod`, `meta` (also `cmd`), `ctrl`, `shift` and `alt` (also `option`); a
@@ -137,6 +139,7 @@ query)` the default row, and `highlight(text, query)` the row's title with each 
 /*{ "parent": "Components" }*/
 import { elements, vars, varDefault, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
+import { localize, XinLocalized } from './localize.js';
 import { findHighestZ } from './track-drag.js';
 const { button, span, kbd, div, dialog, input, textarea, mark } = elements;
 const isMac = () => typeof navigator !== 'undefined' &&
@@ -254,6 +257,7 @@ export function defaultPaletteRow(result, query) {
 }
 export class TosiPalette extends withAttributes({
     placeholder: 'Search',
+    localized: false,
     shortcut: '',
     multiline: false,
     timeout: 10000,
@@ -299,6 +303,12 @@ export class TosiPalette extends withAttributes({
         // a modal <dialog> inside a display:none ancestor is not shown even in the top layer.
         ':host.-no-trigger > .palette-trigger': {
             display: 'none',
+        },
+        // The trigger's shortcut hint is plain text: an outline inside the field's own outline
+        // read as a second control. The hints in the open palette keep theirs.
+        ':host > .palette-trigger > kbd': {
+            boxShadow: 'none',
+            opacity: 0.75,
         },
         ':host > .palette-trigger > .palette-trigger-label': {
             flex: '1 1 auto',
@@ -628,9 +638,9 @@ export class TosiPalette extends withAttributes({
             ariaHaspopup: 'dialog',
             // Named from the start, not first at render(): a trigger with no name is a button a
             // screen reader announces as just "button".
-            ariaLabel: this.placeholder,
+            ariaLabel: this.hint,
             onClick: () => this.open(),
-        }, icons.search(), span({ class: 'palette-trigger-label', part: 'label' }, this.placeholder), kbd({ part: 'shortcut', hidden: true })),
+        }, icons.search(), span({ class: 'palette-trigger-label', part: 'label' }, this.hint), kbd({ part: 'shortcut', hidden: true })),
         dialog({
             part: 'dialog',
             ariaLabel: 'Search',
@@ -672,9 +682,20 @@ export class TosiPalette extends withAttributes({
             this.queueRender();
         }
     };
+    /** The placeholder as shown: localized when `localized` is set. */
+    get hint() {
+        return this.localized ? localize(this.placeholder) : this.placeholder;
+    }
+    localeChanged = () => {
+        if (this.field)
+            this.field.placeholder = this.hint;
+        this.queueRender();
+    };
     connectedCallback() {
         super.connectedCallback();
         document.addEventListener('keydown', this.handleDocumentKeydown);
+        if (this.localized)
+            XinLocalized.allInstances.add(this);
         if (typeof ResizeObserver === 'function') {
             this.resizeObserver = new ResizeObserver(this.handleResize);
             this.resizeObserver.observe(this);
@@ -683,6 +704,7 @@ export class TosiPalette extends withAttributes({
     disconnectedCallback() {
         super.disconnectedCallback();
         document.removeEventListener('keydown', this.handleDocumentKeydown);
+        XinLocalized.allInstances.delete(this);
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;
     }
@@ -700,7 +722,7 @@ export class TosiPalette extends withAttributes({
             ariaAutocomplete: 'list',
             ariaControls: this.listId,
             ariaExpanded: 'true',
-            ariaLabel: this.placeholder,
+            ariaLabel: this.hint,
             onInput: this.handleFieldInput,
             onKeydown: this.handleFieldKeydown,
         };
@@ -727,7 +749,7 @@ export class TosiPalette extends withAttributes({
         this.listElement = this.querySelector('.palette-list');
         this.spinner = this.querySelector('.palette-spinner');
         const field = this.ensureField();
-        field.placeholder = this.placeholder;
+        field.placeholder = this.hint;
         if (!this.dialogElement.open) {
             this.style.zIndex = String(findHighestZ());
             this.dialogElement.showModal();
@@ -916,7 +938,7 @@ export class TosiPalette extends withAttributes({
         this.classList.toggle('-no-trigger', mode === 'none');
         const label = this.querySelector('.palette-trigger-label');
         if (label)
-            label.textContent = this.placeholder;
+            label.textContent = this.hint;
         const hint = this.querySelector('.palette-trigger > kbd');
         if (hint) {
             hint.hidden = !this.shortcut;
@@ -924,8 +946,8 @@ export class TosiPalette extends withAttributes({
         }
         const trigger = this.querySelector('.palette-trigger');
         trigger?.setAttribute('aria-label', this.shortcut
-            ? `${this.placeholder} (${describeShortcut(this.shortcut)})`
-            : this.placeholder);
+            ? `${this.hint} (${describeShortcut(this.shortcut)})`
+            : this.hint);
         if (this.dialogElement?.open)
             this.ensureField();
     }

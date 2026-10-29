@@ -72,6 +72,11 @@ export interface SiteConfig {
      */
     aliases?: Record<string, string>;
     /**
+     * The hint in the header's search field. Default `'Search'`. It is localized like the rest
+     * of the doc system's own text, so a site with translations can translate it.
+     */
+    searchPlaceholder?: string;
+    /**
      * Directories to skip while scanning `docPaths` — by basename (skipped wherever it
      * appears) or by path (skipped only at that location). Added to the built-in
      * `node_modules` / `dist` / `build` / output-dir set, never replacing it.

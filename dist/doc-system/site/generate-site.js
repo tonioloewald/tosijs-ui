@@ -368,6 +368,7 @@ export async function generateSite(config) {
         logo: config.logo,
         bookVolumes: config.bookVolumes,
         ebooks: config.ebooks,
+        searchPlaceholder: config.searchPlaceholder,
     }));
     // The theme stylesheet (config.stylesUrl) is written separately by
     // ./generate-css.ts; pages here just <link> to it.

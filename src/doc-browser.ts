@@ -465,6 +465,11 @@ export interface DocBrowserOptions {
    */
   searchShortcut?: string
   /**
+   * The hint in the header's search field (default `'Search'`). Localized through the site's
+   * strings, like every other piece of the doc system's own text.
+   */
+  searchPlaceholder?: string
+  /**
    * Header-bar links. When provided, these replace the legacy `projectLinks` icon
    * set in the header (each renders as an icon if `icon` names a known icon, else
    * as its text label). `projectLinks` is still used for the logo and view-source.
@@ -600,6 +605,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     aliases = {},
     onRouteChange,
     searchShortcut = 'mod+k',
+    searchPlaceholder = 'Search',
     navbarLinks,
     contentElement,
   } = options
@@ -992,7 +998,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // In the header bar (see headerContent); the nav no longer holds a search field.
   const searchBox = tosiPalette({
     class: 'doc-search',
-    placeholder: 'Search documentation',
+    placeholder: searchPlaceholder,
+    localized: true,
     shortcut: searchShortcut,
     sources: [docSearchSource],
     quickLinks,

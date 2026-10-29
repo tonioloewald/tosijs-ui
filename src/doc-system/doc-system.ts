@@ -96,6 +96,8 @@ interface DocSystemConfig {
   bookVolumes?: string
   /** the ePubs the site build makes; see `epubMenuItem` */
   ebooks?: Ebook[]
+  /** `SiteConfig.searchPlaceholder` */
+  searchPlaceholder?: string
 }
 
 export interface Ebook {
@@ -714,6 +716,7 @@ export class TosiDocSystem extends withAttributes({
       projectLinks: config.projectLinks,
       logo: config.logo,
       navbarLinks: navbarLinks.length ? navbarLinks : undefined,
+      searchPlaceholder: config.searchPlaceholder,
       contentElement,
     })
 

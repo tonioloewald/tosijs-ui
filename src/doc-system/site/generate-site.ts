@@ -51,6 +51,8 @@ export interface GenerateSiteConfig {
   docs: Doc[]
   /** `SiteConfig.aliases`: { alias path -> slug } (board #3513) */
   aliases?: Record<string, string>
+  /** `SiteConfig.searchPlaceholder` */
+  searchPlaceholder?: string
   /**
    * Mirrors `SiteConfig.liveExamples`. The static highlighter needs it so it skips the
    * fences that will become live examples — a highlighted block hands the example markup
@@ -617,6 +619,7 @@ export async function generateSite(
       logo: config.logo,
       bookVolumes: config.bookVolumes,
       ebooks: config.ebooks,
+      searchPlaceholder: config.searchPlaceholder,
     })
   )
 

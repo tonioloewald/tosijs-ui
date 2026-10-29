@@ -608,6 +608,7 @@ export class TosiDocSystem extends withAttributes({
             projectLinks: config.projectLinks,
             logo: config.logo,
             navbarLinks: navbarLinks.length ? navbarLinks : undefined,
+            searchPlaceholder: config.searchPlaceholder,
             contentElement,
         });
         // Add the settings (theme + language) menu — except in a nested demo, where

@@ -92,6 +92,8 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 ## Properties
 
 - `placeholder` — the hint in the field, and in the trigger.
+- `localized` — localize `placeholder` through the site's strings, and follow the locale when
+  it changes (as `<tosi-select localized>` does).
 - `shortcut` — a key that opens it from anywhere on the page, such as `mod+k` (`mod` is ⌘ on a
   Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.
   The modifiers are `mod`, `meta` (also `cmd`), `ctrl`, `shift` and `alt` (also `option`); a

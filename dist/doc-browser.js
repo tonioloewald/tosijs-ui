@@ -395,7 +395,7 @@ let docBrowserSeq = 0;
 // Likewise for the nav's aria-controls ids.
 let navIdCounter = 0;
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, aliases = {}, onRouteChange, searchShortcut = 'mod+k', navbarLinks, contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, aliases = {}, onRouteChange, searchShortcut = 'mod+k', searchPlaceholder = 'Search', navbarLinks, contentElement, } = options;
     // Memory routing is fully self-contained: it never reads or writes
     // window.history/location, so an embedded or nested browser can't hijack the
     // host page's URL (or recurse into it).
@@ -750,7 +750,8 @@ export function createDocBrowser(options) {
     // In the header bar (see headerContent); the nav no longer holds a search field.
     const searchBox = tosiPalette({
         class: 'doc-search',
-        placeholder: 'Search documentation',
+        placeholder: searchPlaceholder,
+        localized: true,
         shortcut: searchShortcut,
         sources: [docSearchSource],
         quickLinks,

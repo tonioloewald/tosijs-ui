@@ -239,3 +239,40 @@ test('a value given to the creator is the query the field opens with', () => {
   palette.close()
   palette.remove()
 })
+
+/*
+The doc header's hint ("Search", now a site option) is localized like the rest of the doc
+system's text. With `localized`, the trigger shows the translation and follows the locale.
+*/
+test('a localized palette shows its hint in the current locale, and follows it', async () => {
+  const { initLocalization, i18n } = await import('./localize.js')
+  initLocalization(
+    [
+      'en-US\tfr',
+      'English\tFrench',
+      'English\tFrançais',
+      '🇺🇸\t🇫🇷',
+      'Search\tRechercher',
+    ].join('\n')
+  )
+  i18n.locale.value = 'fr'
+  const palette = tosiPalette({ placeholder: 'Search', localized: true })
+  document.body.append(palette)
+  palette.render()
+  const label = () =>
+    palette.querySelector('.palette-trigger-label')?.textContent
+  expect(label()).toBe('Rechercher')
+  i18n.locale.value = 'en-US'
+  palette.render()
+  expect(label()).toBe('Search')
+  const plain = tosiPalette({ placeholder: 'Search' })
+  document.body.append(plain)
+  i18n.locale.value = 'fr'
+  plain.render()
+  expect(plain.querySelector('.palette-trigger-label')?.textContent).toBe(
+    'Search'
+  )
+  i18n.locale.value = 'en-US'
+  palette.remove()
+  plain.remove()
+})

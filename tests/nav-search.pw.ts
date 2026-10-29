@@ -24,7 +24,7 @@ test('the nav search opens a centred palette, and the sidebar is not filtered', 
   page,
 }) => {
   const navLinks = await page.locator('.doc-nav a:visible').count()
-  await expect(trigger(page)).toHaveAccessibleName(/Search documentation/)
+  await expect(trigger(page)).toHaveAccessibleName(/^Search\b/)
   await trigger(page).click()
   await expect(dialog(page)).toBeVisible()
   await expect(query(page)).toBeFocused()

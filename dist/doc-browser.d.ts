@@ -119,6 +119,11 @@ export interface DocBrowserOptions {
      */
     searchShortcut?: string;
     /**
+     * The hint in the header's search field (default `'Search'`). Localized through the site's
+     * strings, like every other piece of the doc system's own text.
+     */
+    searchPlaceholder?: string;
+    /**
      * Header-bar links. When provided, these replace the legacy `projectLinks` icon
      * set in the header (each renders as an icon if `icon` names a known icon, else
      * as its text label). `projectLinks` is still used for the logo and view-source.
