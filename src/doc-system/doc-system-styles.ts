@@ -101,7 +101,7 @@ export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
     /*
     Readable, not faint (#3520). This was the brand at 40% opacity, which an axe scan measured
     at 1.88:1 on the input (#eda7c5 on #fdfdfd) where AA asks 4.5:1, and it colours the doc
-    header's "Search documentation" trigger, a real label, not just a hint.
+    header's search trigger, a real label, not just a hint.
     */
     _placeholderColor: readableOn(
       brandColor,

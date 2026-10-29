@@ -11,10 +11,14 @@
   CSP-protected host. Script examples still need `'unsafe-eval'`; a CSP-compatible path for
   them, and an HTML-only example mode, are planned for 1.17.0.
 - **The doc header's search says "Search", and a site can set it.** `searchPlaceholder` in the
-  site config (or `createDocBrowser`) sets the hint in the header's search field; the default
-  was "Search documentation". It is localized through the site's strings, and
-  `<tosi-palette localized>` now localizes its placeholder and follows the locale, as
-  `<tosi-select localized>` does.
+  site config (or `createDocBrowser`) sets the hint in the header's search field, and the
+  trigger's accessible name; the default was "Search documentation" (set
+  `searchPlaceholder: 'Search documentation'` to keep it, and update any test that looks the
+  field up by that name). It is localized through the site's strings and follows the reader's
+  language. `<tosi-palette>` gained a `localizer` property for this: a function its placeholder
+  goes through, such as `localize`. It is a function rather than a `localized` attribute so the
+  palette does not import the localization module, and `<tosi-select>` with it, wherever it is
+  used.
 - **The ⌘K hint in the search field has no outline.** An outline inside the field's own outline
   read as a second control. The hints inside the open palette keep theirs.
 

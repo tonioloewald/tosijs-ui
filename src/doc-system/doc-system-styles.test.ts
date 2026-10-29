@@ -207,7 +207,7 @@ describe('theme.codeBg is not tracked by the token palette (F9)', () => {
 })
 
 /*
-#3520: the doc header's search trigger ("Search documentation", ⌘K) is coloured with
+#3520: the doc header's search trigger ("Search", ⌘K) is coloured with
 --placeholder-color, which was the brand at 40% opacity: 1.88:1 on the input, measured by axe.
 Asserted for the default and for accents that are hard to darken or brighten into AA.
 */

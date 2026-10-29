@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=8658fdaaa77c" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=d49f09d11680" data-tosi-doc-system />
   <title>palette — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-palette&gt; looks like a small search field. Click it (or press its shortcut) and it opens a centred modal: a query field on top, ranked results below, and…" />
   <link rel="canonical" href="https://ui.tosijs.net/palette/" />
@@ -38,7 +38,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=d0ffe10e99de" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=bbb11c3fd595" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="palette.ts">
 <h1 id="palette">palette</h1>
 <p><code>&lt;tosi-palette&gt;</code> looks like a small search field. Click it (or press its shortcut) and it
@@ -127,8 +127,10 @@ preview.append(palette)
 <ul>
 <li><p><code>placeholder</code> — the hint in the field, and in the trigger.</p>
 </li>
-<li><p><code>localized</code> — localize <code>placeholder</code> through the site&#39;s strings, and follow the locale when
-it changes (as <code>&lt;tosi-select localized&gt;</code> does).</p>
+<li><p><code>localizer</code> — a function the placeholder goes through before it is shown, such as
+<code>localize</code> from <code>tosijs-ui</code>. Call <code>queueRender()</code> when the locale changes. A function rather
+than a <code>localized</code> attribute so the palette does not import the localization module (and,
+through it, <code>&lt;tosi-select&gt;</code>) for every page that uses it.</p>
 </li>
 <li><p><code>shortcut</code> — a key that opens it from anywhere on the page, such as <code>mod+k</code> (<code>mod</code> is ⌘ on a
 Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.
@@ -271,6 +273,6 @@ chosen fires <code>action</code> with <code>{ query }</code> as its detail, so a
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-1bnwcr14.js"></script>
+  <script type="module" src="../hydrate-kg0n5bda.js"></script>
 </body>
 </html>

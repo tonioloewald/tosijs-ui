@@ -93,8 +93,10 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 ## Properties
 
 - `placeholder` — the hint in the field, and in the trigger.
-- `localized` — localize `placeholder` through the site's strings, and follow the locale when
-  it changes (as `<tosi-select localized>` does).
+- `localizer` — a function the placeholder goes through before it is shown, such as
+  `localize` from `tosijs-ui`. Call `queueRender()` when the locale changes. A function rather
+  than a `localized` attribute so the palette does not import the localization module (and,
+  through it, `<tosi-select>`) for every page that uses it.
 - `shortcut` — a key that opens it from anywhere on the page, such as `mod+k` (`mod` is ⌘ on a
   Mac and Ctrl elsewhere). Empty by default: a page decides whether it wants a global shortcut.
   The modifiers are `mod`, `meta` (also `cmd`), `ctrl`, `shift` and `alt` (also `option`); a
@@ -139,7 +141,6 @@ query)` the default row, and `highlight(text, query)` the row's title with each 
 /*{ "parent": "Components" }*/
 import { elements, vars, varDefault, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
-import { localize, XinLocalized } from './localize.js';
 import { findHighestZ } from './track-drag.js';
 const { button, span, kbd, div, dialog, input, textarea, mark } = elements;
 const isMac = () => typeof navigator !== 'undefined' &&
@@ -257,7 +258,6 @@ export function defaultPaletteRow(result, query) {
 }
 export class TosiPalette extends withAttributes({
     placeholder: 'Search',
-    localized: false,
     shortcut: '',
     multiline: false,
     timeout: 10000,
@@ -630,6 +630,11 @@ export class TosiPalette extends withAttributes({
         this.search('');
         this.field.focus();
     };
+    /**
+     * Localizes the placeholder (see `localizer` in the docs above); `null` shows it as is.
+     * Declared before `content`, which reads it through `hint`.
+     */
+    localizer = null;
     content = () => [
         button({
             class: 'palette-trigger',
@@ -682,20 +687,13 @@ export class TosiPalette extends withAttributes({
             this.queueRender();
         }
     };
-    /** The placeholder as shown: localized when `localized` is set. */
+    /** The placeholder as shown. */
     get hint() {
-        return this.localized ? localize(this.placeholder) : this.placeholder;
+        return this.localizer ? this.localizer(this.placeholder) : this.placeholder;
     }
-    localeChanged = () => {
-        if (this.field)
-            this.field.placeholder = this.hint;
-        this.queueRender();
-    };
     connectedCallback() {
         super.connectedCallback();
         document.addEventListener('keydown', this.handleDocumentKeydown);
-        if (this.localized)
-            XinLocalized.allInstances.add(this);
         if (typeof ResizeObserver === 'function') {
             this.resizeObserver = new ResizeObserver(this.handleResize);
             this.resizeObserver.observe(this);
@@ -704,7 +702,6 @@ export class TosiPalette extends withAttributes({
     disconnectedCallback() {
         super.disconnectedCallback();
         document.removeEventListener('keydown', this.handleDocumentKeydown);
-        XinLocalized.allInstances.delete(this);
         this.resizeObserver?.disconnect();
         this.resizeObserver = null;
     }
@@ -948,6 +945,11 @@ export class TosiPalette extends withAttributes({
         trigger?.setAttribute('aria-label', this.shortcut
             ? `${this.hint} (${describeShortcut(this.shortcut)})`
             : this.hint);
+        // The open palette's field too, so a locale change while it is open reaches it.
+        if (this.field) {
+            this.field.placeholder = this.hint;
+            this.field.setAttribute('aria-label', this.hint);
+        }
         if (this.dialogElement?.open)
             this.ensureField();
     }

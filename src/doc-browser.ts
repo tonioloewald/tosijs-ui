@@ -142,7 +142,7 @@ import { tosiSidenav, TosiSidenav } from './side-nav.js'
 import { icons } from './icons.js'
 import { tosiPalette, type PaletteResult } from './palette.js'
 import { buildDocIndex, searchDocs } from './doc-system/doc-search.js'
-import { tosiLocalized } from './localize.js'
+import { tosiLocalized, localize, i18n } from './localize.js'
 import { popMenu } from './menu.js'
 import { codeEditor, CodeEditor } from './code-editor.js'
 import { tosiDiff } from './diff.js'
@@ -999,11 +999,13 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   const searchBox = tosiPalette({
     class: 'doc-search',
     placeholder: searchPlaceholder,
-    localized: true,
+    localizer: localize,
     shortcut: searchShortcut,
     sources: [docSearchSource],
     quickLinks,
   })
+  // The hint follows the reader's language, like the rest of the doc system's own text.
+  i18n.locale.observe(() => searchBox.queueRender())
 
   // Memory routing is decoupled from the page URL, so it ignores browser
   // back/forward (the host owns history, if any).
