@@ -8,8 +8,8 @@ The doc-site FRAME meets WCAG 2.2 AA, as axe measures it (#3520). An adopter's s
 trigger at 1.88:1, links inside the nav's <summary> toggles, those toggles under 24px, and
 code blocks that scroll sideways with no keyboard access.
 
-Scoped to the rules those were, plus the rest of the frame-level WCAG 2.2 AA set, against
-pages with sections, code and both colour schemes. Content-level judgements (is this alt
+Every WCAG 2.2 A and AA rule axe has, against pages with sections, code and both colour
+schemes. Content-level judgements (is this alt
 text good?) are not the frame's to make.
 */
 const AXE = readFileSync(
@@ -35,14 +35,16 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.addScriptTag({ content: AXE })
       const violations = await page.evaluate(async () => {
         const result = await (window as any).axe.run(document, {
+          /*
+          Every WCAG 2.0–2.2 A and AA rule, not a hand-picked few: picking rules is how the
+          search trigger's name failed label-in-name on every doc site while this passed (#3569).
+          Target size is checked over the frame only, below.
+          */
           runOnly: {
-            type: 'rule',
-            values: [
-              'color-contrast',
-              'nested-interactive',
-              'scrollable-region-focusable',
-            ],
+            type: 'tag',
+            values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
           },
+          rules: { 'target-size': { enabled: false } },
           // Live examples render arbitrary demo content; the frame is what is under test.
           exclude: [['tosi-example']],
         })

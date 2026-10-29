@@ -2,7 +2,7 @@
 
 <!--{ "parent": "icons", "order": 10, "headTitle": "Icon composition playground — tosijs-ui", "description": "Experiment with the icon composition language: stack, recolour, rotate, scale and offset icons with short suffixes on their names." }-->
 
-This is a toy for playing with the icon composition language introduced in tosijs-ui 1.5.10. It's documented [here](/?icons.ts).
+This is a toy for playing with the icon composition language introduced in tosijs-ui 1.5.10. The language is documented on the [icons page](/?icons.ts).
 
 ```js
 import { tosi, elements } from 'tosijs'

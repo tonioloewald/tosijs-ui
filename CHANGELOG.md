@@ -21,6 +21,11 @@
   called for each image the build would report, and its answer becomes that image's alt text in
   the built site, `docs.json` and the ePub. It never writes a source file. It runs on every
   build, so cache anything slow by `src`.
+- **The doc-site search trigger's name contains its visible text (#3569).** Its `aria-label`
+  was "Search (⌘K)" beside visible text "Search ⌘K", which fails WCAG 2.5.3 (a voice-control user
+  says what they see) on every page of every doc site. A `<tosi-palette>` field trigger is now
+  named by its text, an icon trigger keeps an `aria-label`, and the shortcut is announced through
+  `aria-keyshortcuts`. The frame's axe test now runs every WCAG 2.2 A and AA rule, not four.
 - **The header's site name is no longer a heading.** It was an `<h2>` above every page's own
   `<h1>`, so it was each page's first heading. It is now `<span class="site-name">` and looks the
   same; site CSS that styled `header h2` should target `header .site-name`.

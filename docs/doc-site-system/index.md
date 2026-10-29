@@ -352,6 +352,18 @@ What it reports, by file and line, and fails the build on under `strict`:
 
 It does not judge whether a caption or an alt text is any good; that stays yours.
 
+**The axe audit.** A full build in the mode then opens every page of the built site in Chromium,
+waits for it to hydrate, and runs [axe-core](https://github.com/dequelabs/axe-core) with its WCAG
+2.0–2.2 A and AA rules. Each failure is listed by page, rule and element, worst first, and fails
+the build under `strict`. This covers what the markdown report cannot see: contrast, the names
+of controls inside your live examples, ARIA on the components you embed.
+
+It needs `playwright` and `axe-core` installed in your project (`bun add -d playwright
+axe-core`, then `bunx playwright install chromium`). Without them the build says the audit did
+not run, and makes no claim about what it would have found. It runs on the first build in a
+process and never under a dev server: it takes a second or so per page, which is a release check,
+not an edit-loop one.
+
 **`altText`** fills the gap for a corpus with hundreds of undescribed images. It is called for
 each image the build would report, and what it returns becomes that image's alt text in the
 built site, `docs.json` and the ePub. It never writes a source file, so generated text stays

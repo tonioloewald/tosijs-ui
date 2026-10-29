@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=126514884ae2" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=75ad44aeb70f" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -38,7 +38,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b96c38c8e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=2835b5574090" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -417,6 +417,15 @@ no name), and a raw <code>&lt;img&gt;</code> with no <code>alt</code> attribute 
 in a screen reader&#39;s list of links.</li>
 </ul>
 <p>It does not judge whether a caption or an alt text is any good; that stays yours.</p>
+<p><strong>The axe audit.</strong> A full build in the mode then opens every page of the built site in Chromium,
+waits for it to hydrate, and runs <a href="https://github.com/dequelabs/axe-core">axe-core</a> with its WCAG
+2.0–2.2 A and AA rules. Each failure is listed by page, rule and element, worst first, and fails
+the build under <code>strict</code>. This covers what the markdown report cannot see: contrast, the names
+of controls inside your live examples, ARIA on the components you embed.</p>
+<p>It needs <code>playwright</code> and <code>axe-core</code> installed in your project (<code>bun add -d playwright axe-core</code>, then <code>bunx playwright install chromium</code>). Without them the build says the audit did
+not run, and makes no claim about what it would have found. It runs on the first build in a
+process and never under a dev server: it takes a second or so per page, which is a release check,
+not an edit-loop one.</p>
 <p><strong><code>altText</code></strong> fills the gap for a corpus with hundreds of undescribed images. It is called for
 each image the build would report, and what it returns becomes that image&#39;s alt text in the
 built site, <code>docs.json</code> and the ePub. It never writes a source file, so generated text stays
@@ -2506,6 +2515,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-9c4xmjvk.js"></script>
+  <script type="module" src="../hydrate-m9rgrg5v.js"></script>
 </body>
 </html>

@@ -4,6 +4,8 @@
 `<tosi-rich-text>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
 The class name is `RichText` and the ElementCreator is `tosiRichText`.
 
+## Widget sets
+
 ### `default` widgets
 
 ```html

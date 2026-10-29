@@ -272,3 +272,26 @@ test('a palette with a localizer shows its hint localized, and re-renders to fol
     plain.remove()
   }
 })
+
+/*
+The trigger's accessible name contains its visible text (WCAG 2.5.3, #3569). It was an
+aria-label of "Search (⌘K)" beside visible text "Search ⌘K", which axe fails on every doc site.
+*/
+test('a field trigger is named by its text; an icon trigger by aria-label; the shortcut by aria-keyshortcuts', async () => {
+  const field = tosiPalette({ placeholder: 'Search', shortcut: 'ctrl+k' })
+  const icon = tosiPalette({ placeholder: 'Search', trigger: 'icon' })
+  document.body.append(field, icon)
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    const fieldButton = field.querySelector('.palette-trigger')!
+    expect(fieldButton.hasAttribute('aria-label')).toBe(false)
+    expect(fieldButton.textContent).toContain('Search')
+    expect(fieldButton.getAttribute('aria-keyshortcuts')).toBe('Control+K')
+    const iconButton = icon.querySelector('.palette-trigger')!
+    expect(iconButton.getAttribute('aria-label')).toBe('Search')
+    expect(iconButton.hasAttribute('aria-keyshortcuts')).toBe(false)
+  } finally {
+    field.remove()
+    icon.remove()
+  }
+})

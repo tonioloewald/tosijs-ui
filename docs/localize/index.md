@@ -3,7 +3,7 @@
 `tosijs-ui` provides support for localization via the `localize` method and the `<tosi-locale-picker>`
 and `<tosi-localized>` custom-elements.
 
-> ### Important Note
+> ## Important note
 > This module deals with the **language** used in the user interface. "locale" is
 > *not the same thing*. The (usually) two-letter codes used designate **language**
 > and **not locale**.

@@ -18,6 +18,8 @@ export type PaletteRenderer = (result: PaletteResult, query: string) => Element;
 export type PaletteTrigger = 'field' | 'icon' | 'none';
 /** Does this keydown match a shortcut such as `mod+k` or `ctrl+shift+p`? */
 export declare function matchesShortcut(event: KeyboardEvent, shortcut: string): boolean;
+/** The shortcut in `aria-keyshortcuts` form: `mod+k` is `Meta+K` on a Mac, `Control+K` elsewhere. */
+export declare function ariaShortcut(shortcut: string): string;
 /** The shortcut as a person reads it: `mod+k` is ⌘K on a Mac, Ctrl K elsewhere. */
 export declare function describeShortcut(shortcut: string): string;
 /** `text` with every occurrence of the query's words wrapped in <mark>, as nodes (no HTML). */

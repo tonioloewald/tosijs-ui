@@ -19,7 +19,7 @@ are automatically detected and marked.
 You can use `dragAndDrop.draggedElement()` to get the element being dragged (if it's
 actually from the page you're in).
 
-> ### The beauty of HTML5 drag-and-drop
+> ## The beauty of HTML5 drag-and-drop
 >
 > The nice thing about HTML5 drag-and-drop is that it leverages the OS's drag and
 > drop support. This means you can drag from one window to another, from the desktop

@@ -185,6 +185,25 @@ export function matchesShortcut(event, shortcut) {
         event.shiftKey === want.has('shift') &&
         event.altKey === want.has('alt'));
 }
+/** The shortcut in `aria-keyshortcuts` form: `mod+k` is `Meta+K` on a Mac, `Control+K` elsewhere. */
+export function ariaShortcut(shortcut) {
+    const mac = isMac();
+    const names = {
+        mod: mac ? 'Meta' : 'Control',
+        meta: 'Meta',
+        ctrl: 'Control',
+        shift: 'Shift',
+        alt: 'Alt',
+    };
+    return shortcut
+        .split('+')
+        .map((p) => {
+        const raw = p.trim().toLowerCase();
+        const part = MODIFIER_ALIASES[raw] ?? raw;
+        return names[part] ?? (part.length === 1 ? part.toUpperCase() : part);
+    })
+        .join('+');
+}
 /** The shortcut as a person reads it: `mod+k` is ⌘K on a Mac, Ctrl K elsewhere. */
 export function describeShortcut(shortcut) {
     const mac = isMac();
@@ -641,9 +660,9 @@ export class TosiPalette extends withAttributes({
             part: 'trigger',
             type: 'button',
             ariaHaspopup: 'dialog',
-            // Named from the start, not first at render(): a trigger with no name is a button a
-            // screen reader announces as just "button".
-            ariaLabel: this.hint,
+            // Named from the start by its label text, not first at render(): a trigger with no
+            // name is a button a screen reader announces as just "button". render() adds an
+            // aria-label only for the icon trigger, which shows no text.
             onClick: () => this.open(),
         }, icons.search(), span({ class: 'palette-trigger-label', part: 'label' }, this.hint), kbd({ part: 'shortcut', hidden: true })),
         dialog({
@@ -941,10 +960,23 @@ export class TosiPalette extends withAttributes({
             hint.hidden = !this.shortcut;
             hint.textContent = this.shortcut ? describeShortcut(this.shortcut) : '';
         }
+        /*
+        The trigger's name. As a field, its visible text names it ("Search ⌘K"), so the name always
+        contains what a sighted voice-control user reads and says (WCAG 2.5.3; an aria-label of
+        "Search (⌘K)" failed it on every doc site, #3569). As an icon nothing visible names it, so it
+        needs an aria-label. The shortcut is announced through aria-keyshortcuts either way.
+        */
         const trigger = this.querySelector('.palette-trigger');
-        trigger?.setAttribute('aria-label', this.shortcut
-            ? `${this.hint} (${describeShortcut(this.shortcut)})`
-            : this.hint);
+        if (trigger) {
+            if (this.classList.contains('-icon'))
+                trigger.setAttribute('aria-label', this.hint);
+            else
+                trigger.removeAttribute('aria-label');
+            if (this.shortcut)
+                trigger.setAttribute('aria-keyshortcuts', ariaShortcut(this.shortcut));
+            else
+                trigger.removeAttribute('aria-keyshortcuts');
+        }
         // The open palette's field too, so a locale change while it is open reaches it.
         if (this.field) {
             this.field.placeholder = this.hint;
