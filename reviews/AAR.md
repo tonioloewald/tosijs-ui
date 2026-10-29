@@ -949,3 +949,30 @@ gap, recorded rather than hidden.
   which has no images at all.
 - **Publish:** approved inside the window; the workflow verified, and the published `dist/` is
   identical to the tagged tree.
+
+## 1.16.39 (2026-10-29)
+
+- **Shipped:** the doc-site frame passes the WCAG 2.2 AA rules an adopter's axe scan failed (#3520),
+  `devServer()` builds on start (#3524), and tables have a bottom margin (#3553). All three were
+  filed by downstream projects.
+- **What worked:** axe-core in the Playwright lane is now a gate on the frame. It caught a fault of
+  1.16.40's on its first run: a 75%-opacity ⌘K hint measured 3.39:1. A checklist would not have.
+- **The review caught:** two medium faults in the nav rework, both in states the happy path never
+  reaches: a slow or failed bundle left closed sections with dead toggles, and an embedded
+  `createDocBrowser` got no section styles. It also caught a unit test that passed on the old
+  colour because `contrastRatio` ignored alpha.
+- **Publish:** the workflow ran 63 minutes end to end and passed; the published `dist/` is identical
+  to the tagged tree.
+
+## 1.16.40 (2026-10-29)
+
+- **Shipped:** an example with no script constructs no function, so pure-HTML and `run`-dialect
+  examples work under a CSP without `unsafe-eval` (#245); the search hint is configurable
+  (`searchPlaceholder`, default "Search") and localized; the ⌘K outline is gone (#246).
+- **The review caught:** localizing the hint by importing `localize.ts` added 8.7 kB to the
+  palette, through `select.js`. Injecting a localizer cost 53 bytes.
+- **The gate missed, and CI caught:** three build commits staged the build's deletions but not
+  its new files, so the committed `docs/` had no `hydrate-*.js`. CI went red on `entry-url.test.ts`
+  and was not checked until tagging, and GitHub Pages served the site without its hydrate bundle
+  for the hours in between. Check CI on every push, not only the one before the tag, and stage
+  the build's output with `git add -A docs dist`.
