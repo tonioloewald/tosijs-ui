@@ -44,7 +44,7 @@ function extractDescription(text) {
 export function entriesFromCorpus(corpus, meta) {
     const slugMap = buildSlugMap(corpus);
     const base = (meta.baseUrl ?? '').replace(/\/$/, '');
-    return corpus
+    return (corpus
         // A noindex page is one the author asked not to be found; the sitemap and the markdown
         // copies already leave it out, and an index for agents is no different.
         .filter((doc) => doc.title && !doc.hidden && !doc.noindex)
@@ -53,7 +53,7 @@ export function entriesFromCorpus(corpus, meta) {
         description: doc.description?.trim() || extractDescription(doc.text ?? ''),
         link: base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename])),
     }))
-        .sort((a, b) => a.title.localeCompare(b.title));
+        .sort((a, b) => a.title.localeCompare(b.title)));
 }
 /**
  * Legacy fallback when no corpus is passed (e.g. running this file directly):
