@@ -212,7 +212,8 @@ function navHtml(
     const kids = node.children
       .map((c) => renderNode(c, indent + '  '))
       .join('\n')
-    const listId = `nav-${node.slug || 'home'}`
+    // Prefixed so it cannot collide with a heading id (`## Nav Components` → nav-components).
+    const listId = `tosi-nav-${node.slug || 'home'}`
     return (
       `${indent}<li class="nav-branch${isOpen ? ' -open' : ''}">` +
       `<div class="nav-branch-head">${navToggleHtml(
@@ -464,6 +465,12 @@ async function pageHtml(
      until the bundle lands and sets body.darkmode. CSS alone can't do this: an explicit theme
      choice lives in localStorage. Mirrors applyThemePrefs() (doc-system.ts) — keep the two in
      step. Fails safe: any error leaves the light default.
+
+  3. It marks <html> with `tosi-js`, which is what lets a closed nav section collapse (#3520):
+     without JavaScript nothing could open one, so none collapses. And it opens and closes the
+     static nav's sections until the doc system upgrades, so a reader on a slow bundle, or one
+     whose bundle failed, can still use them. Once the element is defined the hydrated nav
+     handles its own toggles and this stands down, so a click never toggles twice.
   */
   return `<!DOCTYPE html>
 <html lang="${escapeAttr(lang)}">
@@ -472,6 +479,13 @@ async function pageHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
     document.documentElement.classList.add('tosi-js')
+    document.addEventListener('click', function (e) {
+      if (customElements.get('tosi-doc-system')) return
+      var b = e.target.closest && e.target.closest('.doc-nav .nav-toggle')
+      if (!b) return
+      var open = b.closest('.nav-branch').classList.toggle('-open')
+      b.setAttribute('aria-expanded', String(open))
+    })
     try {
       var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
       var t = p.theme || 'system'

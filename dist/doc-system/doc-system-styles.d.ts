@@ -22,7 +22,11 @@ export interface DocSystemTheme {
      */
     codeBg?: string;
 }
-/** WCAG 2 contrast ratio between two opaque colors. */
+/**
+ * WCAG 2 contrast ratio between two opaque colors. Throws on a translucent one: its real
+ * contrast depends on what is behind it, and ignoring alpha measured the old 40%-opacity
+ * placeholder at 4.74:1 where axe, compositing it, measured 1.88:1.
+ */
 export declare function contrastRatio(a: Color, b: Color): number;
 /**
  * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach

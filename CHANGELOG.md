@@ -7,22 +7,34 @@
   - The header's "Search documentation" trigger and its ⌘K hint measured 1.88:1 (AA asks
     4.5:1). `--placeholder-color` was the brand at 40% opacity; it is now the brand darkened
     (or, in dark mode, brightened) just far enough to reach 4.5:1 on the input, for any accent.
-  - Inline code was the brand colour, 4.56:1 on the page and 3.72:1 inside a blockquote. It is
-    now `--code-color`, the brand made readable on the blockquote background.
+    It colours every `::placeholder` on a doc site, live-example inputs included, so
+    placeholders are darker everywhere.
+  - Code (inline and in blocks) was the brand colour, 4.56:1 on the page and 3.72:1 inside a
+    blockquote. It is now `--code-color`: the brand made readable on the blockquote and code
+    backgrounds. It is computed from your config's `accent`, so code no longer follows a
+    runtime override of `--brand-color`; set `--code-color` too if you do that.
   - Each nav section was `<details><summary><a>`, a link inside a control, which a screen reader
     announces as one and loses the other. A section is now a toggle `<button>` beside its link,
     with `aria-expanded` and `aria-controls`, at least 24px square (the old triangle was under
     WCAG 2.2's target size). Without JavaScript every section is open, since nothing could open
-    one. **If your site's CSS targets `.doc-nav details` or `.doc-nav summary`, it no longer
-    matches**: use `.doc-nav .nav-branch` (`.-open` when open), `.nav-branch-head` and
-    `.nav-toggle`.
+    one. Until the bundle loads, a small script in each generated page opens and closes
+    sections, so a slow or failed bundle does not strand a reader; it also marks `<html>` with
+    `tosi-js`. A doc browser made with `createDocBrowser` outside `<tosi-doc-system>` brings
+    its own section styles. **If your site's CSS targets `.doc-nav details` or
+    `.doc-nav summary`, it no longer matches**: use `.doc-nav .nav-branch` (`.-open` when
+    open), `.nav-branch-head` and `.nav-toggle`.
   - A code block that scrolls sideways could not be reached by keyboard. Static code blocks are
     now focusable once the page hydrates.
-- **`devServer()` builds on start (#3524).** The documented `bin/site.ts` one-liner never
-  built: it served whatever the previous run left in the output folder, so a config change (a
-  theme accent, an ePub cover) showed nothing until a source file changed, and nothing said the
-  page was stale. If your script builds just before calling it, pass `initialBuild: false`. The
-  config file itself is not watched: restart the server after editing it.
+- **`devServer()` builds on start when it is watching (#3524).** The documented `bin/site.ts`
+  one-liner never built: it served whatever the previous run left in the output folder, so a
+  config change (a theme accent, an ePub cover) showed nothing until a source file changed, and
+  nothing said the page was stale. (`DEV_NO_WATCH=1` and `{ test: true }` still serve what is
+  there.) **If your script builds and then calls `devServer`, as the full-pipeline example in
+  the docs used to, it now builds twice on start**: pass `initialBuild: false`, or drop your
+  own build. That build is your `build` function when you pass one, so the dependency audit
+  inside `buildSite` runs there too, and a blocking advisory leaves the server up with the
+  failure on the page rather than exiting. The config file itself is not watched: restart the
+  server after editing it.
 - **A table has a margin (#3553).** Tables were the one block element without one, so a
   blockquote after one sat flush against it. The ePub was already right.
 

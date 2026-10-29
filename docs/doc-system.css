@@ -584,7 +584,7 @@ th, td {
   padding-left: var(--spacing);
 }
 
-html.tosi-js .doc-nav .nav-branch:not(.-open) > ul, tosi-doc-system:defined .doc-nav .nav-branch:not(.-open) > ul {
+html.tosi-js .doc-nav .nav-branch:not(.-open) > ul, .doc-nav.-live .nav-branch:not(.-open) > ul {
   display: none;
 }
 
@@ -623,8 +623,8 @@ html.tosi-js .doc-nav .nav-branch:not(.-open) > ul, tosi-doc-system:defined .doc
   transform: rotate(90deg);
 }
 
-html:not(.tosi-js) tosi-doc-system:not(:defined) .doc-nav .nav-toggle::before {
-  transform: rotate(90deg);
+html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
+  visibility: hidden;
 }
 
 .doc-nav .nav-branch-head > .doc-link {

@@ -1,6 +1,10 @@
 import { test, expect, describe } from 'bun:test'
 import { Color } from 'tosijs'
-import { contrastRatio, docSystemStyleSpec } from './doc-system-styles.js'
+import {
+  contrastRatio,
+  docSystemStyleSpec,
+  readableOn,
+} from './doc-system-styles.js'
 
 describe('#150: no rule POISONS a global palette token', () => {
   test('`--text-color` is redefined only by rules that own a background', () => {
@@ -226,4 +230,43 @@ describe('placeholder color meets AA on the input (#3520)', () => {
       ).toBeGreaterThanOrEqual(4.5)
     })
   }
+})
+
+describe('code color meets AA where code sits (#3520)', () => {
+  const cases: Array<[string, Parameters<typeof docSystemStyleSpec>[0]]> = [
+    ['default', {}],
+    ['light accent', { accent: '#ffbc00' }],
+    ['tinted code background', { codeBg: '#e8e0d0' }],
+  ]
+  for (const [name, theme] of cases) {
+    test(name, () => {
+      const spec = docSystemStyleSpec(theme) as Record<string, any>
+      const root = spec[':root']
+      const color = (v: unknown) => Color.fromCss(String(v))
+      const surfaces = [root._insetBg, root._codeBg, root._background]
+      for (const bg of surfaces) {
+        expect(
+          contrastRatio(color(root._codeColor), color(bg))
+        ).toBeGreaterThanOrEqual(4.5)
+        expect(
+          contrastRatio(
+            color(spec['.darkmode']._codeColor),
+            color(bg).inverseLuminance
+          )
+        ).toBeGreaterThanOrEqual(4.5)
+      }
+    })
+  }
+})
+
+test('readableOn falls back to black or white when no shade of the color will do', () => {
+  const grey = Color.fromCss('#777')
+  const out = readableOn(grey, grey, 21)
+  expect(['#000000', '#ffffff']).toContain(out.html.slice(0, 7))
+})
+
+test('contrastRatio refuses a translucent color rather than ignoring its alpha', () => {
+  expect(() =>
+    contrastRatio(Color.fromCss('#d9227066'), Color.fromCss('#fdfdfd'))
+  ).toThrow()
 })

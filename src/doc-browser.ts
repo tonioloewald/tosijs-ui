@@ -118,6 +118,7 @@ import {
   wikilinkTargets,
 } from './doc-system/routing.js'
 import { buildNavTree, NavNode } from './doc-system/nav-tree.js'
+import { navSectionStyleSpec } from './doc-system/nav-styles.js'
 import { renderDocMarkdown } from './doc-system/render.js'
 import { pageTitle } from './doc-system/doc-title.js'
 import {
@@ -1842,7 +1843,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   const buildHierarchicalNav = (): HTMLElement => {
     const roots = buildNavTree(docs as any, slugMap)
     // Ids for aria-controls, unique per browser: an embedded doc browser shares the page.
-    const navIdPrefix = `nav-${(navIdCounter += 1)}-`
+    const navIdPrefix = `tosi-nav-${(navIdCounter += 1)}-`
     const leaves = new Map<string, { li: HTMLElement; link: HTMLElement }>()
     const branches: {
       li: HTMLElement
@@ -1927,7 +1928,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       return item
     }
 
-    const root = div(navStyle, ul(...roots.map(renderNode)))
+    // `-live`: these sections have working toggles, so closed ones collapse even where no
+    // pre-paint script marked <html> (a browser embedded outside a generated page).
+    const root = div(
+      { ...navStyle, class: `${navStyle.class} -live` },
+      ul(...roots.map(renderNode))
+    )
 
     const applyStatus = (
       link: HTMLElement,
@@ -2083,6 +2089,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // Header brand-mark sizing (icon / <img> / inline-<svg>), one CSS var each.
   StyleSheet('doc-logo-mark', logoMarkStyleSpec)
   StyleSheet('doc-nav-search', navSearchStyleSpec)
+  StyleSheet('doc-nav-sections', navSectionStyleSpec)
 
   /*
   The far end has something to tell you.

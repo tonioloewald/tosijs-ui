@@ -11,6 +11,7 @@ palette can eventually be driven entirely by a few attributes on the element
 (accent/background/text) — most of the palette is derived from `accent`.
 */
 
+import { navSectionStyleSpec } from './nav-styles.js'
 import { highlightStyleSpec } from './highlight-styles.js'
 import {
   XinStyleSheet,
@@ -50,8 +51,14 @@ export interface DocSystemTheme {
   codeBg?: string
 }
 
-/** WCAG 2 contrast ratio between two opaque colors. */
+/**
+ * WCAG 2 contrast ratio between two opaque colors. Throws on a translucent one: its real
+ * contrast depends on what is behind it, and ignoring alpha measured the old 40%-opacity
+ * placeholder at 4.74:1 where axe, compositing it, measured 1.88:1.
+ */
 export function contrastRatio(a: Color, b: Color): number {
+  if (a.RGBA[3] < 1 || b.RGBA[3] < 1)
+    throw new Error('contrastRatio: composite a translucent color first')
   const lum = (c: Color) => {
     const [r, g, bl] = c.RGBA.map((v) =>
       v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
@@ -115,7 +122,11 @@ export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
     _insetBg: brandColor.rotate(45).brighten(0.8),
     // The brand, made readable on the inset (blockquote) background, the darker of the two
     // surfaces code sits on. The raw brand measured 3.72:1 there (#3520).
-    _codeColor: readableOn(brandColor, brandColor.rotate(45).brighten(0.8)),
+    // Checked against the code background too: a custom `codeBg` can be the darker one.
+    _codeColor: readableOn(
+      readableOn(brandColor, brandColor.rotate(45).brighten(0.8)),
+      Color.fromCss(theme.codeBg ?? '#fdfdfd')
+    ),
     // Neutral off-white (not brand-tinted); dark mode inverts its luminance to
     // off-black, so the editor surface stays a clean neutral in both themes.
     _codeBg: theme.codeBg ?? '#fdfdfd',
@@ -258,8 +269,11 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       */
       _brandColor: brandColor.brighten(0.18),
       _codeColor: readableOn(
-        brandColor.brighten(0.18),
-        brandColor.rotate(45).brighten(0.8).inverseLuminance
+        readableOn(
+          brandColor.brighten(0.18),
+          brandColor.rotate(45).brighten(0.8).inverseLuminance
+        ),
+        Color.fromCss(theme.codeBg ?? '#fdfdfd').inverseLuminance
       ),
       _placeholderColor: readableOn(
         brandColor.brighten(0.18),
@@ -699,62 +713,7 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       display: 'flex',
       flexDirection: 'column',
     },
-    '.doc-nav .nav-branch > ul': {
-      paddingLeft: vars.spacing,
-    },
-    /*
-    A section is a toggle button BESIDE its link (#3520). It was <details><summary><a>, a link
-    inside a control, which a screen reader announces as one and loses the other (axe
-    `nested-interactive`), and its marker was under the 24px target size WCAG 2.2 asks.
-    A closed section collapses only when JavaScript is running (`tosi-js` is set on <html>
-    before first paint, and the hydrated browser is `:defined`): without it nothing could
-    open the section, so every one stays expanded.
-    */
-    'html.tosi-js .doc-nav .nav-branch:not(.-open) > ul, tosi-doc-system:defined .doc-nav .nav-branch:not(.-open) > ul':
-      {
-        display: 'none',
-      },
-    '.doc-nav .nav-branch-head': {
-      display: 'flex',
-      alignItems: 'flex-start',
-    },
-    '.doc-nav .nav-toggle': {
-      flex: '0 0 auto',
-      minWidth: '24px',
-      minHeight: '24px',
-      padding: 0,
-      margin: 0,
-      border: 'none',
-      background: 'transparent',
-      boxShadow: 'none',
-      cursor: 'pointer',
-      color: vars.brandColor,
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      alignSelf: 'stretch',
-      maxHeight: vars.lineHeight,
-    },
-    // A disclosure triangle, pointing right when closed and down when open.
-    '.doc-nav .nav-toggle::before': {
-      content: "''",
-      borderStyle: 'solid',
-      borderColor: 'transparent transparent transparent currentcolor',
-      borderWidth: '0.3em 0 0.3em 0.5em',
-      transition: 'transform 0.15s ease-out',
-    },
-    '.doc-nav .nav-branch.-open > .nav-branch-head > .nav-toggle::before': {
-      transform: 'rotate(90deg)',
-    },
-    // Without JavaScript every section is open, so the triangle says so.
-    'html:not(.tosi-js) tosi-doc-system:not(:defined) .doc-nav .nav-toggle::before':
-      {
-        transform: 'rotate(90deg)',
-      },
-    '.doc-nav .nav-branch-head > .doc-link': {
-      flex: '1 1 auto',
-      minWidth: 0,
-    },
+    ...navSectionStyleSpec,
     // Declarative header link list — shown for no-JS, removed on hydration.
     '.doc-navbar': {
       listStyle: 'none',

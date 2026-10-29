@@ -96,7 +96,7 @@ process.argv.includes('--build') ? buildSite(config) : devServer(config)
 > }
 > ```
 
-`devServer` **builds once on start** (since 1.16.39; before that it served whatever the last run
+`devServer` **builds once on start** when it is watching (since 1.16.39; `DEV_NO_WATCH=1` and `{ test: true }` serve what is there; before that it served whatever the last run
 left in the output dir, so a config change showed nothing until a source file changed). If your
 script has just built, pass `initialBuild: false` to skip the second build. The config file
 itself is not watched: the server holds the config it was started with, so restart it after

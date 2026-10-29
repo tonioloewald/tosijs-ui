@@ -96,3 +96,71 @@ test('without JavaScript every nav section is open', async ({ browser }) => {
   for (const list of await lists.all()) await expect(list).toBeVisible()
   await context.close()
 })
+
+/*
+Before the bundle arrives (or if it never does) the static nav's toggles still work: a small
+script in every generated page drives them until the doc system upgrades (#3520 review).
+*/
+test('nav sections open before the page hydrates', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.route(/\/(hydrate-[^/]*|iife)\.js(\?|$)/, (route) => route.abort())
+  await page.goto('/')
+  expect(
+    await page.evaluate(() => !!customElements.get('tosi-doc-system'))
+  ).toBe(false)
+  const id = await page
+    .locator(
+      '.doc-nav .nav-branch:not(.-open) > .nav-branch-head > .nav-toggle'
+    )
+    .first()
+    .getAttribute('aria-controls')
+  const toggle = page.locator(`.nav-toggle[aria-controls="${id}"]`)
+  const list = page.locator(`[id="${id}"]`)
+  await expect(list).toBeHidden()
+  await toggle.click()
+  await expect(list).toBeVisible()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await toggle.click()
+  await expect(list).toBeHidden()
+})
+
+/*
+A doc browser made with createDocBrowser outside <tosi-doc-system> brings its own section
+styles: native <details> collapsed with no CSS, the toggle button does not (#3520 review).
+Mounted on a bare page that loads only the iife, so the site stylesheet cannot help.
+*/
+test('an embedded doc browser collapses its nav sections', async ({
+  page,
+  baseURL,
+}) => {
+  await page.goto(`${baseURL}/robots.txt`)
+  await page.setContent('<!doctype html><body></body>')
+  await page.addScriptTag({ url: `${baseURL}/iife.js` })
+  const state = await page.evaluate(async () => {
+    const ui = (window as any).xinjsui
+    const docs = [
+      { filename: 'a.md', title: 'Home', path: 'a.md', text: '# Home' },
+      { filename: 'b.md', title: 'Section', path: 'b.md', text: '# Section' },
+      {
+        filename: 'c.md',
+        title: 'Child',
+        path: 'c.md',
+        parent: 'Section',
+        text: '# Child',
+      },
+    ]
+    const browser = ui.createDocBrowser({ docs, routing: 'memory' })
+    document.body.append(browser)
+    await new Promise((resolve) => setTimeout(resolve, 600))
+    const list = browser.querySelector('.nav-branch > ul') as HTMLElement
+    return {
+      hasStructure: !!list,
+      closedDisplay: list && getComputedStyle(list).display,
+      toggleWidth: browser.querySelector('.nav-toggle')?.getBoundingClientRect()
+        .width,
+    }
+  })
+  expect(state.hasStructure).toBe(true)
+  expect(state.closedDisplay).toBe('none')
+  expect(state.toggleWidth).toBeGreaterThanOrEqual(24)
+})
