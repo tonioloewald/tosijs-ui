@@ -993,3 +993,15 @@ gap, recorded rather than hidden.
   time; the build lock said so plainly.
 - **Publish:** approved inside the window; the workflow verified, and the published `dist/` is
   identical to the tagged tree.
+
+## 1.17.0-beta.1 (2026-10-29)
+
+- Cut mid-minor at the maintainer's request so Learn 3D could try the accessibility mode on its
+  figures before the SEO work and #245/#246 land. No nine-lens review (betas skip it); all four
+  lanes ran sequentially: unit 2154, Playwright 1005 (`E2E_PORT=8797`), haltija 88, consumer 66.
+- The CHANGELOG's `## 1.17.0 (in progress)` heading was renamed to the beta version, because
+  `release-check` looks up the section by exact version. The final will rename it back.
+- Published as `beta`; `latest` stayed on 1.16.41. The published `dist` matches `git archive`
+  of the tag exactly.
+- What the gates did not cover: the mode's axe audit and the Ace check have never run in an
+  adopter's project with those tools installed. Learn 3D is the first real test.
