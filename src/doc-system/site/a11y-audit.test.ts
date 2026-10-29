@@ -4,30 +4,7 @@ import { tmpdir } from 'os'
 import * as path from 'path'
 import { auditBuiltSite, formatAxeFindings } from './a11y-audit.js'
 
-/*
-Drives the real child: a real Chromium and axe-core, both devDependencies of this repo. Two
-pages, one clean and one with an image that has no alt, so a pass that never looked would fail.
-*/
-test('the audit finds what axe finds, page by page, and passes a clean page', async () => {
-  const site = mkdtempSync(path.join(tmpdir(), 'tosijs-axe-'))
-  const page = (body: string) =>
-    `<!doctype html><html lang="en"><head><title>T</title></head><body><main><h1>T</h1>${body}</main></body></html>`
-  await Bun.write(`${site}/index.html`, page('<p>Fine.</p>'))
-  await Bun.write(`${site}/bad/index.html`, page('<img src="x.png">'))
-  try {
-    const result = await auditBuiltSite({
-      outputDir: site,
-      pages: ['/', '/bad/'],
-    })
-    expect(result.ran).toBe(true)
-    if (!result.ran) return
-    expect(result.violations.map((v) => `${v.page} ${v.rule}`)).toEqual([
-      '/bad/ image-alt',
-    ])
-  } finally {
-    rmSync(site, { recursive: true, force: true })
-  }
-}, 60_000)
+// The run against a real Chromium is in tests/a11y-audit.pw.ts: the unit lane has no browser.
 
 test('without axe-core or playwright in the project it did not run, and says why', async () => {
   const project = mkdtempSync(path.join(tmpdir(), 'tosijs-axe-none-'))
