@@ -976,3 +976,6 @@ gap, recorded rather than hidden.
   and was not checked until tagging, and GitHub Pages served the site without its hydrate bundle
   for the hours in between. Check CI on every push, not only the one before the tag, and stage
   the build's output with `git add -A docs dist`.
+- **Publish:** approved inside the window; the workflow verified, and the published `dist/` is
+  identical to the tagged tree. #245 and #246 got comments saying what shipped and what is left
+  for 1.17.0; both stay open.

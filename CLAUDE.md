@@ -1014,6 +1014,10 @@ serves). The book is the broken artifact there, and `strict` exists to stop brok
 shipping: the same ground as 1.16.15. No per-image opt-out; a site with host-only images turns
 off `strict` or `epub`.
 
+**Ruled for 1.16.40 (the maintainer's call):** changing a default UI string ships in a patch, even
+one that changes every doc site's accessible name. The search hint went from "Search documentation"
+to "Search", and `searchPlaceholder` restores the old wording.
+
 **Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
 about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
 removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a
