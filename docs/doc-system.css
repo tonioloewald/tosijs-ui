@@ -14,9 +14,10 @@
   --nav-bg: #f7eeed;
   --bar-color: #d6257066;
   --focus-color: #d62570b3;
-  --placeholder-color: #d6257066;
+  --placeholder-color: #d92270;
   --brand-text-color: #ffffff;
   --inset-bg: #f7dfd3;
+  --code-color: #9f2c5d;
   --code-bg: #fdfdfd;
   --link-color: #6b1265;
   --shadow-color: #0004;
@@ -81,9 +82,10 @@ tosi-doc-system[data-no-header]::before, tosi-doc-system[data-no-header] header 
   --nav-bg: #120908;
   --bar-color: #da297466;
   --focus-color: #da2974b3;
-  --placeholder-color: #da297466;
+  --placeholder-color: #e04a8a;
   --brand-text-color: #000000;
   --inset-bg: #2c1308;
+  --code-color: #e04a8a;
   --code-bg: #020202;
   --link-color: #ed94e6;
   --shadow-color: #d6257080;
@@ -180,9 +182,6 @@ tosi-doc-system:not(:defined) .doc-nav {
     overflow: auto;
     background: var(--nav-bg);
     padding: 0;
-  }
-  tosi-doc-system:not(:defined) .doc-nav summary {
-    cursor: pointer;
   }
 }
 
@@ -380,7 +379,7 @@ pre {
 
 pre, code {
   font-family: var(--code-font-family);
-  color: var(--brand-color);
+  color: var(--code-color);
 }
 
 .token.comment, .token.prolog, .token.cdata {
@@ -505,7 +504,7 @@ pre, code {
   color: var(--text-color);
 }
 
-.current, summary:has(.current) {
+.current, .nav-branch-head:has(.current) {
   background: var(--background);
 }
 
@@ -545,6 +544,7 @@ tosi-example [part=editors] {
 
 table {
   border-collapse: collapse;
+  margin: var(--spacing) 0 calc(var(--spacing) * 2) 0;
 }
 
 thead {
@@ -580,29 +580,56 @@ th, td {
   flex-direction: column;
 }
 
-.doc-nav details > ul {
+.doc-nav .nav-branch > ul {
   padding-left: var(--spacing);
 }
 
-.doc-nav details:not([open]) > ul {
+html.tosi-js .doc-nav .nav-branch:not(.-open) > ul, tosi-doc-system:defined .doc-nav .nav-branch:not(.-open) > ul {
   display: none;
 }
 
-.doc-nav summary {
+.doc-nav .nav-branch-head {
+  display: flex;
+  align-items: flex-start;
+}
+
+.doc-nav .nav-toggle {
+  flex: 0 0 auto;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0px;
+  margin: 0px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
-  padding-left: calc(var(--spacing) * 0.5);
-}
-
-.doc-nav summary::marker {
   color: var(--brand-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  max-height: var(--line-height);
 }
 
-.doc-nav summary > .doc-link {
-  display: inline-block;
-  padding-left: calc(var(--spacing) * 0.5);
-  box-sizing: border-box;
-  max-width: calc(100% - 1.5em);
-  vertical-align: top;
+.doc-nav .nav-toggle::before {
+  content: '';
+  border-style: solid;
+  border-color: transparent transparent transparent currentcolor;
+  border-width: 0.3em 0 0.3em 0.5em;
+  transition: transform 0.15s ease-out;
+}
+
+.doc-nav .nav-branch.-open > .nav-branch-head > .nav-toggle::before {
+  transform: rotate(90deg);
+}
+
+html:not(.tosi-js) tosi-doc-system:not(:defined) .doc-nav .nav-toggle::before {
+  transform: rotate(90deg);
+}
+
+.doc-nav .nav-branch-head > .doc-link {
+  flex: 1 1 auto;
+  min-width: 0px;
 }
 
 .doc-navbar {

@@ -132,4 +132,5 @@ export interface DocBrowserOptions {
      */
     contentElement?: HTMLElement;
 }
+export declare function focusableCodeBlocks(root: ParentNode): void;
 export declare function createDocBrowser(options: DocBrowserOptions): HTMLElement;

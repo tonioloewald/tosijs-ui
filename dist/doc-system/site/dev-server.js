@@ -1796,6 +1796,15 @@ export async function devServer(config, opts = {}) {
             }
             void rebuild();
         });
+        /*
+        Build on start (#3524). The documented one-liner, `… : devServer(config)`, never built:
+        it served the previous run's output, so a config edit (a theme accent, an ePub cover)
+        showed nothing until some watched file changed, and nothing said the page was stale.
+        Started without awaiting, so the port binds at once; requests during the build fall
+        back to the last good tree, as they do for every rebuild.
+        */
+        if (opts.initialBuild !== false)
+            void rebuild();
     }
     /*
     ── dependency audit (NON-BLOCKING — the port comes up first) ─────────────────

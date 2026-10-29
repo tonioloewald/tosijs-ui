@@ -1078,3 +1078,23 @@ test('a pass mutes the header test widget instead of blanking it', async ({
   await page.waitForFunction(() => !!document.querySelector('.test-widget'))
   expect((await settled()).opacity).toBe(0)
 })
+
+/*
+A table brings its own bottom margin (#3553). A blockquote's top margin is 0 by design, so it
+relies on the element above for the gap, and the table was the one block element that gave none.
+*/
+test('a blockquote after a table is not flush against it', async ({ page }) => {
+  await page.goto('/data-table/')
+  const gap = await page.evaluate(() => {
+    const content = document.querySelector('.doc-content') as HTMLElement
+    const table = document.createElement('table')
+    table.innerHTML = '<tbody><tr><td>cell</td></tr></tbody>'
+    const quote = document.createElement('blockquote')
+    quote.textContent = 'a quote'
+    content.append(table, quote)
+    return (
+      quote.getBoundingClientRect().top - table.getBoundingClientRect().bottom
+    )
+  })
+  expect(gap).toBeGreaterThan(8)
+})

@@ -217,20 +217,7 @@ declare global {
   }
 }
 
-const {
-  div,
-  span,
-  a,
-  header,
-  button,
-  template,
-  h2,
-  img,
-  details,
-  summary,
-  ul,
-  li,
-} = elements
+const { div, span, a, header, button, template, h2, img, ul, li } = elements
 
 /*
 Test colors, and the text color that goes ON each — because contrast is a PAIR.
@@ -578,9 +565,25 @@ const logoMarkStyleSpec: XinStyleSheet = {
   '.logo-mark > svg': { height: '100%', width: 'auto' },
 }
 
+/*
+A code block that scrolls sideways must be reachable by keyboard, or its overflow cannot be
+read without a pointer (WCAG 2.1.1, axe `scrollable-region-focusable`, #3520). Every static
+block gets it, not only the ones overflowing now: overflow changes with the window, and a
+check at render time would go stale on the first resize. Done here rather than in the
+markdown renderer so the pre-rendered page stays byte-identical to what it was.
+*/
+export function focusableCodeBlocks(root: ParentNode): void {
+  for (const pre of root.querySelectorAll('pre')) {
+    if (pre.hasAttribute('tabindex') || pre.closest('tosi-example')) continue
+    pre.tabIndex = 0
+  }
+}
+
 // Monotonic per-page counter so each createDocBrowser() call gets a distinct
 // tosi() registry key (see stateKey below) and two browsers can't share state.
 let docBrowserSeq = 0
+// Likewise for the nav's aria-controls ids.
+let navIdCounter = 0
 
 export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   const {
@@ -1364,6 +1367,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // Stamp each example with its source file (for the source↔doc map). doc.path
     // is the extracted file (.md, or a source file with doc comments).
     LiveExample.insertExamples(docContent, context, doc.path || undefined)
+    focusableCodeBlocks(docContent)
     /*
     Highlight whatever is left — the static blocks that are not live examples.
 
@@ -1626,6 +1630,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         context,
         editUI.doc.path || undefined
       )
+      focusableCodeBlocks(docContent)
     } else if (view === 'diff') {
       docContent.replaceChildren(
         tosiDiff({
@@ -1818,7 +1823,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   }
 
   // ── Hierarchical nav (path routing) ───────────────────────────────────────
-  // Build nested <details> from the doc tree; current-highlight, test status,
+  // Build nested sections from the doc tree; current-highlight, test status,
   // search visibility, and auto-open are applied imperatively by refreshNav.
   const navStyle = {
     slot: 'nav',
@@ -1836,10 +1841,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   const buildHierarchicalNav = (): HTMLElement => {
     const roots = buildNavTree(docs as any, slugMap)
+    // Ids for aria-controls, unique per browser: an embedded doc browser shares the page.
+    const navIdPrefix = `nav-${(navIdCounter += 1)}-`
     const leaves = new Map<string, { li: HTMLElement; link: HTMLElement }>()
     const branches: {
       li: HTMLElement
-      el: HTMLDetailsElement
+      el: { setOpen(open: boolean): void }
       link: HTMLElement
       filename: string
       subtree: string[]
@@ -1885,14 +1892,34 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         leaves.set(node.doc.filename, { li: item, link })
         return item
       }
-      const det = details(
-        summary(link),
-        ul(...node.children.map(renderNode))
-      ) as HTMLDetailsElement
-      const item = li(det)
+      /*
+      A toggle button BESIDE the link, not a <summary> around it (#3520): a link inside a
+      summary is a control inside a control. Same markup as the static nav
+      (`navToggleHtml` in generate-site.ts), so hydration does not move anything.
+      */
+      const listId = `${navIdPrefix}${node.slug || 'home'}`
+      const toggle = button({
+        type: 'button',
+        class: 'nav-toggle',
+        ariaExpanded: 'false',
+        ariaControls: listId,
+        ariaLabel: String(node.doc.title),
+        onClick: () => section.setOpen(!item.classList.contains('-open')),
+      })
+      const item = li(
+        { class: 'nav-branch' },
+        div({ class: 'nav-branch-head' }, toggle, link),
+        ul({ id: listId }, ...node.children.map(renderNode))
+      )
+      const section = {
+        setOpen(open: boolean) {
+          item.classList.toggle('-open', open)
+          toggle.setAttribute('aria-expanded', String(open))
+        },
+      }
       branches.push({
         li: item,
-        el: det,
+        el: section,
         link,
         filename: node.doc.filename,
         subtree: subtreeFilenames(node),
@@ -1924,8 +1951,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         applyStatus(link, filename, current)
         // On navigation (resetOpen), collapse everything except the current doc's section.
         // Otherwise (e.g. test-status refresh) leave user toggles alone.
-        if (resetOpen) el.open = subtree.includes(current)
-        else if (subtree.includes(current)) el.open = true
+        if (resetOpen) el.setOpen(subtree.includes(current))
+        else if (subtree.includes(current)) el.setOpen(true)
       }
     }
     refreshNav(true)

@@ -21,11 +21,11 @@ for (const hydrated of [false, true]) {
     await page.goto('/')
     if (hydrated)
       await page.waitForFunction(() => !!(window as any).__docTestResults)
-    const link = page.locator('.doc-nav summary > .doc-link').first()
+    const link = page.locator('.doc-nav .nav-branch-head > .doc-link').first()
     await expect(link).toBeVisible()
     const measure = () =>
       link.evaluate((a) => {
-        const summary = a.parentElement as HTMLElement
+        const summary = a.parentElement as HTMLElement // the section head
         const style = getComputedStyle(a)
         return {
           // how far below the summary's top the link starts
@@ -53,3 +53,46 @@ for (const hydrated of [false, true]) {
     await context.close()
   })
 }
+
+/*
+A nav section is a toggle button beside its link, not a <summary> around it (#3520). The
+button says whether the section is open, opens and closes it, and without JavaScript every
+section is open, since nothing could open one.
+*/
+test('a nav section toggle opens and closes its section', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/')
+  await page.waitForFunction(() => !!(window as any).__docTestResults)
+  // Pinned by id: a `:not(.-open)` locator would re-resolve to the NEXT closed section.
+  const id = await page
+    .locator(
+      '.doc-nav .nav-branch:not(.-open) > .nav-branch-head > .nav-toggle'
+    )
+    .first()
+    .getAttribute('aria-controls')
+  const closed = page.locator(`.nav-toggle[aria-controls="${id}"]`)
+  await expect(closed).toHaveAttribute('aria-expanded', 'false')
+  const list = page.locator(`#${await closed.getAttribute('aria-controls')}`)
+  await expect(list).toBeHidden()
+  await closed.click()
+  await expect(closed).toHaveAttribute('aria-expanded', 'true')
+  await expect(list).toBeVisible()
+  await closed.click()
+  await expect(list).toBeHidden()
+  await expect(page.locator('.doc-nav summary')).toHaveCount(0)
+})
+
+test('without JavaScript every nav section is open', async ({ browser }) => {
+  const context = await browser.newContext({
+    ignoreHTTPSErrors: true,
+    javaScriptEnabled: false,
+    viewport: { width: 1400, height: 900 },
+  })
+  await isolateThirdParty(context)
+  const page = await context.newPage()
+  await page.goto('/')
+  const lists = page.locator('.doc-nav .nav-branch > ul')
+  expect(await lists.count()).toBeGreaterThan(0)
+  for (const list of await lists.all()) await expect(list).toBeVisible()
+  await context.close()
+})

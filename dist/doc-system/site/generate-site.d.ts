@@ -106,6 +106,13 @@ export interface GenerateSiteConfig {
     headExtra?: string;
 }
 /**
+ * A section's disclosure toggle. A real button BESIDE the link, not a `<summary>` around it:
+ * a link inside a summary is a control inside a control, which a screen reader announces as
+ * one and loses the other (axe `nested-interactive`, #3520). Named by the section title, so
+ * it reads "Components, expanded, button". The hydrated nav builds the same markup.
+ */
+export declare function navToggleHtml(title: string, listId: string, open: boolean): string;
+/**
  * Prefix a root-relative path with basePath. No-op for '/', empty, protocol-
  * relative (`//…`), or absolute (`https://…`) URLs.
  *

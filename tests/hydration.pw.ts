@@ -37,13 +37,25 @@ const navMetrics = () =>
     })
 
 test('the nav does not move when the page hydrates', async ({ browser }) => {
-  // With JS disabled we see exactly what a no-JS reader (and a crawler) sees.
-  const noJs = await browser.newContext({ javaScriptEnabled: false })
+  /*
+  The page as first painted: JavaScript on (so the pre-paint script has run, and collapsed
+  nav sections are collapsed), but the bundle withheld, so nothing has upgraded. This used to
+  be a no-JS context, which was the same paint while the nav used <details>; since #3520 a
+  no-JS reader deliberately gets every section open, because nothing could open one.
+  */
+  const noJs = await browser.newContext({ javaScriptEnabled: true })
   await isolateThirdParty(noJs)
   const staticPage = await noJs.newPage()
+  await staticPage.route(/\/(hydrate-[^/]*|iife)\.js(\?|$)/, (route) =>
+    route.abort()
+  )
   await staticPage.goto('/')
   await staticPage.locator(NAV_LINK).first().waitFor()
   const before = await staticPage.evaluate(navMetrics)
+  // Otherwise this compares hydrated with hydrated and proves nothing.
+  expect(
+    await staticPage.evaluate(() => !!customElements.get('tosi-doc-system'))
+  ).toBe(false)
   await noJs.close()
 
   // ...and with JS on, after the component has upgraded.

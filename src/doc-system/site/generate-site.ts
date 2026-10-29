@@ -158,10 +158,27 @@ const escapeText = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 /**
- * Build the hierarchical nav as nested <details>. Parents render as
- * <details><summary><a>…</a></summary><ul>…children…</ul></details>, with the
- * <details> on the path to `currentFilename` opened. `currentFilename` gets
- * aria-current. Crawlable + no-JS: every node is a real <a>.
+ * A section's disclosure toggle. A real button BESIDE the link, not a `<summary>` around it:
+ * a link inside a summary is a control inside a control, which a screen reader announces as
+ * one and loses the other (axe `nested-interactive`, #3520). Named by the section title, so
+ * it reads "Components, expanded, button". The hydrated nav builds the same markup.
+ */
+export function navToggleHtml(
+  title: string,
+  listId: string,
+  open: boolean
+): string {
+  return `<button type="button" class="nav-toggle" aria-expanded="${open}" aria-controls="${escapeAttr(
+    listId
+  )}" aria-label="${escapeAttr(title)}"></button>`
+}
+
+/**
+ * Build the hierarchical nav. Parents render as
+ * <li class="nav-branch"><div class="nav-branch-head"><button/><a/></div><ul/></li>, with
+ * `-open` on the sections on the path to `currentFilename`. `currentFilename` gets
+ * aria-current. Crawlable + no-JS: every node is a real <a>, and without JS (no `tosi-js`
+ * class on <html>) no section collapses, since nothing could open it.
  */
 function navHtml(
   docs: Doc[],
@@ -191,14 +208,19 @@ function navHtml(
     if (node.children.length === 0) {
       return `${indent}<li>${link}</li>`
     }
-    const isOpen = open.has(node.doc.filename) ? ' open' : ''
+    const isOpen = open.has(node.doc.filename)
     const kids = node.children
       .map((c) => renderNode(c, indent + '  '))
       .join('\n')
+    const listId = `nav-${node.slug || 'home'}`
     return (
-      `${indent}<li><details${isOpen}><summary>${link}</summary>\n` +
-      `${indent}<ul>\n${kids}\n${indent}</ul>\n` +
-      `${indent}</details></li>`
+      `${indent}<li class="nav-branch${isOpen ? ' -open' : ''}">` +
+      `<div class="nav-branch-head">${navToggleHtml(
+        node.doc.title,
+        listId,
+        isOpen
+      )}${link}</div>\n` +
+      `${indent}<ul id="${escapeAttr(listId)}">\n${kids}\n${indent}</ul></li>`
     )
   }
 
@@ -449,6 +471,7 @@ async function pageHtml(
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
+    document.documentElement.classList.add('tosi-js')
     try {
       var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
       var t = p.theme || 'system'

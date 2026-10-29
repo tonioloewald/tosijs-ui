@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
+    document.documentElement.classList.add('tosi-js')
     try {
       var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
       var t = p.theme || 'system'
@@ -14,7 +15,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=cf98433a133d" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=ed9ca7318f48" data-tosi-doc-system />
   <title>size-break — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-sizebreak&gt; shows different content at different sizes, for example a row of buttons that becomes a menu when there is no room for it. Container queries" />
   <link rel="canonical" href="https://ui.tosijs.net/size-break/" />
@@ -30,7 +31,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=62f762f3a78b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=80b9d51ef14b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="size-break.ts">
 <h1 id="size-break">size-break</h1>
 <p><code>&lt;tosi-sizebreak&gt;</code> shows different content at different sizes, for example a row of buttons
@@ -99,8 +100,8 @@ of the slots if you like. The demo site uses them to hide the
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
-    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
-    <ul>
+    <li class="nav-branch -open"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="true" aria-controls="nav-components" aria-label="Components"></button><a class="doc-link" href="../components/">Components</a></div>
+    <ul id="nav-components">
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
       <li><a class="doc-link" href="../affix/">affix</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
@@ -113,13 +114,12 @@ of the slots if you like. The demo site uses them to hide the
       <li><a class="doc-link" href="../float/">float</a></li>
       <li><a class="doc-link" href="../gamepad/">gamepads</a></li>
       <li><a class="doc-link" href="../header/">header</a></li>
-      <li><details><summary><a class="doc-link" href="../icons/">icons</a></summary>
-      <ul>
+      <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-icons" aria-label="icons"></button><a class="doc-link" href="../icons/">icons</a></div>
+      <ul id="nav-icons">
         <li><a class="doc-link" href="../icon-composition/">Icon Composition</a></li>
         <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
         <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
-      </ul>
-      </details></li>
+      </ul></li>
       <li><a class="doc-link" href="../layout/">layout</a></li>
       <li><a class="doc-link" href="../bodymovin-player/">lottie / bodymovin</a></li>
       <li><a class="doc-link" href="../mapbox/">map</a></li>
@@ -136,10 +136,9 @@ of the slots if you like. The demo site uses them to hide the
       <li><a class="doc-link" href="../data-table/">table</a></li>
       <li><a class="doc-link" href="../tab-selector/">tabs</a></li>
       <li><a class="doc-link" href="../tooltip/">tooltip</a></li>
-    </ul>
-    </details></li>
-    <li><details><summary><a class="doc-link" href="../form-components/">Form Components</a></summary>
-    <ul>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-form-components" aria-label="Form Components"></button><a class="doc-link" href="../form-components/">Form Components</a></div>
+    <ul id="nav-form-components">
       <li><a class="doc-link" href="../color-input/">color input field</a></li>
       <li><a class="doc-link" href="../filter-builder/">filter</a></li>
       <li><a class="doc-link" href="../form/">forms</a></li>
@@ -151,10 +150,9 @@ of the slots if you like. The demo site uses them to hide the
       <li><a class="doc-link" href="../segmented/">segmented select</a></li>
       <li><a class="doc-link" href="../select/">select</a></li>
       <li><a class="doc-link" href="../tag-list/">tag-list</a></li>
-    </ul>
-    </details></li>
-    <li><details><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
-    <ul>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-helper-libraries" aria-label="Helper Libraries"></button><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></div>
+    <ul id="nav-helper-libraries">
       <li><a class="doc-link" href="../ab-test/">ab-test</a></li>
       <li><a class="doc-link" href="../drag-and-drop/">drag &amp; drop</a></li>
       <li><a class="doc-link" href="../hash-state/">hash-state</a></li>
@@ -167,10 +165,9 @@ of the slots if you like. The demo site uses them to hide the
       <li><a class="doc-link" href="../theme/">theme</a></li>
       <li><a class="doc-link" href="../track-drag/">trackDrag</a></li>
       <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
-    </ul>
-    </details></li>
-    <li><details><summary><a class="doc-link" href="../documentation-system/">Documentation System</a></summary>
-    <ul>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-documentation-system" aria-label="Documentation System"></button><a class="doc-link" href="../documentation-system/">Documentation System</a></div>
+    <ul id="nav-documentation-system">
       <li><a class="doc-link" href="../adopting-the-doc-system/">Adopting the doc system</a></li>
       <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
       <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>
@@ -183,14 +180,12 @@ of the slots if you like. The demo site uses them to hide the
       <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
       <li><a class="doc-link" href="../no-header-demo/">Page without the header</a></li>
       <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
-    </ul>
-    </details></li>
-    <li><details><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
-    <ul>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-appendices" aria-label="Appendices"></button><a class="doc-link" href="../appendices/">Appendices</a></div>
+    <ul id="nav-appendices">
       <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
-    </ul>
-    </details></li>
+    </ul></li>
   </ul>
   </nav>
   <ul class="doc-navbar">
@@ -201,6 +196,6 @@ of the slots if you like. The demo site uses them to hide the
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-2wffpv4f.js"></script>
+  <script type="module" src="../hydrate-qea6k9k9.js"></script>
 </body>
 </html>

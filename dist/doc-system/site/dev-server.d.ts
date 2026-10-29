@@ -179,4 +179,10 @@ export declare function isCompressible(filePath: string): boolean;
 export declare function devServer(config: SiteConfig, opts?: {
     test?: boolean;
     build?: () => unknown | Promise<unknown>;
+    /**
+     * Build once on start (default `true`). Pass `false` only when the caller has just
+     * built, as `bin/dev.ts` does; otherwise the server serves whatever the LAST run
+     * left in the output dir, built from whatever config that run had (#3524).
+     */
+    initialBuild?: boolean;
 }): Promise<void>;

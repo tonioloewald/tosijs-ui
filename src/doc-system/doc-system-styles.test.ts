@@ -1,5 +1,6 @@
 import { test, expect, describe } from 'bun:test'
-import { docSystemStyleSpec } from './doc-system-styles.js'
+import { Color } from 'tosijs'
+import { contrastRatio, docSystemStyleSpec } from './doc-system-styles.js'
 
 describe('#150: no rule POISONS a global palette token', () => {
   test('`--text-color` is redefined only by rules that own a background', () => {
@@ -199,4 +200,30 @@ describe('theme.codeBg is not tracked by the token palette (F9)', () => {
     */
     expect(worst).toBeLessThan(4.5)
   })
+})
+
+/*
+#3520: the doc header's search trigger ("Search documentation", ⌘K) is coloured with
+--placeholder-color, which was the brand at 40% opacity: 1.88:1 on the input, measured by axe.
+Asserted for the default and for accents that are hard to darken or brighten into AA.
+*/
+describe('placeholder color meets AA on the input (#3520)', () => {
+  const cases: Array<[string, Parameters<typeof docSystemStyleSpec>[0]]> = [
+    ['default', {}],
+    ['light accent', { accent: '#ffbc00' }],
+    ['dark accent', { accent: '#5c4400' }],
+    ['pale accent', { accent: '#eeeeff' }],
+  ]
+  for (const [name, theme] of cases) {
+    test(name, () => {
+      const spec = docSystemStyleSpec(theme) as Record<string, any>
+      const input = Color.fromCss(theme?.inputBg ?? '#fdfdfd')
+      const light = Color.fromCss(String(spec[':root']._placeholderColor))
+      const dark = Color.fromCss(String(spec['.darkmode']._placeholderColor))
+      expect(contrastRatio(light, input)).toBeGreaterThanOrEqual(4.5)
+      expect(
+        contrastRatio(dark, input.inverseLuminance)
+      ).toBeGreaterThanOrEqual(4.5)
+    })
+  }
 })

@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.16.39
+
+- **The doc-site frame passes WCAG 2.2 AA where an axe scan said it did not (#3520).** An
+  adopter's scan found four failures in the frame, so every doc site had them:
+  - The header's "Search documentation" trigger and its ⌘K hint measured 1.88:1 (AA asks
+    4.5:1). `--placeholder-color` was the brand at 40% opacity; it is now the brand darkened
+    (or, in dark mode, brightened) just far enough to reach 4.5:1 on the input, for any accent.
+  - Inline code was the brand colour, 4.56:1 on the page and 3.72:1 inside a blockquote. It is
+    now `--code-color`, the brand made readable on the blockquote background.
+  - Each nav section was `<details><summary><a>`, a link inside a control, which a screen reader
+    announces as one and loses the other. A section is now a toggle `<button>` beside its link,
+    with `aria-expanded` and `aria-controls`, at least 24px square (the old triangle was under
+    WCAG 2.2's target size). Without JavaScript every section is open, since nothing could open
+    one. **If your site's CSS targets `.doc-nav details` or `.doc-nav summary`, it no longer
+    matches**: use `.doc-nav .nav-branch` (`.-open` when open), `.nav-branch-head` and
+    `.nav-toggle`.
+  - A code block that scrolls sideways could not be reached by keyboard. Static code blocks are
+    now focusable once the page hydrates.
+- **`devServer()` builds on start (#3524).** The documented `bin/site.ts` one-liner never
+  built: it served whatever the previous run left in the output folder, so a config change (a
+  theme accent, an ePub cover) showed nothing until a source file changed, and nothing said the
+  page was stale. If your script builds just before calling it, pass `initialBuild: false`. The
+  config file itself is not watched: restart the server after editing it.
+- **A table has a margin (#3553).** It was the one block element without one, so a blockquote
+  straight after a table sat flush against it. The ePub was already right.
+
 ## 1.16.38
 
 - **The ePub carries its images (#3519).** Every local image went into the book as a site path

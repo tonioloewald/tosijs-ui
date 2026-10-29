@@ -82,18 +82,25 @@ process.argv.includes('--build') ? buildSite(config) : devServer(config)
 > `rm -rf <outputDir>`, so any artifact your extra steps wrote is deleted on the
 > first file-change rebuild; without `build`, the watcher only re-runs
 > `buildSite` and never regenerates it, so `/iife.js` 404s into the SPA fallback
-> and "loads as html". The initial build still runs your steps explicitly:
+> and "loads as html". The server runs `build` once on start too:
 >
 > ```typescript
 > const build = async () => {
 >   if (!(await buildSite(config))) throw new Error('site build failed')
 >   await buildMyIifeBundle() // re-create what buildSite's rm -rf removed
 > }
-> if (!(await buildSite(config))) process.exit(1)
-> await buildMyIifeBundle()
-> if (process.argv.includes('--build')) process.exit(0)
-> await devServer(config, { build }) // ← watcher runs the full pipeline
+> if (process.argv.includes('--build')) {
+>   await build()
+> } else {
+>   await devServer(config, { build }) // ← builds on start, then on every change
+> }
 > ```
+
+`devServer` **builds once on start** (since 1.16.39; before that it served whatever the last run
+left in the output dir, so a config change showed nothing until a source file changed). If your
+script has just built, pass `initialBuild: false` to skip the second build. The config file
+itself is not watched: the server holds the config it was started with, so restart it after
+editing `site.config.ts`.
 
 **3. scripts** in `package.json`:
 

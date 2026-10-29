@@ -799,7 +799,16 @@ export function isCompressible(filePath: string): boolean {
 
 export async function devServer(
   config: SiteConfig,
-  opts: { test?: boolean; build?: () => unknown | Promise<unknown> } = {}
+  opts: {
+    test?: boolean
+    build?: () => unknown | Promise<unknown>
+    /**
+     * Build once on start (default `true`). Pass `false` only when the caller has just
+     * built, as `bin/dev.ts` does; otherwise the server serves whatever the LAST run
+     * left in the output dir, built from whatever config that run had (#3524).
+     */
+    initialBuild?: boolean
+  } = {}
 ): Promise<void> {
   // PORT env wins over the config, so a test harness can bring up its own instance on
   // its own port instead of adopting (or killing — killStrayServer takes the port)
@@ -2143,6 +2152,15 @@ export async function devServer(
         void rebuild()
       }
     )
+
+    /*
+    Build on start (#3524). The documented one-liner, `… : devServer(config)`, never built:
+    it served the previous run's output, so a config edit (a theme accent, an ePub cover)
+    showed nothing until some watched file changed, and nothing said the page was stale.
+    Started without awaiting, so the port binds at once; requests during the build fall
+    back to the last good tree, as they do for every rebuild.
+    */
+    if (opts.initialBuild !== false) void rebuild()
   }
 
   /*

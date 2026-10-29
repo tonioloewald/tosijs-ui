@@ -122,4 +122,4 @@ const ok = await buildSite(config, { skipAudit: interactive })
 if (!ok && !interactive) process.exit(1)
 if (buildOnly) process.exit(0)
 
-await devServer(config, { test: testMode })
+await devServer(config, { test: testMode, initialBuild: false })

@@ -50,6 +50,34 @@ export interface DocSystemTheme {
   codeBg?: string
 }
 
+/** WCAG 2 contrast ratio between two opaque colors. */
+export function contrastRatio(a: Color, b: Color): number {
+  const lum = (c: Color) => {
+    const [r, g, bl] = c.RGBA.map((v) =>
+      v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+    )
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl
+  }
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x)
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+/**
+ * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach
+ * `min` contrast against `bg`, so it keeps as much of its hue as AA allows.
+ */
+export function readableOn(color: Color, bg: Color, min = 4.5): Color {
+  const darkBg = contrastRatio(bg, Color.black) < contrastRatio(bg, Color.white)
+  // Measured on the hex the stylesheet will actually carry: rounding to 8-bit channels
+  // can drop a ratio just over `min` to just under it.
+  const shipped = (c: Color) => Color.fromCss(c.html)
+  let c = shipped(color.opaque)
+  for (let step = 0; step < 20 && contrastRatio(c, bg) < min; step++) {
+    c = shipped(darkBg ? c.brighten(0.1) : c.darken(0.1))
+  }
+  return contrastRatio(c, bg) < min ? bg.contrasting() : c
+}
+
 /** Compute the full set of `:root` color variables from a few base colors. */
 export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
   const brandColor = Color.fromCss(theme.accent ?? '#d92270')
@@ -63,7 +91,15 @@ export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
     _navBg: brandColor.rotate(30).desaturate(0.5).brighten(0.9),
     _barColor: brandColor.opacity(0.4),
     _focusColor: brandColor.opacity(0.7),
-    _placeholderColor: brandColor.opacity(0.4),
+    /*
+    Readable, not faint (#3520). This was the brand at 40% opacity, which an axe scan measured
+    at 1.88:1 on the input (#eda7c5 on #fdfdfd) where AA asks 4.5:1, and it colours the doc
+    header's "Search documentation" trigger, a real label, not just a hint.
+    */
+    _placeholderColor: readableOn(
+      brandColor,
+      Color.fromCss(theme.inputBg ?? '#fdfdfd')
+    ),
     /*
     `contrasting()` rather than a hand-tuned tint.
 
@@ -77,6 +113,9 @@ export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
     */
     _brandTextColor: brandColor.contrasting(),
     _insetBg: brandColor.rotate(45).brighten(0.8),
+    // The brand, made readable on the inset (blockquote) background, the darker of the two
+    // surfaces code sits on. The raw brand measured 3.72:1 there (#3520).
+    _codeColor: readableOn(brandColor, brandColor.rotate(45).brighten(0.8)),
     // Neutral off-white (not brand-tinted); dark mode inverts its luminance to
     // off-black, so the editor surface stays a clean neutral in both themes.
     _codeBg: theme.codeBg ?? '#fdfdfd',
@@ -218,6 +257,14 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       brand, the luminance belongs to the background it sits on.
       */
       _brandColor: brandColor.brighten(0.18),
+      _codeColor: readableOn(
+        brandColor.brighten(0.18),
+        brandColor.rotate(45).brighten(0.8).inverseLuminance
+      ),
+      _placeholderColor: readableOn(
+        brandColor.brighten(0.18),
+        Color.fromCss(theme.inputBg ?? '#fdfdfd').inverseLuminance
+      ),
       _shadowColor: brandColor.opacity(0.5),
       _menuShadow: `0 0 0 2px ${brandColor.opacity(0.75)}`,
       _menuSeparatorColor: brandColor.opacity(0.5),
@@ -318,9 +365,9 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       display: 'none',
     },
     // Wide enough for the sidebar: reserve its column, and show the REAL nav tree
-    // in it. It's a plain <ul> with native <details> groups, so it navigates and
-    // collapses without a line of JavaScript — a no-JS reader gets a working site,
-    // and hydration merely upgrades it in place.
+    // in it. It's a plain <ul> of real links, every section expanded when there is no
+    // JavaScript to collapse one (no `tosi-js` on <html>) — a no-JS reader gets a
+    // working site, and hydration merely upgrades it in place.
     [`@media (min-width: ${SIDEBAR_BREAKPOINT}px)`]: {
       'tosi-doc-system:not(:defined)': {
         left: `${SIDEBAR_WIDTH}px`,
@@ -351,9 +398,6 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       //
       // Only genuinely pre-hydration-specific rules belong in this block — the fixed
       // positioning above, which the upgraded component takes over itself.
-      'tosi-doc-system:not(:defined) .doc-nav summary': {
-        cursor: 'pointer',
-      },
     },
     '.center': {
       display: 'flex',
@@ -544,7 +588,7 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       // `--text-color` token rather than setting a colour, so everything inside a `<pre>`
       // — including every syntax-highlighting token span — inherited a palette where the
       // theme's text colour had been replaced by the brand colour.
-      color: vars.brandColor,
+      color: vars.codeColor,
     },
     /*
     Prism token colours for STATIC code blocks — TWO palettes, because there are two
@@ -591,7 +635,7 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       boxShadow: 'none',
       color: vars.textColor,
     },
-    '.current, summary:has(.current)': {
+    '.current, .nav-branch-head:has(.current)': {
       background: vars.background,
     },
     '.doc-link': {
@@ -621,8 +665,11 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
     "[class*='icon-']": {
       verticalAlign: 'middle',
     },
+    // Every other block element brings its own margin; without one a table sat flush
+    // against a following blockquote, whose top margin is 0 by design (#3553).
     table: {
       borderCollapse: 'collapse',
+      margin: `${vars.spacing} 0 ${vars.spacing200} 0`,
     },
     thead: {
       background: vars.brandColor,
@@ -638,7 +685,7 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       padding: 'calc(var(--spacing) * 0.5) var(--spacing)',
     },
     // Nav lists carry semantics only — no list styling. Hierarchy indentation
-    // comes from left-padding on each section's child list (inside <details>).
+    // comes from left-padding on each section's child list.
     '.doc-nav ul, .doc-nav li': {
       listStyle: 'none',
       margin: 0,
@@ -652,43 +699,61 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       display: 'flex',
       flexDirection: 'column',
     },
-    '.doc-nav details > ul': {
+    '.doc-nav .nav-branch > ul': {
       paddingLeft: vars.spacing,
     },
-    // Collapse a closed section's list SYNCHRONOUSLY. The UA collapses <details>
-    // via `::details-content { content-visibility: hidden }`, which is applied
-    // lazily and — for this static tree — non-deterministically on first paint:
-    // sometimes the closed section is still laid out at full height for a frame
-    // before it snaps shut. That frame is a visible flicker on refresh, and it made
-    // the "nav does not move on hydration" test measure a 36px row that hydration
-    // then collapses to 0. An explicit display:none collapses it in the first layout
-    // pass with no content-visibility race, and still opens on a no-JS <summary>
-    // toggle (the UA adds [open], so this rule stops matching).
-    '.doc-nav details:not([open]) > ul': {
-      display: 'none',
+    /*
+    A section is a toggle button BESIDE its link (#3520). It was <details><summary><a>, a link
+    inside a control, which a screen reader announces as one and loses the other (axe
+    `nested-interactive`), and its marker was under the 24px target size WCAG 2.2 asks.
+    A closed section collapses only when JavaScript is running (`tosi-js` is set on <html>
+    before first paint, and the hydrated browser is `:defined`): without it nothing could
+    open the section, so every one stays expanded.
+    */
+    'html.tosi-js .doc-nav .nav-branch:not(.-open) > ul, tosi-doc-system:defined .doc-nav .nav-branch:not(.-open) > ul':
+      {
+        display: 'none',
+      },
+    '.doc-nav .nav-branch-head': {
+      display: 'flex',
+      alignItems: 'flex-start',
     },
-    // <summary> is the section header (its triangle toggles; the link navigates).
-    '.doc-nav summary': {
+    '.doc-nav .nav-toggle': {
+      flex: '0 0 auto',
+      minWidth: '24px',
+      minHeight: '24px',
+      padding: 0,
+      margin: 0,
+      border: 'none',
+      background: 'transparent',
+      boxShadow: 'none',
       cursor: 'pointer',
-      // indent the disclosure marker a bit from the edge
-      paddingLeft: 'calc(var(--spacing) * 0.5)',
-    },
-    '.doc-nav summary::marker': {
       color: vars.brandColor,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'stretch',
+      maxHeight: vars.lineHeight,
     },
-    '.doc-nav summary > .doc-link': {
-      display: 'inline-block',
-      // push the summary text in a bit less than a normal doc-link
-      paddingLeft: 'calc(var(--spacing) * 0.5)',
-      /*
-      Room for the disclosure triangle on the same line (#219). An inline-block as wide as
-      its text does not fit beside the marker once the title is long, so the whole link
-      dropped to the next line and left the triangle alone on a row of its own, which reads
-      as an empty nav entry. Capped, it stays beside the triangle and wraps inside itself.
-      */
-      boxSizing: 'border-box',
-      maxWidth: 'calc(100% - 1.5em)',
-      verticalAlign: 'top',
+    // A disclosure triangle, pointing right when closed and down when open.
+    '.doc-nav .nav-toggle::before': {
+      content: "''",
+      borderStyle: 'solid',
+      borderColor: 'transparent transparent transparent currentcolor',
+      borderWidth: '0.3em 0 0.3em 0.5em',
+      transition: 'transform 0.15s ease-out',
+    },
+    '.doc-nav .nav-branch.-open > .nav-branch-head > .nav-toggle::before': {
+      transform: 'rotate(90deg)',
+    },
+    // Without JavaScript every section is open, so the triangle says so.
+    'html:not(.tosi-js) tosi-doc-system:not(:defined) .doc-nav .nav-toggle::before':
+      {
+        transform: 'rotate(90deg)',
+      },
+    '.doc-nav .nav-branch-head > .doc-link': {
+      flex: '1 1 auto',
+      minWidth: 0,
     },
     // Declarative header link list — shown for no-JS, removed on hydration.
     '.doc-navbar': {
