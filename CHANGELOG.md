@@ -1,6 +1,9 @@
 # Changelog
 
-## 1.17.0 (in progress)
+## 1.17.0-beta.1
+
+> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
+> on 1.16.41. It carries the accessibility half of 1.17.0; the SEO work and #245/#246 follow.
 
 - **An opt-in accessibility mode for doc sites (#3521).** `accessibility: 'wcag22-aa'` in the
   site config makes the build do what it can decide on its own and report what it cannot, on the
