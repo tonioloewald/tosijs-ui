@@ -32,14 +32,20 @@
   <meta property="og:title" content="Doc-Site System — tosijs-ui" />
   <meta property="og:description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <meta property="og:url" content="https://ui.tosijs.net/doc-site-system/" />
-  <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","dateModified":"2026-10-31T21:15:11.261Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <meta property="og:image" content="https://ui.tosijs.net/og/index.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Doc-Site System — tosijs-ui" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
+  <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-10-31T21:17:57.304Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=f56447eac196" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=46c340929d2a" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -319,7 +325,7 @@ for the authoritative typed definition.</p>
 <tr>
 <td><code>ogImage</code></td>
 <td>—</td>
-<td>default share image (per-page overridable)</td>
+<td>default share image (per-page overridable; see &quot;Share images&quot; below)</td>
 </tr>
 <tr>
 <td><code>headExtra</code></td>
@@ -2007,6 +2013,15 @@ crawlers/agents. <code>llms-full.txt</code> is the whole indexed corpus as one m
 order, each page followed by its URL; it is written to the output dir only. Set
 <code>llmsTxt: false</code> to skip both, or pass a function <code>(docs) =&gt; string</code> to generate your own index
 from the corpus (<code>llms-full.txt</code> is still written).</p>
+<h4 id="share-images">Share images</h4>
+<p>The image a link to a page unfurls with (<code>og:image</code>, <code>twitter:image</code>) is, in order: the page&#39;s
+own <code>image</code> metadata; its card at <code>/og/&lt;slug&gt;.webp</code> (or <code>.png</code>/<code>.jpg</code>; the home page&#39;s is
+<code>/og/index.webp</code>) when your static files have one; the site&#39;s <code>ogImage</code>; and the home page&#39;s
+card. A local image also gets <code>og:image:width</code>/<code>height</code>, read from its header, so an unfurler
+can lay the card out before fetching it; every image gets an alt of the page&#39;s title.</p>
+<p>Cards are files like any other static asset, so make them however you like. In this repository
+<code>bun run og</code> screenshots each page&#39;s first live example into a 1200×630 card in
+<code>demo/static/og/</code>.</p>
 <h4 id="titles-and-descriptions-the-metadata-lint">Titles and descriptions: the metadata lint</h4>
 <p>A search result, a link unfurl and an <code>llms.txt</code> reader see a page&#39;s <code>&lt;title&gt;</code> and description
 instead of the page. Each page&#39;s description is its metadata <code>description</code>, else its first

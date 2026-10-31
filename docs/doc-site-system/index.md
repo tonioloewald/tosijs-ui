@@ -296,7 +296,7 @@ for the authoritative typed definition.
 | `baseUrl`     | —              | absolute origin for canonical/OG/sitemap URLs |
 | `lang`        | `'en'`         | `<html lang>`                                 |
 | `favicon`     | `/favicon.svg` | favicon href                                  |
-| `ogImage`     | —              | default share image (per-page overridable)    |
+| `ogImage`     | —              | default share image (per-page overridable; see "Share images" below) |
 | `headExtra`   | —              | raw lines injected into every `<head>`        |
 
 ### Branding & chrome
@@ -1862,6 +1862,18 @@ crawlers/agents. `llms-full.txt` is the whole indexed corpus as one markdown fil
 order, each page followed by its URL; it is written to the output dir only. Set
 `llmsTxt: false` to skip both, or pass a function `(docs) => string` to generate your own index
 from the corpus (`llms-full.txt` is still written).
+
+#### Share images
+
+The image a link to a page unfurls with (`og:image`, `twitter:image`) is, in order: the page's
+own `image` metadata; its card at `/og/<slug>.webp` (or `.png`/`.jpg`; the home page's is
+`/og/index.webp`) when your static files have one; the site's `ogImage`; and the home page's
+card. A local image also gets `og:image:width`/`height`, read from its header, so an unfurler
+can lay the card out before fetching it; every image gets an alt of the page's title.
+
+Cards are files like any other static asset, so make them however you like. In this repository
+`bun run og` screenshots each page's first live example into a 1200×630 card in
+`demo/static/og/`.
 
 #### Titles and descriptions: the metadata lint
 

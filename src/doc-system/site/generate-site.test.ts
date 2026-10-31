@@ -642,3 +642,109 @@ describe("#3565: lastmod, structured data, and a book's reading order", () => {
     expect(one).toContain('<link rel="prev" href="../" />')
   })
 })
+
+/*
+#3562: `bun run og` wrote a card per page that no page linked, so every share unfurled with no
+image. A page now shows its own card, else the site's image, else the home page's card.
+*/
+describe('#3562: share images', () => {
+  const png = (w: number, h: number) => {
+    const b = new Uint8Array(24)
+    b.set([
+      0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 0, 0, 0, 13, 0x49, 0x48, 0x44,
+      0x52,
+    ])
+    new DataView(b.buffer).setUint32(16, w)
+    new DataView(b.buffer).setUint32(20, h)
+    return b
+  }
+  const docs = [
+    {
+      filename: 'README.md',
+      title: 'Home',
+      path: 'README.md',
+      text: '# Home\n\nHome.',
+    },
+    {
+      filename: 'carded.md',
+      title: 'Carded',
+      path: 'carded.md',
+      text: '# Carded\n\nHas a card.',
+    },
+    {
+      filename: 'plain.md',
+      title: 'Plain',
+      path: 'plain.md',
+      text: '# Plain\n\nNo card.',
+    },
+    {
+      filename: 'own.md',
+      title: 'Own',
+      path: 'own.md',
+      image: 'https://cdn.test/own.jpg',
+      text: '# Own\n\nOwn image.',
+    },
+  ]
+  const build = async (extra: Record<string, unknown> = {}) => {
+    const dir = `${tmpdir()}/tosi-og-${Math.floor(performance.now() * 1000)}`
+    try {
+      await Bun.write(`${dir}/og/carded.png`, png(1200, 630))
+      await Bun.write(`${dir}/og/index.png`, png(800, 400))
+      await generateSite({
+        docs: docs as any,
+        outputDir: dir,
+        projectName: 'T',
+        baseUrl: 'https://t.test',
+        hydrateUrl: '/hydrate-abc.js',
+        ...extra,
+      } as any)
+      const meta = async (page: string) => {
+        const html = await Bun.file(`${dir}/${page}`).text()
+        const get = (key: string) =>
+          html.match(
+            new RegExp(`(?:property|name)="${key}" content="([^"]*)"`)
+          )?.[1]
+        return {
+          image: get('og:image'),
+          width: get('og:image:width'),
+          height: get('og:image:height'),
+          alt: get('og:image:alt'),
+          twitter: get('twitter:image'),
+        }
+      }
+      return {
+        carded: await meta('carded/index.html'),
+        plain: await meta('plain/index.html'),
+        own: await meta('own/index.html'),
+      }
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  }
+
+  test('a page with a card shows it, with its size and an alt', async () => {
+    const { carded } = await build()
+    expect(carded).toEqual({
+      image: 'https://t.test/og/carded.png',
+      width: '1200',
+      height: '630',
+      alt: 'Carded — T',
+      twitter: 'https://t.test/og/carded.png',
+    })
+  })
+
+  test("a page without one gets the site's image, else the home page's card", async () => {
+    expect((await build({ ogImage: '/brand.png' })).plain.image).toBe(
+      'https://t.test/brand.png'
+    )
+    const { plain } = await build()
+    expect(plain.image).toBe('https://t.test/og/index.png')
+    expect([plain.width, plain.height]).toEqual(['800', '400'])
+  })
+
+  test("a page's own image wins, and a remote one gets no guessed size", async () => {
+    const { own } = await build()
+    expect(own.image).toBe('https://cdn.test/own.jpg')
+    expect(own.width).toBeUndefined()
+  })
+})

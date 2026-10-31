@@ -17,6 +17,7 @@ import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, } from '../render.js';
 import { accessibilityFindings, findingLine } from './a11y-report.js';
 import { pageDescription } from './page-metadata.js';
+import { imageSize } from './image-size.js';
 import { bareNameLinks, deadInPageAnchors, missingWikilinks, misconfigured, } from './build-warnings.js';
 import { existsSync } from 'fs';
 const escapeAttr = (s) => s
@@ -85,6 +86,25 @@ function linkListHtml(className, links) {
 /** Serialize a JSON-LD object into a safe <script> (escaping `<` prevents breakout). */
 function jsonLdScript(obj) {
     return `  <script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+}
+/** Image types a share card may be, in the order a page's card is looked for. */
+const CARD_TYPES = ['webp', 'png', 'jpg', 'jpeg'];
+/**
+ * The image a share of this page shows (#3562): the page's own `image`, else its card at
+ * `/og/<slug>.webp` (or .png/.jpg) when the site has one (`bun run og` writes them, and any
+ * static folder can supply them), else the site's `ogImage`, else the home page's card. A card
+ * nobody linked was a card no share ever showed.
+ */
+function pageImage(doc, slug, config) {
+    if (doc.image)
+        return doc.image;
+    const card = (name) => {
+        if (!config.outputDir)
+            return '';
+        const type = CARD_TYPES.find((t) => existsSync(`${config.outputDir}/og/${name}.${t}`));
+        return type ? `/og/${name}.${type}` : '';
+    };
+    return card(slug || 'index') || config.ogImage || card('index');
 }
 /** The nav path from a top-level page down to `filename`, inclusive; [] when it is not in the nav. */
 function navTrail(roots, filename) {
@@ -178,7 +198,11 @@ at = slugMap[doc.filename] ?? '') {
         ? doc.keywords.join(', ')
         : doc.keywords || '';
     const canonical = baseUrl + withBase(basePath, pathForSlug(slugMap[doc.filename]));
-    const imageAbs = absUrl(baseUrl, withBase(basePath, doc.image || config.ogImage || ''));
+    const image = pageImage(doc, own, config);
+    const imageAbs = absUrl(baseUrl, withBase(basePath, image));
+    const imageDims = image.startsWith('/') && !image.startsWith('//') && config.outputDir
+        ? imageSize(`${config.outputDir}${image}`)
+        : undefined;
     // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
     // static HTML is correct for no-JS readers and crawlers (the doc-browser also
     // does this client-side after hydration).
@@ -312,9 +336,17 @@ at = slugMap[doc.filename] ?? '') {
         imageAbs
             ? `  <meta property="og:image" content="${escapeAttr(imageAbs)}" />`
             : '',
+        imageAbs && imageDims
+            ? `  <meta property="og:image:width" content="${imageDims.width}" />\n` +
+                `  <meta property="og:image:height" content="${imageDims.height}" />`
+            : '',
+        imageAbs
+            ? `  <meta property="og:image:alt" content="${escapeAttr(title)}" />`
+            : '',
         `  <meta name="twitter:card" content="${imageAbs ? 'summary_large_image' : 'summary'}" />`,
         imageAbs
-            ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />`
+            ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />\n` +
+                `  <meta name="twitter:image:alt" content="${escapeAttr(title)}" />`
             : '',
         jsonLd,
         `  <link rel="icon" href="${escapeAttr(relativeUrl(depth, favicon))}" />`,

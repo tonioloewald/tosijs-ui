@@ -36,6 +36,7 @@ import {
 } from '../render.js'
 import { accessibilityFindings, findingLine } from './a11y-report.js'
 import { pageDescription } from './page-metadata.js'
+import { imageSize } from './image-size.js'
 import {
   bareNameLinks,
   deadInPageAnchors,
@@ -267,6 +268,31 @@ function jsonLdScript(obj: Record<string, unknown>): string {
   )}</script>`
 }
 
+/** Image types a share card may be, in the order a page's card is looked for. */
+const CARD_TYPES = ['webp', 'png', 'jpg', 'jpeg']
+
+/**
+ * The image a share of this page shows (#3562): the page's own `image`, else its card at
+ * `/og/<slug>.webp` (or .png/.jpg) when the site has one (`bun run og` writes them, and any
+ * static folder can supply them), else the site's `ogImage`, else the home page's card. A card
+ * nobody linked was a card no share ever showed.
+ */
+function pageImage(
+  doc: Doc,
+  slug: string,
+  config: Pick<GenerateSiteConfig, 'ogImage' | 'outputDir'>
+): string {
+  if (doc.image) return doc.image
+  const card = (name: string) => {
+    if (!config.outputDir) return ''
+    const type = CARD_TYPES.find((t) =>
+      existsSync(`${config.outputDir}/og/${name}.${t}`)
+    )
+    return type ? `/og/${name}.${type}` : ''
+  }
+  return card(slug || 'index') || config.ogImage || card('index')
+}
+
 /** The nav path from a top-level page down to `filename`, inclusive; [] when it is not in the nav. */
 function navTrail(roots: NavNode<Doc>[], filename: string): NavNode<Doc>[] {
   for (const node of roots) {
@@ -387,10 +413,12 @@ async function pageHtml(
     : doc.keywords || ''
   const canonical =
     baseUrl + withBase(basePath, pathForSlug(slugMap[doc.filename]))
-  const imageAbs = absUrl(
-    baseUrl,
-    withBase(basePath, doc.image || config.ogImage || '')
-  )
+  const image = pageImage(doc, own, config)
+  const imageAbs = absUrl(baseUrl, withBase(basePath, image))
+  const imageDims =
+    image.startsWith('/') && !image.startsWith('//') && config.outputDir
+      ? imageSize(`${config.outputDir}${image}`)
+      : undefined
   // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
   // static HTML is correct for no-JS readers and crawlers (the doc-browser also
   // does this client-side after hydration).
@@ -552,11 +580,19 @@ async function pageHtml(
     imageAbs
       ? `  <meta property="og:image" content="${escapeAttr(imageAbs)}" />`
       : '',
+    imageAbs && imageDims
+      ? `  <meta property="og:image:width" content="${imageDims.width}" />\n` +
+        `  <meta property="og:image:height" content="${imageDims.height}" />`
+      : '',
+    imageAbs
+      ? `  <meta property="og:image:alt" content="${escapeAttr(title)}" />`
+      : '',
     `  <meta name="twitter:card" content="${
       imageAbs ? 'summary_large_image' : 'summary'
     }" />`,
     imageAbs
-      ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />`
+      ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />\n` +
+        `  <meta name="twitter:image:alt" content="${escapeAttr(title)}" />`
       : '',
     jsonLd,
     `  <link rel="icon" href="${escapeAttr(relativeUrl(depth, favicon))}" />`,

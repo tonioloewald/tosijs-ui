@@ -46,7 +46,11 @@ export interface SiteConfig {
   lang?: string
   /** favicon href, default /favicon.svg */
   favicon?: string
-  /** default social/share image (og:image); per-page overridable via doc metadata */
+  /**
+   * Default social/share image (og:image). A page's own `image` metadata wins, then its card
+   * at `/og/<slug>.webp|png|jpg` when the static files have one; with no `ogImage`, a page
+   * with neither falls back to the home page's card, `/og/index.*`.
+   */
   ogImage?: string
   /** extra raw lines injected into every <head> (analytics, verification, etc.) */
   headExtra?: string
