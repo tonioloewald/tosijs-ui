@@ -1,6 +1,27 @@
 # Changelog
 
-## 1.17.0-beta.3
+## 1.17.0-beta.4
+
+> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
+> on 1.16.41. Fixes from Learn 3D and from tosijs-native's first site build.
+
+- **Every doc page can be scrolled by keyboard, and has a main landmark (#3575).** A page of
+  plain prose had nothing to tab to inside its scrolling content, so a keyboard user could not
+  scroll it, which axe reports as `scrollable-region-focusable` (Learn 3D: 71 of 126 pages). The
+  content scroller is now focusable, and it is the page's main landmark, which the doc site did not
+  have at all: a screen reader's "jump to main content" now works. A doc browser embedded in
+  another page stays focusable without claiming that page's main landmark.
+- **`buildSite` says it needs `happy-dom` before it starts (#3600).** Without it, the build died
+  partway through with "Cannot find package 'happy-dom'" from a file inside tosijs-ui. It now
+  stops before writing anything and prints the install command. `happy-dom` stays an optional
+  peer: a project that only uses the components never needs it.
+- **TJS's own doc comments, `/# … #/`, become documentation (#3601).** In `.tjs` and `.ajs`
+  files they are read in source order with any `/*#` blocks. tjs-lang finds them, so its grammar
+  applies exactly; that needs a tjs-lang that exports `findDocCommentSpans` (requested). With an
+  older one, the build names each file whose `/#` comments it could not read, instead of
+  dropping the page silently. `.ajs` files are now scraped for `/*#` blocks too.
+
+### 1.17.0-beta.3 (prerelease detail)
 
 > Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
 > on 1.16.41. beta.2 was staged and never published; its notes follow.

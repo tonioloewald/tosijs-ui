@@ -1699,7 +1699,17 @@ export function createDocBrowser(options) {
             // The sidenav has just introduced itself; give it the layout the doc asked for.
             applyFullScreen();
         },
-    }, navContent, div({
+    }, navContent, 
+    /*
+    The page's main landmark, and focusable: a page of plain prose has nothing else to tab
+    to, so a keyboard user could not scroll it at all (WCAG 2.1.1; axe
+    scrollable-region-focusable, #3575). A role, not a <main>, so styles written against the
+    div still apply. An embedded browser (`memory` routing) is part of someone else's page,
+    so it does not claim that page's main landmark.
+    */
+    div({
+        ...(routing === 'memory' ? {} : { role: 'main' }),
+        tabindex: 0,
         style: {
             position: 'relative',
             overflowY: 'scroll',

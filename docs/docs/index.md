@@ -29,8 +29,13 @@ whatever metadata the doc declares (`pin`, `order`, `parent`, `layout`, `descrip
 ## What is collected
 
 - **`.md` files**, whole. YAML frontmatter is read and removed.
-- **`/*#` … `*‎/` blocks** in `.ts`, `.tjs`, `.js` and `.css` files, as markdown. The first heading
-  is the page title. A block counts only when `/*#` starts a line.
+- **`/*#` … `*‎/` blocks** in `.ts`, `.tjs`, `.ajs`, `.js` and `.css` files, as markdown. The
+  first heading is the page title. A block counts only when `/*#` starts a line.
+- **TJS doc comments, `/#` … `#/`**, in `.tjs` and `.ajs` files, in source order with any `/*#`
+  blocks. They are found by tjs-lang itself, so they follow its grammar exactly: multi-line, and
+  a doc comment nested inside one is quoted as part of it. This needs a tjs-lang that exports
+  `findDocCommentSpans`; with an older one, the build names each file whose `/#` comments it
+  could not read.
 - **Files whose name starts with `_`** are skipped: use the prefix for drafts and fragments.
 
 Metadata blocks (`<!--{ … }-->` in markdown, `/*{ … }*‎/` in code), nav order, sections and

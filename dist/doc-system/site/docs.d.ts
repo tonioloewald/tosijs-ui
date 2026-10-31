@@ -143,5 +143,9 @@ export declare function parseFrontmatter(content: string): {
     body: string;
 };
 export declare const SCRAPED_SOURCE_EXTENSIONS: string[];
+type DocSpans = (source: string) => Array<[number, number]>;
+/** Tests only: stand in for tjs-lang's scanner (`undefined` restores the lookup). */
+export declare function setTjsDocCommentScanner(scan: DocSpans | null | undefined): void;
 export declare function extractDocs(options: ExtractDocsOptions): Doc[];
 export declare function saveDocsJSON(docs: Doc[], outputPath: string): void;
+export {};

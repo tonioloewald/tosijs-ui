@@ -31,6 +31,7 @@ export function registerSiteDialects(config) {
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
 import { EPUB_IMAGE_EXIT, attachCovers, listEpubVolumes, printCoverManifestUrl, VOLUME_MANIFEST, renderEpubDownloads, } from './epub-volumes.js';
 import { buildSlugMap, pathForSlug } from '../routing.js';
+import { missingBuildPeers, missingBuildPeersMessage } from './build-peers.js';
 import { assetStampInputs, computeAssetStamp, missingStampInputWarning, } from './asset-stamp.js';
 import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, } from 'fs';
 import { tmpdir } from 'os';
@@ -414,6 +415,12 @@ export async function buildSite(config, opts = {}) {
         devLimitMb: config.memoryLimitMb,
         mode: config.preflight,
     }))) {
+        return false;
+    }
+    // A peer the build needs, checked before anything is deleted or written (#3600).
+    const missingPeers = missingBuildPeers(import.meta.dir);
+    if (missingPeers.length) {
+        console.error(missingBuildPeersMessage(missingPeers));
         return false;
     }
     // Dependency-audit gate. Runs on the initial build only — the dev server runs its
