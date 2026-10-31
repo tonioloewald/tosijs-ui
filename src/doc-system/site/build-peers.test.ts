@@ -1,8 +1,12 @@
 import { test, expect } from 'bun:test'
+import { readFileSync } from 'fs'
+import * as path from 'path'
 import { missingBuildPeers, missingBuildPeersMessage } from './build-peers.js'
 
 test('a missing happy-dom is named with the range tosijs-ui declares (#3600)', () => {
-  const pkg = require('../../../package.json')
+  const pkg = JSON.parse(
+    readFileSync(path.join(import.meta.dir, '../../../package.json'), 'utf8')
+  )
   const missing = missingBuildPeers(import.meta.dir, () => {
     throw new Error('not found')
   })

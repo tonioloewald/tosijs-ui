@@ -47,6 +47,7 @@ which code fences run live are described under [Doc format](/doc-site-system/#do
 // TODO CLI options
 
 import * as fs from 'fs'
+import { createRequire } from 'module'
 import * as path from 'path'
 import {
   truncationWarnings,
@@ -359,9 +360,11 @@ let tjsDocSpans: DocSpans | null | undefined
 function tjsDocCommentSpans(): DocSpans | null {
   if (tjsDocSpans !== undefined) return tjsDocSpans
   tjsDocSpans = null
+  // The project's tjs-lang, the one its .tjs files are written for.
+  const projectModule = createRequire(path.resolve('package.json'))
   for (const entry of ['tjs-lang/lang', 'tjs-lang']) {
     try {
-      const found = require(entry).findDocCommentSpans
+      const found = projectModule(entry).findDocCommentSpans
       if (typeof found === 'function') {
         tjsDocSpans = found
         break
