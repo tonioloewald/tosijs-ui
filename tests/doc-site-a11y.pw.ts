@@ -68,3 +68,45 @@ for (const scheme of ['light', 'dark'] as const) {
     })
   }
 }
+
+/*
+A page of plain prose, with no link or control in it, still scrolls by keyboard (#3575). axe
+accepts a scrolling region that holds something focusable, and every page of this site does, so
+the test strips the content down to text: Learn 3D's chapters are like that, and failed on 71 of
+126 pages.
+*/
+test('the content scroller is keyboard-reachable on a page with no links', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName !== 'chromium', 'one engine is enough for axe')
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+  await page.setViewportSize({ width: 1200, height: 600 })
+  await page.goto('/doc-site-system/')
+  await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
+  await page.waitForTimeout(500)
+  await page.evaluate(() => {
+    const content = document.querySelector('.doc-content')!
+    content.replaceChildren(
+      ...Array.from({ length: 80 }, (_, i) => {
+        const p = document.createElement('p')
+        p.textContent = `Paragraph ${i} of plain prose.`
+        return p
+      })
+    )
+  })
+  await page.addScriptTag({ content: AXE })
+  const violations = await page.evaluate(async () => {
+    const result = await (window as any).axe.run(document, {
+      runOnly: { type: 'rule', values: ['scrollable-region-focusable'] },
+    })
+    return result.violations.map(
+      (v: any) => `${v.id}: ${v.nodes.map((n: any) => n.target).join(', ')}`
+    )
+  })
+  expect(violations).toEqual([])
+  // ...and it is the page's main landmark, which the frame did not have at all.
+  await expect(page.locator('[role="main"]')).toHaveCount(1)
+})
