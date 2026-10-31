@@ -1005,3 +1005,26 @@ gap, recorded rather than hidden.
   of the tag exactly.
 - What the gates did not cover: the mode's axe audit and the Ace check have never run in an
   adopter's project with those tools installed. Learn 3D is the first real test.
+
+## 1.17.0-beta.2 – beta.4 (2026-10-31)
+
+- Three betas in one day, all driven by adopters: Learn 3D filed six issues from its first run of
+  the accessibility mode (#3575–#3577, #3584–#3586), tosijs-native two on its first build
+  (#3600, #3601). Each beta ran all four lanes sequentially; beta.4: unit 2166, Playwright 1007
+  (`E2E_PORT=8797`), haltija 88, consumer 66.
+- `release-check` accumulates from the last STABLE tag, so each beta demands the earlier betas'
+  bullets too. Fixed by keeping each earlier beta as a `### … (prerelease detail)` section under
+  the new `##`, as the 1.9.0 betas did; the final consolidates them.
+- Making the axe audit parallel (#3585) exposed that a fixed 300ms wait audited half-built pages
+  under load. The settle rule that replaced it then exposed the localhost-only doc-test runner's
+  frames on every page. The audit was non-deterministic before either change; nobody noticed
+  because it ran one page at a time on an idle machine.
+- Process slip: ESLint caught two bare `require()` calls after the lanes had run, and the first
+  fix put an import inside the file's `/*#` doc comment (the first `import ` text in the file).
+  Only the unit, format and consumer lanes were re-run after the fix.
+- beta.2 was approved before beta.3 was ready; harmless, since each beta contains the last.
+  beta.3 and beta.4 were approved together. All three workflow runs verified; beta.4's published
+  `dist/` is identical to `git archive` of its tag.
+- Open dependency: #3601's real fix reads `/# … #/` through tjs-lang's `findDocCommentSpans`,
+  exported in tjs-lang d20e936 (#3604) but not yet in a published rc (rc.9 predates it). Until
+  then the build names the files it could not read.
