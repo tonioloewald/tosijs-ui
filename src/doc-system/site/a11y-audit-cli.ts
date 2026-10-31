@@ -10,7 +10,7 @@ tosijs-ui. When either is missing, or Chromium is not installed, it says which a
 NOT_RUN_EXIT, so the build can say the audit did not run instead of reporting a pass.
 
   bun a11y-audit-cli.ts <payload.json>   # payload = { outputDir, basePath, pages }
-  stdout: one JSON line, { violations: AxeFinding[] }
+  stdout: one JSON line, { violations: AxeFinding[], unsettled: { page, reason }[] }
 
 Build-time only. Never import this from browser code.
 */
@@ -21,9 +21,14 @@ import { existsSync } from 'fs'
 import { NOT_RUN_EXIT, AXE_TAGS, type AxeFinding } from './a11y-audit.js'
 
 const payloadPath = process.argv[2]
-const { outputDir, basePath, pages } = JSON.parse(
+const { outputDir, basePath, pages, slowPageMs } = JSON.parse(
   await Bun.file(payloadPath).text()
-) as { outputDir: string; basePath: string; pages: string[] }
+) as {
+  outputDir: string
+  basePath: string
+  pages: string[]
+  slowPageMs?: number
+}
 
 const notRun = (why: string): never => {
   console.error(why)
@@ -78,7 +83,13 @@ Pages are audited a few at a time, each in its own tab: one at a time took Learn
 to ~73s (#3585). Results are kept in page order, so the report reads the same either way.
 */
 const CONCURRENCY = 4
+/** How long a page may take to fire `load`, and to finish being `aria-busy`. */
+const SLOW_PAGE_MS = slowPageMs ?? 30_000
+/** How long an un-busy page may keep adding elements before it is audited as it stands. */
+const QUIET_CAP_MS = 5_000
+
 const perPage: AxeFinding[][] = []
+const unsettled: Array<{ page: string; reason: string }> = []
 try {
   const context = await browser.newContext()
   /*
@@ -94,9 +105,33 @@ try {
     while (next < pages.length) {
       const index = next++
       const pagePath = pages[index]
-      await page.goto(`http://localhost:${server.port}${prefix}${pagePath}`, {
-        waitUntil: 'networkidle',
-      })
+      /*
+      One slow or broken page must not end the audit of every other page, and must not pass
+      unremarked either: it is listed as not fully checked.
+      */
+      try {
+        await page.goto(`http://localhost:${server.port}${prefix}${pagePath}`, {
+          waitUntil: 'load',
+          timeout: SLOW_PAGE_MS,
+        })
+      } catch (error) {
+        const message = (error as Error).message.split('\n')[0]
+        if (!/timeout/i.test(message)) {
+          unsettled.push({ page: pagePath, reason: `not audited: ${message}` })
+          perPage[index] = []
+          continue
+        }
+        unsettled.push({
+          page: pagePath,
+          reason: `did not finish loading in ${
+            SLOW_PAGE_MS / 1000
+          }s; audited as it stood`,
+        })
+      }
+      // Best effort: a page that polls or streams never goes idle, and that is not a defect.
+      await page
+        .waitForLoadState('networkidle', { timeout: 10_000 })
+        .catch(() => undefined)
       // Audit the page a reader uses: hydrated when the bundle loads, static if it does not.
       if (await page.$('tosi-doc-system'))
         await page
@@ -105,29 +140,48 @@ try {
           })
           .catch(() => undefined)
       /*
-      Then until no element has been added or removed for half a second (at most five): live examples render
-      after hydration, and a fixed pause audited a busy machine's pages half-built, so the
-      findings changed from run to run.
+      Then until the page has settled: no element added or removed for half a second, and
+      nothing marked `aria-busy="true"`. A fixed pause audited a busy machine's pages
+      half-built. A page that is still loading (a 3D scene fetching its models, say) says so with
+      aria-busy, which screen readers also announce, and is waited for up to SLOW_PAGE_MS; one
+      that merely keeps changing is audited after QUIET_CAP_MS.
       */
-      await page.evaluate(
-        () =>
-          new Promise<void>((resolve) => {
-            let timer = setTimeout(done, 500)
-            const deadline = setTimeout(done, 5000)
+      const settled = await page.evaluate(
+        ({ quietCap, busyCap }: { quietCap: number; busyCap: number }) =>
+          new Promise<string>((resolve) => {
+            const start = performance.now()
+            let last = start
             const observer = new MutationObserver(() => {
-              clearTimeout(timer)
-              timer = setTimeout(done, 500)
+              last = performance.now()
             })
-            function done() {
-              observer.disconnect()
-              clearTimeout(timer)
-              clearTimeout(deadline)
-              resolve()
-            }
             // Elements arriving, not attributes: an animation changes a style forever.
             observer.observe(document, { subtree: true, childList: true })
-          })
+            const tick = () => {
+              const now = performance.now()
+              const busy = !!document.querySelector('[aria-busy="true"]')
+              const outcome =
+                now - last >= 500 && !busy
+                  ? 'settled'
+                  : !busy && now - start >= quietCap
+                  ? 'changing'
+                  : now - start >= busyCap
+                  ? 'busy'
+                  : ''
+              if (!outcome) return void setTimeout(tick, 100)
+              observer.disconnect()
+              resolve(outcome)
+            }
+            tick()
+          }),
+        { quietCap: QUIET_CAP_MS, busyCap: SLOW_PAGE_MS }
       )
+      if (settled === 'busy')
+        unsettled.push({
+          page: pagePath,
+          reason: `still aria-busy after ${
+            SLOW_PAGE_MS / 1000
+          }s; audited as it stood`,
+        })
       await page.addScriptTag({ path: axePath })
       const found = await page.evaluate(async (tags: string[]) => {
         const result = await (window as any).axe.run(document, {
@@ -151,4 +205,4 @@ try {
   server.stop(true)
 }
 const violations = perPage.flat()
-console.log(JSON.stringify({ violations }))
+console.log(JSON.stringify({ violations, unsettled }))

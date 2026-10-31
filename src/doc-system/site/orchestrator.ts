@@ -2048,16 +2048,32 @@ export async function buildSite(
             `\n⚠️  Accessibility: the axe audit did not run, so this build makes no claim\n` +
               `    about what it would find. ${audit.reason}\n`
           )
-        } else if (audit.violations.length) {
-          misconfigured(
-            config.strict,
-            `\n⚠️  Accessibility: axe found ${audit.violations.length} WCAG 2.2 AA failure(s) in the built pages:\n` +
-              `${formatAxeFindings(audit.violations)}\n`
-          )
         } else {
-          console.log(
-            `♿ axe: no WCAG 2.2 AA failures in ${pages.length} page(s)`
-          )
+          // A page the audit could not check fully is said, never counted as clean.
+          if (audit.unsettled.length)
+            console.warn(
+              `\n⚠️  Accessibility: ${audit.unsettled.length} page(s) were not fully checked, so ` +
+                `this build makes no claim about them. A page that is still loading should mark ` +
+                `itself aria-busy="true"; the audit waits up to 30s for it:\n` +
+                audit.unsettled
+                  .map((u) => `    ${u.page}  ${u.reason}`)
+                  .join('\n') +
+                '\n'
+            )
+          const checked = pages.length - audit.unsettled.length
+          if (audit.violations.length)
+            misconfigured(
+              config.strict,
+              `\n⚠️  Accessibility: axe found ${audit.violations.length} WCAG 2.2 AA failure(s) in the built pages:\n` +
+                `${formatAxeFindings(audit.violations)}\n`
+            )
+          else
+            console.log(
+              `♿ axe: no WCAG 2.2 AA failures in ${checked} fully checked page(s)` +
+                (audit.unsettled.length
+                  ? ` (${audit.unsettled.length} not fully checked, above)`
+                  : '')
+            )
         }
       }
 

@@ -361,10 +361,39 @@ of controls inside your live examples, ARIA on the components you embed.
 It needs `playwright` and `axe-core` installed in your project (`bun add -d playwright
 axe-core`, then `bunx playwright install chromium`). Without them the build says the audit did
 not run, and makes no claim about what it would have found. It runs on the first build in a
-process and never under a dev server. Pages are audited four at a time, each once it has stopped
-adding elements: about half a second a page, measured on this site. To keep the mode on but skip the
+process and never under a dev server. Pages are audited four at a time, each once it has
+settled: about half a second a page, measured on this site. To keep the mode on but skip the
 audit and the Ace check for one build, set `TOSIJS_A11Y_AUDIT=off`; the ePub then claims no
 conformance.
+
+**Slow pages: mark them `aria-busy`.** A page counts as settled when no element has been added or
+removed for half a second, and nothing on it is marked `aria-busy="true"`. A page that keeps
+changing is audited after five seconds as it stands. A page that is still loading, such as a 3D
+scene fetching large models or a chart waiting on data, should say so: while any element carries
+`aria-busy="true"`, the audit waits, up to 30 seconds. A page that never loads, or is still busy
+at 30 seconds, is listed as not fully checked; the build makes no claim about it, and the rest of
+the audit goes on.
+
+This is the standard ARIA signal, not a tosijs-ui convention: a screen reader also holds off
+announcing a busy region until it is ready. A component that loads asynchronously sets it on its
+own element (the host, not inside its shadow root, where the audit cannot see it) and removes it
+when it is ready, failed included:
+
+```js:static
+class SceneViewer extends HTMLElement {
+  async connectedCallback() {
+    this.setAttribute('aria-busy', 'true')
+    try {
+      await this.loadModels()
+    } finally {
+      this.removeAttribute('aria-busy')
+    }
+  }
+}
+```
+
+Always clear it in a `finally`: a component left busy after an error is waited for the full 30
+seconds on every build, and reported as not fully checked.
 
 **The ePub.** In the mode the book's package document declares its accessibility, as EPUB
 Accessibility 1.1 asks (and the European Accessibility Act points e-books at): its access modes,

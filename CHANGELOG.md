@@ -1,6 +1,20 @@
 # Changelog
 
-## 1.17.0-beta.2
+## 1.17.0-beta.3
+
+> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
+> on 1.16.41. beta.2 was staged and never published; its notes follow.
+
+- **The axe audit waits for a page marked `aria-busy`, and one slow page no longer ends it.** A
+  page that is still loading (a 3D scene fetching large models, say) marks an element
+  `aria-busy="true"`, the standard ARIA signal, and is waited for up to 30 seconds; other pages
+  are audited once they have stopped adding elements, or after five seconds. A page that never
+  loads, or is still busy at 30 seconds, is listed as not fully checked, and the build makes no
+  claim about it. Before, each page load waited for the network to go idle, so a page that kept
+  downloading for 30 seconds, or that polled, threw and ended the audit of every page. The doc
+  site reference shows a component setting and clearing `aria-busy`.
+
+### 1.17.0-beta.2 (prerelease detail)
 
 > Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
 > on 1.16.41. Fixes from Learn 3D's first run of beta.1.

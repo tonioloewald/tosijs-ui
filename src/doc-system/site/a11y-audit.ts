@@ -31,8 +31,14 @@ export interface AxeFinding {
   targets: string[]
 }
 
+/** A page the audit could not check fully: it never loaded, or never stopped being busy. */
+export interface UnsettledPage {
+  page: string
+  reason: string
+}
+
 export type AxeAuditResult =
-  | { ran: true; violations: AxeFinding[] }
+  | { ran: true; violations: AxeFinding[]; unsettled: UnsettledPage[] }
   | { ran: false; reason: string }
 
 export async function auditBuiltSite(opts: {
@@ -42,6 +48,8 @@ export async function auditBuiltSite(opts: {
   pages: string[]
   /** the project Playwright and axe-core are resolved from (default: the working directory) */
   projectDir?: string
+  /** how long a page may take to load, or stay `aria-busy="true"` (default 30s) */
+  slowPageMs?: number
 }): Promise<AxeAuditResult> {
   const cliTs = `${import.meta.dir}/a11y-audit-cli.ts`
   const cli = existsSync(cliTs) ? cliTs : `${import.meta.dir}/a11y-audit-cli.js`
@@ -52,6 +60,7 @@ export async function auditBuiltSite(opts: {
       outputDir: path.resolve(opts.outputDir),
       basePath: opts.basePath ?? '',
       pages: opts.pages,
+      slowPageMs: opts.slowPageMs,
     })
   )
   // `--no-install`: without it Bun resolves a package the project does not have from its global
@@ -69,7 +78,10 @@ export async function auditBuiltSite(opts: {
   if (code === NOT_RUN_EXIT) return { ran: false, reason: stderr.trim() }
   const line = stdout.trim().split('\n').pop() ?? ''
   try {
-    if (code === 0) return { ran: true, ...JSON.parse(line) }
+    if (code === 0) {
+      const { violations, unsettled = [] } = JSON.parse(line)
+      return { ran: true, violations, unsettled }
+    }
   } catch {
     // fall through: a run that printed no result did not run
   }

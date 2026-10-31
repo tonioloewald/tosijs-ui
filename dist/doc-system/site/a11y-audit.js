@@ -25,6 +25,7 @@ export async function auditBuiltSite(opts) {
         outputDir: path.resolve(opts.outputDir),
         basePath: opts.basePath ?? '',
         pages: opts.pages,
+        slowPageMs: opts.slowPageMs,
     }));
     // `--no-install`: without it Bun resolves a package the project does not have from its global
     // cache, so "not installed" would never be said and the audit would use a Playwright nobody chose.
@@ -42,8 +43,10 @@ export async function auditBuiltSite(opts) {
         return { ran: false, reason: stderr.trim() };
     const line = stdout.trim().split('\n').pop() ?? '';
     try {
-        if (code === 0)
-            return { ran: true, ...JSON.parse(line) };
+        if (code === 0) {
+            const { violations, unsettled = [] } = JSON.parse(line);
+            return { ran: true, violations, unsettled };
+        }
     }
     catch {
         // fall through: a run that printed no result did not run
