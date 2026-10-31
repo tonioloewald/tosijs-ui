@@ -1,8 +1,8 @@
 import { test, expect, describe } from 'bun:test'
 import {
   entriesFromCorpus,
+  generateLlmsFullTxt,
   generateLlmsTxt,
-  markdownExample,
 } from './make-llms-txt.js'
 import { buildSlugMap, pathForSlug, withBase } from '../routing.js'
 import { mkdtempSync, readFileSync } from 'fs'
@@ -28,7 +28,7 @@ const corpus = [
   { filename: 'demo.md', title: 'Demo', text: 'a fixture', noindex: true },
 ]
 
-test('indexes every titled, non-hidden, indexable doc — .md AND .ts — sorted by title', () => {
+test('indexes every titled, non-hidden, indexable doc — .md AND .ts', () => {
   const entries = entriesFromCorpus(corpus, { baseUrl: 'https://x.dev' })
   // hidden, noindex and untitled excluded; .md docs included (the old src/*.ts scan missed these)
   expect(entries.map((e) => e.title)).toEqual(['button', 'Guide', 'Home'])
@@ -128,8 +128,8 @@ describe('#144: llms.txt links respect basePath', () => {
   })
 })
 
-test('the index says pages are also available as markdown', () => {
-  expect(written({ name: 'x' })).toContain('append `index.md`')
+test("the index links each page's markdown copy", () => {
+  expect(written({ name: 'x' })).toContain('- [button](/button/index.md)')
 })
 
 test('…and does not when the site ships HTML only', () => {
@@ -137,20 +137,126 @@ test('…and does not when the site ships HTML only', () => {
   expect(written({ name: 'x', markdownPages: false })).not.toContain('index.md')
 })
 
-test('the index.md example is a page of THIS site, never a hard-coded one', () => {
-  const corpus = [
-    { filename: 'README.md', title: 'Home', text: '# Home', path: 'README.md' },
-    { filename: 'secret.md', title: 'Secret', text: '# Secret', hidden: true },
-    { filename: 'quiet.md', title: 'Quiet', text: '# Quiet', noindex: true },
-    { filename: 'start-here.md', title: 'Start here', text: '# Start here' },
+/*
+#3564: llms.txt in the llmstxt.org shape. It was a bare-URL list sorted by title, which reads a
+book's chapters out of order, and linked the HTML when every page has a markdown copy.
+*/
+describe('#3564: the llmstxt.org shape', () => {
+  const book = [
+    {
+      filename: 'intro.md',
+      title: 'Introduction',
+      text: '# Introduction\n\nWhere it starts.',
+      order: 1,
+    },
+    {
+      filename: 'zebra.md',
+      title: 'A zebra',
+      text: '# A zebra\n\nStriped.',
+      order: 2,
+    },
+    {
+      filename: 'parts.md',
+      title: 'Parts',
+      text: '# Parts\n\nThe parts.',
+      order: 3,
+    },
+    {
+      filename: 'gear.md',
+      title: 'Gear',
+      text: '# Gear\n\nTeeth.',
+      parent: 'Parts',
+    },
+    {
+      filename: 'axle.md',
+      title: 'Axle',
+      text: '# Axle\n\nTurns.',
+      parent: 'Parts',
+    },
+    { filename: 'quiet.md', title: 'Quiet', text: 'x', noindex: true },
   ]
-  const example = markdownExample(corpus, {})
-  expect(example).toMatch(/^\/[a-z-]+\/index\.md$/)
-  expect(example).not.toContain('carousel')
-  expect(example).not.toContain('secret')
-  expect(example).not.toContain('quiet')
-  expect(markdownExample(corpus, { basePath: '/docs' })).toMatch(
-    /^\/docs\/[a-z-]+\/index\.md$/
-  )
-  expect(markdownExample([], {})).toBeUndefined()
+
+  test('entries are in nav order, not by title', () => {
+    expect(entriesFromCorpus(book, {}).map((e) => e.title)).toEqual([
+      'Introduction',
+      'A zebra',
+      'Parts',
+      'Axle',
+      'Gear',
+    ])
+  })
+
+  test('H1, summary blockquote, then sections of [title](markdown url): description', () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'llms-')), 'llms.txt')
+    generateLlmsTxt(
+      out,
+      { name: 'Book', description: 'A book.', baseUrl: 'https://b.dev' },
+      book
+    )
+    const text = readFileSync(out, 'utf8')
+    expect(text.startsWith('# Book\n\n> A book.\n')).toBe(true)
+    // top-level pages are Docs; a nav section is its own section, the section page first
+    expect(text).toContain(
+      '## Docs\n\n' +
+        '- [Introduction](https://b.dev/intro/index.md): Where it starts.\n' +
+        '- [A zebra](https://b.dev/zebra/index.md): Striped.\n\n' +
+        '## Parts\n\n' +
+        '- [Parts](https://b.dev/parts/index.md): The parts.\n' +
+        '- [Axle](https://b.dev/axle/index.md): Turns.\n' +
+        '- [Gear](https://b.dev/gear/index.md): Teeth.\n'
+    )
+    expect(text).toContain('https://b.dev/llms-full.txt')
+    expect(text).not.toContain('quiet')
+  })
+
+  test('links are the HTML pages when the site writes no markdown copies', () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'llms-')), 'llms.txt')
+    generateLlmsTxt(out, { name: 'Book', markdownPages: false }, book)
+    const text = readFileSync(out, 'utf8')
+    expect(text).toContain('- [Gear](/gear/): Teeth.')
+    expect(text).not.toContain('index.md')
+  })
+
+  test('a description is one line, with the inline markdown taken out', () => {
+    const [entry] = entriesFromCorpus(
+      [
+        {
+          filename: 'a.md',
+          title: 'A',
+          text: '# A\n\nAn _emphatic_\n**bold** [[gear|link]].',
+        },
+      ],
+      {}
+    )
+    expect(entry.description).toBe('An emphatic bold link.')
+  })
+
+  test('llms-full.txt is every indexed page, in nav order, each with its URL', () => {
+    const out = join(mkdtempSync(join(tmpdir(), 'llms-')), 'llms-full.txt')
+    generateLlmsFullTxt(out, { name: 'Book', baseUrl: 'https://b.dev' }, [
+      ...book,
+      // a page with no heading of its own gets its title
+      {
+        filename: 'notes.md',
+        title: 'Notes',
+        text: '<!--{"order":9}-->\nJust notes.',
+        order: 9,
+      },
+    ])
+    const text = readFileSync(out, 'utf8')
+    const order = [...text.matchAll(/^# (.+)$/gm)].map((m) => m[1])
+    expect(order).toEqual([
+      'Book',
+      'Introduction',
+      'A zebra',
+      'Parts',
+      'Axle',
+      'Gear',
+      'Notes',
+    ])
+    expect(text).toContain('Source: https://b.dev/gear/')
+    expect(text).toContain('# Notes\n\nJust notes.')
+    expect(text).not.toContain('<!--{')
+    expect(text).not.toContain('Quiet')
+  })
 })

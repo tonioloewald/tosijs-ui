@@ -42,7 +42,7 @@ whatever metadata the doc declares (`pin`, `order`, `parent`, `layout`, `descrip
 Metadata blocks (`<!--{ … }-->` in markdown, `/*{ … }*‎/` in code), nav order, sections and
 which code fences run live are described under [Doc format](/doc-site-system/#doc-format).
 */
-/*{ "parent": "Documentation System", "order": 60, "description": "extractDocs() collects markdown files and doc comments from source code into one docs.json corpus, the input to the doc browser and static site." }*/
+/*{ "headTitle": "extractDocs() doc corpus extractor — tosijs-ui", "parent": "Documentation System", "order": 60, "description": "extractDocs() collects markdown files and doc comments from source code into one docs.json corpus, the input to the doc browser and static site." }*/
 // TODO CLI options
 import * as fs from 'fs';
 import { createRequire } from 'module';

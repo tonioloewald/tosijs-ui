@@ -340,10 +340,10 @@ export interface SiteConfig {
    */
   generateCssPreload?: string
   /**
-   * Emit llms.txt agent-discoverability index. Default true (uses `name` /
-   * `description` / `baseUrl` / `projectLinks`). Set false to skip, or pass a
-   * function for a fully custom index — it receives the doc corpus and returns
-   * the file contents.
+   * Emit the llms.txt index (llmstxt.org shape, pages in nav order) and llms-full.txt (the
+   * whole corpus as one markdown file). Default true (uses `name` / `description` /
+   * `baseUrl` / `projectLinks`). Set false to skip both, or pass a function for a fully
+   * custom index — it receives the doc corpus and returns the file contents.
    */
   llmsTxt?: boolean | ((docs: Doc[]) => string)
   /**

@@ -110,7 +110,7 @@ For example, tosi-select derives from base:
 This allows fine-grained customization while maintaining consistency.
 */
 
-/*{ "parent": "Helper Libraries", "description": "The tosijs-ui theme: CSS variables for spacing, colour and type shared by every component, with dark mode computed from your colours." }*/
+/*{ "headTitle": "Theme, CSS variables and dark mode — tosijs-ui", "parent": "Helper Libraries", "description": "The tosijs-ui theme: CSS variables for spacing, colour and type shared by every component, with dark mode computed from your colours." }*/
 
 import {
   Color,

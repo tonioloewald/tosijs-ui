@@ -151,7 +151,7 @@ preview.append(tosiRouteView())
 navigate('page/1')
 ```
 */
-/*{ "parent": "Helper Libraries", "description": "A lightweight client-side router for single-page apps, with named parameters, hash routing, and several named views per route." }*/
+/*{ "headTitle": "Client-side router for single-page apps — tosijs-ui", "parent": "Helper Libraries", "description": "A lightweight client-side router for single-page apps, with named parameters, hash routing, and several named views per route." }*/
 import { tosi, withAttributes } from 'tosijs';
 // ============================================================================
 // Router State

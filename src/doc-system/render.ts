@@ -445,13 +445,34 @@ export function accessibleDocTokens(text: string, title?: string): any[] {
 }
 
 /**
+ * Where search engines cut a description (#3563). A derived one is cut to fit, on a sentence
+ * boundary where it can be, and the metadata lint flags a written one that is longer.
+ */
+export const DESCRIPTION_MAX = 155
+
+/**
  * Derive a clean <meta name="description"> from a doc's first prose paragraph.
  * Skips the title heading, code fences, tables, quotes, html and image/link-only
  * lines; strips inline markdown; drops low-value "This is a…" leads; and truncates
  * on a sentence boundary where possible (never mid-clause ending in a comma).
  * Pages can override this entirely via their JSON metadata `description`.
  */
-export function docDescription(text: string, maxLength = 160): string {
+export function docDescription(
+  text: string,
+  maxLength = DESCRIPTION_MAX
+): string {
+  return derivedDescription(text, maxLength).text
+}
+
+/**
+ * `docDescription`, saying whether the paragraph had to be cut mid-sentence (it then ends in
+ * "…"), which the metadata lint reports: the useful half of a cut description is usually the
+ * half that was cut.
+ */
+export function derivedDescription(
+  text: string,
+  maxLength = DESCRIPTION_MAX
+): { text: string; cut: boolean } {
   const lines = text.split('\n')
   let inFence = false
   const prose: string[] = []
@@ -480,12 +501,21 @@ export function docDescription(text: string, maxLength = 160): string {
     .replace(/`([^`]+)`/g, '$1')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/\*([^*]+)\*/g, '$1')
+    // `_emphasis_` leaked into Learn 3D's descriptions; word-bounded, so snake_case survives.
+    .replace(/(^|[^\w])__([^_]+)__(?!\w)/g, '$1$2')
+    .replace(/(^|[^\w])_([^_]+)_(?!\w)/g, '$1$2')
+    .replace(/~~([^~]+)~~/g, '$1')
+    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2')
+    .replace(/\[\[([^\]]+)\]\]/g, '$1')
+    .replace(/\[\^[^\]]+\]/g, '')
     .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\[[^\]]*\]/g, '$1')
     .replace(/^This (?:is|component is|widget is)\s+(?:a|an|the)\s+/i, '')
     .trim()
-  if (!s) return ''
+  if (!s) return { text: '', cut: false }
   s = s.charAt(0).toUpperCase() + s.slice(1)
-  if (s.length <= maxLength) return s.replace(/[,;:\s]+$/, '')
+  if (s.length <= maxLength)
+    return { text: s.replace(/[,;:\s]+$/, ''), cut: false }
 
   const slice = s.slice(0, maxLength)
   const sentenceEnd = Math.max(
@@ -494,12 +524,14 @@ export function docDescription(text: string, maxLength = 160): string {
     slice.lastIndexOf('? ')
   )
   if (sentenceEnd > maxLength * 0.6)
-    return slice.slice(0, sentenceEnd + 1).trim()
+    return { text: slice.slice(0, sentenceEnd + 1).trim(), cut: false }
   const wordEnd = slice.lastIndexOf(' ')
-  return (
-    slice
-      .slice(0, wordEnd)
-      .replace(/[,;:.\s]+$/, '')
-      .trim() + '…'
-  )
+  return {
+    text:
+      slice
+        .slice(0, wordEnd)
+        .replace(/[,;:.\s]+$/, '')
+        .trim() + '…',
+    cut: true,
+  }
 }

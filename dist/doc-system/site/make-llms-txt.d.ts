@@ -2,17 +2,26 @@ import type { ExamplePolicy } from '../example-policy.js';
 /** A doc as it appears in the extracted corpus (docs.json). */
 interface CorpusDoc {
     title?: string;
+    headTitle?: string;
     filename: string;
+    path?: string;
     text?: string;
     description?: string;
     hidden?: boolean;
     noindex?: boolean;
+    pin?: 'top' | 'bottom';
+    order?: number;
+    parent?: string;
 }
 interface LlmsEntry {
     title: string;
     description: string;
     /** rendered-doc URL (corpus mode) or dist/*.js path (legacy scan) */
     link: string;
+    /** the page's markdown copy, when the site writes one */
+    markdown?: string;
+    /** the nav section this page sits in (its top-level ancestor), '' at the top level */
+    section?: string;
 }
 export interface LlmsTxtMeta {
     name?: string;
@@ -48,21 +57,25 @@ export interface LlmsTxtMeta {
 /**
  * Build entries from the extracted corpus — every doc that was actually
  * extracted (`.md`, `.ts`/`.js`/`.css` doc comments, auto-created sections),
- * linking to its rendered URL. This is what the build uses: it reflects the real
- * docs and needs no `dist/` library output.
+ * linking to its rendered URL, in nav order. This is what the build uses: it
+ * reflects the real docs and needs no `dist/` library output.
  */
 export declare function entriesFromCorpus(corpus: CorpusDoc[], meta: LlmsTxtMeta): LlmsEntry[];
 /**
- * A real page of THIS site to show the `index.md` rule with. It was hard-coded to
- * `/carousel/index.md`, a tosijs-ui page, so every other project's llms.txt pointed agents
- * at a URL it does not have (board #3248). The first page that has a markdown copy and is
- * not the site root.
- */
-export declare function markdownExample(corpus: CorpusDoc[], meta: LlmsTxtMeta): string | undefined;
-/**
- * Write an `llms.txt` index. Pass the extracted `corpus` (the build does) to
- * index every doc by its rendered URL; omit it to fall back to the legacy
- * `src/*.ts`-with-`dist/*.js` scan.
+ * Write an `llms.txt` index in the llmstxt.org shape (#3564): an H1 with the project's name, its
+ * summary as a blockquote, notes, then H2 sections of `- [title](url): description` lines. Pages
+ * are in nav order, and a nav section with pages under it is a section of its own; the
+ * top-level pages are `## Docs`. Each link is the page's markdown copy when the site writes
+ * them, which is what an agent fetching from the index wants.
+ *
+ * Pass the extracted `corpus` (the build does) to index every doc by its rendered URL; omit it
+ * to fall back to the legacy `src/*.ts`-with-`dist/*.js` scan.
  */
 export declare function generateLlmsTxt(outputPath: string, meta?: LlmsTxtMeta, corpus?: CorpusDoc[]): void;
+/**
+ * Write `llms-full.txt`: the whole indexed corpus as one markdown file, in nav order (#3564).
+ * For a reader that wants everything in one fetch rather than following the index. Each page
+ * is its own markdown, under a `# title` when it has none, with its URL after it.
+ */
+export declare function generateLlmsFullTxt(outputPath: string, meta: LlmsTxtMeta, corpus: CorpusDoc[]): void;
 export {};

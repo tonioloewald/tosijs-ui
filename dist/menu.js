@@ -792,7 +792,7 @@ preview.append(btn)
 ```
 
 */
-/*{ "parent": "Components", "description": "Pop up a menu anywhere with popMenu() or <tosi-menu>: nested submenus, icons, keyboard shortcuts, and drop menus that accept drags." }*/
+/*{ "headTitle": "Pop-up, nested and drop menus — tosijs-ui", "parent": "Components", "description": "Pop up a menu anywhere with popMenu() or <tosi-menu>: nested submenus, icons, keyboard shortcuts, and drop menus that accept drags." }*/
 import { elements, varDefault, vars, StyleSheet, withAttributes, } from 'tosijs';
 import { popFloat } from './pop-float.js';
 import { icons } from './icons.js';

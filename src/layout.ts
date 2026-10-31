@@ -43,7 +43,7 @@ A CSS grid container.
 ```
 */
 
-/*{ "parent": "Components", "description": "<tosi-row>, <tosi-column> and <tosi-grid>: thin custom elements over CSS flexbox and grid for structural page layout." }*/
+/*{ "headTitle": "<tosi-row>, <tosi-column>, <tosi-grid> layout — tosijs-ui", "parent": "Components", "description": "<tosi-row>, <tosi-column> and <tosi-grid>: thin custom elements over CSS flexbox and grid for structural page layout." }*/
 
 import {
   ElementCreator,

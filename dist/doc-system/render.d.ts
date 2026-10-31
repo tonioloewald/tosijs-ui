@@ -29,6 +29,11 @@ export declare function renderDocMarkdown(text: string, opts?: {
  */
 export declare function accessibleDocTokens(text: string, title?: string): any[];
 /**
+ * Where search engines cut a description (#3563). A derived one is cut to fit, on a sentence
+ * boundary where it can be, and the metadata lint flags a written one that is longer.
+ */
+export declare const DESCRIPTION_MAX = 155;
+/**
  * Derive a clean <meta name="description"> from a doc's first prose paragraph.
  * Skips the title heading, code fences, tables, quotes, html and image/link-only
  * lines; strips inline markdown; drops low-value "This is a…" leads; and truncates
@@ -36,3 +41,12 @@ export declare function accessibleDocTokens(text: string, title?: string): any[]
  * Pages can override this entirely via their JSON metadata `description`.
  */
 export declare function docDescription(text: string, maxLength?: number): string;
+/**
+ * `docDescription`, saying whether the paragraph had to be cut mid-sentence (it then ends in
+ * "…"), which the metadata lint reports: the useful half of a cut description is usually the
+ * half that was cut.
+ */
+export declare function derivedDescription(text: string, maxLength?: number): {
+    text: string;
+    cut: boolean;
+};

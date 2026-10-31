@@ -143,7 +143,7 @@ interface FilterMaker {
 }
 ```
 */
-/*{ "parent": "Form Components", "description": "<tosi-filter> builds array filter functions from a Finder-style query editor, with extensible filter types and a state you can save as JSON." }*/
+/*{ "headTitle": "<tosi-filter> query and filter builder — tosijs-ui", "parent": "Form Components", "description": "<tosi-filter> builds array filter functions from a Finder-style query editor, with extensible filter types and a state you can save as JSON." }*/
 import { Component as WebComponent, elements, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { tosiSelect } from './select.js';

@@ -76,7 +76,7 @@ randomize()
 - `not` reverses the condition (so `<tosi-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 */
 
-/*{ "parent": "Helper Libraries", "description": "<tosi-ab> shows or hides content by condition, so you can run A/B tests or feature flags by setting AbTest.conditions." }*/
+/*{ "headTitle": "<tosi-ab> A/B tests and feature flags — tosijs-ui", "parent": "Helper Libraries", "description": "<tosi-ab> shows or hides content by condition, so you can run A/B tests or feature flags by setting AbTest.conditions." }*/
 
 import { withAttributes } from 'tosijs'
 

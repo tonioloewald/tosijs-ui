@@ -14,8 +14,9 @@ import { pageTitle } from '../doc-title.js';
 import { highlightHtml } from '../highlight.js';
 import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
-import { renderDocMarkdown, docDescription, } from '../render.js';
+import { renderDocMarkdown, } from '../render.js';
 import { accessibilityFindings, findingLine } from './a11y-report.js';
+import { pageDescription } from './page-metadata.js';
 import { bareNameLinks, deadInPageAnchors, missingWikilinks, misconfigured, } from './build-warnings.js';
 import { existsSync } from 'fs';
 const escapeAttr = (s) => s
@@ -150,7 +151,7 @@ at = slugMap[doc.filename] ?? '') {
     // it twice is what made the title change on hydration (issue #6).
     const title = pageTitle(doc, projectName);
     // Per-page metadata (from the doc's JSON block) wins; else derive, else site default.
-    const description = doc.description || docDescription(doc.text) || config.description || '';
+    const description = pageDescription(doc, config.description).text;
     const keywords = Array.isArray(doc.keywords)
         ? doc.keywords.join(', ')
         : doc.keywords || '';

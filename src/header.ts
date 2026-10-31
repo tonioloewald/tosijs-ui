@@ -88,7 +88,7 @@ preview.append(
 ```
 */
 
-/*{ "parent": "Components", "description": "<tosi-header> is a flex header bar; compose it with elastic() and spacer() to place a title, links and menus where you want them." }*/
+/*{ "headTitle": "<tosi-header> flex header bar — tosijs-ui", "parent": "Components", "description": "<tosi-header> is a flex header bar; compose it with elastic() and spacer() to place a title, links and menus where you want them." }*/
 
 import { Component, ElementCreator, elements, varDefault } from 'tosijs'
 

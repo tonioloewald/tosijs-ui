@@ -143,7 +143,7 @@ preview.append(
 ```
 
 */
-/*{ "parent": "Components", "description": "<tosi-dialog> wraps the native <dialog> element with an OK button, a footer slot, and promise-based alert, confirm and prompt helpers." }*/
+/*{ "headTitle": "<tosi-dialog> modal dialogs and prompts — tosijs-ui", "parent": "Components", "description": "<tosi-dialog> wraps the native <dialog> element with an OK button, a footer slot, and promise-based alert, confirm and prompt helpers." }*/
 import { Component, elements, on, vars, varDefault } from 'tosijs';
 import { findHighestZ } from './track-drag.js';
 const { dialog, button, header, footer, tosiSlot, h3, p, label, input, div } = elements;

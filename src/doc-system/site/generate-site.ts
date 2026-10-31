@@ -31,11 +31,11 @@ import {
 import { buildNavTree, navOpenPath, NavNode } from '../nav-tree.js'
 import {
   renderDocMarkdown,
-  docDescription,
   type AccessibilityMode,
   type ExampleBakes,
 } from '../render.js'
 import { accessibilityFindings, findingLine } from './a11y-report.js'
+import { pageDescription } from './page-metadata.js'
 import {
   bareNameLinks,
   deadInPageAnchors,
@@ -347,8 +347,7 @@ async function pageHtml(
   // it twice is what made the title change on hydration (issue #6).
   const title = pageTitle(doc, projectName)
   // Per-page metadata (from the doc's JSON block) wins; else derive, else site default.
-  const description =
-    doc.description || docDescription(doc.text) || config.description || ''
+  const description = pageDescription(doc, config.description).text
   const keywords = Array.isArray(doc.keywords)
     ? doc.keywords.join(', ')
     : doc.keywords || ''

@@ -78,7 +78,8 @@ import {
 } from './check-examples.js'
 import type { ExampleBakes } from '../render.js'
 import { ensureSections } from './sections.js'
-import { generateLlmsTxt } from './make-llms-txt.js'
+import { generateLlmsTxt, generateLlmsFullTxt } from './make-llms-txt.js'
+import { lintMetadata, metadataReport } from './page-metadata.js'
 import { DEFAULT_DOC_IGNORES } from './docs.js'
 import { writesOutsideOutputDir } from './host-preset.js'
 import { generateSite } from './generate-site.js'
@@ -539,6 +540,11 @@ let announcedClobber = false
 let auditedAccessibility = false
 /** Section stubs are created on the first build in a process only (#3584). */
 let sectionStubsDone = false
+/*
+The metadata lint's last report. A watch rebuild repeats it only when it changed: the same
+forty lines after every keystroke would bury whatever else the build has to say.
+*/
+let lastMetadataReport = ''
 
 export async function buildSite(
   config: SiteConfig,
@@ -1520,6 +1526,17 @@ export async function buildSite(
         // Also place it at the served web root so {baseUrl}/llms.txt resolves (the
         // root copy stays for the npm package's `files`).
         await $`cp llms.txt ${PUBLIC}/llms.txt`.text()
+        // The whole corpus in one file (#3564): served only, never written beside the package.
+        generateLlmsFullTxt(
+          `${PUBLIC}/llms-full.txt`,
+          {
+            name: config.name,
+            description: config.description,
+            baseUrl: config.baseUrl,
+            basePath: config.basePath,
+          },
+          corpus
+        )
       }
 
       // Serve the tjs-lang browser bundles SAME-ORIGIN so live examples never depend
@@ -1828,6 +1845,18 @@ export async function buildSite(
       // Declared dialects are live fences at build time too, so the static highlighter
       // leaves their source alone (#2463). Idempotent: a watch rebuild re-adds the same names.
       registerSiteDialects(config)
+      // Titles and descriptions a search result or an llms.txt reader would see (#3563).
+      const indexed = docs.filter((d: any) => !d.hidden && !d.noindex)
+      const metadata = metadataReport(
+        lintMetadata(docs, {
+          projectName: config.name,
+          description: config.description,
+        }),
+        indexed.length
+      )
+      if (metadata && (config.strict || metadata !== lastMetadataReport))
+        misconfigured(config.strict, metadata)
+      lastMetadataReport = metadata
       const pageCount = await generateSite({
         liveExamples: config.liveExamples,
         docs,

@@ -21,7 +21,7 @@ import { chromium } from 'playwright'
 import { readFileSync } from 'fs'
 import siteConfig from '../tosijs-site.config'
 import { buildSlugMap, pathForSlug } from '../src/doc-system/routing'
-import { docDescription } from '../src/doc-system/render'
+import { pageDescription } from '../src/doc-system/site/page-metadata'
 
 declare global {
   var Bun: any
@@ -50,7 +50,7 @@ const escapeHtml = (s: string): string =>
     .replace(/"/g, '&quot;')
 
 function cardHtml(doc: DocLike, shot: string | null): string {
-  const description = doc.description || docDescription(doc.text) || ''
+  const description = pageDescription(doc).text
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   * { margin: 0; box-sizing: border-box; }
   html, body { width: 1200px; height: 630px; }

@@ -401,7 +401,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
 })
 ```
 */
-/*{ "parent": "Form Components", "description": "<tosi-form> and <tosi-field> build forms with native client-side validation and a submit callback that receives the form's values." }*/
+/*{ "headTitle": "<tosi-form> forms with native validation — tosijs-ui", "parent": "Form Components", "description": "<tosi-form> and <tosi-field> build forms with native client-side validation and a submit callback that receives the form's values." }*/
 import { Component as XinComponent, elements, varDefault, withAttributes, } from 'tosijs';
 import { colorInput } from './color-input.js';
 const { form, slot, tosiSlot, label, input, span } = elements;

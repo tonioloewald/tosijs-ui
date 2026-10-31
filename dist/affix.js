@@ -142,7 +142,7 @@ and `describePlacement({ position, inside })` convert between the attribute and
 `{ position, inside }`, and `affixCell(placement)` gives the grid cell and alignment a
 placement takes.
 */
-/*{ "parent": "Components", "description": "<tosi-affix> attaches a toolbar, badge or caption to one edge of its content, laid out beside it rather than floated, so it never covers it." }*/
+/*{ "headTitle": "<tosi-affix> edge toolbars and badges — tosijs-ui", "parent": "Components", "description": "<tosi-affix> attaches a toolbar, badge or caption to one edge of its content, laid out beside it rather than floated, so it never covers it." }*/
 import { Component, elements } from 'tosijs';
 const { slot } = elements;
 const POSITIONS = new Set([

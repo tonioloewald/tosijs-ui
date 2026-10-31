@@ -496,7 +496,7 @@ the example, plus ten pages importing a symbol their barrel did not export.
 | `libraryTsconfig`    | —        | run `tsc -p <path>` for the library build instead (handles root `noEmit`, `removeComments`, custom `outDir`); supersedes `emitLibrary` If a later step of yours replaces tsc's `.js` files with bundles, set `"emitDeclarationOnly": true` in that tsconfig: the build otherwise warns about extensionless imports in files you do not publish. |
 | `libraryBuild`       | —        | `(ctx: { dist, root, tsconfig? }) => void \| Promise<void>` — fully override the tsc library build; you emit `dist/*.js` + `*.d.ts` for ALL sources. For non-`.ts` sources tsc can't compile (native tjs-lang `.tjs`): run tsc for `.ts` + `tjs convert`/`generateDTS` for `.tjs`. Supersedes `libraryTsconfig`/`emitLibrary`. See `BUILD-TJS-HOOK.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `generateCssPreload` | —        | module to `bun --preload` into the CSS-extraction subprocess (`generate-css` imports your library to burn the theme); needed when that graph reaches non-`.ts` sources (`.tjs`) requiring a Bun loader plugin — point it at a module that registers it. Pairs with `libraryBuild`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `llmsTxt`            | `true`   | emit the `llms.txt` index — `true`, `false`, or `(docs) => string` for a custom one (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `llmsTxt`            | `true`   | emit `llms.txt` and `llms-full.txt` — `true`, `false`, or `(docs) => string` for a custom index (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `markdownPages`      | `true`   | write each page's markdown beside its HTML (`/slug/index.md`) and link it with `<link rel="alternate" type="text/markdown">`; `false` ships HTML only (see below) |
 | `strict`              | `false`  | fail the build on misconfigurations it otherwise only warns about (see "Strict builds" below) |
 | `epub`               | `false`  | build + ship an ePub of the corpus every build — `true` or `{ author, title, css, cover, coverIcon, coverColor, printCover }` (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -1835,15 +1835,39 @@ tab" trick, adapted:
   on **watch rebuilds** (it only fires at launch). Best-effort throughout — a failure
   degrades to a plain open or a no-op and never blocks or crashes the server.
 
-#### `llms.txt`
+#### `llms.txt` and `llms-full.txt`
 
-The default index is built from your config — `name`, `description`, `baseUrl`
-(→ `Docs:` link), and `projectLinks.github`/`.npm` (→ `Source:`/`npm:` links;
-npm falls back to your package name) — plus one entry per documented `src/*.ts`
-with a `dist/*.js` pointer. It's written **both** to the project root (so you can
-ship it in your package's `files`) **and** to the served output dir, so
-`{baseUrl}/llms.txt` resolves for crawlers/agents. Set `llmsTxt: false` to skip,
-or pass a function `(docs) => string` to generate your own from the corpus.
+The default index follows [llmstxt.org](https://llmstxt.org): an H1 with your `name`, your
+`description` as a `>` summary, your version and links (`baseUrl` → `Docs:`,
+`projectLinks.github`/`.npm` → `Source:`/`npm:`; npm falls back to your package name), then
+the pages as `- [title](url): description` lines, **in nav order**. A nav section with pages
+under it is a `##` section of its own, its own page first; the top-level pages are `## Docs`.
+Each link is the page's markdown copy (`/{slug}/index.md`) unless `markdownPages: false`, and
+each description is the one the page's `<head>` has (see
+[Titles and descriptions](#titles-and-descriptions-the-metadata-lint)). Hidden and `noindex`
+pages are left out.
+
+`llms.txt` is written **both** to the project root (so you can ship it in your package's
+`files`) **and** to the served output dir, so `{baseUrl}/llms.txt` resolves for
+crawlers/agents. `llms-full.txt` is the whole indexed corpus as one markdown file, in the same
+order, each page followed by its URL; it is written to the output dir only. Set
+`llmsTxt: false` to skip both, or pass a function `(docs) => string` to generate your own index
+from the corpus (`llms-full.txt` is still written).
+
+#### Titles and descriptions: the metadata lint
+
+A search result, a link unfurl and an `llms.txt` reader see a page's `<title>` and description
+instead of the page. Each page's description is its metadata `description`, else its first
+paragraph (inline markdown removed, cut at 155 characters on a sentence boundary where it can
+be), else the site `description`.
+
+Every build checks each indexed page and lists what to fix, grouped by problem: no title, or
+one under 20 or over 60 characters with the " — project" suffix; no description of its own,
+one under 70 or over 155 characters, or one derived from a first paragraph that had to be cut
+mid-sentence; and a title or description another page also has. Fix them in the page's
+metadata block: `headTitle` sets only the `<title>`, so a terse nav label can stay terse. A
+page that should not be found takes `noindex: true`. It warns, once per change under
+`bun start`, and fails the build under [`strict`](#strict-builds-strict).
 
 #### Strict builds (`strict`)
 
@@ -1885,6 +1909,9 @@ exported from `tosijs-ui/site`, and the previous build output is restored):
 - **A local image cannot be bound into the ePub** (missing, outside the site, or not an ePub
   image type; see [the book](#the-book-epub--the-book-manifest)). The warning lists them.
 
+- **A page's title or description needs writing** (see
+  [the metadata lint](#titles-and-descriptions-the-metadata-lint)).
+
 - **An in-page link points at nothing.** `[text](#some-heading)` where the page has no such
   id is a link that looks live and does nothing. The warning names the page and the anchor.
   Not checked: `#/route` and `#!…` (hash routers), `#top`, and `#example-2`, the number a
@@ -1907,8 +1934,8 @@ saying exactly that, and the doc-test lane reports it as a failed example.
 
 Every page is written twice: `/{slug}/index.html`, and its markdown source as
 `/{slug}/index.md` beside it. The HTML carries
-`<link rel="alternate" type="text/markdown" href="index.md">`, and `llms.txt` tells a
-reader it can append `index.md` to any page URL.
+`<link rel="alternate" type="text/markdown" href="index.md">`, and `llms.txt` links the
+markdown copies.
 
 This is for readers that want the text and not the page: an LLM's URL fetcher, a script,
 `curl`. The static HTML already has the whole article in it with no JavaScript needed, but

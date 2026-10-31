@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=15c356aeeff2" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=5897d4543960" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -38,7 +38,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=8bcbedd00336" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=f37060f29fe6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -665,7 +665,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>llmsTxt</code></td>
 <td><code>true</code></td>
-<td>emit the <code>llms.txt</code> index — <code>true</code>, <code>false</code>, or <code>(docs) =&gt; string</code> for a custom one (see below)</td>
+<td>emit <code>llms.txt</code> and <code>llms-full.txt</code> — <code>true</code>, <code>false</code>, or <code>(docs) =&gt; string</code> for a custom index (see below)</td>
 </tr>
 <tr>
 <td><code>markdownPages</code></td>
@@ -1977,14 +1977,34 @@ disables it for one run.</li>
 on <strong>watch rebuilds</strong> (it only fires at launch). Best-effort throughout — a failure
 degrades to a plain open or a no-op and never blocks or crashes the server.</li>
 </ul>
-<h4 id="llmstxt"><code>llms.txt</code></h4>
-<p>The default index is built from your config — <code>name</code>, <code>description</code>, <code>baseUrl</code>
-(→ <code>Docs:</code> link), and <code>projectLinks.github</code>/<code>.npm</code> (→ <code>Source:</code>/<code>npm:</code> links;
-npm falls back to your package name) — plus one entry per documented <code>src/*.ts</code>
-with a <code>dist/*.js</code> pointer. It&#39;s written <strong>both</strong> to the project root (so you can
-ship it in your package&#39;s <code>files</code>) <strong>and</strong> to the served output dir, so
-<code>{baseUrl}/llms.txt</code> resolves for crawlers/agents. Set <code>llmsTxt: false</code> to skip,
-or pass a function <code>(docs) =&gt; string</code> to generate your own from the corpus.</p>
+<h4 id="llmstxt-and-llms-fulltxt"><code>llms.txt</code> and <code>llms-full.txt</code></h4>
+<p>The default index follows <a href="https://llmstxt.org">llmstxt.org</a>: an H1 with your <code>name</code>, your
+<code>description</code> as a <code>&gt;</code> summary, your version and links (<code>baseUrl</code> → <code>Docs:</code>,
+<code>projectLinks.github</code>/<code>.npm</code> → <code>Source:</code>/<code>npm:</code>; npm falls back to your package name), then
+the pages as <code>- [title](url): description</code> lines, <strong>in nav order</strong>. A nav section with pages
+under it is a <code>##</code> section of its own, its own page first; the top-level pages are <code>## Docs</code>.
+Each link is the page&#39;s markdown copy (<code>/{slug}/index.md</code>) unless <code>markdownPages: false</code>, and
+each description is the one the page&#39;s <code>&lt;head&gt;</code> has (see
+<a href="#titles-and-descriptions-the-metadata-lint">Titles and descriptions</a>). Hidden and <code>noindex</code>
+pages are left out.</p>
+<p><code>llms.txt</code> is written <strong>both</strong> to the project root (so you can ship it in your package&#39;s
+<code>files</code>) <strong>and</strong> to the served output dir, so <code>{baseUrl}/llms.txt</code> resolves for
+crawlers/agents. <code>llms-full.txt</code> is the whole indexed corpus as one markdown file, in the same
+order, each page followed by its URL; it is written to the output dir only. Set
+<code>llmsTxt: false</code> to skip both, or pass a function <code>(docs) =&gt; string</code> to generate your own index
+from the corpus (<code>llms-full.txt</code> is still written).</p>
+<h4 id="titles-and-descriptions-the-metadata-lint">Titles and descriptions: the metadata lint</h4>
+<p>A search result, a link unfurl and an <code>llms.txt</code> reader see a page&#39;s <code>&lt;title&gt;</code> and description
+instead of the page. Each page&#39;s description is its metadata <code>description</code>, else its first
+paragraph (inline markdown removed, cut at 155 characters on a sentence boundary where it can
+be), else the site <code>description</code>.</p>
+<p>Every build checks each indexed page and lists what to fix, grouped by problem: no title, or
+one under 20 or over 60 characters with the &quot; — project&quot; suffix; no description of its own,
+one under 70 or over 155 characters, or one derived from a first paragraph that had to be cut
+mid-sentence; and a title or description another page also has. Fix them in the page&#39;s
+metadata block: <code>headTitle</code> sets only the <code>&lt;title&gt;</code>, so a terse nav label can stay terse. A
+page that should not be found takes <code>noindex: true</code>. It warns, once per change under
+<code>bun start</code>, and fails the build under <a href="#strict-builds-strict"><code>strict</code></a>.</p>
 <h4 id="strict-builds-strict">Strict builds (<code>strict</code>)</h4>
 <p>Some things the build can see are wrong are also things a project might do on purpose, so
 by default it warns and carries on. A warning in scrollback under a green build is easy to
@@ -2025,6 +2045,9 @@ project root, for an editor of your own, is not reported.</p>
 <li><p><strong>A local image cannot be bound into the ePub</strong> (missing, outside the site, or not an ePub
 image type; see <a href="#the-book-epub--the-book-manifest">the book</a>). The warning lists them.</p>
 </li>
+<li><p><strong>A page&#39;s title or description needs writing</strong> (see
+<a href="#titles-and-descriptions-the-metadata-lint">the metadata lint</a>).</p>
+</li>
 <li><p><strong>An in-page link points at nothing.</strong> <code>[text](#some-heading)</code> where the page has no such
 id is a link that looks live and does nothing. The warning names the page and the anchor.
 Not checked: <code>#/route</code> and <code>#!…</code> (hash routers), <code>#top</code>, and <code>#example-2</code>, the number a
@@ -2043,8 +2066,8 @@ saying exactly that, and the doc-test lane reports it as a failed example.</p>
 <h4 id="markdown-copies-of-pages-markdownpages">Markdown copies of pages (<code>markdownPages</code>)</h4>
 <p>Every page is written twice: <code>/{slug}/index.html</code>, and its markdown source as
 <code>/{slug}/index.md</code> beside it. The HTML carries
-<code>&lt;link rel=&quot;alternate&quot; type=&quot;text/markdown&quot; href=&quot;index.md&quot;&gt;</code>, and <code>llms.txt</code> tells a
-reader it can append <code>index.md</code> to any page URL.</p>
+<code>&lt;link rel=&quot;alternate&quot; type=&quot;text/markdown&quot; href=&quot;index.md&quot;&gt;</code>, and <code>llms.txt</code> links the
+markdown copies.</p>
 <p>This is for readers that want the text and not the page: an LLM&#39;s URL fetcher, a script,
 <code>curl</code>. The static HTML already has the whole article in it with no JavaScript needed, but
 not every fetcher copes — one reported &quot;no <code>&lt;body&gt;</code>&quot; for a page that plainly had one — and
@@ -2554,6 +2577,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nzztxg3n.js"></script>
+  <script type="module" src="../hydrate-z88z3gey.js"></script>
 </body>
 </html>

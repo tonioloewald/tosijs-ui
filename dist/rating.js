@@ -74,7 +74,7 @@ The up key increases the rating, down descreases it. This is the same
 as the behavior of `<input type="number">`, [Shoelace's rating widget](https://shoelace.style/components/rating/),
 and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).
 */
-/*{ "parent": "Form Components", "description": "<tosi-rating> is a form-associated rating input drawn with icons, with half steps, custom icons and sizes, that behaves like an <input>." }*/
+/*{ "headTitle": "<tosi-rating> star rating input — tosijs-ui", "parent": "Form Components", "description": "<tosi-rating> is a form-associated rating input drawn with icons, with half steps, custom icons and sizes, that behaves like an <input>." }*/
 import { elements, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 const { span } = elements;

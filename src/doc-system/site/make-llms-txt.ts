@@ -1,7 +1,11 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { buildSlugMap, pathForSlug, withBase } from '../routing.js'
+import { buildNavTree, type NavNode } from '../nav-tree.js'
+import { flatten, stripDocMeta } from '../book-html.js'
 import { liveFenceLanguages } from './build-warnings.js'
+import { pageDescription } from './page-metadata.js'
+import { docDescription } from '../render.js'
 import type { ExamplePolicy } from '../example-policy.js'
 
 const SRC = 'src'
@@ -10,11 +14,16 @@ const DIST = 'dist'
 /** A doc as it appears in the extracted corpus (docs.json). */
 interface CorpusDoc {
   title?: string
+  headTitle?: string
   filename: string
+  path?: string
   text?: string
   description?: string
   hidden?: boolean
   noindex?: boolean
+  pin?: 'top' | 'bottom'
+  order?: number
+  parent?: string
 }
 
 interface LlmsEntry {
@@ -22,40 +31,15 @@ interface LlmsEntry {
   description: string
   /** rendered-doc URL (corpus mode) or dist/*.js path (legacy scan) */
   link: string
+  /** the page's markdown copy, when the site writes one */
+  markdown?: string
+  /** the nav section this page sits in (its top-level ancestor), '' at the top level */
+  section?: string
 }
 
 function extractTitle(text: string): string {
   const match = text.match(/^#+ (.+)/m)
   return match ? match[1].trim() : ''
-}
-
-function extractDescription(text: string): string {
-  const lines = text.split('\n')
-  let inCodeBlock = false
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (trimmed.startsWith('```')) {
-      inCodeBlock = !inCodeBlock
-      continue
-    }
-    if (inCodeBlock) continue
-    // Skip non-prose lines
-    if (
-      !trimmed ||
-      trimmed.startsWith('#') ||
-      trimmed.startsWith('<') ||
-      trimmed.startsWith('[') ||
-      trimmed.startsWith('>') ||
-      trimmed.startsWith('|') ||
-      trimmed.startsWith('-') ||
-      trimmed.startsWith('*')
-    ) {
-      continue
-    }
-    // Truncate long descriptions
-    return trimmed.length > 120 ? trimmed.slice(0, 117) + '...' : trimmed
-  }
-  return ''
 }
 
 export interface LlmsTxtMeta {
@@ -90,11 +74,38 @@ export interface LlmsTxtMeta {
   liveExamples?: ExamplePolicy
 }
 
+/** The pages an index lists: titled, not hidden, not noindex. */
+function indexable(corpus: CorpusDoc[]): Array<CorpusDoc & { title: string }> {
+  // A noindex page is one the author asked not to be found; the sitemap and the markdown
+  // copies already leave it out, and an index for agents is no different.
+  return corpus.filter(
+    (doc): doc is CorpusDoc & { title: string } =>
+      !!doc.title && !doc.hidden && !doc.noindex
+  )
+}
+
+/**
+ * The indexable pages in NAV order, each with its top-level section (#3564). An index sorted
+ * by title reads a book's chapters out of order, and the nav order is the author's.
+ */
+function inNavOrder(
+  corpus: CorpusDoc[]
+): Array<{ doc: CorpusDoc & { title: string }; section: string }> {
+  const docs = indexable(corpus)
+  const roots = buildNavTree(docs, buildSlugMap(corpus))
+  const out: Array<{ doc: CorpusDoc & { title: string }; section: string }> = []
+  for (const root of roots as NavNode<CorpusDoc & { title: string }>[]) {
+    const section = root.children.length ? root.doc.title : ''
+    for (const node of flatten([root])) out.push({ doc: node.doc, section })
+  }
+  return out
+}
+
 /**
  * Build entries from the extracted corpus — every doc that was actually
  * extracted (`.md`, `.ts`/`.js`/`.css` doc comments, auto-created sections),
- * linking to its rendered URL. This is what the build uses: it reflects the real
- * docs and needs no `dist/` library output.
+ * linking to its rendered URL, in nav order. This is what the build uses: it
+ * reflects the real docs and needs no `dist/` library output.
  */
 export function entriesFromCorpus(
   corpus: CorpusDoc[],
@@ -102,20 +113,23 @@ export function entriesFromCorpus(
 ): LlmsEntry[] {
   const slugMap = buildSlugMap(corpus)
   const base = (meta.baseUrl ?? '').replace(/\/$/, '')
-  return (
-    corpus
-      // A noindex page is one the author asked not to be found; the sitemap and the markdown
-      // copies already leave it out, and an index for agents is no different.
-      .filter((doc) => doc.title && !doc.hidden && !doc.noindex)
-      .map((doc) => ({
-        title: doc.title as string,
-        description:
-          doc.description?.trim() || extractDescription(doc.text ?? ''),
-        link:
-          base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename])),
-      }))
-      .sort((a, b) => a.title.localeCompare(b.title))
-  )
+  return inNavOrder(corpus).map(({ doc, section }) => {
+    const link =
+      base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename]))
+    return {
+      // The <title> a search result shows names the page better than a terse nav label.
+      title: doc.headTitle?.trim() || doc.title,
+      // The page's own description, by the rule its <head> uses; no site fallback, which
+      // would repeat the summary on every line.
+      description: pageDescription({ ...doc, title: doc.title }).text,
+      link,
+      markdown:
+        meta.markdownPages === false
+          ? undefined
+          : `${link.endsWith('/') ? link : link + '/'}index.md`,
+      section,
+    }
+  })
 }
 
 /**
@@ -148,7 +162,7 @@ function entriesFromSrcScan(): LlmsEntry[] {
     if (!fs.existsSync(path.join(DIST, distFile))) continue
     entries.push({
       title,
-      description: extractDescription(markdown),
+      description: docDescription(markdown),
       link: `dist/${distFile}`,
     })
   }
@@ -156,49 +170,21 @@ function entriesFromSrcScan(): LlmsEntry[] {
 }
 
 /**
- * A real page of THIS site to show the `index.md` rule with. It was hard-coded to
- * `/carousel/index.md`, a tosijs-ui page, so every other project's llms.txt pointed agents
- * at a URL it does not have (board #3248). The first page that has a markdown copy and is
- * not the site root.
- */
-export function markdownExample(
-  corpus: CorpusDoc[],
-  meta: LlmsTxtMeta
-): string | undefined {
-  const slugMap = buildSlugMap(corpus)
-  for (const doc of corpus) {
-    if (!doc.title || doc.hidden || doc.noindex) {
-      continue
-    }
-    const pagePath = pathForSlug(slugMap[doc.filename])
-    if (pagePath === '/') continue
-    return `${withBase(meta.basePath, pagePath)}index.md`
-  }
-  return undefined
-}
-
-/**
- * Write an `llms.txt` index. Pass the extracted `corpus` (the build does) to
- * index every doc by its rendered URL; omit it to fall back to the legacy
- * `src/*.ts`-with-`dist/*.js` scan.
+ * Write an `llms.txt` index in the llmstxt.org shape (#3564): an H1 with the project's name, its
+ * summary as a blockquote, notes, then H2 sections of `- [title](url): description` lines. Pages
+ * are in nav order, and a nav section with pages under it is a section of its own; the
+ * top-level pages are `## Docs`. Each link is the page's markdown copy when the site writes
+ * them, which is what an agent fetching from the index wants.
+ *
+ * Pass the extracted `corpus` (the build does) to index every doc by its rendered URL; omit it
+ * to fall back to the legacy `src/*.ts`-with-`dist/*.js` scan.
  */
 export function generateLlmsTxt(
   outputPath: string,
   meta: LlmsTxtMeta = {},
   corpus?: CorpusDoc[]
 ): void {
-  // package.json supplies fallback name/version/description, but a doc site
-  // isn't guaranteed to have one (or it may be unreadable) — degrade gracefully
-  // rather than aborting the whole build.
-  let pkg: { name?: string; version?: string; description?: string } = {}
-  try {
-    pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
-  } catch {
-    console.warn(
-      'llms.txt: no readable package.json — using config values only'
-    )
-  }
-
+  const pkg = readPackage()
   const entries = corpus
     ? entriesFromCorpus(corpus, meta)
     : entriesFromSrcScan()
@@ -221,18 +207,17 @@ export function generateLlmsTxt(
       ]
     : []
 
-  // Only for a corpus-driven index: the legacy scan links to dist/ files, not pages.
-  const example = corpus ? markdownExample(corpus, meta) : undefined
-  const markdownNote =
-    corpus && meta.markdownPages !== false
-      ? [
-          'Pages below are also available as plain markdown: append `index.md` to the URL' +
-            (example ? '' : '.'),
-          ...(example ? [`(for example \`${example}\`).`] : []),
-          'Prefer that if you only need the text. A page marked noindex has no markdown copy.',
-          '',
-        ]
-      : []
+  const markdownLinks = !!corpus && meta.markdownPages !== false
+  const pagesNote = markdownLinks
+    ? [
+        "Each link below is the page's markdown. Drop `index.md` from it for the HTML page" +
+          (hasLiveExamples ? ', where the examples run.' : '.'),
+        ...(meta.baseUrl
+          ? [`The whole corpus, as one markdown file: ${fullTxtUrl(meta)}`]
+          : []),
+        '',
+      ]
+    : []
 
   const name = meta.name ?? pkg.name ?? ''
   const description = meta.description ?? pkg.description ?? ''
@@ -246,34 +231,98 @@ export function generateLlmsTxt(
   if (npm) links.push(`- npm: ${npm}`)
 
   const lines: string[] = [
-    `# ${name}${pkg.version ? ` v${pkg.version}` : ''}`,
+    `# ${name}`,
     '',
-    description,
-    ...(meta.tagline ? ['', meta.tagline] : []),
-    '',
-    ...links,
-    '',
-    '## Documentation',
-    '',
-    'Full documentation, with live code examples, is at the links below.',
-    '',
-    ...markdownNote,
+    ...(description ? [`> ${description}`, ''] : []),
+    ...(meta.tagline ? [meta.tagline, ''] : []),
+    ...(pkg.version ? [`Version ${pkg.version}.`, ''] : []),
+    ...(links.length ? [...links, ''] : []),
+    ...pagesNote,
     ...liveExampleNote,
-    '## Pages',
-    '',
   ]
 
+  let section: string | undefined
   for (const entry of entries) {
-    lines.push(`- ${entry.link} — ${entry.title}`)
-    if (entry.description) {
-      lines.push(`  ${entry.description}`)
+    const heading = entry.section || 'Docs'
+    if (heading !== section) {
+      if (section !== undefined) lines.push('')
+      section = heading
+      lines.push(`## ${heading}`, '')
     }
+    const url = (markdownLinks && entry.markdown) || entry.link
+    lines.push(
+      `- [${linkText(entry.title)}](${url})` +
+        (entry.description ? `: ${oneLine(entry.description)}` : '')
+    )
   }
-
   lines.push('')
 
   fs.writeFileSync(outputPath, lines.join('\n'), 'utf8')
   console.log(`llms.txt generated (${entries.length} entries)`)
+}
+
+/**
+ * Write `llms-full.txt`: the whole indexed corpus as one markdown file, in nav order (#3564).
+ * For a reader that wants everything in one fetch rather than following the index. Each page
+ * is its own markdown, under a `# title` when it has none, with its URL after it.
+ */
+export function generateLlmsFullTxt(
+  outputPath: string,
+  meta: LlmsTxtMeta,
+  corpus: CorpusDoc[]
+): void {
+  const pkg = readPackage()
+  const name = meta.name ?? pkg.name ?? ''
+  const description = meta.description ?? pkg.description ?? ''
+  const slugMap = buildSlugMap(corpus)
+  const base = (meta.baseUrl ?? '').replace(/\/$/, '')
+  const parts = [
+    `# ${name}` + (description ? `\n\n> ${description}` : '') + '\n',
+  ]
+  for (const { doc } of inNavOrder(corpus)) {
+    const text = stripDocMeta(doc.text ?? '').trim()
+    const url =
+      base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename]))
+    parts.push(
+      (/^#\s/m.test(text) ? '' : `# ${doc.title}\n\n`) +
+        text +
+        `\n\nSource: ${url}\n`
+    )
+  }
+  fs.writeFileSync(outputPath, parts.join('\n---\n\n'), 'utf8')
+}
+
+function fullTxtUrl(meta: LlmsTxtMeta): string {
+  return (
+    (meta.baseUrl ?? '').replace(/\/$/, '') +
+    withBase(meta.basePath, '/llms-full.txt')
+  )
+}
+
+/** package.json's fallbacks; a doc site isn't guaranteed one, so degrade, never abort. */
+function readPackage(): {
+  name?: string
+  version?: string
+  description?: string
+} {
+  try {
+    return JSON.parse(fs.readFileSync('package.json', 'utf8'))
+  } catch {
+    console.warn(
+      'llms.txt: no readable package.json — using config values only'
+    )
+    return {}
+  }
+}
+
+/** Link text cannot hold an unbalanced bracket. */
+function linkText(title: string): string {
+  return title.replace(/[[\]]/g, '\\$&')
+}
+
+/** One entry is one line. */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim()
 }
 
 // Allow running directly (no corpus — uses the legacy src/*.ts scan)

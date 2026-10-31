@@ -1,6 +1,6 @@
 # Adopting the doc system
 
-<!--{ "parent": "Documentation System", "order": 10, "description": "A first hour with tosijs-ui/site: the minimum that works, how to tell it is actually working, and the four things that fail silently while the site still serves 200s." }-->
+<!--{ "parent": "Documentation System", "order": 10, "description": "Your first hour with tosijs-ui/site: the minimum that works, how to tell it works, and four failures that still serve every page." }-->
 
 This is the page to read **before** your first build. [Doc-Site System](/doc-site-system/) is
 the reference — every option, every hook. This is the narrow path through it, plus the things
