@@ -86,6 +86,28 @@ function linkListHtml(className, links) {
 function jsonLdScript(obj) {
     return `  <script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
 }
+/** The nav path from a top-level page down to `filename`, inclusive; [] when it is not in the nav. */
+function navTrail(roots, filename) {
+    for (const node of roots) {
+        if (node.doc.filename === filename)
+            return [node];
+        const below = navTrail(node.children, filename);
+        if (below.length)
+            return [node, ...below];
+    }
+    return [];
+}
+/** "Menus — tosijs-ui" → "Menus": a `headTitle` often carries the suffix a headline must not. */
+function withoutProjectSuffix(title, projectName) {
+    if (!projectName)
+        return title;
+    const escaped = projectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return (title.replace(new RegExp(`\\s+[—–|-]\\s+${escaped}\\s*$`, 'i'), '') || title);
+}
+/** Every nav page in reading order. */
+function flattenNav(roots) {
+    return roots.flatMap((node) => [node, ...flattenNav(node.children)]);
+}
 /** Absolute URL for an asset path against the site origin (passes through full URLs). */
 function absUrl(baseUrl, pathOrUrl) {
     if (!pathOrUrl)
@@ -178,17 +200,77 @@ at = slugMap[doc.filename] ?? '') {
         : rebaseRelativeRefs(rendered, pathForSlug(own), depth);
     const nav = navHtml(config.docs, slugMap, doc.filename, depth);
     const navbar = linkListHtml('doc-navbar', config.navbarLinks);
+    // Reading order and the page's place in the nav, for breadcrumbs and prev/next.
+    const roots = buildNavTree(config.docs, slugMap);
+    const trail = navTrail(roots, doc.filename);
+    const order = flattenNav(roots);
+    const position = order.findIndex((n) => n.doc.filename === doc.filename);
+    const pageUrl = (node) => baseUrl + withBase(basePath, pathForSlug(node.slug));
+    const book = config.kind === 'book';
+    const prev = book && position > 0 ? order[position - 1] : undefined;
+    const next = book && position >= 0 ? order[position + 1] : undefined;
+    const isHome = own === '';
+    const modified = config.modified?.get(doc.path);
+    const author = doc.author || config.author;
+    const site = book
+        ? {
+            '@type': 'Book',
+            name: projectName,
+            url: baseUrl + withBase(basePath, '/'),
+            // The book's author, not this chapter's.
+            ...(config.author
+                ? { author: { '@type': 'Person', name: config.author } }
+                : {}),
+        }
+        : {
+            '@type': 'WebSite',
+            name: projectName,
+            url: baseUrl + withBase(basePath, '/'),
+        };
     const jsonLd = baseUrl
-        ? jsonLdScript({
-            '@context': 'https://schema.org',
-            '@type': 'TechArticle',
-            headline: doc.title,
-            description,
-            url: canonical,
-            inLanguage: lang,
-            ...(imageAbs ? { image: imageAbs } : {}),
-            isPartOf: { '@type': 'WebSite', name: projectName, url: baseUrl },
-        })
+        ? jsonLdScript(isHome
+            ? {
+                '@context': 'https://schema.org',
+                ...site,
+                description,
+                inLanguage: lang,
+                ...(imageAbs ? { image: imageAbs } : {}),
+                ...(modified ? { dateModified: modified } : {}),
+            }
+            : {
+                '@context': 'https://schema.org',
+                '@type': book ? 'Chapter' : 'TechArticle',
+                // The page's own name, without the " — project" suffix the <title> adds.
+                headline: withoutProjectSuffix(doc.headTitle?.trim() || doc.title, projectName),
+                ...(book ? { name: doc.title, position: position + 1 } : {}),
+                description,
+                url: canonical,
+                inLanguage: lang,
+                ...(imageAbs ? { image: imageAbs } : {}),
+                ...(doc.date ? { datePublished: doc.date } : {}),
+                ...(modified ? { dateModified: modified } : {}),
+                ...(author
+                    ? { author: { '@type': 'Person', name: author } }
+                    : {}),
+                isPartOf: site,
+            }) +
+            /*
+            Its own item: `breadcrumb` is a property of a WebPage, not of an article, so nested in
+            the TechArticle a search engine would not read it.
+            */
+            (trail.length > 1
+                ? '\n' +
+                    jsonLdScript({
+                        '@context': 'https://schema.org',
+                        '@type': 'BreadcrumbList',
+                        itemListElement: trail.map((node, i) => ({
+                            '@type': 'ListItem',
+                            position: i + 1,
+                            name: node.doc.title,
+                            item: pageUrl(node),
+                        })),
+                    })
+                : '')
         : '';
     const head = [
         // Render-blocking @import of web fonts lives in the stylesheet; warm the connection.
@@ -205,6 +287,13 @@ at = slugMap[doc.filename] ?? '') {
             : '',
         doc.noindex ? '  <meta name="robots" content="noindex, follow" />' : '',
         baseUrl ? `  <link rel="canonical" href="${escapeAttr(canonical)}" />` : '',
+        // A book's reading order, for readers and agents that follow it. Relative, like the nav.
+        prev
+            ? `  <link rel="prev" href="${escapeAttr(relativeUrl(depth, pathForSlug(prev.slug)))}" />`
+            : '',
+        next
+            ? `  <link rel="next" href="${escapeAttr(relativeUrl(depth, pathForSlug(next.slug)))}" />`
+            : '',
         // Relative to the page's own directory, so it holds at any mount (see relativeUrl).
         hasMarkdownPage(doc, config)
             ? `  <link rel="alternate" type="text/markdown" href="index.md" title="${escapeAttr(title)} (markdown)" />`
@@ -494,8 +583,11 @@ export async function generateSite(config) {
     if (config.baseUrl) {
         const urls = docs
             .filter((doc) => !doc.noindex)
-            .map((doc) => `  <url><loc>${escapeText(config.baseUrl +
-            withBase(config.basePath, pathForSlug(slugMap[doc.filename])))}</loc></url>`)
+            .map((doc) => {
+            const modified = config.modified?.get(doc.path);
+            return `  <url><loc>${escapeText(config.baseUrl +
+                withBase(config.basePath, pathForSlug(slugMap[doc.filename])))}</loc>${modified ? `<lastmod>${escapeText(modified)}</lastmod>` : ''}</url>`;
+        })
             .join('\n');
         await Bun.write(`${outputDir}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
         // Append a Sitemap line to robots.txt (already copied from static assets).

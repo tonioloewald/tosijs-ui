@@ -492,3 +492,153 @@ describe('rebaseRelativeRefs', () => {
     )
   })
 })
+
+/*
+#3565: the sitemap says when a page last changed, and the structured data names the page, its
+dates, its author and its place in the nav. A book's pages are chapters in reading order.
+*/
+describe("#3565: lastmod, structured data, and a book's reading order", () => {
+  const docs = [
+    {
+      filename: 'README.md',
+      title: 'Home',
+      path: 'README.md',
+      pin: 'top',
+      text: '# Home\n\nThe home page of a site.',
+    },
+    {
+      filename: 'one.md',
+      title: 'One',
+      path: 'one.md',
+      order: 1,
+      text: '# One\n\nChapter one.',
+    },
+    {
+      filename: 'two.md',
+      title: 'Two',
+      headTitle: 'Chapter two — T',
+      path: 'two.md',
+      order: 2,
+      author: 'A. Writer',
+      date: '2026-01-02',
+      text: '# Two\n\nChapter two.',
+    },
+    {
+      filename: 'part.md',
+      title: 'Part',
+      path: 'part.md',
+      order: 3,
+      text: '# Part\n\nA part.',
+    },
+    {
+      filename: 'three.md',
+      title: 'Three',
+      path: 'three.md',
+      parent: 'Part',
+      text: '# Three\n\nIn the part.',
+    },
+  ]
+  const build = async (extra: Record<string, unknown> = {}) => {
+    const dir = `${tmpdir()}/tosi-ld-${Math.floor(performance.now() * 1000)}`
+    try {
+      await generateSite({
+        docs: docs as any,
+        outputDir: dir,
+        projectName: 'T',
+        baseUrl: 'https://t.test',
+        hydrateUrl: '/hydrate-abc.js',
+        modified: new Map([['two.md', '2026-02-03T04:05:06Z']]),
+        ...extra,
+      } as any)
+      const read = (f: string) => Bun.file(`${dir}/${f}`).text()
+      const ld = (html: string) =>
+        [
+          ...html.matchAll(
+            /<script type="application\/ld\+json">(.*?)<\/script>/g
+          ),
+        ].map((m) => JSON.parse(m[1]))
+      return {
+        sitemap: await read('sitemap.xml'),
+        home: ld(await read('index.html')),
+        two: await read('two/index.html'),
+        twoLd: ld(await read('two/index.html')),
+        threeLd: ld(await read('three/index.html')),
+        one: await read('one/index.html'),
+      }
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  }
+
+  test('the sitemap carries lastmod where the date is known, and invents none', async () => {
+    const { sitemap } = await build()
+    expect(sitemap).toContain(
+      '<loc>https://t.test/two/</loc><lastmod>2026-02-03T04:05:06Z</lastmod>'
+    )
+    expect(sitemap).toContain('<loc>https://t.test/one/</loc></url>')
+  })
+
+  test('a page is a TechArticle with its headline, dates and author; the home page is the WebSite', async () => {
+    const { home, twoLd, two } = await build({ author: 'Site Author' })
+    expect(home).toEqual([
+      expect.objectContaining({
+        '@type': 'WebSite',
+        name: 'T',
+        url: 'https://t.test/',
+      }),
+    ])
+    expect(twoLd[0]).toMatchObject({
+      '@type': 'TechArticle',
+      // the headTitle, without the suffix the <title> carries
+      headline: 'Chapter two',
+      datePublished: '2026-01-02',
+      dateModified: '2026-02-03T04:05:06Z',
+      // the page's own author wins over the site's
+      author: { '@type': 'Person', name: 'A. Writer' },
+      isPartOf: { '@type': 'WebSite', name: 'T' },
+    })
+    // reading order is for books
+    expect(two).not.toContain('rel="prev"')
+  })
+
+  test('a page in a nav section has a BreadcrumbList of its own', async () => {
+    const { threeLd, twoLd } = await build()
+    expect(threeLd[1]).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Part',
+          item: 'https://t.test/part/',
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Three',
+          item: 'https://t.test/three/',
+        },
+      ],
+    })
+    // a top-level page has no trail to give
+    expect(twoLd).toHaveLength(1)
+  })
+
+  test("a book's pages are Chapters of the Book, linked in reading order", async () => {
+    const { twoLd, two, one } = await build({
+      kind: 'book',
+      author: 'Site Author',
+    })
+    expect(twoLd[0]).toMatchObject({
+      '@type': 'Chapter',
+      name: 'Two',
+      isPartOf: { '@type': 'Book', name: 'T', author: { name: 'Site Author' } },
+    })
+    // reading order: Home, One, Two, Part, Three
+    expect(twoLd[0].position).toBe(3)
+    expect(two).toContain('<link rel="prev" href="../one/" />')
+    expect(two).toContain('<link rel="next" href="../part/" />')
+    expect(one).toContain('<link rel="prev" href="../" />')
+  })
+})

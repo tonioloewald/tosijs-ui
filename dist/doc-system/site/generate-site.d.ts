@@ -45,6 +45,16 @@ export interface GenerateSiteConfig {
     favicon?: string;
     /** default og:image (per-page overridable via doc metadata) */
     ogImage?: string;
+    /**
+     * What the site is, for its structured data (#3565). `'documentation'` (default): pages are
+     * `TechArticle`s. `'book'`: pages are `Chapter`s of a `Book`, and link the previous and next
+     * page in reading order.
+     */
+    kind?: 'documentation' | 'book';
+    /** the default author, for structured data; a page's own `author` wins */
+    author?: string;
+    /** when each page's source last changed (ISO), keyed by `Doc.path`: see page-dates.ts */
+    modified?: Map<string, string>;
     projectLinks?: ProjectLinks;
     /** brand mark left of the title: icon name, image URL, or inline <svg> */
     logo?: string;

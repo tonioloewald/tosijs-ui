@@ -12136,14 +12136,22 @@ bundle. [Where the code lives](#where-the-code-lives) maps each part to its modu
 
 - **One pre-rendered `/{slug}/index.html` per doc** (README → site root) with
   real `<head>` metadata: `<title>`, description, canonical, Open Graph,
-  Twitter card, and `schema.org` `TechArticle` JSON-LD.
+  Twitter card, and `schema.org` JSON-LD: each page a `TechArticle` (a `Chapter` of a
+  `Book` under `kind: 'book'`) with its headline, description, dates and author, a
+  `BreadcrumbList` for a page inside a nav section, and the home page as the `WebSite`.
+  A book's pages also link the previous and next page (`<link rel="prev/next">`).
 - **No-JS readable**: the markdown is already rendered to HTML and every nav
   item is a real `<a>`, so crawlers and AI agents see full content and links.
 - **Zero-flash hydration**: the theme is burned into a static stylesheet, so
   pages are styled before any JS runs; then `<tosi-doc-system>` hydrates the
   page into the live doc browser (search, live examples, locale switching).
 - **`sitemap.xml` + `robots.txt`** (when `baseUrl` is set), and host files
-  (`.nojekyll`, `CNAME`, …) appropriate to the chosen host.
+  (`.nojekyll`, `CNAME`, …) appropriate to the chosen host. Each sitemap entry's
+  `lastmod`, and each page's `dateModified`, is the last commit that touched its source
+  file, or the file's modification time while it has uncommitted edits. Without git there
+  is no date, rather than an invented one: a file's mtime alone changes on every checkout,
+  so a CI build would date every page today. A page's `date` (frontmatter) is its
+  `datePublished`, and its `author` overrides `epub.author`.
 
 ## How it works (pipeline)
 
@@ -12560,6 +12568,7 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | field             | default     | purpose                                                                    |
 | ----------------- | ----------- | -------------------------------------------------------------------------- |
 | `bundleEntry`     | —           | your IIFE entrypoint; omit to use the fallback bundle                      |
+| `kind`            | `'documentation'` | `'book'` makes each page a `Chapter` of a `Book` in the structured data, numbered in reading order, with `rel="prev/next"` links |
 | `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`. See "Marking a fence display-only" |
 | `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |

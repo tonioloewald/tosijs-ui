@@ -44,6 +44,7 @@ import { checkExamples, formatExampleProblems, } from './check-examples.js';
 import { ensureSections } from './sections.js';
 import { generateLlmsTxt, generateLlmsFullTxt } from './make-llms-txt.js';
 import { lintMetadata, metadataReport } from './page-metadata.js';
+import { sourceDates } from './page-dates.js';
 import { DEFAULT_DOC_IGNORES } from './docs.js';
 import { writesOutsideOutputDir } from './host-preset.js';
 import { generateSite } from './generate-site.js';
@@ -1578,6 +1579,12 @@ export async function buildSite(config, opts = {}) {
                 localizedStrings: config.localizedStrings,
                 favicon: config.favicon,
                 ogImage: config.ogImage,
+                kind: config.kind,
+                author: typeof config.epub === 'object' ? config.epub.author : undefined,
+                // Only a site with a baseUrl writes a sitemap or structured data to put them in.
+                modified: config.baseUrl
+                    ? sourceDates(docs.map((d) => d.path), process.cwd())
+                    : undefined,
                 // When set, pages load this as a `<script type="module">` (editor lazy-split)
                 // instead of the classic IIFE. See the ESM hydration bundle above.
                 hydrateUrl: hydrateName ? `/${hydrateName}` : undefined,

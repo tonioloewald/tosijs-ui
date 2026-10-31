@@ -190,6 +190,13 @@ export interface SiteConfig {
   */
   bundleEntry?: string
   /**
+   * What the site is, for search engines' structured data (#3565). `'documentation'`
+   * (default): each page is a `TechArticle` of the `WebSite`. `'book'`: each page is a
+   * `Chapter` of a `Book` (authored by `epub.author` unless the page names its own), numbered
+   * in reading order, and links the previous and next page with `<link rel="prev/next">`.
+   */
+  kind?: 'documentation' | 'book'
+  /**
    * Whether fenced code runs by default (tosijs-ui#140).
    *
    * - `'auto'` (default) — the six executable languages (`js`, `ts`, `tjs`, `html`, `css`,
