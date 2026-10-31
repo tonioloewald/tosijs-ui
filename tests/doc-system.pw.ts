@@ -54,7 +54,10 @@ test('static page hydrates and navigates client-side', async ({ page }) => {
   await dialogLink.click()
 
   await page.waitForFunction(() => location.pathname === '/dialog/')
-  await expect(page).toHaveTitle('dialog — tosijs-ui')
+  // its headTitle, applied on client-side navigation as on a direct load
+  await expect(page).toHaveTitle(
+    '<tosi-dialog> modal dialogs and prompts — tosijs-ui'
+  )
   await expect(page.locator('article.doc-content h1')).toHaveText('dialog')
   // still the same document — no full reload happened
   expect(await page.evaluate(() => (window as any).__noReload)).toBe(true)
