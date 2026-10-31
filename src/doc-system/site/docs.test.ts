@@ -5,6 +5,7 @@ import {
   SCRAPED_SOURCE_EXTENSIONS,
   titleFromMarkdown,
   DEFAULT_DOC_IGNORES,
+  setTjsDocCommentScanner,
 } from './docs.js'
 import { buildSlugMap } from '../routing.js'
 import fs from 'fs'
@@ -112,7 +113,7 @@ describe('which source extensions are scraped (#108)', () => {
   test('.tjs is in the scraped list, and so are the originals', () => {
     // A blunt assertion on the list itself: it is small, it is the whole feature, and every
     // entry removed from it silently deletes pages.
-    for (const ext of ['.ts', '.js', '.tjs', '.css']) {
+    for (const ext of ['.ts', '.js', '.tjs', '.ajs', '.css']) {
       expect(SCRAPED_SOURCE_EXTENSIONS).toContain(ext)
     }
   })
@@ -158,6 +159,93 @@ describe('which source extensions are scraped (#108)', () => {
       console.warn = realWarn
     }
     expect(warnings.join('\n')).not.toContain('not scraped')
+  })
+})
+
+describe("TJS's own doc comments, /# … #/ (#3601)", () => {
+  const withFile = (name: string, body: string, run: (dir: string) => void) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-tjs-'))
+    try {
+      fs.writeFileSync(path.join(dir, name), body)
+      run(dir)
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  }
+  const captureWarnings = (fn: () => void): string => {
+    const warnings: string[] = []
+    const realWarn = console.warn
+    console.warn = (...args: unknown[]) => warnings.push(args.join(' '))
+    try {
+      fn()
+    } finally {
+      console.warn = realWarn
+    }
+    return warnings.join('\n')
+  }
+  const SOURCE = [
+    '/#',
+    '# Native',
+    '',
+    'Quote anything: /* x */ and a nested /# inner #/ too.',
+    '#/',
+    'const re = /# not a doc #/',
+    'export function f(a: 0): 0 { return a }',
+  ].join('\n')
+  // Outer comment spans, as tjs-lang's findDocCommentSpans reports them (the nested one too).
+  const spansOf = (src: string): Array<[number, number]> => {
+    const outer = src.indexOf('/#\n')
+    const end = src.indexOf('\n#/') + 3
+    const inner = src.indexOf('/# inner')
+    return [
+      [outer, end],
+      [inner, src.indexOf('#/', inner) + 2],
+    ]
+  }
+
+  test('read through tjs-lang: the outer comment is the page, a nested one stays quoted', () => {
+    setTjsDocCommentScanner(spansOf)
+    try {
+      for (const name of ['native.tjs', 'agent.ajs'])
+        withFile(name, SOURCE, (dir) => {
+          const [doc] = extractDocs({ paths: [dir], ignore: [] })
+          expect(doc.filename).toBe(name)
+          expect(doc.title).toBe('Native')
+          expect(doc.text).toContain('a nested /# inner #/ too.')
+          expect(doc.text).not.toContain('not a doc')
+        })
+    } finally {
+      setTjsDocCommentScanner(undefined)
+    }
+  })
+
+  test('without the scanner in tjs-lang, the file is named, not silently dropped', () => {
+    setTjsDocCommentScanner(null)
+    try {
+      const said = captureWarnings(() =>
+        withFile('native.tjs', SOURCE, (dir) => {
+          expect(extractDocs({ paths: [dir], ignore: [] })).toEqual([])
+        })
+      )
+      expect(said).toContain('native.tjs')
+      expect(said).toContain('TJS doc comments')
+    } finally {
+      setTjsDocCommentScanner(undefined)
+    }
+  })
+
+  test('a single-line /# … #/ is a regex: no lookup, no warning', () => {
+    setTjsDocCommentScanner(null)
+    try {
+      const said = captureWarnings(() =>
+        withFile('plain.tjs', 'const re = /# x #/\n', (dir) => {
+          expect(extractDocs({ paths: [dir], ignore: [] })).toEqual([])
+        })
+      )
+      expect(said).not.toContain('TJS doc comments')
+    } finally {
+      setTjsDocCommentScanner(undefined)
+    }
   })
 })
 

@@ -30,8 +30,13 @@ whatever metadata the doc declares (`pin`, `order`, `parent`, `layout`, `descrip
 ## What is collected
 
 - **`.md` files**, whole. YAML frontmatter is read and removed.
-- **`/*#` … `*‎/` blocks** in `.ts`, `.tjs`, `.js` and `.css` files, as markdown. The first heading
-  is the page title. A block counts only when `/*#` starts a line.
+- **`/*#` … `*‎/` blocks** in `.ts`, `.tjs`, `.ajs`, `.js` and `.css` files, as markdown. The
+  first heading is the page title. A block counts only when `/*#` starts a line.
+- **TJS doc comments, `/#` … `#/`**, in `.tjs` and `.ajs` files, in source order with any `/*#`
+  blocks. They are found by tjs-lang itself, so they follow its grammar exactly: multi-line, and
+  a doc comment nested inside one is quoted as part of it. This needs a tjs-lang that exports
+  `findDocCommentSpans`; with an older one, the build names each file whose `/#` comments it
+  could not read.
 - **Files whose name starts with `_`** are skipped: use the prefix for drafts and fragments.
 
 Metadata blocks (`<!--{ … }-->` in markdown, `/*{ … }*‎/` in code), nav order, sections and
@@ -333,10 +338,46 @@ ends it — the same trap tosijs-ui#70 records for doc blocks, hit again while w
 
 See `warnUnscrapedDocBlocks` below: a missing extension should never again be invisible.
 */
-export const SCRAPED_SOURCE_EXTENSIONS = ['.ts', '.js', '.tjs', '.css']
+export const SCRAPED_SOURCE_EXTENSIONS = ['.ts', '.js', '.tjs', '.ajs', '.css']
 
 /** Files that look documented but are not scraped — reported once at the end of a walk. */
 const unscrapedDocBlocks: string[] = []
+
+/*
+TJS's own doc comment, `/# … #/` (#3601): multi-line, nestable, and the convention in `.tjs` and
+`.ajs` sources. Its grammar belongs to tjs-lang, which finds the spans over a literal-masked view
+(a raw scan reads a regex `/#/` and a later string `"#/"` as one comment). So this does not keep a
+second copy: it asks the installed tjs-lang, and when that tjs-lang does not export the scanner,
+the build names the files whose doc comments it could not read rather than dropping them.
+*/
+const TJS_DOC_EXTENSIONS = ['.tjs', '.ajs']
+// An opener at the start of a line that its own line does not close: a single-line `/# x #/` is
+// a regex, never a doc comment.
+const TJS_DOC_OPENER = /^[ \t]*\/#(?![^\n]*#\/)/m
+type DocSpans = (source: string) => Array<[number, number]>
+let tjsDocSpans: DocSpans | null | undefined
+function tjsDocCommentSpans(): DocSpans | null {
+  if (tjsDocSpans !== undefined) return tjsDocSpans
+  tjsDocSpans = null
+  for (const entry of ['tjs-lang/lang', 'tjs-lang']) {
+    try {
+      const found = require(entry).findDocCommentSpans
+      if (typeof found === 'function') {
+        tjsDocSpans = found
+        break
+      }
+    } catch {
+      // not installed, or no such entry: try the next
+    }
+  }
+  return tjsDocSpans as DocSpans | null
+}
+/** Tests only: stand in for tjs-lang's scanner (`undefined` restores the lookup). */
+export function setTjsDocCommentScanner(scan: DocSpans | null | undefined) {
+  tjsDocSpans = scan
+}
+/** `.tjs`/`.ajs` files with doc comments the installed tjs-lang could not read. */
+const unreadTjsDocComments: string[] = []
 
 /**
  * Does an UNSCRAPED file appear to carry a doc block?
@@ -495,11 +536,46 @@ function findMarkdownFiles(
         // before the slash). This keeps a `/*#` that appears inside a // comment,
         // a string, or otherwise mid-line from being scraped as a spurious doc.
         // m[1] is the block without its leading indentation.
-        const docs = [...content.matchAll(/^[ \t]*(\/\*#[\s\S]+?\*\/)/gm)].map(
-          (m) => m[1]
+        const blocks = [
+          ...content.matchAll(/^[ \t]*(\/\*#[\s\S]+?\*\/)/gm),
+        ].map((m) => ({
+          at: m.index! + m[0].length - m[1].length,
+          block: m[1],
+        }))
+        const docs = blocks.map(({ block }) =>
+          block.substring(3, block.length - 2).trim()
         )
+        // TJS doc comments, in source order with any `/*#` blocks.
+        if (
+          TJS_DOC_EXTENSIONS.includes(path.extname(file)) &&
+          TJS_DOC_OPENER.test(content)
+        ) {
+          const scan = tjsDocCommentSpans()
+          if (!scan) {
+            unreadTjsDocComments.push(path.relative(process.cwd(), filePath))
+          } else {
+            const spans = scan(content)
+            // Outermost only: a nested doc comment is being quoted, not published.
+            const outer = spans.filter(
+              ([a, b]) => !spans.some(([c, d]) => c < a && b <= d)
+            )
+            const all = [
+              ...blocks.map(({ at }, i) => ({ at, text: docs[i] })),
+              ...outer.map(([a, b]) => ({
+                at: a,
+                // The span may or may not include its delimiters; the text never does.
+                text: content
+                  .slice(a, b)
+                  .replace(/^\/#/, '')
+                  .replace(/#\/$/, '')
+                  .trim(),
+              })),
+            ].sort((x, y) => x.at - y.at)
+            docs.splice(0, docs.length, ...all.map((d) => d.text))
+          }
+        }
         if (docs.length) {
-          const markdown = docs.map((s) => s.substring(3, s.length - 2).trim())
+          const markdown = docs
           // A doc block that ended early drops the rest of the documentation silently, and
           // turns the code after it back into source — which surfaces as parse errors
           // pointing at prose rather than at the delimiter responsible (#70).
@@ -559,6 +635,16 @@ function findMarkdownFiles(
   can act on without going looking. The fix is nearly always one entry in
   SCRAPED_SOURCE_EXTENSIONS.
   */
+  if (unreadTjsDocComments.length) {
+    console.warn(
+      `\n⚠️  ${unreadTjsDocComments.length} file(s) have TJS doc comments (/# … #/) that this ` +
+        `build cannot read, so they have no page from them:\n` +
+        unreadTjsDocComments.map((f) => `    ${f}`).join('\n') +
+        `\n    Reading them needs findDocCommentSpans from tjs-lang, which the installed ` +
+        `tjs-lang does not export. Until it does, write those blocks as /*# … */.\n`
+    )
+    unreadTjsDocComments.length = 0
+  }
   if (unscrapedDocBlocks.length) {
     const list = unscrapedDocBlocks.map((f) => `    ${f}`).join('\n')
     console.warn(
