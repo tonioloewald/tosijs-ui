@@ -46,6 +46,7 @@ import {
   renderEpubDownloads,
 } from './epub-volumes.js'
 import { buildSlugMap, pathForSlug } from '../routing.js'
+import { missingBuildPeers, missingBuildPeersMessage } from './build-peers.js'
 import {
   assetStampInputs,
   computeAssetStamp,
@@ -561,6 +562,13 @@ export async function buildSite(
       mode: config.preflight,
     }))
   ) {
+    return false
+  }
+
+  // A peer the build needs, checked before anything is deleted or written (#3600).
+  const missingPeers = missingBuildPeers(import.meta.dir)
+  if (missingPeers.length) {
+    console.error(missingBuildPeersMessage(missingPeers))
     return false
   }
 
