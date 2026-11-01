@@ -19,6 +19,8 @@ interface SourceBlock {
   compiled?: string
   // Execution mode from a `<lang>:<mode>` fence (inline | iframe | ide), if any.
   mode?: string
+  // Where the bake's module is served (`SiteConfig.exampleModules`, #245), if any.
+  module?: string
 }
 
 // A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
@@ -55,6 +57,15 @@ function bakedJsForBlock(block: Element): string | undefined {
   } catch {
     return undefined
   }
+}
+
+// The URL of the bake's module, which a page under a strict CSP imports (#245).
+function bakedModuleForBlock(block: Element): string | undefined {
+  const n = block.nextElementSibling
+  return n?.tagName === 'SCRIPT' &&
+    n.getAttribute('type') === 'application/tosi-transpiled'
+    ? n.getAttribute('data-module') ?? undefined
+    : undefined
 }
 
 /**
@@ -231,6 +242,7 @@ export function insertExamples(
       ...rest,
       code: code.innerText,
       compiled: bakedJsForBlock(rest.block),
+      module: bakedModuleForBlock(rest.block),
     }))
 
   // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
@@ -345,6 +357,10 @@ export function insertExamples(
           if (source.compiled !== undefined) {
             example.compiledJs = source.compiled
             example.compiledJsSource = source.code
+            if (source.module) {
+              example.compiledModule = source.module
+              example.compiledModuleSource = source.code
+            }
           }
           break
       }

@@ -84,6 +84,7 @@ export interface Doc {
     bakes?: Array<[string, {
         dialect: string;
         js: string;
+        module?: string;
     }]>;
     author?: string;
     date?: string;

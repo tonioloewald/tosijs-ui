@@ -195,7 +195,10 @@ docMarked.use({
                 // `<` → < prevents a `</script>` inside the JS from breaking the tag;
                 // JSON.parse decodes it unchanged at hydration.
                 const json = JSON.stringify(bake.js).replace(/</g, '\\u003c');
-                html += `<script type="application/tosi-transpiled" data-dialect="${bake.dialect}">${json}</script>`;
+                const module = bake.module
+                    ? ` data-module="${escapeAttr(bake.module)}"`
+                    : '';
+                html += `<script type="application/tosi-transpiled" data-dialect="${bake.dialect}"${module}>${json}</script>`;
             }
             return html;
         },

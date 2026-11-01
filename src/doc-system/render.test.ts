@@ -273,3 +273,13 @@ test('a skipped level is left as written (the build reports it)', () => {
   const html = a11y('# T\n\n## A\n\n#### Deep')
   expect(html).toContain('<h4 id="deep">Deep</h4>')
 })
+
+test('#245: a bake with a module names it on the hidden script, for the page to import', () => {
+  const src = 'preview.textContent = 1'
+  const bakes = new Map([
+    [src, { dialect: 'js', js: src, module: '/_examples/abc.js' }],
+  ])
+  expect(renderDocMarkdown('```js\n' + src + '\n```', { bakes })).toContain(
+    '<script type="application/tosi-transpiled" data-dialect="js" data-module="/_examples/abc.js">'
+  )
+})

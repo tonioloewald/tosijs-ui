@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { checkExamples } from './check-examples.js'
+import { checkExamples, exampleModuleSource } from './check-examples.js'
 import type { Doc } from './docs.js'
 import { setStripExportsForTests } from '../../live-example/code-transform.js'
 
@@ -257,5 +257,74 @@ describe('module-style examples', () => {
     } finally {
       setStripExportsForTests(undefined)
     }
+  })
+})
+
+describe('#245: exampleModules', () => {
+  test('every script example is baked with a module; test blocks and the default are not', async () => {
+    const corpus = [
+      doc(
+        'm.md',
+        "```js\nimport { elements } from 'tosijs'\npreview.append(elements.b('hi'))\n```\n```test\ntest('x', () => {})\n```\n"
+      ),
+    ]
+    const plain = await checkExamples(corpus)
+    expect(plain.bakes.size).toBe(0) // only tjs is baked without modules
+    const { bakes, problems } = await checkExamples(corpus, { modules: true })
+    expect(problems).toEqual([])
+    const docBakes = [...bakes.get('m.md')!.values()]
+    expect(docBakes).toHaveLength(1)
+    expect(docBakes[0].dialect).toBe('js')
+    expect(docBakes[0].moduleSource).toStartWith(
+      'export default async function ({ preview, console, tosijs, tosijsui }) {'
+    )
+  })
+
+  test('the module body starts on line 1, so error lines are the example’s own', () => {
+    const source = exampleModuleSource('a()\nb()', ['tosijs'])
+    expect(source.split('\n')[1]).toBe('b()')
+  })
+
+  test('an example with its own console is built without the injected one, as at run time', () => {
+    expect(
+      exampleModuleSource('const console = { log() {} }', ['tosijs'])
+    ).toStartWith('export default async function ({ preview, tosijs }) {')
+  })
+
+  test('code a module cannot hold is a problem with the example, not a broken file', async () => {
+    const { problems } = await checkExamples(
+      [doc('s.md', "```js\n'use strict'\npreview.textContent = 'x'\n```\n")],
+      { modules: true }
+    )
+    expect(problems).toHaveLength(1)
+    expect(problems[0].error).toContain('cannot run as a module')
+  })
+})
+
+describe('#245: writeExampleModules', () => {
+  test('writes each module once, by content hash, and points the bake at its URL', async () => {
+    const { mkdtempSync, readdirSync, readFileSync } = await import('fs')
+    const { tmpdir } = await import('os')
+    const { writeExampleModules } = await import('./orchestrator.js')
+    const dir = `${mkdtempSync(`${tmpdir()}/ex-mod-`)}/_examples`
+    const same = 'export default async function ({ preview }) {}\n'
+    const bakes = new Map([
+      [
+        'a.md',
+        new Map([
+          ['x', { dialect: 'js', js: '', moduleSource: same }],
+          ['y', { dialect: 'js', js: '', moduleSource: same }],
+        ]),
+      ],
+    ])
+    expect(writeExampleModules(bakes, dir, '/docs/_examples/')).toBe(1)
+    const [file] = readdirSync(dir)
+    expect(readFileSync(`${dir}/${file}`, 'utf8')).toBe(same)
+    const bake = bakes.get('a.md')!.get('x')!
+    expect(bake).toEqual({
+      dialect: 'js',
+      js: '',
+      module: `/docs/_examples/${file}`,
+    } as any)
   })
 })

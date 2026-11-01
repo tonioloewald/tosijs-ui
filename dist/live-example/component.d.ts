@@ -591,6 +591,8 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private currentPreview;
     compiledJs?: string;
     compiledJsSource?: string;
+    compiledModule?: string;
+    compiledModuleSource?: string;
     private jsOutEditor?;
     private tjsTestsView?;
     private productTabsReady;

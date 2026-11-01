@@ -26,6 +26,12 @@ export interface ExecutionOptions {
      * `transform(rewriteImports(js, contextKeys))`, so scope-capture still applies.
      */
     compiledJs?: string;
+    /**
+     * The URL of the example's build-time module (`SiteConfig.exampleModules`, #245). When
+     * present the example is IMPORTED and its default export called, and nothing is compiled:
+     * the path for a page whose CSP forbids `eval`/`Function`. Inline only.
+     */
+    module?: string;
     onError?: (error: Error) => void;
     /**
      * Receives the example's top-level locals after a successful run, so tjs
@@ -77,16 +83,6 @@ export declare function withScopeCapture(transformedCode: string, onScope?: (sco
     code: string;
     extraContext: Record<string, unknown>;
 }>;
-/**
- * True when an example has no script of its own to run: an empty source, or `compiledJs: ''`,
- * which is what a dialect that runs its source itself (`run`) is handed.
- *
- * Such an example must not construct a function at all (tosijs-ui#245, #246). Building one from
- * an empty body did nothing useful and was not free: under a strict CSP (`script-src 'self'`,
- * no `'unsafe-eval'`) the `AsyncFunction` constructor throws, so a pure-HTML example, or one
- * whose dialect only sanitizes and binds markup, showed an error and filed a CSP violation
- * report every time it ran.
- */
 export declare function nothingToRun(js: string, compiledJs?: string): boolean;
 /**
  * Execute code inline (directly in the page)

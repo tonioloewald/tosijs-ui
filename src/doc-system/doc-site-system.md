@@ -451,6 +451,7 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | `bundleEntry`     | —           | your IIFE entrypoint; omit to use the fallback bundle                      |
 | `kind`            | `'documentation'` | `'book'` makes each page a `Chapter` of a `Book` in the structured data, numbered in reading order, with `rel="prev/next"` links |
 | `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`; `'no-code'` — only `html` and `css` run, for a host with a strict CSP. See "Marking a fence display-only" and "No-code examples" |
+| `exampleModules`  | `false`     | write each script example to `_examples/<hash>.js` and run it by `import()`, for a strict CSP. See "Script examples under a strict CSP" |
 | `exampleTabs`     | all         | the tabs an example's code panel shows: `'js'`, `'html'`, `'css'`, `'test'`, `'console'`, `'chat'`. Under `'no-code'` the default is `['html', 'css', 'chat']`. A fence overrides it with `{"tabs": [...]}` |
 | `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
@@ -2218,6 +2219,32 @@ setExampleHooks({
 The hooks apply in every mode, not only `'no-code'`: a script example's markup is sanitized
 and its preview hydrated after its script runs. A host that serves its own app's data to
 examples binds it in `hydrate`; nothing the example's author writes needs to run.
+
+#### Script examples under a strict CSP: `exampleModules: true`
+
+A site that keeps its `js`/`ts`/`tjs` examples can still run them under `script-src 'self'`:
+
+```typescript
+export default defineSiteConfig({
+  exampleModules: true,
+})
+```
+
+The build already compiles every example to check it. With this it also writes each one to
+`<outputDir>/_examples/<hash>.js`, and the page runs an example by `import()`-ing its module, which
+`'self'` allows, instead of compiling its source. The module's lines are the example's own, so an
+error still names its line.
+
+What still compiles in the browser, and so still needs `'unsafe-eval'`:
+
+- an example once a reader **edits** it. Under the policy it says so, and that reverting runs
+  the published one;
+- the Console tab's REPL (the example's logs still show there);
+- `test` blocks, which are off on a deployed site;
+- `:iframe` and `:ide` examples, whose code runs in the frame's own realm.
+
+It needs `checkExamples` (the default), which is what produces the modules; turning that off
+with this on is reported.
 
 If you want the styles to be real *and* scoped, write them against the doc system's theme
 variables (`--tosi-bg`, `--tosi-text`, …) rather than literal colours, and scope the selector

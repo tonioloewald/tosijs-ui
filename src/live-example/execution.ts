@@ -2,6 +2,8 @@ import { elements } from 'tosijs'
 import {
   describeError,
   diagnoseConstruction,
+  firstUserStackFrame,
+  sourceLineAt,
   EXAMPLE_SOURCE_URL,
 } from './error-location.js'
 import { ExampleContext, TransformFn } from './types.js'
@@ -10,6 +12,7 @@ import {
   assertContextProvided,
   AsyncFunction,
   contextParamNames,
+  contextVarName,
 } from './code-transform.js'
 
 /*
@@ -94,6 +97,12 @@ export interface ExecutionOptions {
    * `transform(rewriteImports(js, contextKeys))`, so scope-capture still applies.
    */
   compiledJs?: string
+  /**
+   * The URL of the example's build-time module (`SiteConfig.exampleModules`, #245). When
+   * present the example is IMPORTED and its default export called, and nothing is compiled:
+   * the path for a page whose CSP forbids `eval`/`Function`. Inline only.
+   */
+  module?: string
   onError?: (error: Error) => void
   /**
    * Receives the example's top-level locals after a successful run, so tjs
@@ -247,6 +256,51 @@ function buildExample(
  * whose dialect only sanitizes and binds markup, showed an error and filed a CSP violation
  * report every time it ran.
  */
+/*
+Run an example from its build-time module (#245): import it and call its default export with
+what the compiled path passes as parameters, keyed by the same identifiers (exampleModuleSource
+in check-examples.ts builds the matching destructured parameter). Same-origin `import()` is
+allowed by `script-src 'self'`, which is the point: nothing here compiles.
+*/
+async function runModule(
+  url: string,
+  preview: HTMLElement,
+  context: ExampleContext,
+  exampleConsole: Console | undefined
+): Promise<void> {
+  const named: Record<string, unknown> = { preview }
+  if (exampleConsole) named.console = exampleConsole
+  for (const [key, value] of Object.entries(context))
+    named[contextVarName(key)] = value
+  const mod = await import(/* @vite-ignore */ url)
+  await mod.default(named)
+}
+
+// A module's lines are the example's own (its body starts on line 1), so no header to subtract.
+function describeModuleError(
+  err: unknown,
+  source: string | undefined,
+  url: string
+): string {
+  const message = String((err as Error)?.message ?? err)
+  const frame = firstUserStackFrame((err as Error)?.stack, url)
+  if (!frame) return message
+  const src = sourceLineAt(source ?? null, frame.line)
+  return src
+    ? `${message} | ${src} (line ${frame.line})`
+    : `${message} (line ${frame.line})`
+}
+
+/*
+The constructor refused to compile because the page's CSP forbids it (an `EvalError` in every
+engine). Under `exampleModules` that is an EDITED example (the published one runs from its
+module), so say what happened and what still works, instead of an engine message about
+'unsafe-eval' a reader cannot act on.
+*/
+const CSP_REFUSED =
+  "This page's security policy (CSP) does not allow code compiled in the browser, so an edited " +
+  'example cannot run here. Revert the edit to run the published example.'
+
 export function nothingToRun(js: string, compiledJs?: string): boolean {
   return compiledJs === undefined ? !js.trim() : !compiledJs.trim()
 }
@@ -268,6 +322,7 @@ export async function executeInline(
     context,
     transform,
     compiledJs,
+    module,
     exampleElement,
     styleElement,
     widgetsElement,
@@ -289,6 +344,18 @@ export async function executeInline(
   }
 
   if (nothingToRun(js, compiledJs)) return preview
+
+  if (module) {
+    try {
+      await runModule(module, preview, context, exampleConsole)
+    } catch (e) {
+      console.error(e)
+      const described = describeModuleError(e, compiledJs, module)
+      preview.append(div({ class: 'preview-error' }, described))
+      if (onError) onError(e as Error)
+    }
+    return preview
+  }
 
   try {
     assertContextProvided(js, context)
@@ -322,6 +389,7 @@ export async function executeInline(
     try {
       built = buildExample(AsyncFunction, fullContext, taggedCode)
     } catch (err) {
+      if (err instanceof EvalError) throw new Error(CSP_REFUSED, { cause: err })
       /*
       Construction failed, so no user frame exists — say what was rejected instead.
 

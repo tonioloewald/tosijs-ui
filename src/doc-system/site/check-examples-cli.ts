@@ -57,6 +57,7 @@ const { problems, warnings, bakes, skipped } = await checkExamples(corpus, {
   ...(importPrefix ? { importPrefix } : {}),
   liveExamples,
   overriddenDialects,
+  modules: process.env.TOSI_EXAMPLE_MODULES === '1',
 })
 
 // stdout is the channel — the parent parses this. Anything else this process prints

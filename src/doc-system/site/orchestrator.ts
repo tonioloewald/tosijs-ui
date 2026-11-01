@@ -59,7 +59,9 @@ import {
   readdirSync,
   readFileSync,
   unlinkSync,
+  writeFileSync,
 } from 'fs'
+import { createHash } from 'crypto'
 import { tmpdir } from 'os'
 import { $, spawn } from 'bun'
 import type { SiteConfig } from './site-config.js'
@@ -77,7 +79,7 @@ import {
   type ExampleProblem,
   type ExampleCheck,
 } from './check-examples.js'
-import type { ExampleBakes } from '../render.js'
+import type { ExampleBake, ExampleBakes } from '../render.js'
 import { ensureSections } from './sections.js'
 import { generateLlmsTxt, generateLlmsFullTxt } from './make-llms-txt.js'
 import { lintMetadata, metadataReport } from './page-metadata.js'
@@ -207,6 +209,37 @@ const escapeRegExp = (s: string): string =>
   s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 /**
+ * Write each baked example's module into `dir` and point its bake at it (#245). Named by a
+ * hash of the module, so a page never imports a stale one from a cache, and two examples with
+ * the same code share a file. The bake's `moduleSource` is dropped once written: docs.json
+ * carries the URL, not the module twice.
+ */
+export function writeExampleModules(
+  bakes: Map<string, ExampleBakes>,
+  dir: string,
+  // the URL `dir` is served at, like the same-origin tjs bundles' (`basePath`-prefixed)
+  url = `/${path.basename(dir)}/`
+): number {
+  const written = new Set<string>()
+  for (const docBakes of bakes.values())
+    for (const bake of docBakes.values()) {
+      if (bake.moduleSource === undefined) continue
+      const name = `${createHash('sha256')
+        .update(bake.moduleSource)
+        .digest('hex')
+        .slice(0, 16)}.js`
+      if (!written.has(name)) {
+        if (!written.size) mkdirSync(dir, { recursive: true })
+        writeFileSync(path.join(dir, name), bake.moduleSource)
+        written.add(name)
+      }
+      bake.module = url + name
+      delete bake.moduleSource
+    }
+  return written.size
+}
+
+/**
  * Run checkExamples() in a child process.
  *
  * It compiles every executable block in the corpus with `new AsyncFunction` on every
@@ -225,7 +258,8 @@ async function checkExamplesInChild(
   importPrefix?: string,
   contextKeys: string[] = [],
   liveExamples: ExamplePolicy = 'auto',
-  overriddenDialects: string[] = []
+  overriddenDialects: string[] = [],
+  modules = false
 ): Promise<ExampleCheck> {
   const cliTs = `${import.meta.dir}/check-examples-cli.ts`
   const cli = existsSync(cliTs)
@@ -244,6 +278,8 @@ async function checkExamplesInChild(
         TOSI_LIVE_EXAMPLES: liveExamples,
         // Built-ins the site replaces: its transform runs them, not ours (#2463).
         TOSI_OVERRIDDEN_DIALECTS: overriddenDialects.join(','),
+        // #245: bake every script example as a module too
+        ...(modules ? { TOSI_EXAMPLE_MODULES: '1' } : {}),
       },
     })
     // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
@@ -261,7 +297,7 @@ async function checkExamplesInChild(
     const payload = JSON.parse(out) as {
       problems: ExampleProblem[]
       warnings?: ExampleProblem[]
-      bakes: Array<[string, Array<[string, { dialect: string; js: string }]>]>
+      bakes: Array<[string, Array<[string, ExampleBake]>]>
       skipped?: Array<[string, number]>
     }
     return {
@@ -916,6 +952,13 @@ export async function buildSite(
             : config.importResolver.prefix) ?? '/lib/'
         : undefined
       let exampleBakes: Map<string, ExampleBakes> | undefined
+      if (config.exampleModules && config.checkExamples === false)
+        misconfigured(
+          config.strict,
+          '⚠️  exampleModules: true needs checkExamples, which compiles the examples into ' +
+            'modules; with checkExamples: false no module is written and every script example ' +
+            'compiles in the browser, which the CSP this option exists for will refuse.'
+        )
       if (config.checkExamples !== false) {
         const { problems, warnings, bakes } = await checkExamplesInChild(
           DOCS_JSON,
@@ -926,9 +969,20 @@ export async function buildSite(
           config.liveExamples ?? 'auto',
           normalizeDialectNames(config.dialects).filter((name) =>
             BUILT_IN_DIALECTS.has(name)
-          )
+          ),
+          !!config.exampleModules
         )
         exampleBakes = bakes
+        if (config.exampleModules) {
+          const bp = config.basePath
+          writeExampleModules(
+            bakes,
+            `${PUBLIC}/_examples`,
+            !bp || bp === '/'
+              ? '/_examples/'
+              : bp.replace(/\/$/, '') + '/_examples/'
+          )
+        }
         // Unsupported imports don't fail the build — the code isn't broken, it just
         // can't run in the doc environment (almost always illustrative code that
         // should be tagged `typescript`). Warn loudly, treat the block as display-only,

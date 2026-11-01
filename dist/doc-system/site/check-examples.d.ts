@@ -54,6 +54,24 @@ export declare function checkExamples(docs: Doc[], opts?: {
      * runs them, and checking would fail correct examples written for the site's own (#2463).
      */
     overriddenDialects?: string[];
+    /**
+     * `SiteConfig.exampleModules` (#245): bake every script example, `js` and `ts` too, and
+     * give each bake the source of a module that runs it (`moduleSource`), for a page whose
+     * CSP forbids compiling code.
+     */
+    modules?: boolean;
 }): Promise<ExampleCheck>;
+/**
+ * The module a CSP-bound page imports to run an example (#245): the example's baked JS as the
+ * body of an async default export, whose one parameter carries what the runtime would have
+ * passed as the `AsyncFunction`'s parameters: `preview`, the example `console`, and each
+ * context module under its identifier. The body starts on line 1, so line numbers match the
+ * example's.
+ *
+ * An example that declares its own top-level `console` cannot also receive one (a parameter
+ * cannot be redeclared), so it is built without it, exactly as the runtime does
+ * (`buildExample` in execution.ts). The engine decides, not a regex.
+ */
+export declare function exampleModuleSource(js: string, contextKeys: string[]): string;
 /** Format problems for a build log. */
 export declare function formatExampleProblems(problems: ExampleProblem[]): string;

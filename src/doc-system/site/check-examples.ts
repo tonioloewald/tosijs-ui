@@ -26,6 +26,7 @@ import { collectCodeTokens } from '../code-fences.js'
 import {
   rewriteImports,
   AsyncFunction,
+  contextParamNames,
   loadTransform,
   transformAvailable,
   UnsupportedImportError,
@@ -131,6 +132,12 @@ export async function checkExamples(
      * runs them, and checking would fail correct examples written for the site's own (#2463).
      */
     overriddenDialects?: string[]
+    /**
+     * `SiteConfig.exampleModules` (#245): bake every script example, `js` and `ts` too, and
+     * give each bake the source of a module that runs it (`moduleSource`), for a page whose
+     * CSP forbids compiling code.
+     */
+    modules?: boolean
   } = {}
 ): Promise<ExampleCheck> {
   const policy: ExamplePolicy = opts.liveExamples ?? 'auto'
@@ -222,10 +229,18 @@ export async function checkExamples(
         // baked JS is byte-identical to what the page produces at runtime. (`ts`
         // is transpiled here with bun but at runtime by the CDN TS compiler, so it
         // stays on the runtime path — see self-contained-examples-plan.md.)
-        if (dialect === 'tjs') {
+        // Under `modules`, every script example is baked: the page runs the module and
+        // never the runtime transform, so build and runtime cannot disagree (#245).
+        if (dialect === 'tjs' || (opts.modules && block.lang !== 'test')) {
           let docBakes = bakes.get(doc.filename)
           if (!docBakes) bakes.set(doc.filename, (docBakes = new Map()))
-          docBakes.set(block.text, { dialect: 'tjs', js })
+          docBakes.set(block.text, {
+            dialect,
+            js,
+            ...(opts.modules
+              ? { moduleSource: exampleModuleSource(js, contextKeys) }
+              : {}),
+          })
         }
       } catch (err) {
         const entry: ExampleProblem = {
@@ -261,6 +276,43 @@ export async function checkExamples(
     )
   }
   return { problems, warnings, bakes, skipped }
+}
+
+/**
+ * The module a CSP-bound page imports to run an example (#245): the example's baked JS as the
+ * body of an async default export, whose one parameter carries what the runtime would have
+ * passed as the `AsyncFunction`'s parameters: `preview`, the example `console`, and each
+ * context module under its identifier. The body starts on line 1, so line numbers match the
+ * example's.
+ *
+ * An example that declares its own top-level `console` cannot also receive one (a parameter
+ * cannot be redeclared), so it is built without it, exactly as the runtime does
+ * (`buildExample` in execution.ts). The engine decides, not a regex.
+ */
+export function exampleModuleSource(js: string, contextKeys: string[]): string {
+  const names = ['preview', 'console', ...contextParamNames(contextKeys)]
+  const build = (params: string[]) =>
+    new (AsyncFunction as any)(`{ ${params.join(', ')} }`, js)
+  let params = names
+  try {
+    build(params)
+  } catch {
+    params = names.filter((n) => n !== 'console')
+    /*
+    Still failing is something only a module rejects, since the example itself compiled: a
+    `'use strict'` directive, say, which a function with a destructured parameter refuses.
+    Thrown, so it is reported as a problem with the example rather than shipped as a module
+    that cannot load.
+    */
+    try {
+      build(params)
+    } catch (error) {
+      throw new Error(
+        `cannot run as a module (exampleModules): ${(error as Error).message}`
+      )
+    }
+  }
+  return `export default async function ({ ${params.join(', ')} }) {${js}\n}\n`
 }
 
 /** Format problems for a build log. */

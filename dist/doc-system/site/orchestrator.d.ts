@@ -2,9 +2,17 @@ export declare function registerSiteDialects(config: {
     dialects?: readonly string[];
 }): void;
 import type { SiteConfig } from './site-config.js';
+import type { ExampleBakes } from '../render.js';
 declare global {
     var Bun: any;
 }
+/**
+ * Write each baked example's module into `dir` and point its bake at it (#245). Named by a
+ * hash of the module, so a page never imports a stale one from a cache, and two examples with
+ * the same code share a file. The bake's `moduleSource` is dropped once written: docs.json
+ * carries the URL, not the module twice.
+ */
+export declare function writeExampleModules(bakes: Map<string, ExampleBakes>, dir: string, url?: string): number;
 /**
  * Is this lock holder something we can hand work to?
  *

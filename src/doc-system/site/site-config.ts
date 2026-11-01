@@ -232,6 +232,20 @@ export interface SiteConfig {
    */
   exampleTabs?: ExampleTab[]
   /**
+   * Run script examples from same-origin modules (1.17.0, #245), for a site served under a
+   * Content Security Policy without `'unsafe-eval'` (`script-src 'self'`).
+   *
+   * The build already compiles every example to check it; with this it also writes each one
+   * to `<outputDir>/_examples/<hash>.js`, and the page runs an example by importing its module
+   * instead of compiling its source. Needs `checkExamples` (the default), which produces them.
+   *
+   * What still compiles, and so still needs `'unsafe-eval'`: an example once a reader EDITS it,
+   * the Console tab's REPL, `test` blocks (off on a deployed site), and `:iframe` / `:ide`
+   * examples. Under such a policy an edited example says why it cannot run. A site with no
+   * script examples at all wants `liveExamples: 'no-code'` instead.
+   */
+  exampleModules?: boolean
+  /**
    * Give live examples a Console tab: what the example logs, and a REPL in its scope (default
    * `true`; a tab since 1.16.4, a panel under the preview in 1.16.2–1.16.3). `false` turns it off site-wide;
    * logs still reach the browser's devtools. One example opts out with the fence option

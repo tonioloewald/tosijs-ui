@@ -149,7 +149,7 @@ export interface Doc {
   // entries (a Map can't JSON-roundtrip). Attached by generate-site so client-side SPA
   // navigation renders the hidden `<script type="application/tosi-transpiled">` and runs
   // examples without the tjs transpiler. Absent when the doc has no tjs examples.
-  bakes?: Array<[string, { dialect: string; js: string }]>
+  bakes?: Array<[string, { dialect: string; js: string; module?: string }]>
   // Common prose/frontmatter fields (carried through; author/date aren't consumed
   // by the doc system yet, but a book pipeline can use them).
   author?: string

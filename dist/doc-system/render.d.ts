@@ -1,6 +1,13 @@
 export interface ExampleBake {
     dialect: string;
     js: string;
+    /**
+     * `SiteConfig.exampleModules` (#245): where the example's module is served, which a page
+     * under a strict CSP imports instead of compiling `js`.
+     */
+    module?: string;
+    /** The module's source, between the example check and the build writing it out. */
+    moduleSource?: string;
 }
 export type ExampleBakes = Map<string, ExampleBake>;
 /** `SiteConfig.accessibility`. One level for now; the name says which standard it targets. */

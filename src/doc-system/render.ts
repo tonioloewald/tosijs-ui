@@ -31,6 +31,13 @@ const baseRenderer = new Renderer()
 export interface ExampleBake {
   dialect: string
   js: string
+  /**
+   * `SiteConfig.exampleModules` (#245): where the example's module is served, which a page
+   * under a strict CSP imports instead of compiling `js`.
+   */
+  module?: string
+  /** The module's source, between the example check and the build writing it out. */
+  moduleSource?: string
 }
 export type ExampleBakes = Map<string, ExampleBake>
 let currentBakes: ExampleBakes | undefined
@@ -241,7 +248,10 @@ docMarked.use({
         // `<` → < prevents a `</script>` inside the JS from breaking the tag;
         // JSON.parse decodes it unchanged at hydration.
         const json = JSON.stringify(bake.js).replace(/</g, '\\u003c')
-        html += `<script type="application/tosi-transpiled" data-dialect="${bake.dialect}">${json}</script>`
+        const module = bake.module
+          ? ` data-module="${escapeAttr(bake.module)}"`
+          : ''
+        html += `<script type="application/tosi-transpiled" data-dialect="${bake.dialect}"${module}>${json}</script>`
       }
       return html
     },

@@ -222,3 +222,75 @@ test('no-code examples: sanitize, hydrate, tabs and chat under a CSP without uns
   })
   expect(result.violations).toEqual([])
 })
+
+/*
+Script examples under the same policy (tosijs-ui#245): `exampleModules` gives each example a
+same-origin module, and the page imports it instead of compiling. The module here is what
+`exampleModuleSource` writes for a `js` example; it reaches the example the way a built page
+delivers it, on the hidden bake script beside the fence.
+*/
+test('a script example runs from its module under a CSP without unsafe-eval; an edit says why it cannot', async ({
+  page,
+  baseURL,
+}) => {
+  const csp = { 'content-security-policy': "script-src 'self' 'unsafe-inline'" }
+  await page.route('**/__csp-mod/', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      headers: csp,
+      body: PAGE,
+    })
+  )
+  await page.route('**/__csp-mod/_examples/m1.js', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/javascript',
+      headers: csp,
+      body:
+        'export default async function ({ preview, console, tosijs, tosijsui }) {' +
+        "const { b } = tosijs.elements\npreview.append(b({ class: 'from-module' }, 'ran'))\n}\n",
+    })
+  )
+  await page.goto(`${baseURL}/__csp-mod/`)
+  await page.waitForFunction(() => (window as any).xinjsui?.liveExample)
+
+  const result = await page.evaluate(async () => {
+    const ui = (window as any).xinjsui
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 300))
+    const source =
+      "import { elements } from 'tosijs'\nconst { b } = elements\npreview.append(b({ class: 'from-module' }, 'ran'))"
+    const doc = document.createElement('div')
+    const pre = document.createElement('pre')
+    const code = document.createElement('code')
+    code.className = 'language-js'
+    code.textContent = source
+    pre.append(code)
+    const bake = document.createElement('script')
+    bake.type = 'application/tosi-transpiled'
+    bake.setAttribute('data-dialect', 'js')
+    bake.setAttribute('data-module', '/__csp-mod/_examples/m1.js')
+    bake.textContent = JSON.stringify('/* the module runs, not this */')
+    doc.append(pre, bake)
+    document.body.append(doc)
+    ui.LiveExample.insertExamples(doc, {
+      tosijs: (window as any).xinjs,
+      'tosijs-ui': ui,
+    })
+    await settle()
+    const example = doc.querySelector('tosi-example') as any
+    const published = {
+      ran: doc.querySelector('.from-module')?.textContent,
+      errors: doc.querySelectorAll('.preview-error').length,
+      violations: [...(window as any).__violations],
+    }
+    example.js = source + '\npreview.append("edited")'
+    await example.refresh()
+    return {
+      published,
+      edited: doc.querySelector('.preview-error')?.textContent,
+    }
+  })
+  expect(result.published).toEqual({ ran: 'ran', errors: 0, violations: [] })
+  expect(result.edited).toContain('security policy (CSP)')
+})

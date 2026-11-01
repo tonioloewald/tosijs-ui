@@ -31,6 +31,14 @@ function bakedJsForBlock(block) {
         return undefined;
     }
 }
+// The URL of the bake's module, which a page under a strict CSP imports (#245).
+function bakedModuleForBlock(block) {
+    const n = block.nextElementSibling;
+    return n?.tagName === 'SCRIPT' &&
+        n.getAttribute('type') === 'application/tosi-transpiled'
+        ? n.getAttribute('data-module') ?? undefined
+        : undefined;
+}
 /*
 Read at insert time rather than captured, so the page can set it before hydration without
 ordering constraints. The static build stamps `globalThis.__TOSI_EXAMPLE_POLICY` into the
@@ -167,6 +175,7 @@ sourceFile) {
         ...rest,
         code: code.innerText,
         compiled: bakedJsForBlock(rest.block),
+        module: bakedModuleForBlock(rest.block),
     }));
     // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
     // it's the key back to the originating fenced-block group in the source.
@@ -263,6 +272,10 @@ sourceFile) {
                     if (source.compiled !== undefined) {
                         example.compiledJs = source.compiled;
                         example.compiledJsSource = source.code;
+                        if (source.module) {
+                            example.compiledModule = source.module;
+                            example.compiledModuleSource = source.code;
+                        }
                     }
                     break;
             }

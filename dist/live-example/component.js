@@ -1739,6 +1739,14 @@ export class LiveExample extends withAttributes({
     // original bake is dropped and the edit transpiles on demand. Re-paired to the edited
     // source when a saved local edit carries its own bake (slice 4).
     compiledJsSource;
+    /*
+    The example's module, under `SiteConfig.exampleModules` (#245): a same-origin URL the page
+    imports instead of compiling, for a host whose CSP forbids compiling. Paired with the source
+    it was built from, and never re-paired (unlike `compiledJs`): the module is the PUBLISHED
+    example, so an edit, or a restored local edit, takes the compiling path.
+    */
+    compiledModule;
+    compiledModuleSource;
     // ── Read-only product tabs (tjs/ts only) ──────────────────────────────────
     // A `tjs`/`ts` example's source is editable; the JavaScript it compiles to is
     // shown read-only in an extra "JS" tab. The tab is added lazily (examples show
@@ -3011,26 +3019,42 @@ export class LiveExample extends withAttributes({
         // The bake was made at build time by the PINNED transpiler, so it is only valid for a
         // built-in dialect. A site that registered its own `tjs` would otherwise get its override
         // in dev (tests on, no bake) and the pinned output in production (tests off).
-        const bake = !runner &&
+        /*
+        The published example's module (`exampleModules`, #245), imported instead of compiled, for a
+        page whose CSP forbids compiling. Only while the source is still the one it was built from,
+        for a built-in dialect (the build compiled it with the pinned transpiler, as for the bake),
+        and inline: an iframe example's code runs in the frame's realm, which an import from this
+        page cannot give it. It wins over tests being on, since compiling is what it avoids.
+        */
+        const module = !runner &&
             isBuiltInDialect(this.dialect) &&
-            this.dialect !== 'js' &&
-            !testManager.enabled.value &&
-            // An inline view shows its inline tjs tests' result, and running them needs the
-            // transpiler: such an example takes the full path on every site. Only when its source
-            // could hold a test, though (the word is in it): one that cannot keeps the fast path.
-            !(this.teaches && /\btest\b/.test(this.js)) &&
-            this.compiledJs !== undefined &&
-            this.compiledJsSource === this.js
-            ? this.compiledJs
+            this.effectiveMode === 'inline' &&
+            this.compiledModule !== undefined &&
+            this.compiledModuleSource === this.js
+            ? this.compiledModule
             : undefined;
-        const transform = bake === undefined && !runner
+        const bake = module && this.compiledJsSource === this.js
+            ? this.compiledJs
+            : !runner &&
+                isBuiltInDialect(this.dialect) &&
+                this.dialect !== 'js' &&
+                !testManager.enabled.value &&
+                // An inline view shows its inline tjs tests' result, and running them needs the
+                // transpiler: such an example takes the full path on every site. Only when its source
+                // could hold a test, though (the word is in it): one that cannot keeps the fast path.
+                !(this.teaches && /\btest\b/.test(this.js)) &&
+                this.compiledJs !== undefined &&
+                this.compiledJsSource === this.js
+                ? this.compiledJs
+                : undefined;
+        const transform = bake === undefined && !runner && !module
             ? await dialectTransform(this.dialect, this.options)
             : undefined;
         const { example, style: styleEl, exampleWidgets } = this.parts;
         // Keep the read-only generated-JS tab (tjs/ts) in sync with the source, and
         // re-run any inline tjs tests for the "tjs tests" results tab. With the bake we
         // already have the generated JS and skip the transpiler-bound inline-test run.
-        if (this.dialect !== 'js' && !runner) {
+        if (this.dialect !== 'js' && !runner && (bake !== undefined || !module)) {
             this.lastGeneratedJs = bake ?? (await this.computeGeneratedJs(transform));
             if (this.jsOutEditor)
                 this.jsOutEditor.value = this.lastGeneratedJs;
@@ -3057,14 +3081,16 @@ export class LiveExample extends withAttributes({
         // tjs-lang/editors bundle (and its AST parse) off the reader path — it loads only
         // when someone actually edits a tjs/ts example. `js` never needs it. (The Console
         // tab's REPL doesn't use it: it evaluates inside the example's own scope, onRepl.)
-        const onScope = this.dialect !== 'js' && !runner && this.editorsBuilt
+        const onScope = this.dialect !== 'js' && !runner && !module && this.editorsBuilt
             ? this.captureScope
             : undefined;
         // The REPL's door into this run's scope; a superseded run's evaluator is dropped. Only
         // once someone has used the REPL: the hook is a direct eval, which slows the whole example
         // and keeps its scope alive, so readers who never open the console never pay for it.
         this.replEvaluate = undefined;
-        const onRepl = this.replWanted && this.consoleEnabled && !runner
+        const onRepl = 
+        // a module cannot take the REPL's hook, which is a direct `eval`
+        this.replWanted && this.consoleEnabled && !runner && !module
             ? (evaluate) => {
                 if (!runAbort.signal.aborted)
                     this.replEvaluate = evaluate;
@@ -3101,6 +3127,7 @@ export class LiveExample extends withAttributes({
                 context: this.context,
                 transform,
                 compiledJs: runner ? '' : bake,
+                module,
                 exampleElement: example,
                 styleElement: styleEl,
                 widgetsElement: exampleWidgets,
