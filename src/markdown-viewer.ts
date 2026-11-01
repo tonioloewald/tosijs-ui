@@ -125,7 +125,7 @@ pass context data through to HTML elements.
 >
 ## {{title}}
 
-The magic number is <input type="number" value={{foo.bar}}>
+The magic number is <input type="number" title="magic number" value={{foo.bar}}>
 
 Oh, and nested templates {{nested}}.
 </tosi-md>

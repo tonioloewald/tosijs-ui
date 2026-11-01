@@ -48,7 +48,8 @@ function composeName(prefix, suffix, base) {
   return name
 }
 
-const scroller = div({ class: 'scroller' })
+// Focusable, so the icon grid scrolls from the keyboard too.
+const scroller = div({ class: 'scroller', tabindex: 0, title: 'icons' })
 
 function rebuildGrid() {
   const prefix = iconDemo.prefix.value
@@ -111,11 +112,11 @@ preview.append(
       }
     }),
     select(
-      { bindValue: iconDemo.prefix },
+      { bindValue: iconDemo.prefix, title: 'prefix' },
       ...prefixes.map(p => option({ value: p }, p || 'prefix'))
     ),
     select(
-      { bindValue: iconDemo.suffix },
+      { bindValue: iconDemo.suffix, title: 'suffix' },
       ...suffixes.map(s => option({ value: s }, s || 'suffix'))
     ),
   ),

@@ -53,6 +53,8 @@ export interface CmOptions {
     onChange?: (value: string) => void;
     /** style-injection root — pass the host's ShadowRoot when mounted in shadow DOM */
     root?: Document | ShadowRoot;
+    /** the editable area's accessible name */
+    label?: string;
 }
 /** Create a CodeMirror editor mounted in `parent`, returning an editor-agnostic handle. */
 export declare function createCmEditor(parent: HTMLElement, opts?: CmOptions): CmHandle;

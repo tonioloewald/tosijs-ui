@@ -462,8 +462,6 @@ export class TosiTagList extends withAttributes({
     div({
       part: 'tagContainer',
       class: 'row',
-      role: 'list',
-      ariaLabel: 'Selected tags',
     }),
     input({
       part: 'tagInput',
@@ -522,8 +520,14 @@ export class TosiTagList extends withAttributes({
 
     tagContainer.textContent = ''
     // A list of the chips (#3570): each chip is an item, and with none there is no list.
-    if (this.tags.length) tagContainer.setAttribute('role', 'list')
-    else tagContainer.removeAttribute('role')
+    // Its name goes with the role: `aria-label` is not allowed on an element with none.
+    if (this.tags.length) {
+      tagContainer.setAttribute('role', 'list')
+      tagContainer.setAttribute('aria-label', 'Selected tags')
+    } else {
+      tagContainer.removeAttribute('role')
+      tagContainer.removeAttribute('aria-label')
+    }
     for (const tag of this.tags) {
       const chip = tosiTag({
         caption: tag,

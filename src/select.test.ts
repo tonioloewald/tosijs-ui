@@ -120,11 +120,68 @@ describe('TosiSelect', () => {
       expect(input?.getAttribute('aria-expanded')).toBe('false')
     })
 
-    test('aria-autocomplete is "none" when not editable', () => {
-      const select = tosiSelect({ options: 'a,b,c', editable: false })
+    test('a select you pick from is its button: one combobox, no input inside it (#3571)', () => {
+      const select = tosiSelect({ options: 'a,b,c', value: 'b' })
       container.appendChild(select)
-      const input = select.querySelector('input[part="value"]')
-      expect(input?.getAttribute('aria-autocomplete')).toBe('none')
+      select.render()
+      const button = select.querySelector('button[part="button"]')!
+      expect(button.getAttribute('role')).toBe('combobox')
+      expect(button.getAttribute('aria-haspopup')).toBe('listbox')
+      expect(button.querySelector('input')).toBeNull()
+      expect(select.querySelector('[part="caption"]')!.textContent).toBe('b')
+      expect(
+        (select.querySelector('[part="field"]') as HTMLElement).hidden
+      ).toBe(true)
+    })
+
+    test('an editable select is its input, outside the button', () => {
+      const select = tosiSelect({ options: 'a,b,c', editable: true })
+      container.appendChild(select)
+      select.render()
+      const button = select.querySelector(
+        'button[part="button"]'
+      ) as HTMLElement
+      const field = select.querySelector('[part="field"]') as HTMLElement
+      expect(button.hidden).toBe(true)
+      expect(field.hidden).toBe(false)
+      expect(
+        field.querySelector('input')?.getAttribute('aria-autocomplete')
+      ).toBe('list')
+    })
+
+    test('the combobox is named by title, a wrapping label, or the placeholder', () => {
+      const titled = tosiSelect({ options: 'a', title: 'paragraph style' })
+      container.appendChild(titled)
+      titled.render()
+      expect(
+        titled
+          .querySelector('button[part="button"]')!
+          .getAttribute('aria-label')
+      ).toBe('paragraph style')
+
+      const label = document.createElement('label')
+      label.append('Country ')
+      const labelled = tosiSelect({ options: 'a', value: 'a' })
+      label.append(labelled)
+      container.appendChild(label)
+      labelled.render()
+      expect(
+        labelled
+          .querySelector('button[part="button"]')!
+          .getAttribute('aria-label')
+      ).toBe('Country')
+
+      const placeheld = tosiSelect({
+        options: 'a',
+        placeholder: 'pick an icon',
+      })
+      container.appendChild(placeheld)
+      placeheld.render()
+      expect(
+        placeheld
+          .querySelector('button[part="button"]')!
+          .getAttribute('aria-label')
+      ).toBe('pick an icon')
     })
   })
 

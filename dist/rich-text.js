@@ -219,6 +219,9 @@ export class RichText extends withAttributes({
         },
         ':host [part="toolbar"] > button': {
             _xinIconSize: 18,
+            // WCAG 2.5.8's minimum target: a page whose buttons have no padding made them 16px.
+            minHeight: '24px',
+            minWidth: '24px',
         },
     };
     static formAssociated = true;

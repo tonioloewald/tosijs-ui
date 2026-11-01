@@ -49,6 +49,7 @@ import {
   indentOnInput,
   syntaxHighlighting,
   defaultHighlightStyle,
+  HighlightStyle,
   bracketMatching,
 } from '@codemirror/language'
 import {
@@ -90,10 +91,23 @@ const isDarkMode = (): boolean =>
  */
 const programmatic = Annotation.define<boolean>()
 
+/*
+CodeMirror's light style, with its one colour under WCAG AA's 4.5:1 darkened (#3572): type and
+namespace names are #085, 4.43:1 on a near-white editor. #075 is 5.5:1 and reads the same.
+*/
+const AA_COLORS: Record<string, string> = { '#085': '#075' }
+const lightHighlightStyle = HighlightStyle.define(
+  defaultHighlightStyle.specs.map((spec) =>
+    typeof spec.color === 'string' && AA_COLORS[spec.color]
+      ? { ...spec, color: AA_COLORS[spec.color] }
+      : spec
+  )
+)
+
 const highlightFor = (dark: boolean): Extension =>
   dark
     ? syntaxHighlighting(oneDarkHighlightStyle)
-    : syntaxHighlighting(defaultHighlightStyle, { fallback: true })
+    : syntaxHighlighting(lightHighlightStyle, { fallback: true })
 
 /** Map a `<tosi-code mode>` value to a CodeMirror language extension. */
 export function languageForMode(mode: string): Extension {
@@ -287,6 +301,8 @@ export interface CmOptions {
   onChange?: (value: string) => void
   /** style-injection root — pass the host's ShadowRoot when mounted in shadow DOM */
   root?: Document | ShadowRoot
+  /** the editable area's accessible name */
+  label?: string
 }
 
 // ONE darkmode observer for the whole module, with a registry of live editors —
@@ -349,6 +365,9 @@ export function createCmEditor(
           highlight.of(highlightFor(isDarkMode())),
           language.of(langExt),
           readonly.of(EditorState.readOnly.of(!!opts.readOnly)),
+          EditorView.contentAttributes.of({
+            'aria-label': opts.label || 'code editor',
+          }),
           EditorView.updateListener.of((u) => {
             if (!u.docChanged || !opts.onChange) return
             // A programmatic `value` set is not a change the USER made. See `programmatic`.

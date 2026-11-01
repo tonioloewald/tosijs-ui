@@ -179,6 +179,8 @@ export declare class TosiSchemaForm extends TosiSchemaForm_base {
     /** The schema the current DOM was built for — see `render`. */
     private _builtFor;
     private _errors;
+    private _labelCount;
+    private labelFor;
     private _index;
     private _curation;
     private _entries;

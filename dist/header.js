@@ -27,7 +27,7 @@ Use `elastic()` to push the menu to the right:
 import { elements } from 'tosijs'
 import { tosiHeader, tosiMenu, elastic, icons } from 'tosijs-ui'
 
-const menu = tosiMenu({ class: 'menu-demo' }, icons.moreVertical())
+const menu = tosiMenu({ class: 'menu-demo', title: 'more' }, icons.moreVertical())
 menu.menuItems = [
   { caption: 'About', tooltip: 'Learn more about this app', action() { alert('About!') } },
   { caption: 'Settings', icon: 'settings', tooltip: 'Appearance options', menuItems: [

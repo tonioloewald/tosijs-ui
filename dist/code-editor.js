@@ -409,6 +409,10 @@ export class CodeEditor extends withAttributes({
                     mode: this.mode,
                     readOnly: this.disabled,
                     root: this.shadowRoot ?? undefined,
+                    // The editable area is what a screen reader reaches; the host's name is its name.
+                    label: this.getAttribute('aria-label') ||
+                        this.title ||
+                        (this.mode ? `${this.mode} code` : ''),
                     onChange: (value) => this.dispatchEvent(new CustomEvent('change', { detail: { value } })),
                 });
                 this._handle = handle;

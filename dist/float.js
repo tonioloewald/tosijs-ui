@@ -44,7 +44,7 @@ A floating, potentially draggable user interface element.
   margin: 0;
   padding: 5px 10px;
   color: white;
-  background: red;
+  background: #c00;
 }
 
 .preview .balloon {
@@ -67,7 +67,7 @@ A floating, potentially draggable user interface element.
 
 .preview footer {
   text-align: center;
-  background: #f008;
+  background: #b00c;
   color: white;
 ```
 

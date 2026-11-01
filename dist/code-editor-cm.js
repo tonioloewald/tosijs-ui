@@ -13,7 +13,7 @@ layered in separately and only when tjs-lang is installed.
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, tooltips, } from '@codemirror/view';
 import { EditorState, Compartment, Annotation, Transaction, } from '@codemirror/state';
 import { indentWithTab, history, defaultKeymap, historyKeymap, undo, redo, undoDepth, redoDepth, } from '@codemirror/commands';
-import { indentUnit, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching, } from '@codemirror/language';
+import { indentUnit, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting, defaultHighlightStyle, HighlightStyle, bracketMatching, } from '@codemirror/language';
 import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap, } from '@codemirror/autocomplete';
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { lintKeymap } from '@codemirror/lint';
@@ -44,9 +44,17 @@ const isDarkMode = () => typeof document !== 'undefined' &&
  * semantic to preserve — and tightening it after 1.7 is on `latest` would be breaking.
  */
 const programmatic = Annotation.define();
+/*
+CodeMirror's light style, with its one colour under WCAG AA's 4.5:1 darkened (#3572): type and
+namespace names are #085, 4.43:1 on a near-white editor. #075 is 5.5:1 and reads the same.
+*/
+const AA_COLORS = { '#085': '#075' };
+const lightHighlightStyle = HighlightStyle.define(defaultHighlightStyle.specs.map((spec) => typeof spec.color === 'string' && AA_COLORS[spec.color]
+    ? { ...spec, color: AA_COLORS[spec.color] }
+    : spec));
 const highlightFor = (dark) => dark
     ? syntaxHighlighting(oneDarkHighlightStyle)
-    : syntaxHighlighting(defaultHighlightStyle, { fallback: true });
+    : syntaxHighlighting(lightHighlightStyle, { fallback: true });
 /** Map a `<tosi-code mode>` value to a CodeMirror language extension. */
 export function languageForMode(mode) {
     switch (mode) {
@@ -209,6 +217,9 @@ export function createCmEditor(parent, opts = {}) {
                     highlight.of(highlightFor(isDarkMode())),
                     language.of(langExt),
                     readonly.of(EditorState.readOnly.of(!!opts.readOnly)),
+                    EditorView.contentAttributes.of({
+                        'aria-label': opts.label || 'code editor',
+                    }),
                     EditorView.updateListener.of((u) => {
                         if (!u.docChanged || !opts.onChange)
                             return;

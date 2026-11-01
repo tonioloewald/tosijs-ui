@@ -131,7 +131,7 @@ test('captions select has value', () => {
 
 ```html
 <form>
-  <tosi-select name="choice" options="a,b,c" required></tosi-select>
+  <label>Choice <tosi-select name="choice" options="a,b,c" required></tosi-select></label>
   <button type="submit">Submit</button>
 </form>
 ```
@@ -215,6 +215,7 @@ import {
   PartsMap,
   elements,
   vars,
+  varDefault,
   throttle,
   deprecated,
   withAttributes,
@@ -231,7 +232,7 @@ import {
 import { localize, XinLocalized } from './localize.js'
 import { splitCaptionIcon } from './caption-icon.js'
 
-const { button, span, input } = elements
+const { button, div, span, input } = elements
 
 type OptionRequest = () => Promise<string | undefined>
 
@@ -271,6 +272,8 @@ const hasValue = (options: SelectOptions, value: string): boolean => {
 
 interface SelectParts extends PartsMap {
   button: HTMLButtonElement
+  caption: HTMLSpanElement
+  field: HTMLDivElement
   value: HTMLInputElement
 }
 
@@ -328,6 +331,42 @@ export class TosiSelect extends withAttributes({
     },
     ':host[hide-caption] button > :nth-child(2)': {
       display: 'none',
+    },
+    /*
+    Two controls, one shown (#3571). A select you pick from is its button: the button IS the
+    combobox, and shows the caption as text. An editable one is its input, in a field of its
+    own. An input inside a button was both at once, which HTML forbids and a screen reader
+    reads as two controls, neither with a name.
+    */
+    ':host [part="caption"]': {
+      width: vars.tosiSelectFieldWidth,
+      padding: vars.tosiSelectValuePadding,
+      flex: '1',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
+    ':host [part="caption"].-placeholder': {
+      opacity: '0.6',
+    },
+    ':host [part="field"]': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: vars.tosiSelectGap,
+      height: vars.tosiSelectTouchSize,
+      padding: vars.tosiSelectPadding,
+      width: '100%',
+      borderRadius: varDefault.tosiSelectFieldRadius(vars.spacing50),
+      boxShadow: varDefault.inputBorderShadow('inset 0 0 0 1px #8888'),
+    },
+    ':host:not([show-icon]) [part="field"] > :first-child': {
+      display: 'none',
+    },
+    ':host [part="field"][hidden], :host [part="button"][hidden]': {
+      display: 'none',
+    },
+    ':host [part="field"] > svg': {
+      cursor: 'pointer',
     },
     ':host [part="value"]': {
       width: vars.tosiSelectFieldWidth,
@@ -502,6 +541,41 @@ export class TosiSelect extends withAttributes({
     if (event.key === 'Enter') {
       event.preventDefault()
     }
+    if (event.key === 'ArrowDown' && !this.isExpanded) {
+      event.preventDefault()
+      this.popOptions()
+    }
+  }
+
+  /*
+  The combobox's name: the host's own `aria-label` or `title`, else its `<label>`, else the
+  placeholder. A wrapping `<label>` names the custom element, which a screen reader never
+  reaches, so the name is copied onto the control that has focus.
+  */
+  private accessibleName(): string {
+    const own = this.getAttribute('aria-label') || this.title
+    if (own) return own
+    const labels: Element[] = []
+    const wrapping = this.closest('label')
+    if (wrapping) labels.push(wrapping)
+    if (this.id) {
+      labels.push(
+        ...Array.from(
+          document.querySelectorAll(`label[for="${CSS.escape(this.id)}"]`)
+        )
+      )
+    }
+    const text = labels
+      .map((label) => {
+        // The label's text, not the select's own caption inside it.
+        const copy = label.cloneNode(true) as Element
+        copy.querySelectorAll('tosi-select').forEach((el) => el.remove())
+        return copy.textContent?.trim() ?? ''
+      })
+      .filter(Boolean)
+      .join(' ')
+    if (text) return text
+    return this.localized ? localize(this.placeholder) : this.placeholder
   }
 
   filterMenu = throttle(() => {
@@ -533,8 +607,9 @@ export class TosiSelect extends withAttributes({
   }
 
   private updateAriaExpanded() {
-    const { value } = this.parts
+    const { value, button } = this.parts
     value.setAttribute('aria-expanded', String(this.isExpanded))
+    button.setAttribute('aria-expanded', String(this.isExpanded))
   }
 
   content = () => [
@@ -542,22 +617,32 @@ export class TosiSelect extends withAttributes({
       {
         type: 'button',
         part: 'button',
+        role: 'combobox',
+        ariaHaspopup: 'listbox',
+        ariaExpanded: 'false',
         onClick: this.popOptions,
+        onKeydown: this.handleKey,
       },
+      span(),
+      span({ part: 'caption' }),
+      icons.chevronDown()
+    ),
+    div(
+      { part: 'field', hidden: true },
       span(),
       input({
         part: 'value',
         value: this.value,
-        tabindex: 0,
         role: 'combobox',
         ariaHaspopup: 'listbox',
         ariaExpanded: 'false',
-        ariaAutocomplete: this.editable ? 'list' : 'none',
+        ariaAutocomplete: 'list',
+        onClick: this.popOptions,
         onKeydown: this.handleKey,
         onInput: this.filterMenu,
         onChange: this.handleChange,
       }),
-      icons.chevronDown()
+      icons.chevronDown({ onClick: this.popOptions })
     ),
   ]
 
@@ -639,13 +724,27 @@ export class TosiSelect extends withAttributes({
   render(): void {
     super.render()
 
-    const { value, button } = this.parts
+    const { value, button, caption, field } = this.parts
     button.disabled = this.disabled
-    const icon = value.previousElementSibling as HTMLElement
+    value.disabled = this.disabled
+    button.hidden = this.editable
+    field.hidden = !this.editable
+    const name = this.accessibleName()
+    for (const control of [button, value]) {
+      if (name) control.setAttribute('aria-label', name)
+      else control.removeAttribute('aria-label')
+    }
+    const icon = button.firstElementChild as HTMLElement
 
     const option = this.findOption()
     let newIcon: Element = span()
-    value.value = this.localized ? localize(option.caption) : option.caption
+    const shown = this.localized ? localize(option.caption) : option.caption
+    value.value = shown
+    const placeholder = this.localized
+      ? localize(this.placeholder)
+      : this.placeholder
+    caption.textContent = shown || placeholder
+    caption.classList.toggle('-placeholder', !shown)
     if (option.icon) {
       if (option.icon instanceof HTMLElement) {
         newIcon = option.icon.cloneNode(true) as HTMLElement
@@ -654,12 +753,8 @@ export class TosiSelect extends withAttributes({
       }
     }
     icon.replaceWith(newIcon)
-    value.setAttribute(
-      'placeholder',
-      this.localized ? localize(this.placeholder) : this.placeholder
-    )
-    value.style.pointerEvents = this.editable ? '' : 'none'
-    value.readOnly = !this.editable
+    field.firstElementChild!.replaceWith(newIcon.cloneNode(true))
+    value.setAttribute('placeholder', placeholder)
   }
 }
 

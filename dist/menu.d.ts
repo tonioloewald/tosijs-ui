@@ -149,6 +149,7 @@ export declare class TosiMenu extends TosiMenu_base<TosiMenuParts> {
     handleDragLeave: (event: DragEvent) => void;
     handleDrop: (event: DragEvent) => void;
     content: () => HTMLButtonElement;
+    render(): void;
     handleShortcut: (event: KeyboardEvent) => Promise<void>;
     private findMenuItemByCaption;
     private animateShortcut;

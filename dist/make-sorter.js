@@ -39,7 +39,8 @@ sortPicker = select(
   option('Sort by age, last (desc)', {value: 'ageLast'}),
   {
     onChange: render,
-    value: 'nameSort'
+    value: 'nameSort',
+    title: 'sort order'
   },
 )
 

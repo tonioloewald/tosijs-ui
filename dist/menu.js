@@ -1578,7 +1578,25 @@ export class TosiMenu extends withAttributes({
         }
         removeLastMenu(0);
     };
-    content = () => button({ tabindex: 0, part: 'trigger', onClick: this.showMenu }, tosiSlot());
+    content = () => button({
+        tabindex: 0,
+        part: 'trigger',
+        ariaHaspopup: 'menu',
+        onClick: this.showMenu,
+    }, tosiSlot());
+    render() {
+        super.render();
+        /*
+        The trigger is the control a screen reader reaches, and a menu shown as an icon alone has
+        no text to name it (#3572). The host's own name carries over: `aria-label`, else `title`.
+        */
+        const name = this.getAttribute('aria-label') || this.title;
+        const { trigger } = this.parts;
+        if (name)
+            trigger.setAttribute('aria-label', name);
+        else
+            trigger.removeAttribute('aria-label');
+    }
     handleShortcut = async (event) => {
         const match = findShortcutAction(this.menuItems, event);
         if (!match)

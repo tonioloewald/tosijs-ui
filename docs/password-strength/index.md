@@ -52,8 +52,8 @@ breach.addEventListener('click', async () => {
 ```
 ```html
 <tosi-password-strength>
-  <input class="password" type="password">
-  <button class="toggle">
+  <input class="password" type="password" aria-label="password">
+  <button class="toggle" title="show password">
     <tosi-icon icon="eye"></tosi-icon>
   </button>
 </tosi-password-strength>

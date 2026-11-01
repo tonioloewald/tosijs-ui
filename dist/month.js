@@ -211,7 +211,8 @@ export class TosiMonth extends withAttributes({
             userSelect: 'none',
         },
         ':host .day': {
-            color: varDefault.monthDayColor('hotpink'),
+            // Not hotpink, which is 2.6:1 on white; this is 5:1 (WCAG AA, #3572).
+            color: varDefault.monthDayColor('mediumvioletred'),
             background: varDefault.monthDayBackground('white'),
             fontWeight: varDefault.monthDayFontWeight('800'),
         },
@@ -226,7 +227,7 @@ export class TosiMonth extends withAttributes({
         },
         ':host .date.checked': {
             color: varDefault.monthDateCheckedColor('white'),
-            background: varDefault.monthDateCheckedBackground('hotpink'),
+            background: varDefault.monthDateCheckedBackground('mediumvioletred'),
         },
         ':host:not([range]) .date.checked': {
             borderRadius: varDefault.monthDateCheckedBorderRadius('10px'),
@@ -414,20 +415,25 @@ export class TosiMonth extends withAttributes({
     content = () => [
         div({ part: 'header' }, button({
             part: 'previous',
+            title: 'previous month',
             onClick: this.previousMonth,
         }, icons.chevronLeft()), span({ style: { flex: '1' } }), button({
             part: 'jump',
+            title: 'go to date',
             onClick: this.jumpMenu,
         }, icons.calendar()), tosiSelect({
             part: 'month',
+            title: 'month',
             options: this.months,
             onChange: this.setMonth,
         }), tosiSelect({
             part: 'year',
+            title: 'year',
             options: [this.year],
             onChange: this.setMonth,
         }), span({ style: { flex: '1' } }), button({
             part: 'next',
+            title: 'next month',
             onClick: this.nextMonth,
         }, icons.chevronRight())),
         div({ part: 'week' }),

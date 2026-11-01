@@ -32,7 +32,7 @@ Nobody normal ever accomplished anything meaningful in this world. It's just, so
 > These are wrapped in a div with `display: flex; flex-direction: column; gap: 0.5em`.
 
 <div style="display: flex; flex-direction: column; gap: 0.5em">
-  <select value="That">
+  <select value="That" title="a select">
     <option>This</option>
     <option>That</option>
     <option>The other</option>

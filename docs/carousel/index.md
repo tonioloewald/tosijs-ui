@@ -61,7 +61,9 @@ This is a minimalist carousel component that supports the usual stuff.
   would ever end it.
 - **The dots are tappable:** each draws a `--carousel-dot-size` dot (8px) but answers taps across
   its whole slot and `--carousel-dot-hit-size` (44px) tall, so a tap that just misses a dot
-  doesn't open the slide underneath.
+  doesn't open the slide underneath. Dots sit 24px apart (`--carousel-dot-spacing`, 16px), the
+  spacing WCAG 2.5.8 asks of a target smaller than 24px.
+- **The keyboard reaches the slides:** the slide strip takes focus, and ← and → page it.
 - **Resizing keeps the current slide in place** (rotation, a window resize) instead of leaving
   it partway into the next one.
 

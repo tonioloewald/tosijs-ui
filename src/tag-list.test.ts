@@ -232,6 +232,7 @@ describe('TosiTagList', () => {
     test('tag container has role="list"', () => {
       const tagList = tosiTagList({ value: 'test' })
       container.appendChild(tagList)
+      tagList.render()
       const tagContainer = tagList.querySelector('[part="tagContainer"]')
       expect(tagContainer?.getAttribute('role')).toBe('list')
     })
@@ -248,14 +249,15 @@ describe('TosiTagList', () => {
       const empty = tosiTagList({ value: '' })
       container.appendChild(empty)
       empty.render()
-      expect(
-        empty.querySelector('[part="tagContainer"]')!.hasAttribute('role')
-      ).toBe(false)
+      const emptyContainer = empty.querySelector('[part="tagContainer"]')!
+      expect(emptyContainer.hasAttribute('role')).toBe(false)
+      expect(emptyContainer.hasAttribute('aria-label')).toBe(false)
     })
 
     test('tag container has aria-label', () => {
       const tagList = tosiTagList({ value: 'test' })
       container.appendChild(tagList)
+      tagList.render()
       const tagContainer = tagList.querySelector('[part="tagContainer"]')
       expect(tagContainer?.getAttribute('aria-label')).toBe('Selected tags')
     })

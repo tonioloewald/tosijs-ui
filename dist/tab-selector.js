@@ -49,7 +49,7 @@ preview.querySelector('.add').addEventListener('click', () => {
     look at the html…
   </div>
   <div name="third">third body</div>
-  <button class="add" slot="after-tabs">
+  <button class="add" slot="after-tabs" title="add a tab">
     <tosi-icon icon="plus"></tosi-icon>
   </button>
 </tosi-tabs>
@@ -138,13 +138,13 @@ initTooltips()
 import { elements, vars, withAttributes, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize.js';
 import { icons } from './icons.js';
-const { div, slot, span, button } = elements;
+const { div, slot, span } = elements;
 export class TosiTabs extends withAttributes({
     localized: false,
 }) {
     static preferredTagName = 'tosi-tabs';
     value = 0;
-    makeTab(tabs, tabBody, bodyId) {
+    makeTab(tabs, tabBody, _bodyId) {
         const tabName = tabBody.getAttribute('name');
         const tabContent = tabBody.querySelector('template[role="tab"]')?.content.cloneNode(true) ||
             (this.localized ? tosiLocalized(tabName) : span(tabName));
@@ -152,13 +152,26 @@ export class TosiTabs extends withAttributes({
             part: 'tab',
             tabindex: 0,
             role: 'tab',
-            ariaControls: bodyId,
-        }, tabBody.hasAttribute('data-close')
-            ? button({
+        }, 
+        /*
+        A tab may hold no control of its own (#3572), so the close button is for the pointer
+        only: Delete or Backspace closes the focused tab from the keyboard (keyTab).
+        */
+        tabBody.hasAttribute('data-close')
+            ? span({
                 title: 'close',
                 class: 'close',
+                ariaHidden: 'true',
             }, icons.x())
             : {});
+        /*
+        The panel is in the light DOM and the tab in the shadow root, where an id cannot reach, so
+        `aria-controls="<id>"` named nothing. Element reflection crosses the boundary.
+        */
+        if ('ariaControlsElements' in tab) {
+            ;
+            tab.ariaControlsElements = [tabBody];
+        }
         const tooltip = tabBody.dataset.tooltip;
         if (tooltip) {
             tab.dataset.tooltip = tooltip;
@@ -226,14 +239,17 @@ export class TosiTabs extends withAttributes({
             background: vars.tosiTabsSelectedColor,
             transition: 'ease-out 0.2s',
         },
-        ':host button.close': {
+        ':host .close': {
             border: 0,
             background: 'transparent',
             textAlign: 'center',
-            marginLeft: vars.spacing50,
-            padding: 0,
+            // A 24px target (WCAG 2.5.8) around a 12px glyph, taking no more room than the glyph.
+            padding: '6px',
+            margin: `-6px -6px -6px calc(${vars.spacing50} - 6px)`,
+            lineHeight: '0',
+            cursor: 'pointer',
         },
-        ':host button.close > svg': {
+        ':host .close > svg': {
             height: '12px',
         },
     };
@@ -252,7 +268,7 @@ export class TosiTabs extends withAttributes({
         this.handleCloseTab = handler;
     }
     content = [
-        div({ role: 'tabpanel', part: 'tabpanel' }, div({ part: 'tabrow' }, div({ class: 'tabs', part: 'tabs' }), div({ class: 'elastic' }), slot({ name: 'after-tabs' })), div({ class: 'border' }, div({ class: 'selected', part: 'selected' }))),
+        div({ part: 'tabpanel' }, div({ part: 'tabrow' }, div({ class: 'tabs', part: 'tabs', role: 'tablist' }), div({ class: 'elastic' }), slot({ name: 'after-tabs' })), div({ class: 'border' }, div({ class: 'selected', part: 'selected' }))),
         slot(),
     ];
     addTabBody(body, selectTab = false) {
@@ -291,6 +307,17 @@ export class TosiTabs extends withAttributes({
                 this.pickTab(event);
                 event.preventDefault();
                 break;
+            case 'Delete':
+            case 'Backspace': {
+                const body = this.bodies[tabIndex];
+                if (body?.hasAttribute('data-close')) {
+                    event.preventDefault();
+                    if (!this.handleCloseTab || this.handleCloseTab(body) !== false) {
+                        this.removeTabBody(body);
+                    }
+                }
+                break;
+            }
             default:
             // console.log(event.key)
         }
@@ -301,7 +328,7 @@ export class TosiTabs extends withAttributes({
     pickTab = (event) => {
         const { tabs } = this.parts;
         const target = event.target;
-        const isCloseEvent = target.closest('button.close') !== null;
+        const isCloseEvent = target.closest('.close') !== null;
         const tab = target.closest('.tabs > div');
         const tabIndex = [...tabs.children].indexOf(tab);
         if (isCloseEvent) {
@@ -327,6 +354,8 @@ export class TosiTabs extends withAttributes({
             const tabBody = tabBodies[index];
             const bodyId = `${this.instanceId}-${index}`;
             tabBody.id = bodyId;
+            if (!tabBody.hasAttribute('role'))
+                tabBody.setAttribute('role', 'tabpanel');
             const tab = this.makeTab(this, tabBody, bodyId);
             tabs.append(tab);
         }
@@ -356,7 +385,11 @@ export class TosiTabs extends withAttributes({
             const tabBody = tabBodies[i];
             const tab = tabs.children[i];
             const isSelected = this.value === Number(i);
-            tab.toggleAttribute('aria-selected', isSelected);
+            // "true" or absent: an empty aria-selected is not a valid value.
+            if (isSelected)
+                tab.setAttribute('aria-selected', 'true');
+            else
+                tab.removeAttribute('aria-selected');
             tabBody.toggleAttribute('hidden', !isSelected);
             if (isSelected) {
                 selected.style.marginLeft = `${tab.offsetLeft - tabs.offsetLeft}px`;

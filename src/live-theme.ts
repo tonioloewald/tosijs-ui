@@ -300,22 +300,22 @@ export class TosiThemeEditor extends Component<ThemeEditorParts> {
     div(
       { class: 'field' },
       label('Accent'),
-      input({ type: 'color', part: 'accent' })
+      input({ type: 'color', part: 'accent', ariaLabel: 'Accent' })
     ),
     div(
       { class: 'field' },
       label('Background'),
-      input({ type: 'color', part: 'background' })
+      input({ type: 'color', part: 'background', ariaLabel: 'Background' })
     ),
     div(
       { class: 'field' },
       label('Text'),
-      input({ type: 'color', part: 'text' })
+      input({ type: 'color', part: 'text', ariaLabel: 'Text' })
     ),
     div(
       { class: 'field' },
       label('Dark mode'),
-      input({ type: 'checkbox', part: 'dark' })
+      input({ type: 'checkbox', part: 'dark', ariaLabel: 'Dark mode' })
     ),
     div(
       {

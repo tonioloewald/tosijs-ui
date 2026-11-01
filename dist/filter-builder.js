@@ -300,9 +300,9 @@ export class FilterPart extends withAttributes({
     fields = [];
     filters = availableFilters;
     content = () => [
-        tosiSelect({ part: 'haystack' }),
-        tosiSelect({ part: 'condition' }),
-        input({ part: 'needle', type: 'search' }),
+        tosiSelect({ part: 'haystack', title: 'field' }),
+        tosiSelect({ part: 'condition', title: 'condition' }),
+        input({ part: 'needle', type: 'search', title: 'value' }),
         span({ part: 'padding' }),
         button({ part: 'remove', title: 'delete' }, icons.trash()),
     ];

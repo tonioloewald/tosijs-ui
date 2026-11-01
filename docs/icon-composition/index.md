@@ -88,7 +88,7 @@ preview.append(
           alignItems: 'stretch',
         },
       },
-      tosiSelect({ options: ideas, bindValue: suzy.icon }),
+      tosiSelect({ title: 'example icons', options: ideas, bindValue: suzy.icon }),
       button(
         {
           onClick() {
@@ -100,6 +100,7 @@ preview.append(
                 index > -1 && index < ideas.length - 1 ? index + 1 : 0
               ].value
           },
+          title: 'next example',
         },
         icons.chevronRight()
       )

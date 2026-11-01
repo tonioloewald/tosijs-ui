@@ -677,7 +677,9 @@ This is a minimalist carousel component that supports the usual stuff.
   would ever end it.
 - **The dots are tappable:** each draws a `--carousel-dot-size` dot (8px) but answers taps across
   its whole slot and `--carousel-dot-hit-size` (44px) tall, so a tap that just misses a dot
-  doesn't open the slide underneath.
+  doesn't open the slide underneath. Dots sit 24px apart (`--carousel-dot-spacing`, 16px), the
+  spacing WCAG 2.5.8 asks of a target smaller than 24px.
+- **The keyboard reaches the slides:** the slide strip takes focus, and ← and → page it.
 - **Resizing keeps the current slide in place** (rotation, a window resize) instead of leaving
   it partway into the next one.
 
@@ -2208,7 +2210,7 @@ A floating, potentially draggable user interface element.
   margin: 0;
   padding: 5px 10px;
   color: white;
-  background: red;
+  background: #c00;
 }
 
 .preview .balloon {
@@ -2231,7 +2233,7 @@ A floating, potentially draggable user interface element.
 
 .preview footer {
   text-align: center;
-  background: #f008;
+  background: #b00c;
   color: white;
 ```
 
@@ -2325,7 +2327,7 @@ Use `elastic()` to push the menu to the right:
 import { elements } from 'tosijs'
 import { tosiHeader, tosiMenu, elastic, icons } from 'tosijs-ui'
 
-const menu = tosiMenu({ class: 'menu-demo' }, icons.moreVertical())
+const menu = tosiMenu({ class: 'menu-demo', title: 'more' }, icons.moreVertical())
 menu.menuItems = [
   { caption: 'About', tooltip: 'Learn more about this app', action() { alert('About!') } },
   { caption: 'Settings', icon: 'settings', tooltip: 'Appearance options', menuItems: [
@@ -2437,7 +2439,8 @@ function composeName(prefix, suffix, base) {
   return name
 }
 
-const scroller = div({ class: 'scroller' })
+// Focusable, so the icon grid scrolls from the keyboard too.
+const scroller = div({ class: 'scroller', tabindex: 0, title: 'icons' })
 
 function rebuildGrid() {
   const prefix = iconDemo.prefix.value
@@ -2500,11 +2503,11 @@ preview.append(
       }
     }),
     select(
-      { bindValue: iconDemo.prefix },
+      { bindValue: iconDemo.prefix, title: 'prefix' },
       ...prefixes.map(p => option({ value: p }, p || 'prefix'))
     ),
     select(
-      { bindValue: iconDemo.suffix },
+      { bindValue: iconDemo.suffix, title: 'suffix' },
       ...suffixes.map(s => option({ value: s }, s || 'suffix'))
     ),
   ),
@@ -3074,7 +3077,7 @@ preview.append(
           alignItems: 'stretch',
         },
       },
-      tosiSelect({ options: ideas, bindValue: suzy.icon }),
+      tosiSelect({ title: 'example icons', options: ideas, bindValue: suzy.icon }),
       button(
         {
           onClick() {
@@ -3086,6 +3089,7 @@ preview.append(
                 index > -1 && index < ideas.length - 1 ? index + 1 : 0
               ].value
           },
+          title: 'next example',
         },
         icons.chevronRight()
       )
@@ -3498,7 +3502,7 @@ mapbox.token = DEMO_TOKEN
   coords="14.0093606,120.995083,17"
   map-style="mapbox://styles/mapbox/streets-v12"
 ></tosi-map>
-<select>
+<select title="map style">
   <option selected value="mapbox://styles/mapbox/streets-v12">Streets</option>
   <option value="mapbox://styles/mapbox/satellite-v9">Satellite</option>
   <option value="mapbox://styles/mapbox/light-v11">Light</option>
@@ -3714,7 +3718,7 @@ pass context data through to HTML elements.
 >
 ## {{title}}
 
-The magic number is <input type="number" value={{foo.bar}}>
+The magic number is <input type="number" title="magic number" value={{foo.bar}}>
 
 Oh, and nested templates {{nested}}.
 </tosi-md>
@@ -7999,7 +8003,7 @@ preview.querySelector('.add').addEventListener('click', () => {
     look at the html…
   </div>
   <div name="third">third body</div>
-  <button class="add" slot="after-tabs">
+  <button class="add" slot="after-tabs" title="add a tab">
     <tosi-icon icon="plus"></tosi-icon>
   </button>
 </tosi-tabs>
@@ -8941,8 +8945,8 @@ breach.addEventListener('click', async () => {
 ```
 ```html
 <tosi-password-strength>
-  <input class="password" type="password">
-  <button class="toggle">
+  <input class="password" type="password" aria-label="password">
+  <button class="toggle" title="show password">
     <tosi-icon icon="eye"></tosi-icon>
   </button>
 </tosi-password-strength>
@@ -9815,7 +9819,7 @@ test('captions select has value', () => {
 
 ```html
 <form>
-  <tosi-select name="choice" options="a,b,c" required></tosi-select>
+  <label>Choice <tosi-select name="choice" options="a,b,c" required></tosi-select></label>
   <button type="submit">Submit</button>
 </form>
 ```
@@ -10150,7 +10154,7 @@ randomize()
 }
 
 .preview tosi-ab[not] p {
-  background: red;
+  background: #c00;
 }
 ```
 
@@ -11169,7 +11173,8 @@ sortPicker = select(
   option('Sort by age, last (desc)', {value: 'ageLast'}),
   {
     onChange: render,
-    value: 'nameSort'
+    value: 'nameSort',
+    title: 'sort order'
   },
 )
 

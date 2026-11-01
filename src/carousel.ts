@@ -62,7 +62,9 @@ This is a minimalist carousel component that supports the usual stuff.
   would ever end it.
 - **The dots are tappable:** each draws a `--carousel-dot-size` dot (8px) but answers taps across
   its whole slot and `--carousel-dot-hit-size` (44px) tall, so a tap that just misses a dot
-  doesn't open the slide underneath.
+  doesn't open the slide underneath. Dots sit 24px apart (`--carousel-dot-spacing`, 16px), the
+  spacing WCAG 2.5.8 asks of a target smaller than 24px.
+- **The keyboard reaches the slides:** the slide strip takes focus, and ← and → page it.
 - **Resizing keeps the current slide in place** (rotation, a window resize) instead of leaving
   it partway into the next one.
 
@@ -196,7 +198,12 @@ export class TosiCarousel extends withAttributes({
       _carouseButtonWidth: 48,
       _carouselDotCurrentColor: '#0008',
       _carouselDotSize: 8,
-      _carouselDotSpacing: vars.carouselDotSize,
+      /*
+      16px of spacing puts the dots 24px apart: WCAG 2.5.8 takes a target under 24px as long
+      as a 24px circle on each one touches no neighbour, and at 16px apart they overlapped
+      (#3573).
+      */
+      _carouselDotSpacing: 16,
       // The tappable area around each dot; the dot itself stays --carousel-dot-size (#204).
       _carouselDotHitSize: 44,
       _carouselProgressPadding: 12,
@@ -299,6 +306,10 @@ export class TosiCarousel extends withAttributes({
     ':host .dot.current::before': {
       background: vars.carouselDotCurrentColor,
     },
+    ':host::part(scroller):focus-visible': {
+      outline: `2px solid ${vars.carouselButtonActiveColor}`,
+      outlineOffset: '-2px',
+    },
     ':host .dot:focus-visible::before': {
       boxShadow: `0 0 0 2px ${vars.carouselButtonActiveColor}`,
     },
@@ -341,6 +352,15 @@ export class TosiCarousel extends withAttributes({
           : Math.floor(currentPosition)
     }
     this.lastAutoAdvance = Date.now()
+  }
+
+  handleScrollerKey = (event: Event) => {
+    if (event.target !== event.currentTarget) return
+    const { key } = event as KeyboardEvent
+    if (key === 'ArrowLeft') this.back()
+    else if (key === 'ArrowRight') this.forward()
+    else return
+    event.preventDefault()
   }
 
   back = () => {
@@ -399,7 +419,11 @@ export class TosiCarousel extends withAttributes({
       { part: 'pager' },
       button({ title: 'previous slide', part: 'back' }, icons.chevronLeft()),
       div(
-        { title: 'slides', role: 'group', part: 'scroller' },
+        /*
+        Focusable, so the strip can be scrolled from the keyboard (#3573); ← and → page it,
+        like the arrow buttons.
+        */
+        { title: 'slides', role: 'group', part: 'scroller', tabindex: 0 },
         div({ part: 'grid' }, slot())
       ),
       button({ title: 'next slide', part: 'forward' }, icons.chevronRight())
@@ -418,6 +442,7 @@ export class TosiCarousel extends withAttributes({
     back.addEventListener('click', this.back)
     forward.addEventListener('click', this.forward)
     scroller.addEventListener('scroll', this.indicateCurrent)
+    scroller.addEventListener('keydown', this.handleScrollerKey)
     progress.addEventListener('click', this.handleDotClick)
     this.addEventListener('pointerenter', this.handlePointerEnter)
     this.addEventListener('pointerleave', this.handlePointerLeave)

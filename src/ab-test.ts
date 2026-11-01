@@ -66,7 +66,7 @@ randomize()
 }
 
 .preview tosi-ab[not] p {
-  background: red;
+  background: #c00;
 }
 ```
 

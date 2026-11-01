@@ -296,7 +296,8 @@ export class TosiPalette extends withAttributes({
             gap: vars.spacing50,
             width: '100%',
             font: 'inherit',
-            color: varDefault.paletteTriggerColor('#0008'),
+            // #0009, not #0008: 4.46:1 on a near-white field, just under AA's 4.5:1 (#3572).
+            color: varDefault.paletteTriggerColor('#0009'),
             background: varDefault.inputBg('#fff'),
             border: 'none',
             borderRadius: varDefault.searchFieldRadius(vars.spacing50),

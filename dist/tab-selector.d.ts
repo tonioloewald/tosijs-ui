@@ -6,7 +6,7 @@ declare const TosiTabs_base: import("tosijs").WithAttributes<{
 export declare class TosiTabs extends TosiTabs_base {
     static preferredTagName: string;
     value: number;
-    makeTab(tabs: TosiTabs, tabBody: HTMLElement, bodyId: string): HTMLElement;
+    makeTab(tabs: TosiTabs, tabBody: HTMLElement, _bodyId: string): HTMLElement;
     static shadowStyleSpec: {
         ':host': {
             '--tosi-tabs-selected-color': string;
@@ -67,14 +67,16 @@ export declare class TosiTabs extends TosiTabs_base {
             background: string;
             transition: string;
         };
-        ':host button.close': {
+        ':host .close': {
             border: number;
             background: string;
             textAlign: string;
-            marginLeft: string;
-            padding: number;
+            padding: string;
+            margin: string;
+            lineHeight: string;
+            cursor: string;
         };
-        ':host button.close > svg': {
+        ':host .close > svg': {
             height: string;
         };
     };

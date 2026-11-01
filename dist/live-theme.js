@@ -255,10 +255,10 @@ export class TosiThemeEditor extends Component {
         },
     };
     content = () => [
-        div({ class: 'field' }, label('Accent'), input({ type: 'color', part: 'accent' })),
-        div({ class: 'field' }, label('Background'), input({ type: 'color', part: 'background' })),
-        div({ class: 'field' }, label('Text'), input({ type: 'color', part: 'text' })),
-        div({ class: 'field' }, label('Dark mode'), input({ type: 'checkbox', part: 'dark' })),
+        div({ class: 'field' }, label('Accent'), input({ type: 'color', part: 'accent', ariaLabel: 'Accent' })),
+        div({ class: 'field' }, label('Background'), input({ type: 'color', part: 'background', ariaLabel: 'Background' })),
+        div({ class: 'field' }, label('Text'), input({ type: 'color', part: 'text', ariaLabel: 'Text' })),
+        div({ class: 'field' }, label('Dark mode'), input({ type: 'checkbox', part: 'dark', ariaLabel: 'Dark mode' })),
         div({
             class: 'preview',
             part: 'preview',

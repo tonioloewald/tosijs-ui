@@ -83,7 +83,7 @@ mapbox.token = DEMO_TOKEN
   coords="14.0093606,120.995083,17"
   map-style="mapbox://styles/mapbox/streets-v12"
 ></tosi-map>
-<select>
+<select title="map style">
   <option selected value="mapbox://styles/mapbox/streets-v12">Streets</option>
   <option value="mapbox://styles/mapbox/satellite-v9">Satellite</option>
   <option value="mapbox://styles/mapbox/light-v11">Light</option>

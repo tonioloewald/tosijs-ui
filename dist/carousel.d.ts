@@ -36,7 +36,7 @@ export declare class TosiCarousel extends TosiCarousel_base {
             _carouseButtonWidth: number;
             _carouselDotCurrentColor: string;
             _carouselDotSize: number;
-            _carouselDotSpacing: string;
+            _carouselDotSpacing: number;
             _carouselDotHitSize: number;
             _carouselProgressPadding: number;
             _carouselDotTransition: string;
@@ -127,6 +127,10 @@ export declare class TosiCarousel extends TosiCarousel_base {
         ':host .dot.current::before': {
             background: string;
         };
+        ':host::part(scroller):focus-visible': {
+            outline: string;
+            outlineOffset: string;
+        };
         ':host .dot:focus-visible::before': {
             boxShadow: string;
         };
@@ -140,6 +144,7 @@ export declare class TosiCarousel extends TosiCarousel_base {
     easing: (t: number) => number;
     indicateCurrent: () => void;
     snapPosition: () => void;
+    handleScrollerKey: (event: Event) => void;
     back: () => void;
     forward: () => void;
     handleDotClick: (event: Event) => void;

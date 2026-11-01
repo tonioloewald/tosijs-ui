@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=4620981d34fa" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=8553a377e33f" data-tosi-doc-system />
   <title>makeSorter — tosijs-ui</title>
   <meta name="description" content="Build an array sort callback from a function that returns the keys to sort by, with a direction per key, so a multi-key sort is one line." />
   <link rel="canonical" href="https://ui.tosijs.net/make-sorter/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="makeSorter — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"makeSorter","description":"Build an array sort callback from a function that returns the keys to sort by, with a direction per key, so a multi-key sort is one line.","url":"https://ui.tosijs.net/make-sorter/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-10-29T15:40:17+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"makeSorter","description":"Build an array sort callback from a function that returns the keys to sort by, with a direction per key, so a multi-key sort is one line.","url":"https://ui.tosijs.net/make-sorter/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-01T20:06:37.791Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"makeSorter","item":"https://ui.tosijs.net/make-sorter/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=7e9f79db190d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=d3469f1bd2d8" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="make-sorter.ts">
 <h1 id="makesorter">makeSorter</h1>
 <p>I&#39;m always confusing myself when writing sort functions, so I wrote <code>makeSorter()</code>. It&#39;s
@@ -84,7 +84,8 @@ sortPicker = select(
   option(&#39;Sort by age, last (desc)&#39;, {value: &#39;ageLast&#39;}),
   {
     onChange: render,
-    value: &#39;nameSort&#39;
+    value: &#39;nameSort&#39;,
+    title: &#39;sort order&#39;
   },
 )
 
@@ -232,6 +233,6 @@ render()
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-qb1ympdc.js"></script>
+  <script type="module" src="../hydrate-hqnsw35z.js"></script>
 </body>
 </html>

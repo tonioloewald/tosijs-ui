@@ -48,7 +48,7 @@ preview.querySelector('.add').addEventListener('click', () => {
     look at the html…
   </div>
   <div name="third">third body</div>
-  <button class="add" slot="after-tabs">
+  <button class="add" slot="after-tabs" title="add a tab">
     <tosi-icon icon="plus"></tosi-icon>
   </button>
 </tosi-tabs>

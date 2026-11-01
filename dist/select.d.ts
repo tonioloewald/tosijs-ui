@@ -20,6 +20,8 @@ export interface SelectOptionSubmenu {
 export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>;
 interface SelectParts extends PartsMap {
     button: HTMLButtonElement;
+    caption: HTMLSpanElement;
+    field: HTMLDivElement;
     value: HTMLInputElement;
 }
 declare const TosiSelect_base: import("tosijs").WithAttributes<{
@@ -70,6 +72,36 @@ export declare class TosiSelect extends TosiSelect_base<SelectParts> {
         ':host[hide-caption] button > :nth-child(2)': {
             display: string;
         };
+        ':host [part="caption"]': {
+            width: string;
+            padding: string;
+            flex: string;
+            overflow: string;
+            textOverflow: string;
+            whiteSpace: string;
+        };
+        ':host [part="caption"].-placeholder': {
+            opacity: string;
+        };
+        ':host [part="field"]': {
+            display: string;
+            alignItems: string;
+            gap: string;
+            height: string;
+            padding: string;
+            width: string;
+            borderRadius: string;
+            boxShadow: string;
+        };
+        ':host:not([show-icon]) [part="field"] > :first-child': {
+            display: string;
+        };
+        ':host [part="field"][hidden], :host [part="button"][hidden]': {
+            display: string;
+        };
+        ':host [part="field"] > svg': {
+            cursor: string;
+        };
         ':host [part="value"]': {
             width: string;
             padding: string;
@@ -104,10 +136,11 @@ export declare class TosiSelect extends TosiSelect_base<SelectParts> {
     get optionsMenu(): MenuItem[];
     handleChange: (event: Event) => void;
     handleKey: (event: KeyboardEvent) => void;
+    private accessibleName;
     filterMenu: (...args: any[]) => void;
     popOptions: (event?: Event) => void;
     private updateAriaExpanded;
-    content: () => HTMLButtonElement[];
+    content: () => (HTMLDivElement | HTMLButtonElement)[];
     get allOptions(): SelectOption[];
     findOption(): SelectOption;
     localeChanged: () => void;

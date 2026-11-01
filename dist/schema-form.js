@@ -1509,6 +1509,30 @@ export class TosiSchemaForm extends withAttributes({
     A Map turns both passes linear. It is rebuilt whenever the DOM is, which is the only time
     the answers can change.
     */
+    _labelCount = 0;
+    /*
+    A field's label, tied to its control (#3574): a <label> beside an input names nothing until it
+    says which input it is for. A plugin's control may not be labelable (a <div> wrapping its own
+    inputs), so that one is named by the label's id instead.
+    */
+    labelFor(text, control) {
+        const id = `${this.instanceId}-field-${++this._labelCount}`;
+        const element = label(text);
+        const labelable = (el) => /^(INPUT|SELECT|TEXTAREA|BUTTON|METER|OUTPUT|PROGRESS)$/.test(el.tagName) || !!el.constructor.formAssociated;
+        // A plugin's wrapper is labelled through the first control inside it.
+        const target = labelable(control)
+            ? control
+            : control.querySelector('input, select, textarea');
+        if (target) {
+            target.id ||= id;
+            element.htmlFor = target.id;
+        }
+        else {
+            element.id = `${id}-label`;
+            control.setAttribute('aria-labelledby', element.id);
+        }
+        return element;
+    }
     _index = new Map();
     /*
     Curation (#221): which properties to show, in what order, under what captions, and through
@@ -1984,7 +2008,7 @@ export class TosiSchemaForm extends withAttributes({
         // The curation may hide the picker: a screen about one variant has no use for it.
         if (this._entries.get(node.path)?.picker === false)
             picker.hidden = true;
-        const container = div({ class: 'schema-field schema-union' }, label(String(node.label)), picker, ...this.unvalidatedNote(node), div({ class: 'schema-variant-fields' }));
+        const container = div({ class: 'schema-field schema-union' }, this.labelFor(String(node.label), picker), picker, ...this.unvalidatedNote(node), div({ class: 'schema-variant-fields' }));
         container.dataset.union = node.path;
         this._hosts.set(node.path, { wrapper: container, after: picker });
         this.fillUnion(container, node);
@@ -2261,7 +2285,7 @@ export class TosiSchemaForm extends withAttributes({
         });
         control.dataset.plugin = node.path;
         const errorSlot = span({ class: 'schema-error', hidden: true });
-        const wrapper = div({ class: 'schema-field' }, label(String(node.label)), control, ...this.unvalidatedNote(node), errorSlot);
+        const wrapper = div({ class: 'schema-field' }, this.labelFor(String(node.label), control), control, ...this.unvalidatedNote(node), errorSlot);
         wrapper.dataset.field = node.path;
         this._index.set(node.path, { control, wrapper, errorSlot });
         return wrapper;
@@ -2302,7 +2326,7 @@ export class TosiSchemaForm extends withAttributes({
         control.addEventListener('change', (event) => event.stopPropagation());
         control.dataset.path = field.path;
         const errorSlot = span({ class: 'schema-error', hidden: true });
-        const wrapper = div({ class: 'schema-field' }, label(String(field.label)), control, ...this.unvalidatedNote(field), errorSlot);
+        const wrapper = div({ class: 'schema-field' }, this.labelFor(String(field.label), control), control, ...this.unvalidatedNote(field), errorSlot);
         wrapper.dataset.field = field.path;
         this._index.set(field.path, { control, wrapper, errorSlot });
         return wrapper;

@@ -2340,7 +2340,9 @@ export class LiveExample extends withAttributes({
         preview, and when the example is maximized, it moves inside, along the bottom
         (syncToolbarPlace).
         */
-        tosiAffix({ part: 'example', position: 'en', fallback: 's inside' }, style({ part: 'style' }), pre({ part: 'testResults', hidden: true }), 
+        tosiAffix({ part: 'example', position: 'en', fallback: 's inside' }, style({ part: 'style' }), 
+        // Focusable: a long list of results scrolls, and the keyboard must be able to scroll it.
+        pre({ part: 'testResults', hidden: true, tabindex: 0 }), 
         /*
         ORDERED BY REACH, top to bottom: maximize, which you reach for repeatedly while
         reading, sits at the top; tests, which you toggle once, last. The tests check carries

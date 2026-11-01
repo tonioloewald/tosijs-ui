@@ -130,7 +130,7 @@ test('captions select has value', () => {
 
 ```html
 <form>
-  <tosi-select name="choice" options="a,b,c" required></tosi-select>
+  <label>Choice <tosi-select name="choice" options="a,b,c" required></tosi-select></label>
   <button type="submit">Submit</button>
 </form>
 ```
