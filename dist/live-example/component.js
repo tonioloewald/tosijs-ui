@@ -741,7 +741,9 @@ import { dialectDocs, dialectTransform, getDialect, isBuiltInDialect, showDialec
 import { loadTransform, loadTjsTestApi, rewriteImports, rewriteContextImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
 import { executeInline, executeInIframe } from './execution.js';
-import { insertExamples, examplePolicy } from './insert-examples.js';
+import { insertExamples, examplePolicy, siteExampleTabs, } from './insert-examples.js';
+import { exampleHooks, sanitizeExampleHtml } from './example-hooks.js';
+import { EXAMPLE_TABS, exampleTabsProblem, } from '../doc-system/example-policy.js';
 import { rewriteExampleBlocks, groupExamples, findFencedBlocks, } from './save-to-source.js';
 import { mayHaveSingleSourceDirective } from '../doc-system/book-target.js';
 import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, hasExampleEdit, } from './example-store.js';
@@ -1089,10 +1091,39 @@ export class LiveExample extends withAttributes({
     }
     // Not in the pop-out editor window: it never runs the example, so its console would be
     // empty and its REPL would evaluate against the pop-out's own document (1.16.4 review).
+    // Never under no-code: its REPL evaluates by constructing a function (#246).
     get consoleEnabled() {
         return (exampleConsoleEnabled() &&
             this.options.console !== false &&
-            this.remoteId === '');
+            this.remoteId === '' &&
+            examplePolicy() !== 'no-code' &&
+            this.tabAllowed('console'));
+    }
+    /*
+    The tabs this example's code panel may show (#246): the fence's `{"tabs": [...]}`, else the
+    site's `exampleTabs`, else all of them, or html, css and chat under no-code. A hidden tab's
+    block still runs; it just can't be edited.
+    */
+    get allowedTabs() {
+        const own = this.options.tabs;
+        if (own !== undefined) {
+            const problem = exampleTabsProblem(own);
+            if (!problem)
+                return new Set(own);
+            // reported once per example, like a malformed fence option (insert-examples)
+            if (!this.reportedTabsProblem) {
+                this.reportedTabsProblem = true;
+                console.error(`${this.getAttribute('data-source-file') ?? 'doc'}: example ${this.id}: ${problem}`);
+            }
+        }
+        const site = siteExampleTabs();
+        if (site)
+            return new Set(site);
+        return new Set(examplePolicy() === 'no-code' ? ['html', 'css', 'chat'] : EXAMPLE_TABS);
+    }
+    reportedTabsProblem = false;
+    tabAllowed(tab) {
+        return this.allowedTabs.has(tab);
     }
     // A fresh console per run. A log arriving from a PREVIOUS run (a timer or listener it left
     // behind) still reaches devtools but not the tab, which belongs to the current run.
@@ -1852,6 +1883,8 @@ export class LiveExample extends withAttributes({
         if (this.productTabsReady ||
             // plain js has no product tabs, unless the site replaced it (its `docs` gets a tab)
             (this.dialect === 'js' && isBuiltInDialect('js')) ||
+            // they belong to the source tab, which `tabs` may leave out (#246)
+            !this.tabAllowed('js') ||
             !this.hydrated ||
             !this.editorsBuilt // the editors it relabels don't exist yet
         )
@@ -2076,28 +2109,38 @@ export class LiveExample extends withAttributes({
     `<tosi-tabs>` makes a tab of every child with a `name`, so a hidden tab is a body without
     one. The `part` is untouched, so `this.parts.html` and friends still resolve.
     */
+    /*
+    A tab the site or the fence left out of `tabs` (#246) is hidden the same way, in every view.
+    The source tab's label is the dialect's (ensureProductTabs), so a hidden tab keeps its label in
+    `data-tab-name` to get it back.
+    */
     syncSourceTabs() {
         if (!this.editorsBuilt)
             return;
         const inline = this.classList.contains('-inline-code') &&
             !this.classList.contains('-maximize');
-        const { editors, html, css, test } = this.parts;
+        const { editors, js, html, css, test } = this.parts;
         const active = this.activeTab;
         let changed = false;
-        for (const [editor, name, value] of [
+        for (const [editor, tab, value] of [
+            [js, 'js', this.js],
             [html, 'html', this.html],
             [css, 'css', this.css],
-            [test, 'DOM tests', this.test],
+            [test, 'test', this.test],
         ]) {
-            const hide = inline && (value ?? '').trim() === '';
+            const empty = (value ?? '').trim() === '';
+            // The source tab is never hidden as empty: an inline view of a script example shows it.
+            const hide = !this.tabAllowed(tab) || (tab !== 'js' && inline && empty);
             if (hide === !editor.hasAttribute('name'))
                 continue;
             if (hide) {
+                editor.setAttribute('data-tab-name', editor.getAttribute('name'));
                 editor.removeAttribute('name');
                 editor.hidden = true;
             }
             else {
-                editor.setAttribute('name', name);
+                editor.setAttribute('name', editor.getAttribute('data-tab-name'));
+                editor.removeAttribute('data-tab-name');
             }
             changed = true;
         }
@@ -2348,7 +2391,9 @@ export class LiveExample extends withAttributes({
         // `part`/`name` stay `test`; only the displayed label differs.
         codeEditor({ name: 'DOM tests', mode: 'javascript', part: 'test' }), 
         // the Console tab (logs + REPL), unless the site or the fence turned the console off
-        ...(this.consoleEnabled ? [this.buildConsoleView()] : []), div({ slot: 'after-tabs', class: 'row' }, button({
+        ...(this.consoleEnabled ? [this.buildConsoleView()] : []), 
+        // the host's chat panel (#246), when the page registered one and the tabs allow it
+        ...this.buildChatView(), div({ slot: 'after-tabs', class: 'row' }, button({
             title: 'undo',
             part: 'undo',
             class: 'transparent',
@@ -2368,6 +2413,34 @@ export class LiveExample extends withAttributes({
             onClick: this.closeCode,
         }, icons.x())));
     }
+    /*
+    The Chat tab (#246). The host builds the panel; the example hands it the source and takes
+    replacements, which run like an edit (sanitize → insert → hydrate). Built with the code panel,
+    so a reader who never opens one never constructs a chat.
+    */
+    chatAbort;
+    buildChatView() {
+        const { chat } = exampleHooks();
+        if (!chat || !this.tabAllowed('chat') || this.remoteId !== '')
+            return [];
+        this.chatAbort = new AbortController();
+        const panel = chat({
+            example: this,
+            signal: this.chatAbort.signal,
+            source: () => ({ html: this.html, css: this.css }),
+            apply: async ({ html, css }) => {
+                if (html !== undefined)
+                    this.html = html;
+                if (css !== undefined)
+                    this.css = css;
+                this.updateUndo();
+                await this.refresh();
+            },
+        });
+        panel.setAttribute('name', 'Chat');
+        panel.classList.add('example-chat');
+        return [panel];
+    }
     // Build the editor panel the first time a code panel is opened, flush the cached
     // values into the now-real editors, and wire the tjs/ts read-only JS tab. Idempotent.
     ensureEditors() {
@@ -2378,6 +2451,7 @@ export class LiveExample extends withAttributes({
         // pendingValues → the real editors, then pick the default tab and product tabs.
         this.flushPendingValues();
         this.ensureProductTabs();
+        this.syncSourceTabs();
         this.showDefaultTab();
         this.updateUndo();
     }
@@ -2449,6 +2523,7 @@ export class LiveExample extends withAttributes({
         this.toolbarWatch?.disconnect();
         this.toolbarWatch = undefined;
         this.runAbort?.abort();
+        this.chatAbort?.abort();
         this.remoteSync?.sendClose();
         this.remoteSync?.stopListening();
         this.initialViewWatch?.disconnect();
@@ -3000,9 +3075,11 @@ export class LiveExample extends withAttributes({
         // real-module execution is a follow-up (import-resolver-plan.md phase 2), so it
         // currently uses the iframe path.
         const mode = this.effectiveMode;
+        // The page's sanitizer sees the markup before the preview does (#246); edits included.
+        const html = sanitizeExampleHtml(this.html, this);
         if (mode === 'iframe' || mode === 'ide') {
             preview = await executeInIframe({
-                html: this.html,
+                html,
                 css: this.css,
                 js: this.js,
                 context: this.context,
@@ -3018,7 +3095,7 @@ export class LiveExample extends withAttributes({
         }
         else {
             preview = await executeInline({
-                html: this.html,
+                html,
                 css: this.css,
                 js: this.js,
                 context: this.context,
@@ -3069,6 +3146,22 @@ export class LiveExample extends withAttributes({
                 // only if no newer run has taken over the spinner
                 if (this.runAbort === runAbort)
                     running.hidden = true;
+            }
+        }
+        /*
+        The page's hydrator binds the preview (#246), after the markup and any script: it is how a
+        no-code example becomes live. Aborted with the run, so a re-run drops the old bindings.
+        */
+        const { hydrate } = exampleHooks();
+        if (hydrate && preview && !runAbort.signal.aborted) {
+            try {
+                await hydrate(preview, runAbort.signal, this);
+            }
+            catch (error) {
+                if (!runAbort.signal.aborted) {
+                    console.error(error);
+                    onError(error);
+                }
             }
         }
         // The run has settled: if it rendered nothing, show what it logged (refreshOutput).
@@ -3207,18 +3300,18 @@ export class LiveExample extends withAttributes({
             return;
         }
         // By body, not by position: an inline view hides the empty source tabs (syncSourceTabs).
+        // The first block with something in it whose tab is shown (`tabs` may hide one, #246).
         const { editors, js, html, css, test } = this.parts;
-        const body = this.js !== ''
-            ? js
-            : this.html !== ''
-                ? html
-                : this.css !== ''
-                    ? css
-                    : this.test !== ''
-                        ? test
-                        : undefined;
-        const index = body ? editors.bodies.indexOf(body) : -1;
-        if (index > -1)
+        const index = [
+            [js, this.js],
+            [html, this.html],
+            [css, this.css],
+            [test, this.test],
+        ]
+            .filter(([, value]) => value !== '')
+            .map(([body]) => editors.bodies.indexOf(body))
+            .find((i) => i > -1);
+        if (index !== undefined)
             editors.value = index;
     }
     render() {

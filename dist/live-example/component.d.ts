@@ -525,6 +525,9 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     }[];
     private droppedText;
     private get consoleEnabled();
+    private get allowedTabs();
+    private reportedTabsProblem;
+    private tabAllowed;
     private consoleForRun;
     private clearConsole;
     private runSettled;
@@ -637,6 +640,8 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     handleShortcuts: (event: KeyboardEvent) => void;
     content: () => any[];
     private buildEditorPanel;
+    private chatAbort?;
+    private buildChatView;
     private ensureEditors;
     connectedCallback(): void;
     disconnectedCallback(): void;

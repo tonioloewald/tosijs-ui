@@ -94,6 +94,31 @@ export function languageOfClass(className) {
     return String(className ?? '').match(LANGUAGE_CLASS)?.[1] ?? '';
 }
 /**
+ * The tabs a live example's code panel can show (`SiteConfig.exampleTabs`, the fence option
+ * `{"tabs": [...]}`). `js` is the source block whatever its dialect, and brings the dialect's
+ * generated-JS, inline-test and Docs tabs with it; `test` is the "DOM tests" tab; `chat` exists
+ * only when the page registered a chat with `setExampleHooks`.
+ */
+export const EXAMPLE_TABS = [
+    'js',
+    'html',
+    'css',
+    'test',
+    'console',
+    'chat',
+];
+/** Why `value` is not a list of example tabs, or undefined when it is one. */
+export function exampleTabsProblem(value) {
+    if (!Array.isArray(value))
+        return `example tabs must be an array of tab names, got ${JSON.stringify(value)}`;
+    const unknown = value.filter((name) => !EXAMPLE_TABS.includes(name));
+    return unknown.length
+        ? `unknown example tab${unknown.length > 1 ? 's' : ''} ${unknown
+            .map((name) => JSON.stringify(name))
+            .join(', ')} (the tabs are ${EXAMPLE_TABS.join(', ')})`
+        : undefined;
+}
+/**
  * Will this fence become a live example?
  *
  * @param lang  the fence language as written (`js`, `html`, `typescript`, …); case-sensitive
@@ -111,6 +136,9 @@ export function isLiveFence(lang, mode, policy = 'auto') {
     // `:static` opts out under any policy, so one corpus can target all of them.
     if (mode === 'static')
         return false;
+    // No script under no-code: a `:inline` cannot ask for one, since the host cannot run it.
+    if (policy === 'no-code')
+        return lang === 'html' || lang === 'css';
     return policy === 'opt-in' ? mode !== undefined : true;
 }
 /**

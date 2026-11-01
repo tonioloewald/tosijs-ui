@@ -17,7 +17,7 @@ export interface GenerateSiteConfig {
      * fences that will become live examples — a highlighted block hands the example markup
      * where it expected source. See `doc-system/example-policy.ts`.
      */
-    liveExamples?: 'auto' | 'opt-in';
+    liveExamples?: 'auto' | 'opt-in' | 'no-code';
     /** directory to write pages into (the served web root, e.g. ./docs) */
     outputDir: string;
     /** `SiteConfig.strict`: a build warning raised here fails the build */

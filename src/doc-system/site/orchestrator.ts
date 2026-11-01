@@ -13,6 +13,7 @@ cause an endless rebuild loop.
 */
 
 import { pageGlobalsHead } from './page-globals.js'
+import type { ExamplePolicy } from '../example-policy.js'
 import { liveFenceLanguages, misconfigured } from './build-warnings.js'
 import { TJS_VERSION } from '../../live-example/code-transform.js'
 import {
@@ -223,7 +224,7 @@ async function checkExamplesInChild(
   docsJson: string,
   importPrefix?: string,
   contextKeys: string[] = [],
-  liveExamples: 'auto' | 'opt-in' | 'none' = 'auto',
+  liveExamples: ExamplePolicy = 'auto',
   overriddenDialects: string[] = []
 ): Promise<ExampleCheck> {
   const cliTs = `${import.meta.dir}/check-examples-cli.ts`

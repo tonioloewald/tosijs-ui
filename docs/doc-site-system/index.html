@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=5897d4543960" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=d92403cc7823" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-10-31T21:17:57.304Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-01T09:50:37.679Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=46c340929d2a" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=8ae9461fa553" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -552,7 +552,12 @@ something you review before it becomes authored text. Return nothing to leave an
 <tr>
 <td><code>liveExamples</code></td>
 <td><code>&#39;auto&#39;</code></td>
-<td><code>&#39;auto&#39;</code> — the six executable fence languages run; <code>&#39;opt-in&#39;</code> — nothing runs unless the fence asks with <code>:inline</code>/<code>:iframe</code>/<code>:ide</code>. See &quot;Marking a fence display-only&quot;</td>
+<td><code>&#39;auto&#39;</code> — the six executable fence languages run; <code>&#39;opt-in&#39;</code> — nothing runs unless the fence asks with <code>:inline</code>/<code>:iframe</code>/<code>:ide</code>; <code>&#39;no-code&#39;</code> — only <code>html</code> and <code>css</code> run, for a host with a strict CSP. See &quot;Marking a fence display-only&quot; and &quot;No-code examples&quot;</td>
+</tr>
+<tr>
+<td><code>exampleTabs</code></td>
+<td>all</td>
+<td>the tabs an example&#39;s code panel shows: <code>&#39;js&#39;</code>, <code>&#39;html&#39;</code>, <code>&#39;css&#39;</code>, <code>&#39;test&#39;</code>, <code>&#39;console&#39;</code>, <code>&#39;chat&#39;</code>. Under <code>&#39;no-code&#39;</code> the default is <code>[&#39;html&#39;, &#39;css&#39;, &#39;chat&#39;]</code>. A fence overrides it with <code>{&quot;tabs&quot;: [...]}</code></td>
 </tr>
 <tr>
 <td><code>bundleExternals</code></td>
@@ -2339,6 +2344,48 @@ nothing has been removed; they are simply no longer the price of not running som
 <p><strong>If you build an ePub, set this deliberately.</strong> The book&#39;s &quot;▶ Run this example live&quot; links
 point at anchors on the web page, so the two only agree if they were built under the same
 policy.</p>
+<h4 id="no-code-examples-liveexamples-no-code">No-code examples: <code>liveExamples: &#39;no-code&#39;</code></h4>
+<p>A doc system shown inside a host app usually runs under that app&#39;s Content Security Policy,
+and a policy without <code>&#39;unsafe-eval&#39;</code> cannot run a script example at all: compiling one is
+exactly what it forbids. <code>&#39;no-code&#39;</code> is the mode for that host:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineSiteConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  liveExamples<span class="token operator">:</span> <span class="token string">'no-code'</span><span class="token punctuation">,</span> <span class="token comment">// html and css run; script and test fences are shown as code</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<ul>
+<li>Only <code>html</code> and <code>css</code> fences run. <code>js</code>, <code>ts</code>, <code>tjs</code>, a registered dialect and <code>test</code> are
+highlighted as code, whatever their <code>:mode</code>, so the doc-test runner has nothing to run either.</li>
+<li>Nothing on a no-code example&#39;s path constructs a <code>Function</code> or calls <code>eval</code>: not the
+preview, not an edit, not a chat reply. There is no Console tab, since its REPL evaluates.</li>
+<li>The code panel shows the <code>html</code> and <code>css</code> tabs, and a Chat tab when the page registers one.
+<code>exampleTabs</code> chooses others site-wide; <code>{&quot;tabs&quot;: [&quot;html&quot;]}</code> on a fence, for one example.</li>
+</ul>
+<p>An example becomes live without code through three hooks your <code>bundleEntry</code> registers. They
+are functions, so they cannot live in the site config:</p>
+<pre data-example-mode="static"><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> setExampleHooks <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/live-example'</span>
+
+<span class="token function">setExampleHooks</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment">// the markup, parsed but inert, before it enters the preview: clean it in place</span>
+  <span class="token function">sanitize</span><span class="token punctuation">(</span>fragment<span class="token punctuation">,</span> example<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> el <span class="token keyword">of</span> fragment<span class="token punctuation">.</span><span class="token function">querySelectorAll</span><span class="token punctuation">(</span><span class="token string">'script, [onclick]'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> el<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// the preview, once the markup is in it; `signal` aborts on the next run</span>
+  <span class="token function">hydrate</span><span class="token punctuation">(</span>preview<span class="token punctuation">,</span> signal<span class="token punctuation">,</span> example<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">bindDeclaratively</span><span class="token punctuation">(</span>preview<span class="token punctuation">,</span> appState<span class="token punctuation">,</span> <span class="token punctuation">{</span> signal <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// a panel for the Chat tab: it reads the source and applies replacements</span>
+  <span class="token function">chat</span><span class="token punctuation">(</span><span class="token punctuation">{</span> source<span class="token punctuation">,</span> apply<span class="token punctuation">,</span> signal <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">myAssistantPanel</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      <span class="token function-variable function">context</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token function">source</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// { html, css }</span>
+      <span class="token function-variable function">onReply</span><span class="token operator">:</span> <span class="token punctuation">(</span>html<span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token function">apply</span><span class="token punctuation">(</span><span class="token punctuation">{</span> html <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// runs like an edit: sanitize, insert, hydrate</span>
+      signal<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>The hooks apply in every mode, not only <code>&#39;no-code&#39;</code>: a script example&#39;s markup is sanitized
+and its preview hydrated after its script runs. A host that serves its own app&#39;s data to
+examples binds it in <code>hydrate</code>; nothing the example&#39;s author writes needs to run.</p>
 <p>If you want the styles to be real <em>and</em> scoped, write them against the doc system&#39;s theme
 variables (<code>--tosi-bg</code>, <code>--tosi-text</code>, …) rather than literal colours, and scope the selector
 to your example&#39;s own markup.</p>
@@ -2606,6 +2653,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-z88z3gey.js"></script>
+  <script type="module" src="../hydrate-0dwewng6.js"></script>
 </body>
 </html>

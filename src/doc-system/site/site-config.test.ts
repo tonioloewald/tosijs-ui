@@ -85,7 +85,7 @@ describe('emitted site-config.d.ts keeps its documentation (F13)', () => {
 
   test('liveExamples still carries its own documentation', async () => {
     const dts = await Bun.file(DTS).text()
-    const at = dts.indexOf("liveExamples?: 'auto' | 'opt-in';")
+    const at = dts.indexOf("liveExamples?: 'auto' | 'opt-in' | 'no-code';")
     expect(at).toBeGreaterThan(-1)
     const commentStart = dts.lastIndexOf('/**', at)
     expect(dts.slice(commentStart, at)).toContain('opt-in')

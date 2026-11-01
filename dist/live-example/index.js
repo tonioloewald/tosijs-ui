@@ -3,7 +3,9 @@ export { LiveExample, liveExample, enableTests, disableTests, pageTestCount, tes
 // Test harness (for doc-browser integration)
 export { runTests, createTestContext, expect } from './test-harness.js';
 // Utilities (for advanced usage)
-export { insertExamples } from './insert-examples.js';
+export { insertExamples, setExamplePolicy, setExampleTabs, } from './insert-examples.js';
+// What a host page plugs into every example (#246): sanitize, hydrate, and a chat panel
+export { setExampleHooks } from './example-hooks.js';
 export { loadTransform, rewriteImports, executeCode } from './code-transform.js';
 export { executeInline, executeInIframe } from './execution.js';
 export { RemoteSyncManager, STORAGE_KEY } from './remote-sync.js';

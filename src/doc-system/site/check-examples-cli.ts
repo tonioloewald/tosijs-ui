@@ -28,6 +28,7 @@ Build-time only. Never import this from browser code.
 */
 
 import { checkExamples } from './check-examples.js'
+import type { ExamplePolicy } from '../example-policy.js'
 
 const docsJson = process.argv[2]
 if (!docsJson) {
@@ -43,10 +44,7 @@ The example policy crosses the process boundary by env, like `importPrefix`. Wit
 child always assumed 'auto', so a `:static` fence — or any fence under `liveExamples:
 'opt-in'` that never runs — could still hard-fail the build (review major M2).
 */
-const liveExamples = (process.env.TOSI_LIVE_EXAMPLES || 'auto') as
-  | 'auto'
-  | 'opt-in'
-  | 'none'
+const liveExamples = (process.env.TOSI_LIVE_EXAMPLES || 'auto') as ExamplePolicy
 
 // Built-ins the site replaces (SiteConfig.dialects), comma-separated (#2463).
 const overriddenDialects = (process.env.TOSI_OVERRIDDEN_DIALECTS || '')

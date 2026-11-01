@@ -1,10 +1,12 @@
 import { ElementCreator } from 'tosijs'
 import {
   BUILT_IN_DIALECTS,
+  exampleTabsProblem,
   isDialectLanguage,
   isLiveFence,
   languageOfClass,
 } from '../doc-system/example-policy.js'
+import type { ExampleTab } from '../doc-system/example-policy.js'
 import { isBuiltInDialect } from './dialects.js'
 import { ExampleContext } from './types.js'
 import type { LiveExample } from './component.js'
@@ -89,7 +91,32 @@ directly can call `setExamplePolicy`.
 */
 export function examplePolicy(): ExamplePolicy {
   const g = globalThis as { __TOSI_EXAMPLE_POLICY?: string }
-  return g.__TOSI_EXAMPLE_POLICY === 'opt-in' ? 'opt-in' : 'auto'
+  return g.__TOSI_EXAMPLE_POLICY === 'opt-in' ||
+    g.__TOSI_EXAMPLE_POLICY === 'no-code'
+    ? g.__TOSI_EXAMPLE_POLICY
+    : 'auto'
+}
+
+/*
+The tabs a site gives its examples' code panels (`SiteConfig.exampleTabs`, stamped as
+`__TOSI_EXAMPLE_TABS`), or undefined for the default. The build validated the list; a page that
+set the global itself gets the same check, by name, in the console.
+*/
+export function siteExampleTabs(): ExampleTab[] | undefined {
+  const tabs = (globalThis as { __TOSI_EXAMPLE_TABS?: unknown })
+    .__TOSI_EXAMPLE_TABS
+  if (tabs === undefined) return undefined
+  const problem = exampleTabsProblem(tabs)
+  if (problem) {
+    console.error(`live examples: __TOSI_EXAMPLE_TABS: ${problem}`)
+    return undefined
+  }
+  return tabs as ExampleTab[]
+}
+
+/** Set the tabs every example's code panel shows; `undefined` restores the default. */
+export function setExampleTabs(tabs: ExampleTab[] | undefined): void {
+  ;(globalThis as { __TOSI_EXAMPLE_TABS?: unknown }).__TOSI_EXAMPLE_TABS = tabs
 }
 
 export function setExamplePolicy(policy: ExamplePolicy): void {
@@ -176,7 +203,7 @@ export function insertExamples(
   illustration and a runaway `css` fence is a restyled chapter.
   */
   checkDeclaredDialects()
-  const optIn = examplePolicy() === 'opt-in'
+  const policy = examplePolicy()
   const sources: SourceBlock[] = [
     /*
     Any `language-*` block; `isLiveFence` below decides which run. This was a selector
@@ -198,7 +225,7 @@ export function insertExamples(
     // THE shared rule — see doc-system/example-policy.ts. The static highlighter asks the
     // same question, and for one build the two disagreed: it tokenized the `html` fence of
     // every grouped example, and this read spans instead of markup.
-    .filter((s) => isLiveFence(s.language, s.mode, optIn ? 'opt-in' : 'auto'))
+    .filter((s) => isLiveFence(s.language, s.mode, policy))
     // Only now read the text (a layout-dependent `innerText`) and the bake, for live blocks.
     .map(({ code, ...rest }) => ({
       ...rest,

@@ -450,7 +450,8 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | ----------------- | ----------- | -------------------------------------------------------------------------- |
 | `bundleEntry`     | —           | your IIFE entrypoint; omit to use the fallback bundle                      |
 | `kind`            | `'documentation'` | `'book'` makes each page a `Chapter` of a `Book` in the structured data, numbered in reading order, with `rel="prev/next"` links |
-| `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`. See "Marking a fence display-only" |
+| `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`; `'no-code'` — only `html` and `css` run, for a host with a strict CSP. See "Marking a fence display-only" and "No-code examples" |
+| `exampleTabs`     | all         | the tabs an example's code panel shows: `'js'`, `'html'`, `'css'`, `'test'`, `'console'`, `'chat'`. Under `'no-code'` the default is `['html', 'css', 'chat']`. A fence overrides it with `{"tabs": [...]}` |
 | `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
 | `bundleOutDir`    | `outputDir` | where the bundle is BUILT; set only when it is itself a published artifact |
@@ -2168,6 +2169,55 @@ Under `'opt-in'` a fence has to ask, with `:inline`, `:iframe` or `:ide`. The de
 **If you build an ePub, set this deliberately.** The book's "▶ Run this example live" links
 point at anchors on the web page, so the two only agree if they were built under the same
 policy.
+
+#### No-code examples: `liveExamples: 'no-code'`
+
+A doc system shown inside a host app usually runs under that app's Content Security Policy,
+and a policy without `'unsafe-eval'` cannot run a script example at all: compiling one is
+exactly what it forbids. `'no-code'` is the mode for that host:
+
+```typescript
+export default defineSiteConfig({
+  liveExamples: 'no-code', // html and css run; script and test fences are shown as code
+})
+```
+
+- Only `html` and `css` fences run. `js`, `ts`, `tjs`, a registered dialect and `test` are
+  highlighted as code, whatever their `:mode`, so the doc-test runner has nothing to run either.
+- Nothing on a no-code example's path constructs a `Function` or calls `eval`: not the
+  preview, not an edit, not a chat reply. There is no Console tab, since its REPL evaluates.
+- The code panel shows the `html` and `css` tabs, and a Chat tab when the page registers one.
+  `exampleTabs` chooses others site-wide; `{"tabs": ["html"]}` on a fence, for one example.
+
+An example becomes live without code through three hooks your `bundleEntry` registers. They
+are functions, so they cannot live in the site config:
+
+```typescript:static
+import { setExampleHooks } from 'tosijs-ui/live-example'
+
+setExampleHooks({
+  // the markup, parsed but inert, before it enters the preview: clean it in place
+  sanitize(fragment, example) {
+    for (const el of fragment.querySelectorAll('script, [onclick]')) el.remove()
+  },
+  // the preview, once the markup is in it; `signal` aborts on the next run
+  hydrate(preview, signal, example) {
+    bindDeclaratively(preview, appState, { signal })
+  },
+  // a panel for the Chat tab: it reads the source and applies replacements
+  chat({ source, apply, signal }) {
+    return myAssistantPanel({
+      context: () => source(), // { html, css }
+      onReply: (html) => apply({ html }), // runs like an edit: sanitize, insert, hydrate
+      signal,
+    })
+  },
+})
+```
+
+The hooks apply in every mode, not only `'no-code'`: a script example's markup is sanitized
+and its preview hydrated after its script runs. A host that serves its own app's data to
+examples binds it in `hydrate`; nothing the example's author writes needs to run.
 
 If you want the styles to be real *and* scoped, write them against the doc system's theme
 variables (`--tosi-bg`, `--tosi-text`, …) rather than literal colours, and scope the selector

@@ -98,3 +98,127 @@ test('examples with no script run under a CSP without unsafe-eval', async ({
   })
   expect(result.controlViolations).toBeGreaterThan(0)
 })
+
+/*
+The no-code mode (tosijs-ui#246), end to end under the same policy: a page of fences under
+`'no-code'`, with the host's sanitizer, hydrator and chat. Opening the code panel (CodeMirror),
+choosing tabs and a chat reply all happen under the CSP, and none of it may trip it.
+*/
+test('no-code examples: sanitize, hydrate, tabs and chat under a CSP without unsafe-eval', async ({
+  page,
+  baseURL,
+}) => {
+  await page.route('**/__csp-no-code/', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      headers: {
+        'content-security-policy': "script-src 'self' 'unsafe-inline'",
+      },
+      body: PAGE,
+    })
+  )
+  await page.goto(`${baseURL}/__csp-no-code/`)
+  await page.waitForFunction(() => (window as any).xinjsui?.liveExample)
+
+  const result = await page.evaluate(async () => {
+    const ui = (window as any).xinjsui
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 300))
+    const state: Record<string, string> = { name: 'Ada' }
+    const signals: AbortSignal[] = []
+    ui.setExamplePolicy('no-code')
+    ui.setExampleHooks({
+      sanitize: (fragment: DocumentFragment) => {
+        for (const el of fragment.querySelectorAll('[onclick]'))
+          el.removeAttribute('onclick')
+      },
+      hydrate: (preview: HTMLElement, signal: AbortSignal) => {
+        signals.push(signal)
+        for (const el of preview.querySelectorAll('[data-bind]'))
+          el.textContent = state[el.getAttribute('data-bind')!]
+      },
+      chat: (session: any) => {
+        const panel = document.createElement('div')
+        const send = document.createElement('button')
+        send.className = 'chat-send'
+        send.onclick = () =>
+          session.apply({
+            html: '<p class="reply" data-bind="name" onclick="steal()"></p>',
+          })
+        panel.append(send)
+        return panel
+      },
+    })
+
+    const fence = (lang: string, code: string) => {
+      const pre = document.createElement('pre')
+      const el = document.createElement('code')
+      el.className = `language-${lang}`
+      el.textContent = code
+      pre.append(el)
+      return pre
+    }
+    const doc = document.createElement('div')
+    doc.append(
+      fence(
+        'html',
+        '<p class="greeting" data-bind="name" onclick="steal()"></p>'
+      ),
+      fence('css', '.greeting { color: rebeccapurple }'),
+      fence('js', "preview.append('from js')"),
+      fence('test', "test('never runs', () => {})")
+    )
+    document.body.append(doc)
+    ui.LiveExample.insertExamples(doc)
+    await settle()
+
+    const example = doc.querySelector('tosi-example') as any
+    const greeting = doc.querySelector('.greeting')
+    const shown = {
+      examples: doc.querySelectorAll('tosi-example').length,
+      bound: greeting?.textContent,
+      sanitized: !greeting?.hasAttribute('onclick'),
+      codeShownAsCode: [...doc.querySelectorAll(':scope > pre code')].map(
+        (code) => code.className.match(/language-(\w+)/)?.[1]
+      ),
+      errors: document.querySelectorAll('.preview-error').length,
+    }
+
+    example.showCode()
+    await settle()
+    // <tosi-tabs> makes a tab of each named body
+    const tabs = example
+      .querySelector('tosi-tabs')
+      .bodies.map((body: Element) => body.getAttribute('name'))
+
+    ;(example.querySelector('.chat-send') as HTMLButtonElement).click()
+    await settle()
+    const reply = example.querySelector('.reply')
+    return {
+      shown,
+      tabs,
+      reply: {
+        bound: reply?.textContent,
+        sanitized: !reply?.hasAttribute('onclick'),
+        editorHasIt: example.html.includes('class="reply"'),
+        previousRunAborted: signals[signals.length - 2]?.aborted,
+      },
+      violations: [...(window as any).__violations],
+    }
+  })
+  expect(result.shown).toEqual({
+    examples: 1,
+    bound: 'Ada',
+    sanitized: true,
+    codeShownAsCode: ['js', 'test'],
+    errors: 0,
+  })
+  expect(result.tabs).toEqual(['html', 'css', 'Chat'])
+  expect(result.reply).toEqual({
+    bound: 'Ada',
+    sanitized: true,
+    editorHasIt: true,
+    previousRunAborted: true,
+  })
+  expect(result.violations).toEqual([])
+})

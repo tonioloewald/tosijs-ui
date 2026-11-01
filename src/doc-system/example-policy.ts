@@ -113,8 +113,44 @@ export function languageOfClass(className: string | null | undefined): string {
  *   every `js`/`ts`/`tjs`/`html`/`css`/`test` fence — buying nothing, because a book has no
  *   live examples to protect — and left **237 of 284 code blocks unhighlighted** in our own
  *   ePub while the CHANGELOG said "highlighted in the ePub and in print".
+ * - `'no-code'` — **only `html` and `css` run** (tosijs-ui#246). Every other fence, `test`
+ *   included, is shown as highlighted code, whatever its `:mode`. For a site served under a
+ *   CSP without `'unsafe-eval'`, where running a script example is impossible: nothing on a
+ *   no-code example's path constructs a `Function`.
  */
-export type ExamplePolicy = 'auto' | 'opt-in' | 'none'
+export type ExamplePolicy = 'auto' | 'opt-in' | 'none' | 'no-code'
+
+/**
+ * The tabs a live example's code panel can show (`SiteConfig.exampleTabs`, the fence option
+ * `{"tabs": [...]}`). `js` is the source block whatever its dialect, and brings the dialect's
+ * generated-JS, inline-test and Docs tabs with it; `test` is the "DOM tests" tab; `chat` exists
+ * only when the page registered a chat with `setExampleHooks`.
+ */
+export const EXAMPLE_TABS = [
+  'js',
+  'html',
+  'css',
+  'test',
+  'console',
+  'chat',
+] as const
+export type ExampleTab = (typeof EXAMPLE_TABS)[number]
+
+/** Why `value` is not a list of example tabs, or undefined when it is one. */
+export function exampleTabsProblem(value: unknown): string | undefined {
+  if (!Array.isArray(value))
+    return `example tabs must be an array of tab names, got ${JSON.stringify(
+      value
+    )}`
+  const unknown = value.filter(
+    (name) => !(EXAMPLE_TABS as readonly unknown[]).includes(name)
+  )
+  return unknown.length
+    ? `unknown example tab${unknown.length > 1 ? 's' : ''} ${unknown
+        .map((name) => JSON.stringify(name))
+        .join(', ')} (the tabs are ${EXAMPLE_TABS.join(', ')})`
+    : undefined
+}
 
 /**
  * Will this fence become a live example?
@@ -135,6 +171,8 @@ export function isLiveFence(
   if (!EXECUTABLE_LANGS.has(lang) && !SOURCE_LANGS.has(lang)) return false
   // `:static` opts out under any policy, so one corpus can target all of them.
   if (mode === 'static') return false
+  // No script under no-code: a `:inline` cannot ask for one, since the host cannot run it.
+  if (policy === 'no-code') return lang === 'html' || lang === 'css'
   return policy === 'opt-in' ? mode !== undefined : true
 }
 

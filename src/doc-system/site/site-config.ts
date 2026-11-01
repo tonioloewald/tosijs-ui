@@ -21,6 +21,7 @@ import type { EditableDataOptions } from './data-store.js'
 import type { BookManifest } from '../book-manifest.js'
 import type { AccessibilityMode } from '../render.js'
 import type { AltTextHook } from './alt-text.js'
+import type { ExampleTab } from '../example-policy.js'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 
@@ -213,9 +214,23 @@ export interface SiteConfig {
    * YOUR app is injected as a page-wide stylesheet, and a fence showing the markup something
    * compiles to renders as an unstyled demo. Neither fails the build.
    *
-   * Per-fence, ` ```js:static ` opts a single block out under either policy.
+   * - `'no-code'` (1.17.0, #246) — only `html` and `css` run; `js`, `ts`, `tjs`, a dialect
+   *   and `test` fences are shown as highlighted code. For a site whose host serves it under a
+   *   Content Security Policy without `'unsafe-eval'`: no example constructs a `Function`, so
+   *   none trips the policy. Examples default to the `html` and `css` tabs (and `chat` when the
+   *   page registers one with `setExampleHooks`), and have no Console.
+   *
+   * Per-fence, ` ```js:static ` opts a single block out under any policy.
    */
-  liveExamples?: 'auto' | 'opt-in'
+  liveExamples?: 'auto' | 'opt-in' | 'no-code'
+  /**
+   * The tabs an example's code panel shows (1.17.0, #246), from `'js'` (the source block, with
+   * its dialect's generated-JS and Docs tabs), `'html'`, `'css'`, `'test'` (DOM tests),
+   * `'console'` and `'chat'`. Default: all of them, or `['html', 'css', 'chat']` under
+   * `liveExamples: 'no-code'`. One example overrides it with the fence option
+   * `{"tabs": ["html"]}`. A hidden tab's block still runs; it just can't be edited.
+   */
+  exampleTabs?: ExampleTab[]
   /**
    * Give live examples a Console tab: what the example logs, and a REPL in its scope (default
    * `true`; a tab since 1.16.4, a panel under the preview in 1.16.2–1.16.3). `false` turns it off site-wide;

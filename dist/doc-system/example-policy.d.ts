@@ -55,8 +55,22 @@ export declare function languageOfClass(className: string | null | undefined): s
  *   every `js`/`ts`/`tjs`/`html`/`css`/`test` fence — buying nothing, because a book has no
  *   live examples to protect — and left **237 of 284 code blocks unhighlighted** in our own
  *   ePub while the CHANGELOG said "highlighted in the ePub and in print".
+ * - `'no-code'` — **only `html` and `css` run** (tosijs-ui#246). Every other fence, `test`
+ *   included, is shown as highlighted code, whatever its `:mode`. For a site served under a
+ *   CSP without `'unsafe-eval'`, where running a script example is impossible: nothing on a
+ *   no-code example's path constructs a `Function`.
  */
-export type ExamplePolicy = 'auto' | 'opt-in' | 'none';
+export type ExamplePolicy = 'auto' | 'opt-in' | 'none' | 'no-code';
+/**
+ * The tabs a live example's code panel can show (`SiteConfig.exampleTabs`, the fence option
+ * `{"tabs": [...]}`). `js` is the source block whatever its dialect, and brings the dialect's
+ * generated-JS, inline-test and Docs tabs with it; `test` is the "DOM tests" tab; `chat` exists
+ * only when the page registered a chat with `setExampleHooks`.
+ */
+export declare const EXAMPLE_TABS: readonly ["js", "html", "css", "test", "console", "chat"];
+export type ExampleTab = (typeof EXAMPLE_TABS)[number];
+/** Why `value` is not a list of example tabs, or undefined when it is one. */
+export declare function exampleTabsProblem(value: unknown): string | undefined;
 /**
  * Will this fence become a live example?
  *

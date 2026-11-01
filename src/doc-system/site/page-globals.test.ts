@@ -22,6 +22,21 @@ describe('pageGlobalsHead', () => {
       '__TOSI_EXAMPLE_POLICY="opt-in"'
     )
   })
+
+  test("#246: liveExamples: 'no-code' and exampleTabs stamp what the examples read", () => {
+    const head = pageGlobalsHead({
+      liveExamples: 'no-code',
+      exampleTabs: ['html', 'chat'],
+    })
+    expect(head).toContain('__TOSI_EXAMPLE_POLICY="no-code"')
+    expect(head).toContain('__TOSI_EXAMPLE_TABS=["html","chat"]')
+  })
+
+  test('#246: a misspelt tab fails the build, by name', () => {
+    expect(() =>
+      pageGlobalsHead({ exampleTabs: ['html', 'preview'] as any })
+    ).toThrow('unknown example tab "preview"')
+  })
 })
 
 test('the stamp lands BEFORE the bundle script, so the bundle sees it when it runs', async () => {
