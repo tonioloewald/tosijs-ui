@@ -236,6 +236,23 @@ describe('TosiTagList', () => {
       expect(tagContainer?.getAttribute('role')).toBe('list')
     })
 
+    test('each chip is a listitem, and an empty container is not a list (#3570)', () => {
+      const tagList = tosiTagList({ value: 'a,b' })
+      container.appendChild(tagList)
+      tagList.render()
+      const tagContainer = tagList.querySelector('[part="tagContainer"]')!
+      const roles = [...tagContainer.children].map((c) =>
+        c.getAttribute('role')
+      )
+      expect(roles).toEqual(['listitem', 'listitem'])
+      const empty = tosiTagList({ value: '' })
+      container.appendChild(empty)
+      empty.render()
+      expect(
+        empty.querySelector('[part="tagContainer"]')!.hasAttribute('role')
+      ).toBe(false)
+    })
+
     test('tag container has aria-label', () => {
       const tagList = tosiTagList({ value: 'test' })
       container.appendChild(tagList)

@@ -1936,7 +1936,9 @@ export class TosiTable extends withAttributes({
       {
         class: 'tr-detail',
         id: `${this.instanceId}-detail-${this._detailCount}`,
-        role: 'region',
+        // It lives inside its row, and a row holds cells: one spanning the whole row.
+        role: 'gridcell',
+        'aria-colspan': String(this.visibleColumns.length),
       },
       content
     )
@@ -2066,6 +2068,7 @@ export class TosiTable extends withAttributes({
   private _tbodyTop: HTMLElement | null = null
   private _tbodyBottom: HTMLElement | null = null
   private _pinnedRowEdgeObserver: MutationObserver | null = null
+  private _rowRoleObserver: MutationObserver | null = null
   // Cache the cells array per row to preserve array identity across getCells
   // calls — consumers compare by reference.
   private _rowCellsCache = new WeakMap<Element, HTMLElement[]>()
@@ -2682,6 +2685,9 @@ export class TosiTable extends withAttributes({
     style: Record<string, string>,
     repeats = false
   ): void {
+    // A custom `dataCell` is the cell, so it is a gridcell like the table's own (#3570),
+    // unless its author gave it a role.
+    if (!cell.hasAttribute('role')) cell.setAttribute('role', 'gridcell')
     cell.setAttribute('aria-colindex', String(colIndex + 1))
     cell.tabIndex = -1
     cell.classList.add(...this.cellClasses('td', si, repeats).split(' '))
@@ -3076,8 +3082,8 @@ export class TosiTable extends withAttributes({
 
   // Build a `.tr` row element with all cells for a single item. The row is
   // bound to the item so selection state and rowRendered fire correctly.
-  // Note: listBinding sets role="listitem" on stamped elements; that's good
-  // enough — selectors throughout this file use `.tr` for row matching.
+  // Rows are role=row in a role=grid scroll area (#3570). A virtual listBinding stamps
+  // role=listitem over that; keepRowRole puts it back.
   private buildRow(
     item: any,
     cols: ColumnOptions[],
@@ -3093,7 +3099,7 @@ export class TosiTable extends withAttributes({
     // `rowDetail` and no expander column has nothing to sync, so its rows skip it entirely.
     const detailed =
       grouped && (this._rowDetail != null || cols.some((col) => col.expander))
-    const props: any = { class: rowClass }
+    const props: any = { class: rowClass, role: 'row' }
     // `item` here is the placeholder proxy from template-build time. The
     // actual stamped row's item is delivered to toDOM as the second arg
     // (resolved via the rewritten path) — use that, not the closure-captured
@@ -4355,6 +4361,8 @@ export class TosiTable extends withAttributes({
       {
         class: this._rowDetail ? 'scroll-area has-row-detail' : 'scroll-area',
         part: 'visibleRows',
+        // Rows of cells under column headers: a grid, which the keyboard navigation already is.
+        role: 'grid',
       },
       ...[
         this._head,
@@ -4368,8 +4376,39 @@ export class TosiTable extends withAttributes({
     this.append(this._scrollArea)
 
     this.observePinnedRowMutations()
+    this.keepRowRole()
     this.tagPinnedRows()
     this.restoreScrollAnchor(visibleData)
+  }
+
+  /*
+  A virtual listBinding sets role=listitem (and aria-rowindex) on every row it stamps,
+  whatever role the container has, which puts list items in a grid (#3570). This puts each
+  stamped row back to role=row, where aria-rowindex is valid. Remove it once tosijs gives a
+  grid's items role=row itself (tosijs board #3638) and the peer floor includes that release.
+  */
+  private keepRowRole(): void {
+    this._rowRoleObserver?.disconnect()
+    const area = this._scrollArea
+    if (!area) return
+    const fix = (el: Element) => {
+      if (el.getAttribute('role') === 'listitem') el.setAttribute('role', 'row')
+    }
+    for (const child of Array.from(area.children)) fix(child)
+    this._rowRoleObserver = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === 'attributes') fix(record.target as Element)
+        else
+          record.addedNodes.forEach(
+            (node) => node instanceof Element && fix(node)
+          )
+      }
+    })
+    this._rowRoleObserver.observe(area, {
+      childList: true,
+      subtree: true,
+      attributeFilter: ['role'],
+    })
   }
 
   // Edge classes need to track listBinding mutations (pinned data may change

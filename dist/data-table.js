@@ -1798,7 +1798,9 @@ export class TosiTable extends withAttributes({
         const container = div({
             class: 'tr-detail',
             id: `${this.instanceId}-detail-${this._detailCount}`,
-            role: 'region',
+            // It lives inside its row, and a row holds cells: one spanning the whole row.
+            role: 'gridcell',
+            'aria-colspan': String(this.visibleColumns.length),
         }, content);
         this._detailEls.set(key, container);
         this._detailRows.set(container, raw);
@@ -1919,6 +1921,7 @@ export class TosiTable extends withAttributes({
     _tbodyTop = null;
     _tbodyBottom = null;
     _pinnedRowEdgeObserver = null;
+    _rowRoleObserver = null;
     // Cache the cells array per row to preserve array identity across getCells
     // calls — consumers compare by reference.
     _rowCellsCache = new WeakMap();
@@ -2444,6 +2447,10 @@ export class TosiTable extends withAttributes({
         return style;
     }
     applyGridCellAttrs(cell, colIndex, si, style, repeats = false) {
+        // A custom `dataCell` is the cell, so it is a gridcell like the table's own (#3570),
+        // unless its author gave it a role.
+        if (!cell.hasAttribute('role'))
+            cell.setAttribute('role', 'gridcell');
         cell.setAttribute('aria-colindex', String(colIndex + 1));
         cell.tabIndex = -1;
         cell.classList.add(...this.cellClasses('td', si, repeats).split(' '));
@@ -2799,15 +2806,15 @@ export class TosiTable extends withAttributes({
     }
     // Build a `.tr` row element with all cells for a single item. The row is
     // bound to the item so selection state and rowRendered fire correctly.
-    // Note: listBinding sets role="listitem" on stamped elements; that's good
-    // enough — selectors throughout this file use `.tr` for row matching.
+    // Rows are role=row in a role=grid scroll area (#3570). A virtual listBinding stamps
+    // role=listitem over that; keepRowRole puts it back.
     buildRow(item, cols, stickyInfo, rowClass = 'tr', grouped = true) {
         const cells = cols.map((col, i) => this.buildCell(col, i, stickyInfo[i], item, grouped));
         const selectBindingFn = this.selectBinding;
         // `grouped` is false only for pinned rows, which are not expandable. A table with no
         // `rowDetail` and no expander column has nothing to sync, so its rows skip it entirely.
         const detailed = grouped && (this._rowDetail != null || cols.some((col) => col.expander));
-        const props = { class: rowClass };
+        const props = { class: rowClass, role: 'row' };
         // `item` here is the placeholder proxy from template-build time. The
         // actual stamped row's item is delivered to toDOM as the second arg
         // (resolved via the rewritten path) — use that, not the closure-captured
@@ -3955,6 +3962,8 @@ export class TosiTable extends withAttributes({
         this._scrollArea = div({
             class: this._rowDetail ? 'scroll-area has-row-detail' : 'scroll-area',
             part: 'visibleRows',
+            // Rows of cells under column headers: a grid, which the keyboard navigation already is.
+            role: 'grid',
         }, ...[
             this._head,
             this._tbodyTop,
@@ -3964,8 +3973,40 @@ export class TosiTable extends withAttributes({
         this._scrollArea.addEventListener('scrollend', this.handleScrollEnd);
         this.append(this._scrollArea);
         this.observePinnedRowMutations();
+        this.keepRowRole();
         this.tagPinnedRows();
         this.restoreScrollAnchor(visibleData);
+    }
+    /*
+    A virtual listBinding sets role=listitem (and aria-rowindex) on every row it stamps,
+    whatever role the container has, which puts list items in a grid (#3570). This puts each
+    stamped row back to role=row, where aria-rowindex is valid. Remove it once tosijs gives a
+    grid's items role=row itself (tosijs board #3638) and the peer floor includes that release.
+    */
+    keepRowRole() {
+        this._rowRoleObserver?.disconnect();
+        const area = this._scrollArea;
+        if (!area)
+            return;
+        const fix = (el) => {
+            if (el.getAttribute('role') === 'listitem')
+                el.setAttribute('role', 'row');
+        };
+        for (const child of Array.from(area.children))
+            fix(child);
+        this._rowRoleObserver = new MutationObserver((records) => {
+            for (const record of records) {
+                if (record.type === 'attributes')
+                    fix(record.target);
+                else
+                    record.addedNodes.forEach((node) => node instanceof Element && fix(node));
+            }
+        });
+        this._rowRoleObserver.observe(area, {
+            childList: true,
+            subtree: true,
+            attributeFilter: ['role'],
+        });
     }
     // Edge classes need to track listBinding mutations (pinned data may change
     // without a full re-render), so observe each pinned tbody and re-tag on

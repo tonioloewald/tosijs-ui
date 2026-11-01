@@ -521,12 +521,16 @@ export class TosiTagList extends withAttributes({
     }
 
     tagContainer.textContent = ''
+    // A list of the chips (#3570): each chip is an item, and with none there is no list.
+    if (this.tags.length) tagContainer.setAttribute('role', 'list')
+    else tagContainer.removeAttribute('role')
     for (const tag of this.tags) {
       const chip = tosiTag({
         caption: tag,
         removeable: this.editable && !this.disabled,
         removeCallback: this.removeTag,
       })
+      chip.setAttribute('role', 'listitem')
       // Chips take their colours from the matching Tag in availableTags (#173).
       const colors = tagColors(this.#tagFor(tag))
       if (colors?.background)

@@ -330,6 +330,7 @@ export declare class TosiTable extends TosiTable_base {
     private _tbodyTop;
     private _tbodyBottom;
     private _pinnedRowEdgeObserver;
+    private _rowRoleObserver;
     private _rowCellsCache;
     private itemFor;
     private cellsFor;
@@ -491,6 +492,7 @@ export declare class TosiTable extends TosiTable_base {
     private draggedColumn?;
     private dropColumn;
     render(): void;
+    private keepRowRole;
     private observePinnedRowMutations;
 }
 /** @deprecated Use TosiTable instead */
