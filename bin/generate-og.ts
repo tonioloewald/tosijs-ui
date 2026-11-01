@@ -17,7 +17,8 @@ demo/static/og/ so it survives the build's `rm -rf docs` and is copied + committ
 like any other static asset; the generator then references /og/<slug>.webp.
 
 Tooling: Playwright renders the card + captures examples (ergonomic setContent /
-element screenshot); ffmpeg encodes webp (Playwright emits only png/jpeg).
+element screenshot); cwebp encodes webp (Playwright emits only png/jpeg, and Homebrew's
+ffmpeg dropped its webp encoder in 8.x). Install it with `brew install webp`.
 
 Usage: bun bin/generate-og.ts [serverUrl] [slug ...]
   serverUrl defaults to https://localhost:8787; pass slugs to limit (for testing).
@@ -77,9 +78,16 @@ function cardHtml(doc: DocLike, shot: string | null): string {
     object-fit: contain; object-position: right bottom; border-radius: 16px;
     box-shadow: 0 24px 64px #0008; background: #fff;
   }
+  /* Beside a screenshot the text gets the left column: it ran under the shot before. */
+  .has-shot h1, .has-shot p { max-width: 500px; }
+  .has-shot h1 { font-size: 72px; overflow-wrap: anywhere; }
+  .has-shot p {
+    font-size: 28px; display: -webkit-box; -webkit-box-orient: vertical;
+    -webkit-line-clamp: 6; overflow: hidden;
+  }
   .watermark { position: absolute; right: -40px; top: -40px; width: 280px; height: 280px; opacity: 0.12; }
   </style></head><body>
-  <div class="card">
+  <div class="card${shot ? ' has-shot' : ''}">
     <div class="watermark">${favicon}</div>
     <div class="brand">${favicon}<span class="name">${escapeHtml(
     projectName
@@ -134,7 +142,8 @@ async function main(): Promise<void> {
         await page.goto(`${serverUrl}${pathForSlug(slug)}`, {
           waitUntil: 'domcontentloaded',
         })
-        const el = await page.waitForSelector('tosi-example', {
+        // The preview alone: the example's toolbar says nothing in a share card.
+        const el = await page.waitForSelector('tosi-example .preview', {
           timeout: 8000,
         })
         await page.waitForTimeout(900)
@@ -152,7 +161,7 @@ async function main(): Promise<void> {
     await page.screenshot({ path: pngPath })
 
     const webpName = (slug || 'index') + '.webp'
-    await Bun.$`ffmpeg -y -loglevel error -i ${pngPath} -c:v libwebp -quality 82 ${outDir}/${webpName}`
+    await Bun.$`cwebp -quiet -q 82 ${pngPath} -o ${outDir}/${webpName}`
     made += 1
     console.log(`og: ${webpName}${shot ? ' (with example)' : ''}`)
   }
