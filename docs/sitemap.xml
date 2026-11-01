@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://ui.tosijs.net/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/adopting-the-doc-system/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/icon-composition/</loc><lastmod>2026-11-01T20:01:06.124Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/icon-composition/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/icon-svg/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/one-source-every-artifact/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/doc-site-system/</loc><lastmod>2026-11-01T15:05:41+02:00</lastmod></url>
@@ -14,54 +14,54 @@
   <url><loc>https://ui.tosijs.net/highlight-styles/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/data-client/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/babylon-3d/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/ab-test/</loc><lastmod>2026-11-01T20:06:37.792Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/ab-test/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/affix/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/carousel/</loc><lastmod>2026-11-01T20:04:26.527Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/code-editor/</loc><lastmod>2026-11-01T20:03:39.065Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/carousel/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/code-editor/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/color-input/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/crud/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/dialog/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/diff/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/drag-and-drop/</loc><lastmod>2026-10-29T17:19:06+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/editable-rect/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/component/</loc><lastmod>2026-11-01T20:07:14.883Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/filter-builder/</loc><lastmod>2026-11-01T20:01:06.124Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/float/</loc><lastmod>2026-11-01T20:06:37.792Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/component/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/filter-builder/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/float/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/form/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/gamepad/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/hash-state/</loc><lastmod>2026-08-21T20:57:12+03:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/header/</loc><lastmod>2026-11-01T20:02:14.821Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/icons/</loc><lastmod>2026-11-01T20:06:37.791Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/header/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/icons/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/layout/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/live-theme/</loc><lastmod>2026-11-01T20:07:14.882Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/live-theme/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/localize/</loc><lastmod>2026-10-29T17:33:42+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/bodymovin-player/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/make-sorter/</loc><lastmod>2026-11-01T20:06:37.791Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/mapbox/</loc><lastmod>2026-11-01T20:06:37.791Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/markdown-viewer/</loc><lastmod>2026-11-01T20:06:37.791Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/menu/</loc><lastmod>2026-11-01T20:02:14.821Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/month/</loc><lastmod>2026-11-01T20:03:49.238Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/make-sorter/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/mapbox/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/markdown-viewer/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/menu/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/month/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/natural-compare/</loc><lastmod>2026-10-16T13:56:18+03:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/notifications/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/palette/</loc><lastmod>2026-11-01T20:03:49.238Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/password-strength/</loc><lastmod>2026-11-01T20:06:43.265Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/palette/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/password-strength/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/pocket-bar/</loc><lastmod>2026-10-16T13:56:18+03:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/pop-float/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/rating/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/release-notes/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/rich-text/</loc><lastmod>2026-11-01T20:07:04.875Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/rich-text/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/router/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/schema-form/</loc><lastmod>2026-11-01T20:09:02.066Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/schema-form/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/via-tag/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/search-field/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/segmented/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/select/</loc><lastmod>2026-11-01T20:01:06.124Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/select/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/side-nav/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/size-break/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/sizer/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/data-table/</loc><lastmod>2026-11-01T21:56:13+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/tab-selector/</loc><lastmod>2026-11-01T20:07:45.500Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/tag-list/</loc><lastmod>2026-11-01T20:00:40.692Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/tab-selector/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/tag-list/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/theme/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/tooltip/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/track-drag/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
