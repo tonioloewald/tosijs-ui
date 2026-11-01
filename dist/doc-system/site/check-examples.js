@@ -225,7 +225,7 @@ export function exampleModuleSource(js, contextKeys) {
             build(params);
         }
         catch (error) {
-            throw new Error(`cannot run as a module (exampleModules): ${error.message}`);
+            throw new Error(`cannot run as a module (exampleModules): ${error.message}`, { cause: error });
         }
     }
     return `export default async function ({ ${params.join(', ')} }) {${js}\n}\n`;

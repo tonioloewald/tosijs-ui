@@ -308,7 +308,8 @@ export function exampleModuleSource(js: string, contextKeys: string[]): string {
       build(params)
     } catch (error) {
       throw new Error(
-        `cannot run as a module (exampleModules): ${(error as Error).message}`
+        `cannot run as a module (exampleModules): ${(error as Error).message}`,
+        { cause: error }
       )
     }
   }
