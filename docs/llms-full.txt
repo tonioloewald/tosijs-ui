@@ -13989,7 +13989,9 @@ can lay the card out before fetching it; every image gets an alt of the page's t
 
 Cards are files like any other static asset, so make them however you like. In this repository
 `bun run og` screenshots each page's first live example into a 1200×630 card in
-`demo/static/og/`.
+`demo/static/og/`. It makes cards only where one shows something the title doesn't: the home
+page, and each page with a live example and no `image` of its own. Every other page shares the
+home page's card.
 
 #### Titles and descriptions: the metadata lint
 

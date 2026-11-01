@@ -2,8 +2,14 @@
 Generate per-page Open Graph cards (1200x630 webp) for the doc site.
 
 Each card is a branded panel — theme background, favicon, page title + description —
-with a screenshot of the page's first live example composited in when one exists
-(the component itself is the most informative possible share image).
+with a screenshot of the page's first live example composited in (the component itself is
+the most informative possible share image).
+
+Only pages that can show something get a card: the home page (every other page's fallback),
+and a page with a live example and no `image` of its own. A text-only card for every other
+page said nothing the title doesn't, so those share the home page's card (or the site's
+`ogImage`) instead. A page with a live example whose capture fails is an error, not a quiet
+text-only card.
 
 This is a SEPARATE, opt-in step (`bun run og`): it needs the dev server running so
 it can capture the live examples, and og cards change rarely. Output lands in
@@ -22,6 +28,7 @@ import { readFileSync } from 'fs'
 import siteConfig from '../tosijs-site.config'
 import { buildSlugMap, pathForSlug } from '../src/doc-system/routing'
 import { pageDescription } from '../src/doc-system/site/page-metadata'
+import { liveFenceLanguages } from '../src/doc-system/site/build-warnings'
 
 declare global {
   var Bun: any
@@ -32,6 +39,7 @@ interface DocLike {
   title: string
   text: string
   description?: string
+  image?: string
 }
 
 const accent = siteConfig.theme?.accent ?? '#ee247b'
@@ -101,30 +109,41 @@ async function main(): Promise<void> {
     viewport: { width: 1200, height: 630 },
   })
 
+  const policy = siteConfig.liveExamples ?? 'auto'
   let made = 0
+  const failed: string[] = []
   for (const doc of docs) {
     const slug = slugMap[doc.filename]
-    if (onlySlugs.length && !onlySlugs.includes(slug || 'index')) continue
+    const name = slug || 'index'
+    if (onlySlugs.length && !onlySlugs.includes(name)) continue
+    const hasExample = liveFenceLanguages([doc], policy).size > 0
+    if (name !== 'index' && (doc.image || !hasExample)) {
+      if (onlySlugs.length)
+        console.log(
+          `og: ${name} skipped (${
+            doc.image ? 'has its own image' : 'no live example'
+          })`
+        )
+      continue
+    }
 
-    // Capture the first live example (best-effort — many docs have one, some don't).
+    // Capture the first live example.
     let shot: string | null = null
-    const hasExample = /```(js|html)/.test(doc.text)
     if (hasExample) {
       try {
         await page.goto(`${serverUrl}${pathForSlug(slug)}`, {
           waitUntil: 'domcontentloaded',
         })
-        await page.waitForSelector('tosi-example .preview, tosi-example', {
+        const el = await page.waitForSelector('tosi-example', {
           timeout: 8000,
         })
         await page.waitForTimeout(900)
-        const el = await page.$('tosi-example')
-        if (el) {
-          const buf = await el.screenshot({ type: 'png' })
-          shot = `data:image/png;base64,${buf.toString('base64')}`
-        }
-      } catch {
-        /* no capturable example — fall back to a text-only card */
+        const buf = await el!.screenshot({ type: 'png' })
+        shot = `data:image/png;base64,${buf.toString('base64')}`
+      } catch (error) {
+        console.error(`og: ${name}: could not capture its example: ${error}`)
+        failed.push(name)
+        continue
       }
     }
 
@@ -140,6 +159,10 @@ async function main(): Promise<void> {
 
   await browser.close()
   console.log(`generated ${made} og cards in ${outDir}/`)
+  if (failed.length) {
+    console.error(`og: no card for ${failed.join(', ')}`)
+    process.exit(1)
+  }
 }
 
 await main()
