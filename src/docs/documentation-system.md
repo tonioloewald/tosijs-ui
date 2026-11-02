@@ -10,16 +10,4 @@ Start with [Adopting the doc system](/adopting-the-doc-system/) for a first buil
 [Doc-Site System](/doc-site-system/) for every option.
 
 <!-- toc -->
-- [Adopting the doc system](/adopting-the-doc-system/)
-- [One Source](/one-source-every-artifact/)
-- [Doc-Site System](/doc-site-system/)
-- [doc-system](/doc-system/)
-- [doc-browser](/doc-browser/)
-- [docs](/docs/)
-- [highlight-block](/highlight-block/)
-- [highlight-styles](/highlight-styles/)
-- [data client](/data-client/)
-- [Full-screen layout](/full-screen-demo/)
-- [Page without the header](/no-header-demo/)
-- [kitchen sink](/kitchen-sink/)
 <!-- /toc -->

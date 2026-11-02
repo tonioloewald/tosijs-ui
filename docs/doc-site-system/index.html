@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-01T15:05:41+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-02T21:18:23.266Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=d3469f1bd2d8" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ae4a2302ceb1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -522,7 +522,7 @@ something you review before it becomes authored text. Return nothing to leave an
 <tr>
 <td><code>sectionsDir</code></td>
 <td><code>&#39;src/docs&#39;</code></td>
-<td>where auto-created section docs + their <code>&lt;!-- toc --&gt;</code> blocks are written (must be inside a <code>docPath</code>, not named <code>docs</code>; outside every <code>docPath</code> the build warns and writes no stub). Stubs are created on the first build in a process, never on a watch rebuild</td>
+<td>where auto-created section docs are written (must be inside a <code>docPath</code>, not named <code>docs</code>; outside every <code>docPath</code> the build warns and writes no stub). Stubs are created on the first build in a process, never on a watch rebuild. A section&#39;s <code>&lt;!-- toc --&gt;</code> list of its children is filled in the built page only, never in the source file; a section with no <code>&lt;!-- toc --&gt;</code> block gets the list at the end</td>
 </tr>
 <tr>
 <td><code>docsJson</code></td>

@@ -1,5 +1,11 @@
 import { test, expect } from 'bun:test'
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import { ensureSections, insideDocPaths } from './sections.js'
@@ -81,4 +87,46 @@ test('a full build inside docPaths creates the stub and names it', () => {
     expect(existsSync(stub)).toBe(true)
     expect(messages.join('\n')).toContain(stub)
   })
+})
+
+test('the toc goes into the corpus, never the parent source file (#3733)', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'tosijs-sections-'))
+  try {
+    const source = '# Birds\n\n<!-- toc -->\n<!-- /toc -->\n'
+    const parentPath = path.join(dir, 'birds.md')
+    writeFileSync(parentPath, source)
+    const docsJson = path.join(dir, 'docs.json')
+    writeFileSync(
+      docsJson,
+      JSON.stringify([
+        {
+          filename: 'birds.md',
+          path: parentPath,
+          title: 'Birds',
+          text: source,
+          bookText: source + '\nbook only\n',
+        },
+        {
+          filename: 'falcon.md',
+          path: path.join(dir, 'falcon.md'),
+          title: 'Falcon',
+          text: '# Falcon',
+          parent: 'birds.md',
+        },
+      ])
+    )
+    ensureSections({
+      docsJsonPath: docsJson,
+      sectionsDir: dir,
+      reExtract: () => {},
+    })
+    expect(readFileSync(parentPath, 'utf8')).toBe(source)
+    const [birds] = JSON.parse(readFileSync(docsJson, 'utf8'))
+    const block = '<!-- toc -->\n- [Falcon](/falcon/)\n<!-- /toc -->'
+    expect(birds.text).toContain(block)
+    expect(birds.bookText).toContain(block)
+    expect(birds.bookText).toContain('book only')
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 })

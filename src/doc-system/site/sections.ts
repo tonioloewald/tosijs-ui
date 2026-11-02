@@ -4,12 +4,16 @@ Section docs + TOC writeback (build-time only; uses fs).
 A doc's `parent` groups it into a nav section. `ensureSections`:
   1. auto-creates a real .md file for any referenced parent that doesn't exist
      yet (so authors can later add intro prose + metadata like pin/order),
-  2. regenerates the `<!-- toc -->…<!-- /toc -->` block inside every .md parent
-     so its body lists its children.
+  2. fills the `<!-- toc -->…<!-- /toc -->` block of every .md parent IN THE CORPUS
+     (docsJsonPath) so its body lists its children.
 
-Write-if-changed + a total-order child sort (pinnedSort) make this idempotent —
-repeated builds reach a fixed point and emit no fs events, so `bun --watch`
-doesn't loop. TOC links are root-relative (basePath-agnostic source).
+The toc is build output: it is written into the extracted corpus, never back into the
+parent's source file. Writing it into source dirtied a tracked file on every build (#3733),
+and the shared rule is that build steps never write tracked source. A parent with no block
+gets one appended. TOC links are root-relative (basePath-agnostic).
+
+Step 1 does write source, deliberately: a stub is a new file for the author to fill in, and
+it is created once, never on a watch rebuild.
 */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
@@ -108,7 +112,7 @@ export function ensureSections(opts: EnsureSectionsOptions): void {
     slugMap = buildSlugMap(docs)
   }
 
-  // 2. Regenerate the TOC block inside every .md parent (write-if-changed).
+  // 2. Fill the TOC block of every .md parent, in the corpus only (#3733).
   const childrenOf = new Map<string, Doc[]>()
   for (const doc of docs) {
     const pf = doc.parent ? resolveParent(doc.parent, docs, slugMap) : ''
@@ -121,12 +125,11 @@ export function ensureSections(opts: EnsureSectionsOptions): void {
     arr.push(doc)
   }
 
-  let wrote = false
+  let changed = false
   for (const [parentFilename, kids] of childrenOf) {
     const parent = docs.find((d) => d.filename === parentFilename)
     // Only .md parents get an auto-TOC in their body (a .ts parent is code).
-    if (!parent || !parent.path.endsWith('.md') || !existsSync(parent.path))
-      continue
+    if (!parent || !parent.path.endsWith('.md')) continue
 
     kids.sort(pinnedSort)
     const list = kids
@@ -134,14 +137,20 @@ export function ensureSections(opts: EnsureSectionsOptions): void {
       .join('\n')
     const block = `<!-- toc -->\n${list}\n<!-- /toc -->`
 
-    const current = readFileSync(parent.path, 'utf8')
-    const updated = TOC_RE.test(current)
-      ? current.replace(TOC_RE, block)
-      : current.replace(/\s*$/, '') + '\n\n' + block + '\n'
-    if (updated !== current) {
-      writeFileSync(parent.path, updated, 'utf8')
-      wrote = true
+    const fill = (text: string): string =>
+      TOC_RE.test(text)
+        ? text.replace(TOC_RE, () => block)
+        : text.replace(/\s*$/, '') + '\n\n' + block + '\n'
+    // A page with a book variant (single-source.ts) carries its own copy of the body.
+    for (const key of ['text', 'bookText'] as const) {
+      const current = parent[key]
+      if (typeof current !== 'string') continue
+      const updated = fill(current)
+      if (updated !== current) {
+        parent[key] = updated
+        changed = true
+      }
     }
   }
-  if (wrote) reExtract() // refresh corpus so doc.text includes the new TOCs
+  if (changed) writeFileSync(docsJsonPath, JSON.stringify(docs, null, 2))
 }

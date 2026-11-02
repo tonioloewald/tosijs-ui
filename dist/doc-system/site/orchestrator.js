@@ -743,8 +743,7 @@ export async function buildSite(config, opts = {}) {
                 // re-deriving the filename — the "documented helper" half of #46.
                 await Bun.write(`${PUBLIC}/${VOLUME_MANIFEST}`, JSON.stringify(volumes, null, 2));
             };
-            // Auto-create missing section docs + regenerate their TOC blocks, then
-            // re-extract so the corpus reflects the on-disk changes.
+            // Auto-create missing section docs, then fill their TOC blocks in the corpus.
             ensureSections({
                 docsJsonPath: DOCS_JSON,
                 sectionsDir: config.sectionsDir ?? 'src/docs',

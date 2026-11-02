@@ -5,16 +5,4 @@
 General purpose utilities and behaviors — routing, theming, localization, sorting, drag-and-drop, and other building blocks.
 
 <!-- toc -->
-- [ab-test](/ab-test/)
-- [drag & drop](/drag-and-drop/)
-- [hash-state](/hash-state/)
-- [live-theme](/live-theme/)
-- [localize](/localize/)
-- [makeSorter](/make-sorter/)
-- [naturalCompare](/natural-compare/)
-- [router](/router/)
-- [scriptTag & styleSheet](/via-tag/)
-- [theme](/theme/)
-- [trackDrag](/track-drag/)
-- [valueRenderer](/value-renderer/)
 <!-- /toc -->

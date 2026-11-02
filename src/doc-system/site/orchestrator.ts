@@ -923,8 +923,7 @@ export async function buildSite(
         )
       }
 
-      // Auto-create missing section docs + regenerate their TOC blocks, then
-      // re-extract so the corpus reflects the on-disk changes.
+      // Auto-create missing section docs, then fill their TOC blocks in the corpus.
       ensureSections({
         docsJsonPath: DOCS_JSON,
         sectionsDir: config.sectionsDir ?? 'src/docs',

@@ -142,9 +142,10 @@ export interface SiteConfig {
    */
   ignoreDocPaths?: string[]
   /**
-   * Directory where the build writes auto-created section ("parent") docs and
-   * regenerates their `<!-- toc -->` blocks. Committed source (like
-   * src/version.ts) so authors can add intro prose + metadata. Default
+   * Directory where the build writes auto-created section ("parent") docs, once,
+   * so authors can add intro prose + metadata. A section's `<!-- toc -->` list
+   * of its children is filled in the built corpus only, never written into the
+   * source file (#3733). Default
    * 'src/docs'. Must sit inside a scanned docPath so the section docs are
    * extracted into the corpus.
    */
