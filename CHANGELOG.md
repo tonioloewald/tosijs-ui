@@ -1,6 +1,121 @@
 # Changelog
 
-## 1.17.0-beta.4
+## 1.17.0-beta.5
+
+> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
+> on 1.16.41. Accessibility fixes across the components, the doc site's SEO surface, and two
+> ways to run live examples under a strict Content Security Policy.
+
+**Visible changes.** An editable `<tosi-select>` now looks like a text field rather than a
+button, because it is one. `<tosi-month>` uses mediumvioletred where it used hotpink, which
+failed contrast; its CSS variables restore the old colour. `<tosi-carousel>`'s dots are further
+apart. A section page's `<!-- toc -->` list is no longer written into its source file.
+
+### Accessibility: the components pass axe's WCAG 2.2 AA rules
+
+The doc site's accessibility audit found 142 failures across 75 pages, most of them in
+components every adopter ships. A new Playwright spec holds 20 component pages, examples
+included, at zero.
+
+- **`<tosi-table>` is a grid of rows (#3570).** Its scroll area is `role="grid"` and every row
+  `role="row"`. It was a list of list items holding grid cells, which a screen reader announced
+  as a list of unnamed items. A custom `dataCell` gets `role="gridcell"` like the table's own
+  cells, unless it carries a role of its own, and an expanded row's detail is a full-width
+  `gridcell` rather than a `region`, because a row may only contain cells.
+- **`<tosi-tag-list>`'s chips are list items**, and an empty tag list is no longer an empty list.
+- **`<tosi-select>` no longer puts its input inside its button (#3571).** A select you pick from
+  is its button, which is the combobox and shows the caption as text; an editable one is its
+  input, in a field beside the button. The combobox is named by the host's `aria-label` or
+  `title`, its `<label>`, or the placeholder, and ↓ opens the list.
+- **`<tosi-tabs>` (#3572):** the tab row is the `tablist` and each body a `tabpanel`; a tab
+  points at its panel through `ariaControlsElements` (an id cannot cross the shadow root), and
+  `aria-selected` is `"true"` or absent rather than empty. The close glyph is no longer a button
+  inside the tab: Delete or Backspace closes a closeable tab from the keyboard, and the glyph
+  keeps a 24px pointer target.
+- **Names for icon-only controls.** An icon-only `<tosi-menu>`'s trigger is named by the host's
+  `aria-label` or `title`, and says it opens a menu. `<tosi-month>`'s header buttons and
+  month/year selects have names. `<tosi-code>`'s editable area is named (the host's `aria-label`
+  or `title`, else "<mode> code"). `<tosi-theme-editor>`'s inputs and the filter builder's
+  controls are named. `<tosi-schema-form>`'s labels are tied to their controls (a plugin's
+  through its first input), so every field has a name.
+- **Contrast.** `<tosi-month>`'s day headings and checked dates use mediumvioletred (5:1)
+  instead of hotpink (2.6:1); `--month-day-color` and `--month-date-checked-background` restore
+  the old colour. `<tosi-code>`'s light theme's type names are #075 instead of CodeMirror's #085
+  (4.43:1). `<tosi-palette>`'s trigger text is #0009 instead of #0008, just under 4.5:1 on a
+  near-white field.
+- **Targets and keyboard.** `<tosi-carousel>`'s dots sit 24px apart (WCAG 2.5.8), and its slide
+  strip takes focus, with ← and → paging it (#3573). `<tosi-rich-text>`'s toolbar buttons are
+  at least 24px, and a live example's scrolling test results take focus.
+- The doc examples name their controls and use colours that pass AA (#3574).
+
+### Live examples under a strict CSP
+
+- **`liveExamples: 'no-code'` (tosijs-ui#246):** only `html` and `css` fences run; script,
+  dialect and `test` fences are shown as highlighted code. Nothing on a no-code example's path
+  constructs a `Function` or calls `eval` (no Console tab, since its REPL evaluates), so a doc
+  system served under a CSP without `'unsafe-eval'` runs its examples.
+- **`setExampleHooks({ sanitize, hydrate, chat })`** from `tosijs-ui/live-example`:
+  `sanitize(fragment, example)` sees the markup parsed but inert before it enters the preview;
+  `hydrate(preview, signal, example)` runs once it is in (after any script), with a signal that
+  aborts on the next run; `chat(session)` builds a Chat tab whose `session.apply({ html, css })`
+  runs like an edit. They apply in every mode.
+- **`exampleTabs`** in the site config, and `{"tabs": [...]}` per fence, choose the code panel's
+  tabs from `js`, `html`, `css`, `test`, `console`, `chat`. Under no-code the default is
+  `['html', 'css', 'chat']`. A misspelt tab fails the build by name.
+- **`setExamplePolicy` and `setExampleTabs` are exported** from `tosijs-ui/live-example`; the
+  first was documented as callable but never exported.
+- **`exampleModules: true` (tosijs-ui#245):** the build writes each script example (`js`, `ts`,
+  `tjs`) to `<outputDir>/_examples/<hash>.js`, and the page runs an unedited inline example by
+  `import()`-ing its module instead of compiling its source, so it runs under
+  `script-src 'self'` with no `'unsafe-eval'`. The module's lines are the example's own, so an
+  error still names its line. Under such a policy, an EDITED example (which must compile) says
+  the policy refused it and that reverting runs the published example, instead of an engine
+  message about `'unsafe-eval'`.
+
+### The doc site's SEO surface
+
+- **Share images (#3562).** A page's share image (og:image, twitter:image) is its own `image`,
+  else its card at `/og/<slug>.webp|png|jpg` when the static files have one, else the site's
+  `ogImage`, else the home page's card. The cards `bun run og` wrote were linked from no page,
+  so every share unfurled without an image. A local share image gets `og:image:width`/`height`,
+  read from its header (PNG, WebP, JPEG, GIF), and every one gets an alt of the page's title.
+- **`bun run og`** cards only the home page and pages with a live example and no `image` of
+  their own; every other page shares the home page's card instead of getting a text-only one.
+  It encodes with cwebp (`brew install webp`): Homebrew's ffmpeg 8 has no webp encoder, so every
+  card failed to encode. A card with an example screenshot gives its title and description the
+  left column (they ran under the shot) and captures the preview without the example's toolbar,
+  and a page whose example cannot be captured now fails the run (exit 1) instead of quietly
+  getting a text-only card.
+- **`sitemap.xml` entries carry `lastmod` (#3565):** the last commit that touched the page's
+  source, or its mtime while it has uncommitted edits. Without git there is none, rather than
+  an invented one.
+- **JSON-LD names the page properly** (its headTitle without the project suffix), with
+  `dateModified`, `datePublished` (frontmatter `date`) and `author` (the page's, else
+  `epub.author`); a page inside a nav section gets a `BreadcrumbList`; the home page is the
+  `WebSite` rather than a `TechArticle`.
+- **`kind: 'book'`** in the site config: pages become `Chapter`s of a `Book`, numbered in
+  reading order, and link the previous and next page with `<link rel="prev/next">`.
+- **`llms.txt` follows llmstxt.org (#3564):** an H1, the site description as a `>` summary,
+  then `- [title](url): description` lines in nav order, with each nav section as its own `##`
+  section. Links are the pages' markdown copies, and descriptions are the ones the pages' heads
+  carry. **`llms-full.txt`** is the whole indexed corpus as one markdown file, in nav order,
+  each page followed by its URL, written to the output dir only.
+- **The metadata lint (#3563):** every build lists pages whose title or description needs
+  writing — missing, too short or long, derived from a paragraph cut mid-sentence, or shared
+  with another page. It warns (once per change under `bun start`) and fails a `strict` build.
+  A description derived from a page's first paragraph no longer keeps `_emphasis_`,
+  `~~strikethrough~~`, wikilinks or footnote markers, and is cut at 155 characters, where
+  search results cut it.
+
+### Build
+
+- **`buildSite` no longer rewrites the `<!-- toc -->` block in a section's source `.md` on
+  every build (#3733),** which left every adopter with section pages a dirty tree after
+  building. The list of child pages is filled in the built page (and its book variant) only; a
+  section with no `<!-- toc -->` marker still gets the list at the end. A committed block's old
+  list is harmless (the build replaces it), but can be emptied to the bare markers.
+
+### 1.17.0-beta.4 (prerelease detail)
 
 > Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
 > on 1.16.41. Fixes from Learn 3D and from tosijs-native's first site build.

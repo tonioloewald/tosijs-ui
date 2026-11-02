@@ -2,7 +2,7 @@
 
 > Simple, robust web-components for use with tosijs or anything else.
 
-Version 1.17.0-beta.4.
+Version 1.17.0-beta.5.
 
 - Docs: https://ui.tosijs.net
 - Source: https://github.com/tonioloewald/tosijs-ui
