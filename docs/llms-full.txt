@@ -7698,6 +7698,70 @@ scrolls horizontally exactly as it does without the attribute, and every column 
 width it was given. Header and body stay in step either way; they share one
 `grid-template-columns`.
 
+### Elastic columns
+
+To share the leftover space out instead of giving it all to one column, mark columns
+**`elastic: true`**. Elastic columns grow in proportion to their `width` (a 200px column
+gets twice the extra a 100px one does) and never shrink below it, so a narrow container
+still scrolls. Put the **`elastic`** attribute on the table (`elastic: true` from the
+creator) and every column is elastic unless it says `elastic: false`, which is the way to
+get it for columns inferred from the data. Pinned columns are never elastic. Elastic
+columns take precedence over `full-width-header`.
+
+Dragging an elastic column's edge keeps the edge under the pointer; the other elastic
+columns give up or take the difference.
+
+### Filling the space beside the columns
+
+When the columns don't fill the table, the space to their right shows the table's
+background. Set **`--tosi-table-fill`** to paint it differently, to make it obvious where
+the table ends:
+
+```js
+import { tosiTable } from 'tosijs-ui'
+
+const array = [
+  { id: 1, name: 'Ada', role: 'Analyst' },
+  { id: 2, name: 'Grace', role: 'Admiral' },
+  { id: 3, name: 'Margaret', role: 'Director' },
+]
+const style = { display: 'block', height: '150px' }
+preview.append(
+  tosiTable({
+    array,
+    style,
+    columns: [
+      { prop: 'id', name: 'ID', width: 60 },
+      { prop: 'name', name: 'Name', width: 100, elastic: true },
+      { prop: 'role', name: 'Role', width: 200, elastic: true },
+    ],
+  }),
+  tosiTable({
+    array,
+    style: { ...style, '--tosi-table-fill': '#8882' },
+    columns: [
+      { prop: 'id', name: 'ID', width: 60 },
+      { prop: 'name', name: 'Name', width: 100 },
+      { prop: 'role', name: 'Role', width: 200 },
+    ],
+  })
+)
+```
+```test
+test('elastic columns share the leftover in proportion to their widths', async () => {
+  const [elastic] = preview.querySelectorAll('tosi-table')
+  for (let i = 0; i < 100 && !elastic.querySelector('.thead .th'); i++) await waitMs(20)
+  const [id, name, role] = [...elastic.querySelectorAll('.thead .th')].map(
+    (th) => th.getBoundingClientRect().width
+  )
+  // A preview narrower than the columns leaves nothing to share out.
+  const spare = elastic.querySelector('.scroll-area').clientWidth - 360
+  expect(Math.round(id)).toBe(60)
+  expect(Math.round(name)).toBe(Math.round(100 + Math.max(0, spare) / 3))
+  expect(Math.round(role / name)).toBe(2)
+})
+```
+
 ## Row Detail
 
 Set **`rowDetail`** to a function that builds an element from a row, and each row can be

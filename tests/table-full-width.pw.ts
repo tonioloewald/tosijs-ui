@@ -20,23 +20,29 @@ const build = `
     columns: COLUMNS,
     array: [{ a: 'one', b: 'two', c: 'three' }],
   })
-  if (FULL) table.setAttribute('full-width-header', '')
+  if (ATTR) table.setAttribute(ATTR, '')
   host.append(table)
 `
 
 async function measure(
   page: any,
-  { width, full, columns }: { width: string; full: boolean; columns: string }
+  {
+    width,
+    full,
+    columns,
+    attr,
+  }: { width: string; full: boolean; columns: string; attr?: string }
 ) {
+  attr = attr ?? (full ? 'full-width-header' : '')
   return page.evaluate(
-    async ({ width, full, columns, build }: any) => {
+    async ({ width, attr, columns, build }: any) => {
       document.querySelector('#fw-host')?.remove()
 
       new Function(
         build
           .replace('WIDTH', JSON.stringify(width))
           .replace('COLUMNS', columns)
-          .replace('FULL', String(full))
+          .replaceAll('ATTR', JSON.stringify(attr))
       )()
       /*
       Wait for the ROWS, not for two frames. Two rAFs is a proxy for "the virtual list has
@@ -69,7 +75,7 @@ async function measure(
         headWidths: headCells.map((c) => Math.round(w(c))),
       }
     },
-    { width, full, columns, build }
+    { width, attr, columns, build }
   )
 }
 
@@ -145,4 +151,98 @@ test('a right-pinned column is not the one that stretches', async ({
   expect(m.cellWidths[1]).toBeGreaterThan(300)
   expect(m.cellWidths[2]).toBe(100)
   expect(m.headWidths).toEqual(m.cellWidths)
+})
+
+test('elastic columns share the leftover in proportion to their widths', async ({
+  page,
+}) => {
+  await page.goto('/data-table/')
+  const m = await measure(page, {
+    width: '600px',
+    full: false,
+    columns: `[{prop:'a',width:100,elastic:true},{prop:'b',width:100},{prop:'c',width:200,elastic:true}]`,
+  })
+  // 200px left over: a gets a third, c two thirds; b keeps its width.
+  expect(m.cellWidths[1]).toBe(100)
+  expect(
+    Math.abs(m.cellWidths[0] - (100 + (m.hostWidth - 400) / 3))
+  ).toBeLessThan(2)
+  expect(Math.abs(m.cellWidths[2] - 2 * m.cellWidths[0])).toBeLessThan(2)
+  expect(Math.round(m.rowWidth)).toBe(Math.round(m.hostWidth))
+  expect(m.headWidths).toEqual(m.cellWidths)
+})
+
+test('elastic columns keep their widths when the columns overflow', async ({
+  page,
+}) => {
+  await page.goto('/data-table/')
+  const m = await measure(page, {
+    width: '200px',
+    full: false,
+    attr: 'elastic',
+    columns: THREE_100,
+  })
+  expect(m.cellWidths).toEqual([100, 100, 100])
+  expect(m.rowWidth).toBeGreaterThan(m.hostWidth)
+  expect(m.headWidths).toEqual(m.cellWidths)
+})
+
+test('the elastic attribute makes every unpinned column elastic, unless one opts out', async ({
+  page,
+}) => {
+  await page.goto('/data-table/')
+  const m = await measure(page, {
+    width: '700px',
+    full: false,
+    attr: 'elastic',
+    columns: `[{prop:'a',width:100},{prop:'b',width:100,elastic:false},{prop:'c',width:100,pinned:'right'}]`,
+  })
+  expect(m.cellWidths[0]).toBeGreaterThan(300)
+  expect(m.cellWidths.slice(1)).toEqual([100, 100])
+  expect(m.headWidths).toEqual(m.cellWidths)
+})
+
+test('--tosi-table-fill paints the space to the right of the columns', async ({
+  page,
+}) => {
+  await page.goto('/data-table/')
+  await measure(page, { width: '600px', full: false, columns: THREE_100 })
+  const image = await page.evaluate(() => {
+    const table = document.querySelector('#fw-host tosi-table') as HTMLElement
+    table.style.setProperty('--tosi-table-fill', 'rgb(255, 0, 0)')
+    return getComputedStyle(table.querySelector('.scroll-area')!)
+      .backgroundImage
+  })
+  expect(image).toContain('300px')
+  expect(image).toContain('rgb(255, 0, 0)')
+})
+
+test('dragging an elastic column keeps its edge under the pointer', async ({
+  page,
+}) => {
+  await page.goto('/data-table/')
+  await measure(page, {
+    width: '600px',
+    full: false,
+    attr: 'elastic',
+    columns: THREE_100,
+  })
+  // Pointer events need the table on screen: pin its host over the page.
+  await page.evaluate(() => {
+    ;(document.querySelector('#fw-host') as HTMLElement).style.cssText +=
+      ';position:fixed;top:0;left:0;height:200px;z-index:9999;background:#fff'
+  })
+  const edge = () =>
+    page.evaluate(() => {
+      const th = document.querySelector('#fw-host .th') as HTMLElement
+      const r = th.getBoundingClientRect()
+      return { x: r.right, y: r.top + r.height / 2 }
+    })
+  const start = await edge()
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await page.mouse.move(start.x + 40, start.y, { steps: 4 })
+  await page.mouse.up()
+  const end = await edge()
+  expect(Math.abs(end.x - (start.x + 40))).toBeLessThan(3)
 })

@@ -1,5 +1,5 @@
 import { test, expect, afterEach, describe } from 'bun:test'
-import { tosiTable, derivedMaxVisibleRows } from './data-table.js'
+import { tosiTable, derivedMaxVisibleRows, columnLayout } from './data-table.js'
 import { initLocalization, i18n } from './localize.js'
 
 /*
@@ -429,4 +429,44 @@ test('with no data, columns is one stable empty list, and handing it back does n
   // that followed was never inferred from.
   table.value = { ...table.value, array: [{ name: 'Ada', role: 'admin' }] }
   expect(table.columns.map((c) => c.prop)).toEqual(['name', 'role'])
+})
+
+describe('columnLayout', () => {
+  test('elastic columns share the leftover in proportion to their widths', () => {
+    const { drawn, tracks, stretches } = columnLayout(
+      [100, 100, 200],
+      [true, false, true],
+      -1,
+      700
+    )
+    expect(drawn).toEqual([200, 100, 400])
+    expect(tracks).toEqual([
+      'minmax(100px, 100fr)',
+      '100px',
+      'minmax(200px, 200fr)',
+    ])
+    expect(stretches).toBe(true)
+  })
+
+  test('no leftover: every column is drawn at its width', () => {
+    expect(columnLayout([100, 100], [true, true], -1, 150).drawn).toEqual([
+      100, 100,
+    ])
+  })
+
+  test('elastic columns win over the full-width column', () => {
+    expect(columnLayout([100, 100], [true, false], 1, 300).drawn).toEqual([
+      200, 100,
+    ])
+  })
+
+  test('without elastic columns the full-width column takes it all', () => {
+    const { drawn, tracks } = columnLayout([100, 100], [false, false], 1, 300)
+    expect(drawn).toEqual([100, 200])
+    expect(tracks).toEqual(['100px', '1fr'])
+  })
+
+  test('neither: nothing stretches', () => {
+    expect(columnLayout([100], [false], -1, 300).stretches).toBe(false)
+  })
 })

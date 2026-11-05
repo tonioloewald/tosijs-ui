@@ -990,6 +990,70 @@ scrolls horizontally exactly as it does without the attribute, and every column 
 width it was given. Header and body stay in step either way; they share one
 `grid-template-columns`.
 
+### Elastic columns
+
+To share the leftover space out instead of giving it all to one column, mark columns
+**`elastic: true`**. Elastic columns grow in proportion to their `width` (a 200px column
+gets twice the extra a 100px one does) and never shrink below it, so a narrow container
+still scrolls. Put the **`elastic`** attribute on the table (`elastic: true` from the
+creator) and every column is elastic unless it says `elastic: false`, which is the way to
+get it for columns inferred from the data. Pinned columns are never elastic. Elastic
+columns take precedence over `full-width-header`.
+
+Dragging an elastic column's edge keeps the edge under the pointer; the other elastic
+columns give up or take the difference.
+
+### Filling the space beside the columns
+
+When the columns don't fill the table, the space to their right shows the table's
+background. Set **`--tosi-table-fill`** to paint it differently, to make it obvious where
+the table ends:
+
+```js
+import { tosiTable } from 'tosijs-ui'
+
+const array = [
+  { id: 1, name: 'Ada', role: 'Analyst' },
+  { id: 2, name: 'Grace', role: 'Admiral' },
+  { id: 3, name: 'Margaret', role: 'Director' },
+]
+const style = { display: 'block', height: '150px' }
+preview.append(
+  tosiTable({
+    array,
+    style,
+    columns: [
+      { prop: 'id', name: 'ID', width: 60 },
+      { prop: 'name', name: 'Name', width: 100, elastic: true },
+      { prop: 'role', name: 'Role', width: 200, elastic: true },
+    ],
+  }),
+  tosiTable({
+    array,
+    style: { ...style, '--tosi-table-fill': '#8882' },
+    columns: [
+      { prop: 'id', name: 'ID', width: 60 },
+      { prop: 'name', name: 'Name', width: 100 },
+      { prop: 'role', name: 'Role', width: 200 },
+    ],
+  })
+)
+```
+```test
+test('elastic columns share the leftover in proportion to their widths', async () => {
+  const [elastic] = preview.querySelectorAll('tosi-table')
+  for (let i = 0; i < 100 && !elastic.querySelector('.thead .th'); i++) await waitMs(20)
+  const [id, name, role] = [...elastic.querySelectorAll('.thead .th')].map(
+    (th) => th.getBoundingClientRect().width
+  )
+  // A preview narrower than the columns leaves nothing to share out.
+  const spare = elastic.querySelector('.scroll-area').clientWidth - 360
+  expect(Math.round(id)).toBe(60)
+  expect(Math.round(name)).toBe(Math.round(100 + Math.max(0, spare) / 3))
+  expect(Math.round(role / name)).toBe(2)
+})
+```
+
 ## Row Detail
 
 Set **`rowDetail`** to a function that builds an element from a row, and each row can be
@@ -1281,6 +1345,35 @@ function defaultWidth(array, prop, charWidth) {
     return false;
 }
 const { div, span, button, input, select, option } = elements;
+/**
+ * How a table's columns divide its width: the grid tracks, and the width each column is
+ * actually drawn at. Pure, so the grid (CSS) and the resize hit-test (JS) cannot disagree.
+ *
+ * When the columns add up to less than `available`, the leftover goes to the elastic
+ * columns in proportion to their widths, or, if there are none, to `stretchAt` (the
+ * `fullWidthHeader` column). Otherwise every column is drawn at its width.
+ */
+export function columnLayout(widths, elastic, stretchAt, available) {
+    const total = widths.reduce((sum, w) => sum + w, 0);
+    const elasticTotal = widths.reduce((sum, w, i) => (elastic[i] ? sum + w : sum), 0);
+    if (elasticTotal > 0) {
+        const extra = Math.max(0, available - total);
+        return {
+            // `minmax(Wpx, Wfr)`: the fr shares the space in proportion to the width, and the px
+            // floor keeps a cell's content from sizing the track. Every row is its own grid, so a
+            // content-sized track would draw the header and body at different widths (#102).
+            tracks: widths.map((w, i) => elastic[i] ? `minmax(${w}px, ${w}fr)` : `${w}px`),
+            drawn: widths.map((w, i) => elastic[i] ? w + (extra * w) / elasticTotal : w),
+            stretches: true,
+        };
+    }
+    const extra = stretchAt === -1 ? 0 : Math.max(0, available - total);
+    return {
+        tracks: widths.map((w, i) => (i === stretchAt ? '1fr' : `${w}px`)),
+        drawn: widths.map((w, i) => (i === stretchAt ? w + extra : w)),
+        stretches: stretchAt !== -1,
+    };
+}
 const passThru = (array) => array;
 // One ValueRenderer per typed column, cached: `Intl.*Format` construction is the
 // expensive part and a column's renderer is stable for its lifetime. Returns null
@@ -1399,6 +1492,7 @@ export class TosiTable extends withAttributes({
     nopreservescroll: false,
     editable: false,
     fullWidthHeader: false,
+    elastic: false,
 }) {
     static preferredTagName = 'tosi-table';
     // Layout: a single .scroll-area inside :host is the only scroll container
@@ -1426,6 +1520,14 @@ export class TosiTable extends withAttributes({
             height: '100%',
             overflow: 'auto',
             overscrollBehavior: 'none',
+            /*
+            The space to the right of the columns, when they add up to less than the table's width,
+            is painted --tosi-table-fill (transparent by default, so the table's background shows).
+            `local` attaches the gradient to the scrolled content, so the boundary stays at the
+            columns' right edge.
+            */
+            backgroundImage: `linear-gradient(90deg, transparent ${vars.tosiTableGridRowWidth}, ${varDefault.tosiTableFill('transparent')} ${vars.tosiTableGridRowWidth})`,
+            backgroundAttachment: 'local',
         },
         // The thead and pinned tbodies are layout pass-throughs so their .tr rows
         // are direct children of .scroll-area for sticky positioning. Without
@@ -2943,11 +3045,14 @@ export class TosiTable extends withAttributes({
         const { scrollLeft, clientWidth, scrollWidth } = this._scrollArea;
         const cols = this.visibleColumns;
         const rightScroll = scrollWidth - clientWidth - scrollLeft;
+        // The edges are where the columns are DRAWN, which differs from their widths when the
+        // leftover space is shared out.
+        const { drawn } = this.layoutColumns(cols);
         let boundaryX = 0;
-        return cols.find((options) => {
+        return cols.find((options, i) => {
             if (options.visible === false)
                 return false;
-            boundaryX += options.width;
+            boundaryX += drawn[i];
             let visualBoundary;
             if (options.pinned === 'left') {
                 visualBoundary = boundaryX;
@@ -2988,6 +3093,7 @@ export class TosiTable extends withAttributes({
             const prop = grabbed.prop;
             let anchor = grabbed;
             let anchorWidth = Number(grabbed.width);
+            let anchorEdge = this.drawnEdge(grabbed);
             let anchorDx = 0;
             const isTouchEvent = event.touches !== undefined;
             const touchIdentifier = isTouchEvent
@@ -3006,9 +3112,12 @@ export class TosiTable extends withAttributes({
                 if (live !== anchor) {
                     anchor = live;
                     anchorWidth = Number(live.width);
+                    anchorEdge = this.drawnEdge(live);
                     anchorDx = dx;
                 }
-                const width = anchorWidth + (dx - anchorDx);
+                const width = this.isElastic(live)
+                    ? this.widthForEdge(live, anchorEdge + (dx - anchorDx))
+                    : anchorWidth + (dx - anchorDx);
                 live.width = width > this.minColumnWidth ? width : this.minColumnWidth;
                 this.setColumnWidths();
                 if (event.type === 'mouseup') {
@@ -3547,6 +3656,47 @@ export class TosiTable extends withAttributes({
         this.addEventListener('touchend', this.updateSelection);
         this.addEventListener('keydown', this.handleKeyNav);
     }
+    /** Where `col`'s right edge is drawn, from the left of the columns. */
+    drawnEdge(col) {
+        const cols = this.visibleColumns;
+        const { drawn } = this.layoutColumns(cols);
+        const index = cols.indexOf(col);
+        return drawn.slice(0, index + 1).reduce((sum, w) => sum + w, 0);
+    }
+    /*
+    The width that draws an elastic column's right edge at `edge`, so a resize drag keeps the edge
+    under the pointer. An elastic column is drawn wider than its width and shares the leftover with
+    the others, so `width + dx` would move the edge by some fraction of dx. Its edge only ever
+    moves right as its width grows, so a bisection finds it.
+    */
+    widthForEdge(col, edge) {
+        const original = col.width;
+        let lo = this.minColumnWidth;
+        let hi = Math.max(lo, edge) * 64;
+        for (let i = 0; i < 40; i++) {
+            const mid = (lo + hi) / 2;
+            col.width = mid;
+            if (this.drawnEdge(col) < edge)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        col.width = original;
+        return Math.round(hi);
+    }
+    isElastic(col) {
+        return !col.pinned && (col.elastic ?? this.elastic);
+    }
+    /*
+    Elastic columns win over `fullWidthHeader`: both answer "where does the leftover space go",
+    and a column that asked for a share is the more specific answer.
+    */
+    layoutColumns(cols) {
+        const stretchAt = this.fullWidthHeader
+            ? cols.map((c) => !c.pinned).lastIndexOf(true)
+            : -1;
+        return columnLayout(cols.map((c) => c.width), cols.map((c) => this.isElastic(c)), stretchAt, this._scrollArea?.clientWidth ?? 0);
+    }
     setColumnWidths() {
         /*
         The widths describe the columns the DOM ACTUALLY HAS, not the ones it is about to get.
@@ -3592,13 +3742,9 @@ export class TosiTable extends withAttributes({
         replacing it with a bare `1fr` changed nothing anywhere. A redundant guard is a guard no
         test pins, so it was removed and the row width left to do the job it was already doing.
         */
-        const stretchAt = this.fullWidthHeader
-            ? cols.map((c) => !c.pinned).lastIndexOf(true)
-            : -1;
-        const columns = cols
-            .map((c, i) => (i === stretchAt ? '1fr' : c.width + 'px'))
-            .join(' ');
-        const rowWidth = stretchAt === -1 ? total + 'px' : `max(${total}px, 100%)`;
+        const { tracks, stretches } = this.layoutColumns(cols);
+        const columns = tracks.join(' ');
+        const rowWidth = stretches ? `max(${total}px, 100%)` : total + 'px';
         // The CSS variable is consumed by every `.tr` (display:grid) and by .thead
         // / .tbody for explicit width — one var, all rows reflow.
         this.style.setProperty('--tosi-table-grid-columns', columns);

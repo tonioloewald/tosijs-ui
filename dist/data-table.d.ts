@@ -11,6 +11,13 @@ export interface ColumnOptions {
     align?: string;
     type?: ValueRendererType;
     pinned?: 'left' | 'right';
+    /**
+     * Whether this column takes a share of the space left over when the columns add up to
+     * less than the table's width. Elastic columns grow in proportion to their `width`, and
+     * never shrink below it. Defaults to the table's `elastic`. A pinned column is never
+     * elastic: its sticky offset is its width.
+     */
+    elastic?: boolean;
     sort?: false | 'ascending' | 'descending';
     /**
      * What this column SORTS by, when that differs from what it stores.
@@ -49,6 +56,19 @@ export interface ColumnOptions {
 }
 /** Builds the element shown under an expanded row. `null` means the row has no detail. */
 export type RowDetailFn = (row: any) => HTMLElement | null;
+/**
+ * How a table's columns divide its width: the grid tracks, and the width each column is
+ * actually drawn at. Pure, so the grid (CSS) and the resize hit-test (JS) cannot disagree.
+ *
+ * When the columns add up to less than `available`, the leftover goes to the elastic
+ * columns in proportion to their widths, or, if there are none, to `stretchAt` (the
+ * `fullWidthHeader` column). Otherwise every column is drawn at its width.
+ */
+export declare function columnLayout(widths: number[], elastic: boolean[], stretchAt: number, available: number): {
+    tracks: string[];
+    drawn: number[];
+    stretches: boolean;
+};
 export interface TableData {
     columns?: ColumnOptions[] | null;
     array: any[];
@@ -81,6 +101,7 @@ declare const TosiTable_base: import("tosijs").WithAttributes<{
     nopreservescroll: boolean;
     editable: boolean;
     fullWidthHeader: boolean;
+    elastic: boolean;
 }>;
 export declare class TosiTable extends TosiTable_base {
     static preferredTagName: string;
@@ -100,6 +121,8 @@ export declare class TosiTable extends TosiTable_base {
             height: string;
             overflow: string;
             overscrollBehavior: string;
+            backgroundImage: string;
+            backgroundAttachment: string;
         };
         ':host .thead, :host .tbody': {
             display: string;
@@ -479,6 +502,11 @@ export declare class TosiTable extends TosiTable_base {
     private focusCell;
     private handleKeyNav;
     connectedCallback(): void;
+    /** Where `col`'s right edge is drawn, from the left of the columns. */
+    private drawnEdge;
+    private widthForEdge;
+    private isElastic;
+    private layoutColumns;
     setColumnWidths(): void;
     sortByColumn: (columnOptions: ColumnOptions, direction?: "ascending" | "descending" | "auto") => void;
     popColumnMenu: (target: HTMLElement, options: ColumnOptions) => void;
