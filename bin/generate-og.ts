@@ -25,7 +25,9 @@ Usage: bun bin/generate-og.ts [serverUrl] [slug ...]
 */
 
 import { chromium } from 'playwright'
-import { readFileSync } from 'fs'
+import { cpSync, mkdtempSync, readFileSync, rmSync } from 'fs'
+import { tmpdir } from 'os'
+import * as path from 'path'
 import siteConfig from '../tosijs-site.config'
 import { buildSlugMap, pathForSlug } from '../src/doc-system/routing'
 import { pageDescription } from '../src/doc-system/site/page-metadata'
@@ -110,6 +112,12 @@ async function main(): Promise<void> {
   )
   const slugMap = buildSlugMap(docs)
   const outDir = 'demo/static/og'
+  /*
+  Cards are written OUTSIDE the watched tree and copied in at the end. demo/static is a
+  watched static dir, so writing each card there as it was made rebuilt the dev server once
+  per card, and its rebuild-loop guard stopped the server this run depends on, part way through.
+  */
+  const workDir = mkdtempSync(path.join(tmpdir(), 'tosijs-og-'))
 
   const browser = await chromium.launch()
   const page = await browser.newPage({
@@ -147,6 +155,11 @@ async function main(): Promise<void> {
           timeout: 8000,
         })
         await page.waitForTimeout(900)
+        // A dev server with haltijaDev floats haltija's widget over the page; it is not the
+        // page, and it landed in the corner of every card.
+        await page.evaluate(() =>
+          document.querySelector('haltija-dev')?.remove()
+        )
         const buf = await el!.screenshot({ type: 'png' })
         shot = `data:image/png;base64,${buf.toString('base64')}`
       } catch (error) {
@@ -157,16 +170,19 @@ async function main(): Promise<void> {
     }
 
     await page.setContent(cardHtml(doc, shot), { waitUntil: 'networkidle' })
-    const pngPath = `/tmp/og-${slug || 'index'}.png`
+    const pngPath = `${workDir}/${slug || 'index'}.png`
     await page.screenshot({ path: pngPath })
 
     const webpName = (slug || 'index') + '.webp'
-    await Bun.$`cwebp -quiet -q 82 ${pngPath} -o ${outDir}/${webpName}`
+    await Bun.$`cwebp -quiet -q 82 ${pngPath} -o ${workDir}/${webpName}`
+    rmSync(pngPath)
     made += 1
     console.log(`og: ${webpName}${shot ? ' (with example)' : ''}`)
   }
 
   await browser.close()
+  cpSync(workDir, outDir, { recursive: true })
+  rmSync(workDir, { recursive: true, force: true })
   console.log(`generated ${made} og cards in ${outDir}/`)
   if (failed.length) {
     console.error(`og: no card for ${failed.join(', ')}`)
