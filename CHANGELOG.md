@@ -31,12 +31,16 @@
   attribute as it was, so a `"` ended it. An ordinary caption (`A sign reading "Open"`) broke the
   tag in every release that renders markdown images. In the 1.17 betas, alt text from an
   `altText` hook, which is machine-generated and so untrusted, could inject markup such as a live
-  `<img onerror>`. Upgrade from any 1.17 beta that uses `altText`.
+  `<img onerror>`. **Affected:** 1.17.0-beta.1 through beta.5 with an `altText` hook (author
+  markdown with a `"` in its alt text rendered a broken tag in every earlier version, but that
+  text is the site author's own).
 - **What a `setExampleHooks` `sanitize` hook returns is what the preview gets.** The betas
   serialized the hook's fragment and parsed it again, and HTML does not survive that round trip
   through MathML or SVG: markup the hook had judged harmless could come back as a live
   `<img onerror>` (shown in Chromium, Firefox and WebKit). The fragment is now inserted as it is.
-  Affects 1.17.0-beta.5 only, and only pages that register a `sanitize` hook.
+  **Affected:** 1.17.0-beta.5, on pages that register a `sanitize` hook.
+
+The 1.17.0 betas are deprecated on npm with a message pointing here; upgrade to 1.17.0.
 
 ### Accessibility: the components pass axe's WCAG 2.2 AA rules
 
