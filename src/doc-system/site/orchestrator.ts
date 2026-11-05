@@ -81,6 +81,7 @@ import {
 } from './check-examples.js'
 import type { ExampleBake, ExampleBakes } from '../render.js'
 import { ensureSections } from './sections.js'
+import { configFingerprint } from './config-fingerprint.js'
 import { generateLlmsTxt, generateLlmsFullTxt } from './make-llms-txt.js'
 import { lintMetadata, metadataReport } from './page-metadata.js'
 import { sourceDates } from './page-dates.js'
@@ -429,7 +430,8 @@ export function canDelegateTo(holder: {
 
 async function delegateBuild(
   holder: { pid: number; port?: number; root?: string },
-  outputDir: string
+  outputDir: string,
+  fingerprint: string
 ): Promise<boolean | null> {
   const port = holder.port
   // `canDelegateTo` already validated this; re-assert so the URL below can never be fed junk.
@@ -444,6 +446,8 @@ async function delegateBuild(
     // The server answers 409 if it builds a different root, rather than silently building
     // something else and reporting success for a tree nothing touched.
     url.searchParams.set('root', here)
+    // And 409 if it was launched with a different site config, before building anything.
+    url.searchParams.set('config', fingerprint)
     const res = await fetch(url, {
       method: 'POST',
       // Our own dev cert, and this never leaves loopback.
@@ -459,10 +463,15 @@ async function delegateBuild(
 
     if (res.status === 404) return null
     if (res.status === 409) {
-      const why = (await res.json().catch(() => ({}))) as { detail?: string }
+      const why = (await res.json().catch(() => ({}))) as {
+        detail?: string
+        config?: string
+      }
       console.error(
         `   ${why.detail ?? 'the dev server builds a different tree'}\n`
       )
+      // A stale config is the whole answer; the lock-holder notice would only muddy it.
+      if (why.config !== undefined && why.config !== fingerprint) return false
       return null
     }
 
@@ -487,6 +496,7 @@ async function delegateBuild(
       pid?: number
       root?: string
       outputDir?: string
+      config?: string
     } | null
     if (body === null || typeof body.ok !== 'boolean') {
       console.error(
@@ -520,6 +530,24 @@ async function delegateBuild(
         `   the dev server writes ${body.outputDir}, this build wants ${wanted} — refusing.\n`
       )
       return null
+    }
+
+    /*
+    And that it built THIS config. The server builds the one it was launched with, so after an
+    edit to the site config a delegated build wrote the old config's site and said so with a
+    tick (#3772, tosijs-ui#241). A current server refuses that up front (409); this
+    catches one that predates the check, which sends no fingerprint and so cannot be trusted
+    with it.
+    */
+    if (body.config !== fingerprint) {
+      console.error(
+        `🛑 the dev server on ${port} is building ${
+          body.config === undefined
+            ? 'with a version of tosijs-ui that cannot say which site config it has'
+            : 'a different site config from this one (edited since it started, or loaded with a different environment)'
+        }. Restart it (pid ${holder.pid}), then build again.\n`
+      )
+      return false
     }
 
     if (body.ok) {
@@ -656,7 +684,11 @@ export async function buildSite(
     */
     const holder = lock.holder!
     if (canDelegateTo(holder)) {
-      const delegated = await delegateBuild(holder, config.outputDir ?? 'docs')
+      const delegated = await delegateBuild(
+        holder,
+        config.outputDir ?? 'docs',
+        configFingerprint(config)
+      )
       if (delegated !== null) return delegated
     }
     console.error(describeHolder(holder))

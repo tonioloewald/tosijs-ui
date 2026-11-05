@@ -630,3 +630,10 @@ describe('injectFirst', () => {
     )
   })
 })
+
+test('the bundleEntry FILE is watched, so editing it rebuilds the bundle (#3772)', () => {
+  const watched = resolveWatchPaths({ bundleEntry: 'demo/site.ts' })
+  expect(watched).toContain('demo/site.ts')
+  // Never its folder: a bundleEntry at the root would watch the output tree.
+  expect(resolveWatchPaths({ bundleEntry: 'site.ts' })).not.toContain('.')
+})

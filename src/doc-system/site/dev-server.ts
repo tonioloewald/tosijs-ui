@@ -17,6 +17,7 @@ import { $, spawn, gzipSync } from 'bun'
 import { brotliCompressSync, constants as zlibConstants } from 'node:zlib'
 import type { SiteConfig } from './site-config.js'
 import { buildSite } from './orchestrator.js'
+import { configFingerprint } from './config-fingerprint.js'
 import { preflight } from './preflight.js'
 import { auditDependencies, reportAudit } from './audit-guard.js'
 import { openDevBrowser } from './open-browser.js'
@@ -161,6 +162,7 @@ export function resolveWatchPaths(
     docPaths?: string[]
     watchPaths?: string[]
     staticDirs?: string[]
+    bundleEntry?: string
   },
   root = '.'
 ): string[] {
@@ -173,6 +175,9 @@ export function resolveWatchPaths(
     './icons',
     ...(config.docPaths ?? []),
     ...(config.staticDirs ?? []),
+    // The FILE, not its folder: a bundleEntry at the project root would otherwise watch the
+    // output tree and rebuild forever. What it imports from elsewhere goes in watchPaths (#3772).
+    ...(config.bundleEntry ? [config.bundleEntry] : []),
     ...(config.watchPaths ?? []),
   ]) {
     const key = path.resolve(root, p)
@@ -892,6 +897,8 @@ export async function devServer(
     process.exit(143)
   })
   const PUBLIC = path.resolve('./', config.outputDir ?? 'docs')
+  // What a delegated build compares against: see /__build.
+  const launchedConfig = configFingerprint(config)
   const isSPA = true
   const testMode = !!opts.test
 
@@ -2931,6 +2938,12 @@ export async function devServer(
       build writes the config the SERVER launched with, not the caller's. The caller compares
       and refuses rather than accepting a build of something else.
       */
+      /*
+      The config travels too, as a fingerprint (#3772, tosijs-ui#241). This server builds the
+      config it was LAUNCHED with; edit the site config without restarting it and a delegated
+      build used to write the old config's site and report success. The caller compares and
+      refuses.
+      */
       const requestedRoot = new URL(request.url).searchParams.get('root')
       if (requestedRoot !== null && requestedRoot !== path.resolve('./')) {
         return new Response(
@@ -2945,6 +2958,22 @@ export async function devServer(
           { status: 409, headers: { 'Content-Type': 'application/json' } }
         )
       }
+      const requestedConfig = new URL(request.url).searchParams.get('config')
+      if (requestedConfig !== null && requestedConfig !== launchedConfig) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            detail:
+              `🛑 this dev server (pid ${process.pid}) was started with a different site config ` +
+              `(edited since, or loaded with a different environment), so it would build the ` +
+              `old one. Restart it, then build again.`,
+            pid: process.pid,
+            root: path.resolve('./'),
+            config: launchedConfig,
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
       const result = await requestBuild()
       return new Response(
         JSON.stringify({
@@ -2952,6 +2981,7 @@ export async function devServer(
           pid: process.pid,
           root: path.resolve('./'),
           outputDir: PUBLIC,
+          config: launchedConfig,
         }),
         {
           status: result.ok ? 200 : 500,

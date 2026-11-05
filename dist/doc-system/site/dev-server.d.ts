@@ -41,6 +41,7 @@ export declare function resolveWatchPaths(config: {
     docPaths?: string[];
     watchPaths?: string[];
     staticDirs?: string[];
+    bundleEntry?: string;
 }, root?: string): string[];
 declare global {
     var Bun: any;

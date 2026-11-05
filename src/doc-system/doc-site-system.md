@@ -797,7 +797,17 @@ reports what it says.
 The endpoint is **loopback-only, not via the tunnel, and same-origin** (see the security note in
 the CHANGELOG for why the last one matters). It answers JSON identifying itself — `pid`, `root`
 and `outputDir` — and the caller refuses the result unless those match the lock it read and the
-tree it asked for. A `?root=` that names a different project gets `409`. A dev server predating
+tree it asked for. A `?root=` that names a different project gets `409`.
+
+The server builds the site config it was **started** with, so the caller also sends a
+fingerprint of its own config (`?config=`), and a server started with a different one answers
+`409` without building: edit the site config, and `bun run build` tells you to restart the dev
+server instead of writing the old config's site and reporting success. "Different" includes a
+config that reads the environment and was loaded with different variables. A server too old to
+report its config is refused the same way.
+
+The dev server also watches the `bundleEntry` file, so editing it rebuilds the hydration bundle.
+Files it imports from outside the watched folders need `watchPaths`. A dev server predating
 this endpoint answers with the SPA shell, which the caller detects and reports as "restart your
 dev server" rather than as a failed build.
 

@@ -236,6 +236,34 @@ Icons will be generated with the class `tosi-icon`.
 You can also assign the classes `filled`, `stroked`, and `color` to icons to set default
 icon styling.
 
+An icon that is both **`stroked filled`** is an outline in the ink colour over a
+**knockout**: its filled parts take the colour behind the icon (`--tosi-icon-knockout`,
+default `--tosi-bg`), so a figure drawn over another shape hides what is behind it. A path
+with its own `fill="none"` stays open. `tosijs-make-icons` gives an icon both classes when
+it sits in a `stroked/filled/` folder.
+
+```js
+import { icons, defineIcons } from 'tosijs-ui'
+
+defineIcons({
+  knockoutDemo:
+    '<svg class="stroked filled" viewBox="0 0 24 24">' +
+    '<path d="M3 21 L21 3"/>' +
+    '<circle cx="12" cy="12" r="6"/>' +
+    '<path fill="none" d="M4 20 A 11 11 0 0 1 20 20"/></svg>',
+})
+const icon = icons.knockoutDemo()
+icon.style.height = '64px'
+preview.append(icon)
+```
+```test
+test('a stroked filled icon has strokes and a knockout fill', () => {
+  const svg = preview.querySelector('svg.stroked.filled')
+  expect(svg.style.stroke).toContain('currentColor')
+  expect(svg.style.fill).toContain('--tosi-icon-knockout')
+})
+```
+
 ## `<tosi-icon>`
 
 `<tosi-icon>` is a simple component that lets you embed icons as HTML. Check the CSS tab to see
@@ -860,7 +888,15 @@ function makeIcon(spec: string, parts: ElementPart[]): SVGElement {
     ...sourceSvg.children
   )
   svg.style.strokeWidth = varDefault.tosiIconStrokeWidth('2px')
-  if (classes.has('filled')) {
+  if (classes.has('stroked') && classes.has('filled')) {
+    /*
+    An outline in the ink over a knockout in the colour behind it, as tosijs-3d draws them.
+    `filled` alone used to win here, which removed every stroke. A path that should stay
+    open carries its own `fill="none"` from the generator (tosijs-ui#249).
+    */
+    svg.style.stroke = varDefault.tosiIconStroke('currentColor')
+    svg.style.fill = varDefault.tosiIconKnockout(varDefault.tosiBg('#fafafa'))
+  } else if (classes.has('filled')) {
     svg.style.stroke = 'none'
     svg.style.fill = 'currentColor'
   } else if (classes.has('stroked')) {
