@@ -1,7 +1,7 @@
 {
-  "generator": "1.17.0-beta.5",
+  "generator": "1.17.0",
   "site": "tosijs-ui",
-  "commit": "be524f574",
-  "commitTime": "2026-11-05T16:05:43+02:00",
-  "contentHash": "ef1d4c2c23eef612"
+  "commit": "7ccf4aa19",
+  "commitTime": "2026-11-05T16:12:18+02:00",
+  "contentHash": "b55b7b101aa6e8f1"
 }

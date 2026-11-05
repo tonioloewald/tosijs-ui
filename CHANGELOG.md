@@ -1,15 +1,42 @@
 # Changelog
 
-## 1.17.0-beta.5
+## 1.17.0
 
-> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
-> on 1.16.41. Accessibility fixes across the components, the doc site's SEO surface, and two
-> ways to run live examples under a strict Content Security Policy.
+> Accessibility and SEO for doc sites, and the components themselves passing WCAG 2.2 AA. A doc
+> site can now be built to a stated accessibility level, with an accessible ePub, and every page
+> carries share images, structured data and an llms.txt worth reading. Live examples can run
+> under a Content Security Policy with no `'unsafe-eval'`. `<tosi-table>` gains elastic columns,
+> and the icon generator keeps open paths open. Released as five betas; this section folds them
+> together.
+>
+> **`dist/iife.js` grew 505.2 kB → 509.5 kB gzip (+4.3 kB, +0.9%)**, measured with `gzip -9`
+> against 1.16.41. The ESM entry points pay only for what they import.
 
-**Visible changes.** An editable `<tosi-select>` now looks like a text field rather than a
-button, because it is one. `<tosi-month>` uses mediumvioletred where it used hotpink, which
-failed contrast; its CSS variables restore the old colour. `<tosi-carousel>`'s dots are further
-apart. A section page's `<!-- toc -->` list is no longer written into its source file.
+**Visible changes.** Nothing an adopter must change, but these look or behave differently:
+
+- An editable `<tosi-select>` looks like a text field rather than a button, because it is one.
+- `<tosi-month>` uses mediumvioletred where it used hotpink, which failed contrast;
+  `--month-day-color` and `--month-date-checked-background` restore the old colour.
+- `<tosi-carousel>`'s dots are 24px apart rather than 16px.
+- An icon whose classes are both `stroked filled` now draws its outline, over a knockout fill
+  (`--tosi-icon-knockout`, default `--tosi-bg`). The `filled` class used to win and remove every
+  stroke.
+- The doc site header's site name is a `<span class="site-name">`, not an `<h2>`: site CSS that
+  styled `header h2` should target `header .site-name`.
+- A section page's `<!-- toc -->` list is no longer written into its source file.
+
+### Security
+
+- **Image alt and title text are escaped in rendered pages.** marked wrote alt text into the
+  attribute as it was, so a `"` ended it. An ordinary caption (`A sign reading "Open"`) broke the
+  tag in every release that renders markdown images. In the 1.17 betas, alt text from an
+  `altText` hook, which is machine-generated and so untrusted, could inject markup such as a live
+  `<img onerror>`. Upgrade from any 1.17 beta that uses `altText`.
+- **What a `setExampleHooks` `sanitize` hook returns is what the preview gets.** The betas
+  serialized the hook's fragment and parsed it again, and HTML does not survive that round trip
+  through MathML or SVG: markup the hook had judged harmless could come back as a live
+  `<img onerror>` (shown in Chromium, Firefox and WebKit). The fragment is now inserted as it is.
+  Affects 1.17.0-beta.5 only, and only pages that register a `sanitize` hook.
 
 ### Accessibility: the components pass axe's WCAG 2.2 AA rules
 
@@ -47,6 +74,97 @@ included, at zero.
   strip takes focus, with ← and → paging it (#3573). `<tosi-rich-text>`'s toolbar buttons are
   at least 24px, and a live example's scrolling test results take focus.
 - The doc examples name their controls and use colours that pass AA (#3574).
+- **Enter opens a `<tosi-select>` you pick from**, like Space and ↓. (beta.5 cancelled it.)
+- **`<tosi-table>` gives `role="row"` only to its own rows**: a list inside a cell keeps its list
+  items.
+
+### Accessibility mode for doc sites
+
+- **An opt-in accessibility mode for doc sites (#3521).** `accessibility: 'wcag22-aa'` in the
+  site config makes the build do what it can decide on its own and report what it cannot, on the
+  site, in print and in the ePub:
+  - an image alone in its paragraph, followed by an italic-only paragraph, renders as a
+    `<figure>` with that text as its `<figcaption>`;
+  - every page has exactly one `<h1>`, its title: a page's first heading is promoted when its
+    title came from it, a later `#` becomes `##`, and the rest shift to start at `##`;
+  - the build lists, by file and line, each image with no alt text and no caption, each heading
+    that skips a level, and each link named "here" or the like, and fails on them under `strict`.
+
+  Off by default; a site that does not set it renders exactly as before.
+- **The mode audits the built site with axe.** A full build opens every page in Chromium and runs
+  axe-core's WCAG 2.2 AA rules, listing each failure by page, rule and element and failing under
+  `strict`. It needs `playwright` and `axe-core` in your project; without them the build says the
+  audit did not run rather than reporting a pass. Never under a dev server.
+- **Accessible ePubs (#3522).** In the mode, the book's package document declares its access
+  modes, features, hazards and a summary (EPUB Accessibility 1.1), derived from the build: it
+  claims alternative text only when every image has alt text or a caption. Conformance to WCAG
+  2.2 AA is claimed only when DAISY Ace, installed in your project, has checked the finished book
+  and passed it. `epub: { accessibility: { summary, hazards, certifiedBy } }` overrides the
+  defaults. Checked against real Ace: this site's own book passes.
+- **Every ePub, mode or not: the right language, readable links, landmarks.** Each chapter, the
+  nav, the contents and the cover said `xml:lang="en"` whatever the book's language, and the
+  package said none, so a reading system pronounced a French book as English. Links were
+  `#0088cc` (3.9:1 on white) and marked by colour alone; they are now 6.6:1 and underlined.
+  The nav gains a landmarks list (cover, contents, start of the text) and its table of contents
+  `role="doc-toc"`.
+- **`altText`: a hook that supplies alt text for undescribed images.** With the mode on, it is
+  called for each image the build would report, and its answer becomes that image's alt text in
+  the built site, `docs.json` and the ePub. It never writes a source file. It runs on every
+  build, so cache anything slow by `src`.
+- **The doc-site search trigger's name contains its visible text (#3569).** Its `aria-label`
+  was "Search (⌘K)" beside visible text "Search ⌘K", which fails WCAG 2.5.3 (a voice-control user
+  says what they see) on every page of every doc site. A `<tosi-palette>` field trigger is now
+  named by its text, an icon trigger keeps an `aria-label`, and the shortcut is announced through
+  `aria-keyshortcuts`. The frame's axe test now runs every WCAG 2.2 A and AA rule, not four.
+- **The header's site name is no longer a heading.** It was an `<h2>` above every page's own
+  `<h1>`, so it was each page's first heading. It is now `<span class="site-name">` and looks the
+  same; site CSS that styled `header h2` should target `header .site-name`.
+- **Accessibility mode: headings in a blockquote or list shift with the rest of the page
+  (#3576).** A sidebar's `> ####` under `###` sections stayed an `<h4>` under the new `<h2>`s, so
+  the build reported a skipped level and DAISY Ace failed the ePub on heading order. A heading
+  inside a blockquote still never becomes the page's title.
+- **DAISY Ace is found on `PATH` (#3577).** The docs said `bun add -d @daisy/ace`, which brings
+  Electron and Puppeteer into the project, and their advisories then failed the build's own
+  dependency audit. Install it globally (`npm install -g @daisy/ace`) instead; the build looks in
+  the project first, then on `PATH`.
+- **The axe audit is about twice as fast, and audits the page a reader gets (#3585).** Pages are
+  audited four at a time (this site: 80s to 43s). Each is audited once it stops adding elements,
+  rather than after a fixed 300ms, which on a busy machine caught pages half-built. And the
+  audit no longer starts the doc browser's background test runner, which runs on localhost and
+  never on a deployed site. `TOSIJS_A11Y_AUDIT=off` skips the audit and the Ace check for one
+  build while the mode stays on; the ePub then claims no conformance.
+- **Section stubs are not written where they cannot be read, or mid-edit (#3584).** A page whose
+  `parent` names a missing doc gets a stub section doc in `sectionsDir`. When `sectionsDir` is
+  outside every `docPaths` entry, the build now warns and writes nothing, since the stub would
+  never be read back. Stubs are created only on the first build in a process, so a parent that
+  disappears for a second during a rename no longer leaves files behind. Each stub written is
+  named in the build output.
+- **`preview.host` is optional, and the preview docs no longer say `host` is required (#3586).**
+  The type has allowed a config with only `preview.tunnel` since 1.10.0, but the doc comment and
+  the reference table still said so. `as any` casts written for it can go.
+- **The axe audit waits for a page marked `aria-busy`, and one slow page no longer ends it.** A
+  page that is still loading (a 3D scene fetching large models, say) marks an element
+  `aria-busy="true"`, the standard ARIA signal, and is waited for up to 30 seconds; other pages
+  are audited once they have stopped adding elements, or after five seconds. A page that never
+  loads, or is still busy at 30 seconds, is listed as not fully checked, and the build makes no
+  claim about it. Before, each page load waited for the network to go idle, so a page that kept
+  downloading for 30 seconds, or that polled, threw and ended the audit of every page. The doc
+  site reference shows a component setting and clearing `aria-busy`.
+- **Every doc page can be scrolled by keyboard, and has a main landmark (#3575).** A page of
+  plain prose had nothing to tab to inside its scrolling content, so a keyboard user could not
+  scroll it, which axe reports as `scrollable-region-focusable` (Learn 3D: 71 of 126 pages). The
+  content scroller is now focusable, and it is the page's main landmark, which the doc site did not
+  have at all: a screen reader's "jump to main content" now works. A doc browser embedded in
+  another page stays focusable without claiming that page's main landmark.
+- **`buildSite` says it needs `happy-dom` before it starts (#3600).** Without it, the build died
+  partway through with "Cannot find package 'happy-dom'" from a file inside tosijs-ui. It now
+  stops before writing anything and prints the install command. `happy-dom` stays an optional
+  peer: a project that only uses the components never needs it.
+- **TJS's own doc comments, `/# … #/`, become documentation (#3601).** In `.tjs` and `.ajs`
+  files they are read in source order with any `/*#` blocks. tjs-lang finds them, so its grammar
+  applies exactly; that needs a tjs-lang that exports `findDocCommentSpans` (requested). With an
+  older one, the build names each file whose `/#` comments it could not read, instead of
+  dropping the page silently. `.ajs` files are now scraped for `/*#` blocks too.
 
 ### Live examples under a strict CSP
 
@@ -106,123 +224,51 @@ included, at zero.
   A description derived from a page's first paragraph no longer keeps `_emphasis_`,
   `~~strikethrough~~`, wikilinks or footnote markers, and is cut at 155 characters, where
   search results cut it.
+- **`bun run og` no longer stops the dev server it captures from.** It wrote each card into the
+  watched `demo/static/og/` as it went, and the server's rebuild-loop guard shut the server down
+  part way through; cards are now written elsewhere and copied in at the end. It also removes
+  haltija's dev widget before capturing, which sat in the corner of every card.
 
-### Build
+### Components
 
-- **`buildSite` no longer rewrites the `<!-- toc -->` block in a section's source `.md` on
-  every build (#3733),** which left every adopter with section pages a dirty tree after
-  building. The list of child pages is filled in the built page (and its book variant) only; a
-  section with no `<!-- toc -->` marker still gets the list at the end. A committed block's old
-  list is harmless (the build replaces it), but can be emptied to the bare markers.
+- **Elastic table columns (snowfox, #3858).** A `<tosi-table>` column with `elastic: true` takes
+  a share of the space left over when the columns add up to less than the table's width, in
+  proportion to its `width`, and never shrinks below it, so a narrow table still scrolls. The
+  table's `elastic` attribute makes every unpinned column elastic unless it says
+  `elastic: false`, which covers columns inferred from the data. Pinned columns are never
+  elastic, and elastic columns take precedence over `full-width-header`. Dragging an elastic
+  column's edge keeps the edge under the pointer, and a stretched column's edge can be grabbed
+  where it is drawn.
+- **`--tosi-table-fill`** paints the space to the right of a table's columns when they don't
+  fill it. Transparent by default.
+- **`<tosi-palette>`'s `localizer` localizes every caption the palette owns (tosijs-ui#247):** the
+  footer's Navigate, Select and Close, the dialog's Search and the clear button's Clear names,
+  `emptyCaption` and `quickLinksCaption`, not only the placeholder.
+- **`tosijs-make-icons` keeps open paths open (tosijs-ui#249).** In a folder that is both stroked
+  and filled (`stroked/filled/`), an element's own `fill="none"`, or `fill:none` in its style, is
+  kept: those icons' fill is a knockout, and `fill="none"` is what keeps an arc or arrowhead
+  open. It also no longer swallows the rest of an icon after a `style` whose last fill or stroke
+  had no trailing `;`, and drops a style left empty. Checked against tosijs-3d's icons: the
+  output matches their post-pass, which can now go.
 
-### 1.17.0-beta.4 (prerelease detail)
+### Doc system and build
 
-> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
-> on 1.16.41. Fixes from Learn 3D and from tosijs-native's first site build.
-
-- **Every doc page can be scrolled by keyboard, and has a main landmark (#3575).** A page of
-  plain prose had nothing to tab to inside its scrolling content, so a keyboard user could not
-  scroll it, which axe reports as `scrollable-region-focusable` (Learn 3D: 71 of 126 pages). The
-  content scroller is now focusable, and it is the page's main landmark, which the doc site did not
-  have at all: a screen reader's "jump to main content" now works. A doc browser embedded in
-  another page stays focusable without claiming that page's main landmark.
-- **`buildSite` says it needs `happy-dom` before it starts (#3600).** Without it, the build died
-  partway through with "Cannot find package 'happy-dom'" from a file inside tosijs-ui. It now
-  stops before writing anything and prints the install command. `happy-dom` stays an optional
-  peer: a project that only uses the components never needs it.
-- **TJS's own doc comments, `/# … #/`, become documentation (#3601).** In `.tjs` and `.ajs`
-  files they are read in source order with any `/*#` blocks. tjs-lang finds them, so its grammar
-  applies exactly; that needs a tjs-lang that exports `findDocCommentSpans` (requested). With an
-  older one, the build names each file whose `/#` comments it could not read, instead of
-  dropping the page silently. `.ajs` files are now scraped for `/*#` blocks too.
-
-### 1.17.0-beta.3 (prerelease detail)
-
-> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
-> on 1.16.41. beta.2 was staged and never published; its notes follow.
-
-- **The axe audit waits for a page marked `aria-busy`, and one slow page no longer ends it.** A
-  page that is still loading (a 3D scene fetching large models, say) marks an element
-  `aria-busy="true"`, the standard ARIA signal, and is waited for up to 30 seconds; other pages
-  are audited once they have stopped adding elements, or after five seconds. A page that never
-  loads, or is still busy at 30 seconds, is listed as not fully checked, and the build makes no
-  claim about it. Before, each page load waited for the network to go idle, so a page that kept
-  downloading for 30 seconds, or that polled, threw and ended the audit of every page. The doc
-  site reference shows a component setting and clearing `aria-busy`.
-
-### 1.17.0-beta.2 (prerelease detail)
-
-> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
-> on 1.16.41. Fixes from Learn 3D's first run of beta.1.
-
-- **Accessibility mode: headings in a blockquote or list shift with the rest of the page
-  (#3576).** A sidebar's `> ####` under `###` sections stayed an `<h4>` under the new `<h2>`s, so
-  the build reported a skipped level and DAISY Ace failed the ePub on heading order. A heading
-  inside a blockquote still never becomes the page's title.
-- **DAISY Ace is found on `PATH` (#3577).** The docs said `bun add -d @daisy/ace`, which brings
-  Electron and Puppeteer into the project, and their advisories then failed the build's own
-  dependency audit. Install it globally (`npm install -g @daisy/ace`) instead; the build looks in
-  the project first, then on `PATH`.
-- **The axe audit is about twice as fast, and audits the page a reader gets (#3585).** Pages are
-  audited four at a time (this site: 80s to 43s). Each is audited once it stops adding elements,
-  rather than after a fixed 300ms, which on a busy machine caught pages half-built. And the
-  audit no longer starts the doc browser's background test runner, which runs on localhost and
-  never on a deployed site. `TOSIJS_A11Y_AUDIT=off` skips the audit and the Ace check for one
-  build while the mode stays on; the ePub then claims no conformance.
-- **Section stubs are not written where they cannot be read, or mid-edit (#3584).** A page whose
-  `parent` names a missing doc gets a stub section doc in `sectionsDir`. When `sectionsDir` is
-  outside every `docPaths` entry, the build now warns and writes nothing, since the stub would
-  never be read back. Stubs are created only on the first build in a process, so a parent that
-  disappears for a second during a rename no longer leaves files behind. Each stub written is
-  named in the build output.
-- **`preview.host` is optional, and the preview docs no longer say `host` is required (#3586).**
-  The type has allowed a config with only `preview.tunnel` since 1.10.0, but the doc comment and
-  the reference table still said so. `as any` casts written for it can go.
-
-### 1.17.0-beta.1 (prerelease detail)
-
-> Prerelease, published under the `beta` dist-tag: install with `tosijs-ui@beta`. `latest` stays
-> on 1.16.41. It carries the accessibility half of 1.17.0; the SEO work and #245/#246 follow.
-
-- **An opt-in accessibility mode for doc sites (#3521).** `accessibility: 'wcag22-aa'` in the
-  site config makes the build do what it can decide on its own and report what it cannot, on the
-  site, in print and in the ePub:
-  - an image alone in its paragraph, followed by an italic-only paragraph, renders as a
-    `<figure>` with that text as its `<figcaption>`;
-  - every page has exactly one `<h1>`, its title: a page's first heading is promoted when its
-    title came from it, a later `#` becomes `##`, and the rest shift to start at `##`;
-  - the build lists, by file and line, each image with no alt text and no caption, each heading
-    that skips a level, and each link named "here" or the like, and fails on them under `strict`.
-
-  Off by default; a site that does not set it renders exactly as before.
-- **The mode audits the built site with axe.** A full build opens every page in Chromium and runs
-  axe-core's WCAG 2.2 AA rules, listing each failure by page, rule and element and failing under
-  `strict`. It needs `playwright` and `axe-core` in your project; without them the build says the
-  audit did not run rather than reporting a pass. Never under a dev server.
-- **Accessible ePubs (#3522).** In the mode, the book's package document declares its access
-  modes, features, hazards and a summary (EPUB Accessibility 1.1), derived from the build: it
-  claims alternative text only when every image has alt text or a caption. Conformance to WCAG
-  2.2 AA is claimed only when DAISY Ace, installed in your project, has checked the finished book
-  and passed it. `epub: { accessibility: { summary, hazards, certifiedBy } }` overrides the
-  defaults. Checked against real Ace: this site's own book passes.
-- **Every ePub, mode or not: the right language, readable links, landmarks.** Each chapter, the
-  nav, the contents and the cover said `xml:lang="en"` whatever the book's language, and the
-  package said none, so a reading system pronounced a French book as English. Links were
-  `#0088cc` (3.9:1 on white) and marked by colour alone; they are now 6.6:1 and underlined.
-  The nav gains a landmarks list (cover, contents, start of the text) and its table of contents
-  `role="doc-toc"`.
-- **`altText`: a hook that supplies alt text for undescribed images.** With the mode on, it is
-  called for each image the build would report, and its answer becomes that image's alt text in
-  the built site, `docs.json` and the ePub. It never writes a source file. It runs on every
-  build, so cache anything slow by `src`.
-- **The doc-site search trigger's name contains its visible text (#3569).** Its `aria-label`
-  was "Search (⌘K)" beside visible text "Search ⌘K", which fails WCAG 2.5.3 (a voice-control user
-  says what they see) on every page of every doc site. A `<tosi-palette>` field trigger is now
-  named by its text, an icon trigger keeps an `aria-label`, and the shortcut is announced through
-  `aria-keyshortcuts`. The frame's axe test now runs every WCAG 2.2 A and AA rule, not four.
-- **The header's site name is no longer a heading.** It was an `<h2>` above every page's own
-  `<h1>`, so it was each page's first heading. It is now `<span class="site-name">` and looks the
-  same; site CSS that styled `header h2` should target `header .site-name`.
+- **A memory-routed doc browser follows `/slug/` links in memory (tosijs-ui#243).** It resolved
+  only `?filename`, yet rewrote every internal link to `/slug/` itself, so every doc-to-doc link
+  in an embedded browser was a full page load. A `/slug/#heading` link scrolls to the heading, and
+  canonicalising a content link keeps its `#heading`; it used to drop it.
+- **A build handed to a running dev server is refused when the server has a different site
+  config (#3772, tosijs-ui#241).** The server builds the config it was started with, so editing
+  the config used to produce a build of the old one that reported success. Now `bun run build`
+  says to restart the server. The dev server also watches the `bundleEntry` file, so editing it
+  rebuilds the hydration bundle.
+- **`buildSite` no longer rewrites the `<!-- toc -->` block in a section's source `.md` on every
+  build (#3733),** which left every adopter with section pages a dirty tree after building. The
+  list of child pages is filled in the built page (and its book variant) only; a section with no
+  `<!-- toc -->` marker still gets the list at the end. A committed block's old list is harmless,
+  but can be emptied to the bare markers.
+- **A `liveExamples` or `kind` value the build does not know fails the build**, naming the allowed
+  values. `'nocode'` silently ran every example, on a site meant to run none.
 
 ## 1.16.41
 
