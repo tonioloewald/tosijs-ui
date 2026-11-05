@@ -93,9 +93,38 @@ async function fromCdnCache(route: Route): Promise<void> {
  * from an `about:blank` popup it opens: the Print popup never asked for its cover. A spec that
  * opens one calls `page.unrouteAll()` first (print-cover.pw.ts; microsoft/playwright#43496).
  */
+/*
+`globalThis.__settled(quietMs = 300, capMs = 5000)`, in every page: resolves once no element has
+been added or removed for `quietMs` and nothing is `aria-busy="true"`, or after `capMs`. The
+same rule the accessibility audit uses, in place of fixed sleeps that were too short on a busy
+machine and too long on an idle one (#3865). Call it in the page, or `settled(page)` from a spec.
+*/
+const SETTLE_SCRIPT = `globalThis.__settled = (quietMs = 300, capMs = 5000) =>
+  new Promise((resolve) => {
+    const start = performance.now()
+    let last = start
+    const observer = new MutationObserver(() => { last = performance.now() })
+    observer.observe(document, { subtree: true, childList: true })
+    const tick = () => {
+      const now = performance.now()
+      const busy = !!document.querySelector('[aria-busy="true"]')
+      if ((now - last >= quietMs && !busy) || now - start >= capMs) {
+        observer.disconnect()
+        resolve(now - start < capMs)
+      } else setTimeout(tick, 50)
+    }
+    tick()
+  })`
+
+/** Wait until the page has stopped adding elements (see SETTLE_SCRIPT). */
+export async function settled(page: Page, quietMs = 300): Promise<void> {
+  await page.evaluate((q) => (globalThis as any).__settled(q), quietMs)
+}
+
 export async function isolateThirdParty<T extends Page | BrowserContext>(
   target: T
 ): Promise<T> {
+  await target.addInitScript(SETTLE_SCRIPT)
   await target.route(/^https?:/, (route) => {
     const request = route.request()
     const host = new URL(request.url()).host

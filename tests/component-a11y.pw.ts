@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect, settled } from './fixtures'
 import { readFileSync } from 'fs'
 import * as path from 'path'
 
@@ -51,7 +51,7 @@ for (const route of PAGES) {
     await page.setViewportSize({ width: 1200, height: 900 })
     await page.goto(route)
     await page.waitForSelector('tosi-example .preview')
-    await page.waitForTimeout(1500)
+    await settled(page)
     await page.addScriptTag({ content: AXE })
     const violations = await page.evaluate(async () => {
       const result = await (window as any).axe.run(document, {

@@ -37,7 +37,7 @@ test('the hydrated doc browser renders figures and one <h1> in the accessibility
       accessibility: 'wcag22-aa',
     })
     document.body.append(browser)
-    const settle = () => new Promise((resolve) => setTimeout(resolve, 400))
+    const settle = () => (globalThis as any).__settled()
     await settle()
     const content = () => browser.querySelector('.doc-content') as HTMLElement
     const headings = () =>

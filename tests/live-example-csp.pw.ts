@@ -45,7 +45,7 @@ test('examples with no script run under a CSP without unsafe-eval', async ({
 
   const result = await page.evaluate(async () => {
     const { liveExample, registerDialect } = (window as any).xinjsui
-    const settle = () => new Promise((resolve) => setTimeout(resolve, 300))
+    const settle = () => (globalThis as any).__settled()
     const mount = (setup: (example: any) => void) => {
       const example = liveExample()
       example.options = { view: 'preview' }
@@ -123,7 +123,7 @@ test('no-code examples: sanitize, hydrate, tabs and chat under a CSP without uns
 
   const result = await page.evaluate(async () => {
     const ui = (window as any).xinjsui
-    const settle = () => new Promise((resolve) => setTimeout(resolve, 300))
+    const settle = () => (globalThis as any).__settled()
     const state: Record<string, string> = { name: 'Ada' }
     const signals: AbortSignal[] = []
     ui.setExamplePolicy('no-code')
@@ -257,7 +257,7 @@ test('a script example runs from its module under a CSP without unsafe-eval; an 
 
   const result = await page.evaluate(async () => {
     const ui = (window as any).xinjsui
-    const settle = () => new Promise((resolve) => setTimeout(resolve, 300))
+    const settle = () => (globalThis as any).__settled()
     const source =
       "import { elements } from 'tosijs'\nconst { b } = elements\npreview.append(b({ class: 'from-module' }, 'ran'))"
     const doc = document.createElement('div')

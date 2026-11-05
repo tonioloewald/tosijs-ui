@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect, settled } from './fixtures'
 import { readFileSync } from 'fs'
 import * as path from 'path'
 
@@ -31,7 +31,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width: 1200, height: 900 })
       await page.goto(route)
       await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
-      await page.waitForTimeout(500)
+      await settled(page)
       await page.addScriptTag({ content: AXE })
       const violations = await page.evaluate(async () => {
         const result = await (window as any).axe.run(document, {
@@ -86,7 +86,7 @@ test('the content scroller is keyboard-reachable on a page with no links', async
   await page.setViewportSize({ width: 1200, height: 600 })
   await page.goto('/doc-site-system/')
   await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
-  await page.waitForTimeout(500)
+  await settled(page)
   await page.evaluate(() => {
     const content = document.querySelector('.doc-content')!
     content.replaceChildren(

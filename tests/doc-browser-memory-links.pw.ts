@@ -1,4 +1,4 @@
-import { test, expect } from './fixtures'
+import { test, expect, settled } from './fixtures'
 
 /*
 A memory-routed doc browser follows `/slug/` links in memory (tosijs-ui#243).
@@ -38,7 +38,7 @@ test('a memory-routed browser follows /slug/ and ?filename links in memory', asy
     ]
     docs[1].text +=
       '\n\n' + 'filler\n\n'.repeat(80) + '## Second\n\n' + 'more\n\n'.repeat(80)
-    const settle = () => new Promise((r) => setTimeout(r, 600))
+    const settle = () => (globalThis as any).__settled()
     const box = document.createElement('div')
     box.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#fff'
     document.body.append(box)
@@ -101,7 +101,7 @@ test('under path routing, a /slug/#heading link lands on the heading and keeps t
   })
   await page.click('#heading-link')
   await page.waitForFunction(() => location.pathname === '/data-table/')
-  await page.waitForTimeout(400)
+  await settled(page)
   const landed = await page.evaluate(() => {
     const heading = document.querySelector('#row-detail') as HTMLElement
     let scroller: HTMLElement | null = heading.parentElement
