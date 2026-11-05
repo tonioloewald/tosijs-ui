@@ -808,7 +808,10 @@ The server builds the site config it was **started** with, so the caller also se
 fingerprint of its own config (`?config=`), and a server started with a different one answers
 `409` without building: edit the site config, and `bun run build` tells you to restart the dev
 server instead of writing the old config's site and reporting success. "Different" includes a
-config that reads the environment and was loaded with different variables. A server too old to
+config that reads the environment and was loaded with different variables, and one that
+computes a value per process (`Date.now()`, a random id): such a config is refused on every
+delegated build, so compute those values in a `prebuild` step or pass them in through the
+environment. A server too old to
 check the fingerprint has already built with its old config by the time it replies, but the
 build still fails and says to restart it, rather than reporting success.
 

@@ -55,3 +55,14 @@ test('a reply with no fingerprint, or another one, fails the delegated build (#3
   )
   expect(staleConfigMessage('abc', 'abc', where)).toBe(null)
 })
+
+test('the refusal says what makes it happen on every build (#3870)', () => {
+  const refusal = buildRequestRefusal(params('config=other'), server)
+  expect(String(refusal!.detail)).toContain('differs per process')
+})
+
+test('a config computing a value per process fingerprints differently each time (#3870)', () => {
+  // Why the refusal names it: two processes loading this config never agree.
+  const make = () => ({ name: 'x', built: Math.random() })
+  expect(configFingerprint(make())).not.toBe(configFingerprint(make()))
+})

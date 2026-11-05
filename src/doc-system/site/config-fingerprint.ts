@@ -61,7 +61,10 @@ export function buildRequestRefusal(
       detail:
         `🛑 this dev server (pid ${server.pid}) was started with a different site config ` +
         `(edited since, or loaded with a different environment), so it would build the ` +
-        `old one. Restart it, then build again.`,
+        `old one. Restart it, then build again. If this happens on every build, the config ` +
+        `computes a value that differs per process (Date.now(), a random id, an environment ` +
+        `variable one of the two lacks): compute it in a prebuild step instead, or pass it ` +
+        `in through the environment both processes share.`,
       pid: server.pid,
       root: server.root,
       config: server.config,
