@@ -260,3 +260,18 @@ describe('#3564: the llmstxt.org shape', () => {
     expect(text).not.toContain('Quiet')
   })
 })
+
+test('link titles drop the project suffix a headTitle carries (#3867)', () => {
+  const [entry] = entriesFromCorpus(
+    [
+      {
+        filename: 'menu.ts',
+        title: 'menu',
+        headTitle: '<tosi-menu> menus — tosijs-ui',
+        text: '# menu\n\nMenus.',
+      } as any,
+    ],
+    { name: 'tosijs-ui', baseUrl: 'https://ui.example' }
+  )
+  expect(entry.title).toBe('<tosi-menu> menus')
+})

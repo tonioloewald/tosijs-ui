@@ -1,3 +1,4 @@
+import { withoutProjectSuffix } from '../doc-title.js'
 import * as fs from 'fs'
 import * as path from 'path'
 import { buildSlugMap, pathForSlug, withBase } from '../routing.js'
@@ -118,7 +119,11 @@ export function entriesFromCorpus(
       base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename]))
     return {
       // The <title> a search result shows names the page better than a terse nav label.
-      title: doc.headTitle?.trim() || doc.title,
+      // …without the project suffix every headTitle repeats (#3867).
+      title: withoutProjectSuffix(
+        doc.headTitle?.trim() || doc.title,
+        meta.name
+      ),
       // The page's own description, by the rule its <head> uses; no site fallback, which
       // would repeat the summary on every line.
       description: pageDescription({ ...doc, title: doc.title }).text,

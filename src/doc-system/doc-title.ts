@@ -54,3 +54,18 @@ export function pageTitle(doc: TitledDoc, projectName?: string): string {
   if (t.includes(p) || p.includes(t)) return doc.title
   return `${doc.title} — ${project}`
 }
+
+/**
+ * "Menus — tosijs-ui" → "Menus": a `headTitle` often carries the suffix a headline or an index
+ * entry must not (the structured data's headline; llms.txt's link titles, #3867).
+ */
+export function withoutProjectSuffix(
+  title: string,
+  projectName: string | undefined
+): string {
+  if (!projectName) return title
+  const escaped = projectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return (
+    title.replace(new RegExp(`\\s+[—–|-]\\s+${escaped}\\s*$`, 'i'), '') || title
+  )
+}
