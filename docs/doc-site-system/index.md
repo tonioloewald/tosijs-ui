@@ -457,6 +457,11 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
 | `bundleOutDir`    | `outputDir` | where the bundle is BUILT; set only when it is itself a published artifact |
 
+The build prints the bundle's size, gzipped. With a `dist-sizes.json` in the project root
+(`{ "version": "1.2.0", "gzip": { "iife.js": 518412 } }`, keyed by the bundle's file name),
+it also prints the change since that baseline and the version it was recorded at. Re-record
+it at each release, so the change reads release over release rather than since whenever.
+
 ### Example checking
 
 | field           | default | purpose                                                                                                   |
@@ -803,7 +808,10 @@ The server builds the site config it was **started** with, so the caller also se
 fingerprint of its own config (`?config=`), and a server started with a different one answers
 `409` without building: edit the site config, and `bun run build` tells you to restart the dev
 server instead of writing the old config's site and reporting success. "Different" includes a
-config that reads the environment and was loaded with different variables. A server too old to
+config that reads the environment and was loaded with different variables, and one that
+computes a value per process (`Date.now()`, a random id): such a config is refused on every
+delegated build, so compute those values in a `prebuild` step or pass them in through the
+environment. A server too old to
 check the fingerprint has already built with its old config by the time it replies, but the
 build still fails and says to restart it, rather than reporting success.
 

@@ -28,12 +28,21 @@ export type AceResult = {
 };
 /** Why Ace did not run, when it is not installed anywhere. */
 export declare const ACE_NOT_INSTALLED = "DAISY Ace is not installed (npm install -g @daisy/ace, which keeps it out of your lockfile)";
+/** Is `bin` DAISY Ace? Its real path sits inside a `@daisy/ace` package (#3864). */
+export declare function isDaisyAce(bin: string): boolean;
 /**
- * Where `ace` is: the project's own `node_modules/.bin` first, then `PATH`. A global install is
- * the one the docs recommend: Ace brings Electron and Puppeteer, whose advisories would otherwise
- * fail the project's own dependency audit (#3577). It is the adopter's, never a dependency of
- * tosijs-ui.
+ * Where DAISY Ace is: the project's own `node_modules/.bin` first, then `PATH`. A global install
+ * is the one the docs recommend: Ace brings Electron and Puppeteer, whose advisories would
+ * otherwise fail the project's own dependency audit (#3577). It is the adopter's, never a
+ * dependency of tosijs-ui.
+ *
+ * Only DAISY Ace counts: an unrelated program named `ace` would otherwise decide whether a book
+ * claims conformance (#3864). `notAce` lists any `ace` found that is not it.
  */
+export declare function locateAce(projectDir?: string, searchPath?: string): {
+    bin: string | null;
+    notAce: string[];
+};
 export declare function findAce(projectDir?: string, searchPath?: string): string | null;
 /** Check a built `.epub` with DAISY Ace (`@daisy/ace`). */
 export declare function runAce(epubFile: string, projectDir?: string, searchPath?: string): Promise<AceResult>;

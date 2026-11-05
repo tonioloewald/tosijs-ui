@@ -17,3 +17,8 @@ export interface TitledDoc {
  * more specific label, so use it alone.
  */
 export declare function pageTitle(doc: TitledDoc, projectName?: string): string;
+/**
+ * "Menus — tosijs-ui" → "Menus": a `headTitle` often carries the suffix a headline or an index
+ * entry must not (the structured data's headline; llms.txt's link titles, #3867).
+ */
+export declare function withoutProjectSuffix(title: string, projectName: string | undefined): string;

@@ -17,7 +17,7 @@ Build-time only. Never import this from browser code.
 import * as path from 'path';
 import { createRequire } from 'module';
 import { existsSync } from 'fs';
-import { NOT_RUN_EXIT, AXE_TAGS } from './a11y-audit.js';
+import { NOT_RUN_EXIT, AXE_TAGS, auditFileFor, } from './a11y-audit.js';
 const payloadPath = process.argv[2];
 const { outputDir, basePath, pages, slowPageMs } = JSON.parse(await Bun.file(payloadPath).text());
 const notRun = (why) => {
@@ -42,16 +42,13 @@ catch {
 }
 const root = path.resolve(outputDir);
 const prefix = (basePath || '').replace(/\/$/, '');
+// Loopback only: the built site is nobody else's business while it is audited (#3861).
 const server = Bun.serve({
     port: 0,
+    hostname: 'localhost',
     fetch(request) {
-        let pathname = decodeURIComponent(new URL(request.url).pathname);
-        if (prefix && pathname.startsWith(prefix))
-            pathname = pathname.slice(prefix.length) || '/';
-        if (pathname.endsWith('/'))
-            pathname += 'index.html';
-        const file = path.join(root, pathname);
-        if (!file.startsWith(root) || !existsSync(file))
+        const file = auditFileFor(root, prefix, new URL(request.url).pathname);
+        if (file === null || !existsSync(file))
             return new Response('not found', { status: 404 });
         return new Response(Bun.file(file));
     },

@@ -9,36 +9,73 @@ takes seconds per page; that is a release step, not something to repeat on each 
 What it never does is report a pass it did not earn: when Playwright, axe-core or Chromium is
 missing, the result says the audit did not run and why, and the build prints that.
 */
-import { spawn } from 'bun';
-import { existsSync } from 'fs';
+import { existsSync, mkdtempSync, rmSync } from 'fs';
+import { runBounded } from './bounded-child.js';
 import { tmpdir } from 'os';
 import * as path from 'path';
 /** The child's exit code when it could not run at all (a missing package or browser). */
 export const NOT_RUN_EXIT = 3;
 /** axe-core's tags for WCAG 2.0, 2.1 and 2.2 at levels A and AA. */
 export const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+/**
+ * The file in `root` a request path names for the audit server, or null when it is not one.
+ *
+ * Containment is `root + sep`, not a bare prefix: `startsWith(root)` let `/..%2fdocs-private/x`
+ * serve a sibling directory whose name starts with the output dir's (#3861). A malformed
+ * percent-escape is not a file either.
+ */
+export function auditFileFor(root, prefix, rawPathname) {
+    let pathname;
+    try {
+        pathname = decodeURIComponent(rawPathname);
+    }
+    catch {
+        return null;
+    }
+    if (prefix && pathname.startsWith(prefix))
+        pathname = pathname.slice(prefix.length) || '/';
+    if (pathname.endsWith('/'))
+        pathname += 'index.html';
+    const base = path.resolve(root);
+    const file = path.join(base, pathname);
+    return file === base || file.startsWith(base + path.sep) ? file : null;
+}
 export async function auditBuiltSite(opts) {
     const cliTs = `${import.meta.dir}/a11y-audit-cli.ts`;
     const cli = existsSync(cliTs) ? cliTs : `${import.meta.dir}/a11y-audit-cli.js`;
-    const payloadPath = path.join(tmpdir(), `tosijs-a11y-${process.pid}.json`);
+    // A private directory, removed afterwards: a predictable name in a shared /tmp could be
+    // planted, and the payloads were never cleaned up (#3862).
+    const workDir = mkdtempSync(path.join(tmpdir(), 'tosijs-a11y-'));
+    const payloadPath = path.join(workDir, 'payload.json');
     await Bun.write(payloadPath, JSON.stringify({
         outputDir: path.resolve(opts.outputDir),
         basePath: opts.basePath ?? '',
         pages: opts.pages,
         slowPageMs: opts.slowPageMs,
     }));
+    /*
+    The worst case, plus a minute: every page waits out the slow-page limit, four at a time. A
+    run past that is hung, and is killed rather than hanging the build (#3860).
+    */
+    const timeoutMs = 60_000 + Math.ceil(opts.pages.length / 4) * (opts.slowPageMs ?? 30_000) * 2;
     // `--no-install`: without it Bun resolves a package the project does not have from its global
     // cache, so "not installed" would never be said and the audit would use a Playwright nobody chose.
-    const child = spawn(['bun', '--no-install', cli, payloadPath], {
-        cwd: opts.projectDir,
-        stdout: 'pipe',
-        stderr: 'pipe',
-    });
-    const [stdout, stderr, code] = await Promise.all([
-        new Response(child.stdout).text(),
-        new Response(child.stderr).text(),
-        child.exited,
-    ]);
+    let run;
+    try {
+        run = await runBounded(['bun', '--no-install', cli, payloadPath], {
+            cwd: opts.projectDir,
+            timeoutMs,
+        });
+    }
+    finally {
+        rmSync(workDir, { recursive: true, force: true });
+    }
+    const { stdout, stderr, code } = run;
+    if (run.timedOut)
+        return {
+            ran: false,
+            reason: `the audit did not finish in ${Math.round(timeoutMs / 1000)}s and was stopped`,
+        };
     if (code === NOT_RUN_EXIT)
         return { ran: false, reason: stderr.trim() };
     const line = stdout.trim().split('\n').pop() ?? '';

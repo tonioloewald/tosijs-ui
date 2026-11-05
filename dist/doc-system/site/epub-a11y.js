@@ -12,8 +12,8 @@ caption, by the same report the site build prints. `conformsTo` is never claimed
 alone: a conformance claim nothing verified is worse than none (an e-book distributor takes the
 claim at face value). DAISY Ace is the verifier, when the adopter has it installed.
 */
-import { spawn } from 'bun';
-import { existsSync, mkdtempSync, rmSync } from 'fs';
+import { runBounded } from './bounded-child.js';
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import * as path from 'path';
 /** The `dcterms:conformsTo` value EPUB Accessibility 1.1 defines for WCAG 2.2 AA. */
@@ -66,34 +66,80 @@ export function accessibilityMetadata(facts, opts = {}) {
 }
 /** Why Ace did not run, when it is not installed anywhere. */
 export const ACE_NOT_INSTALLED = 'DAISY Ace is not installed (npm install -g @daisy/ace, which keeps it out of your lockfile)';
-/**
- * Where `ace` is: the project's own `node_modules/.bin` first, then `PATH`. A global install is
- * the one the docs recommend: Ace brings Electron and Puppeteer, whose advisories would otherwise
- * fail the project's own dependency audit (#3577). It is the adopter's, never a dependency of
- * tosijs-ui.
- */
-export function findAce(projectDir = process.cwd(), searchPath = process.env.PATH ?? '') {
-    const local = path.join(projectDir, 'node_modules', '.bin', 'ace');
-    if (existsSync(local))
-        return local;
-    return Bun.which('ace', { PATH: searchPath }) ?? null;
+/** Is `bin` DAISY Ace? Its real path sits inside a `@daisy/ace` package (#3864). */
+export function isDaisyAce(bin) {
+    let dir;
+    try {
+        dir = path.dirname(realpathSync(bin));
+    }
+    catch {
+        return false;
+    }
+    for (let i = 0; i < 8; i++) {
+        const manifest = path.join(dir, 'package.json');
+        if (existsSync(manifest)) {
+            try {
+                const { name } = JSON.parse(readFileSync(manifest, 'utf8'));
+                if (typeof name === 'string' && name.startsWith('@daisy/ace'))
+                    return true;
+            }
+            catch {
+                // not a manifest we can read: keep looking up
+            }
+        }
+        const parent = path.dirname(dir);
+        if (parent === dir)
+            break;
+        dir = parent;
+    }
+    return false;
 }
+/**
+ * Where DAISY Ace is: the project's own `node_modules/.bin` first, then `PATH`. A global install
+ * is the one the docs recommend: Ace brings Electron and Puppeteer, whose advisories would
+ * otherwise fail the project's own dependency audit (#3577). It is the adopter's, never a
+ * dependency of tosijs-ui.
+ *
+ * Only DAISY Ace counts: an unrelated program named `ace` would otherwise decide whether a book
+ * claims conformance (#3864). `notAce` lists any `ace` found that is not it.
+ */
+export function locateAce(projectDir = process.cwd(), searchPath = process.env.PATH ?? '') {
+    const candidates = [
+        path.join(projectDir, 'node_modules', '.bin', 'ace'),
+        ...searchPath
+            .split(path.delimiter)
+            .filter(Boolean)
+            .map((dir) => path.join(dir, 'ace')),
+    ].filter((file) => existsSync(file));
+    const bin = candidates.find(isDaisyAce) ?? null;
+    return {
+        bin,
+        notAce: bin ? [] : [...new Set(candidates)],
+    };
+}
+export function findAce(projectDir = process.cwd(), searchPath = process.env.PATH ?? '') {
+    return locateAce(projectDir, searchPath).bin;
+}
+const ACE_TIMEOUT_MS = 10 * 60_000;
 /** Check a built `.epub` with DAISY Ace (`@daisy/ace`). */
 export async function runAce(epubFile, projectDir = process.cwd(), searchPath = process.env.PATH ?? '') {
-    const bin = findAce(projectDir, searchPath);
+    const { bin, notAce } = locateAce(projectDir, searchPath);
     if (!bin)
-        return { ran: false, reason: ACE_NOT_INSTALLED };
+        return {
+            ran: false,
+            reason: notAce.length
+                ? `${ACE_NOT_INSTALLED}. Found \`ace\` at ${notAce.join(', ')}, which is not DAISY Ace`
+                : ACE_NOT_INSTALLED,
+        };
     const out = mkdtempSync(path.join(tmpdir(), 'tosijs-ace-'));
     try {
-        const child = spawn([bin, '--silent', '--force', '--outdir', out, epubFile], {
-            cwd: projectDir,
-            stdout: 'pipe',
-            stderr: 'pipe',
-        });
-        const [stderr, code] = await Promise.all([
-            new Response(child.stderr).text(),
-            child.exited,
-        ]);
+        // Ace drives a browser; ten minutes is far past any real book, so past it Ace is hung (#3860).
+        const { stderr, code, timedOut } = await runBounded([bin, '--silent', '--force', '--outdir', out, epubFile], { cwd: projectDir, timeoutMs: ACE_TIMEOUT_MS });
+        if (timedOut)
+            return {
+                ran: false,
+                reason: `DAISY Ace did not finish in ${ACE_TIMEOUT_MS / 60_000} minutes and was stopped`,
+            };
         const reportFile = path.join(out, 'report.json');
         if (!existsSync(reportFile))
             return {

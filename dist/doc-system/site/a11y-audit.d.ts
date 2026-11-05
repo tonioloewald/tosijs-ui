@@ -24,6 +24,14 @@ export type AxeAuditResult = {
     ran: false;
     reason: string;
 };
+/**
+ * The file in `root` a request path names for the audit server, or null when it is not one.
+ *
+ * Containment is `root + sep`, not a bare prefix: `startsWith(root)` let `/..%2fdocs-private/x`
+ * serve a sibling directory whose name starts with the output dir's (#3861). A malformed
+ * percent-escape is not a file either.
+ */
+export declare function auditFileFor(root: string, prefix: string, rawPathname: string): string | null;
 export declare function auditBuiltSite(opts: {
     outputDir: string;
     basePath?: string;

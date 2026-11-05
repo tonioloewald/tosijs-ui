@@ -33,7 +33,7 @@ import { EPUB_IMAGE_EXIT, attachCovers, listEpubVolumes, printCoverManifestUrl, 
 import { buildSlugMap, pathForSlug } from '../routing.js';
 import { missingBuildPeers, missingBuildPeersMessage } from './build-peers.js';
 import { assetStampInputs, computeAssetStamp, missingStampInputWarning, } from './asset-stamp.js';
-import { existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync, } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync, } from 'fs';
 import { createHash } from 'crypto';
 import { tmpdir } from 'os';
 import { $, spawn } from 'bun';
@@ -43,7 +43,7 @@ import { relocateSourcemaps } from './sourcemap-relocate.js';
 import { bundleBuildArgs, bundleDeclarationArgs, extensionlessImports, } from './library-bundle.js';
 import { checkExamples, formatExampleProblems, } from './check-examples.js';
 import { ensureSections } from './sections.js';
-import { configFingerprint } from './config-fingerprint.js';
+import { configFingerprint, staleConfigMessage } from './config-fingerprint.js';
 import { generateLlmsTxt, generateLlmsFullTxt } from './make-llms-txt.js';
 import { lintMetadata, metadataReport } from './page-metadata.js';
 import { sourceDates } from './page-dates.js';
@@ -297,6 +297,25 @@ async function drainChild(child) {
     ]);
     return [out, err].filter((s) => s.trim()).join('\n');
 }
+/*
+The change in a bundle's gzip size since the committed baseline, `dist-sizes.json`
+(`{ version, gzip: { [file]: bytes } }`, recorded at a release), or nothing without one. A
+release that grows the bundle then says so on every build, and the baseline's version is in the
+line, so a stale one is visible (practices/releasing.md "Track bundle size", #3866).
+*/
+function sizeDelta(file, bytes) {
+    try {
+        const baseline = JSON.parse(readFileSync('dist-sizes.json', 'utf8'));
+        const before = baseline?.gzip?.[file];
+        if (typeof before !== 'number')
+            return '';
+        const diff = (bytes - before) / 1024;
+        return `, ${diff >= 0 ? '+' : ''}${diff.toFixed(1)}kb since ${baseline.version}`;
+    }
+    catch {
+        return '';
+    }
+}
 async function gzipSizeInChild(file) {
     try {
         const out = await $ `bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(file)}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
@@ -406,10 +425,12 @@ async function delegateBuild(holder, outputDir, fingerprint) {
         catches one that predates the check, which sends no fingerprint and so cannot be trusted
         with it.
         */
-        if (body.config !== fingerprint) {
-            console.error(`🛑 the dev server on ${port} is building ${body.config === undefined
-                ? 'with a version of tosijs-ui that cannot say which site config it has'
-                : 'a different site config from this one (edited since it started, or loaded with a different environment)'}. Restart it (pid ${holder.pid}), then build again.\n`);
+        const stale = staleConfigMessage(body.config, fingerprint, {
+            port: port,
+            pid: holder.pid,
+        });
+        if (stale) {
+            console.error(stale);
             return false;
         }
         if (body.ok) {
@@ -505,6 +526,8 @@ export async function buildSite(config, opts = {}) {
     rebuild, so its own builds proceed. `opts.lock: false` is the escape hatch for a caller
     that manages ownership itself.
     */
+    // Private temp directories this build made, removed when it ends however it ends.
+    const scratchDirs = [];
     const lock = opts.lock === false
         ? { ok: true, release: () => { } }
         : acquireBuildLock('.', 'build');
@@ -1142,7 +1165,9 @@ export async function buildSite(config, opts = {}) {
                 // ~1.6% (378.6kb vs 384.9kb here), and this number is quoted in the docs and
                 // tracked across releases. Moving the work must not silently move the measurement.
                 const bytes = await gzipSizeInChild(`${BUNDLE_DIR}/${scriptName}`);
-                const gzipKb = bytes > 0 ? ` (${(bytes / 1024).toFixed(1)}kb gzip)` : '';
+                const gzipKb = bytes > 0
+                    ? ` (${(bytes / 1024).toFixed(1)}kb gzip${sizeDelta(scriptName, bytes)})`
+                    : '';
                 console.log(`${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb${gzipKb}`);
                 // ── ESM hydration bundle (the doc pages load THIS, not the IIFE above) ──────
                 //
@@ -1602,7 +1627,10 @@ export async function buildSite(config, opts = {}) {
                 docs = patched.docs;
                 console.log(`♿ altText: ${patched.supplied} of ${patched.asked} image(s) given alt text`);
                 if (patched.supplied) {
-                    altTextCorpus = path.join(tmpdir(), `tosijs-alt-corpus-${process.pid}.json`);
+                    // A private directory (it can hold hidden docs), removed when the build ends (#3862).
+                    const corpusDir = mkdtempSync(path.join(tmpdir(), 'tosijs-alt-corpus-'));
+                    scratchDirs.push(corpusDir);
+                    altTextCorpus = path.join(corpusDir, 'docs.json');
                     await Bun.write(altTextCorpus, JSON.stringify(docs));
                 }
             }
@@ -1874,5 +1902,7 @@ export async function buildSite(config, opts = {}) {
         // Release even on a thrown/early exit — a lock outliving its build would refuse the
         // NEXT build until someone found a file in the temp dir they do not know exists.
         lock.release();
+        for (const dir of scratchDirs)
+            rmSync(dir, { recursive: true, force: true });
     }
 }

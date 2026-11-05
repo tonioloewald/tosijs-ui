@@ -10,7 +10,7 @@ the IIFE bundle loads.
 Build-time only (uses Bun.write). Shares slug + markdown rendering with the runtime
 component (src/doc-system/*) so static and hydrated output agree.
 */
-import { pageTitle } from '../doc-title.js';
+import { pageTitle, withoutProjectSuffix } from '../doc-title.js';
 import { highlightHtml } from '../highlight.js';
 import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
@@ -116,13 +116,6 @@ function navTrail(roots, filename) {
             return [node, ...below];
     }
     return [];
-}
-/** "Menus — tosijs-ui" → "Menus": a `headTitle` often carries the suffix a headline must not. */
-function withoutProjectSuffix(title, projectName) {
-    if (!projectName)
-        return title;
-    const escaped = projectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return (title.replace(new RegExp(`\\s+[—–|-]\\s+${escaped}\\s*$`, 'i'), '') || title);
 }
 /** Every nav page in reading order. */
 function flattenNav(roots) {
