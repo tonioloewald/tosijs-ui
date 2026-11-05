@@ -92,8 +92,9 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 ## Properties
 
 - `placeholder` — the hint in the field, and in the trigger.
-- `localizer` — a function the placeholder goes through before it is shown, such as
-  `localize` from `tosijs-ui`. Call `queueRender()` when the locale changes. A function rather
+- `localizer` — a function every caption the palette owns goes through before it is shown
+  or announced (the placeholder, `emptyCaption`, `quickLinksCaption`, the footer's Navigate,
+  Select and Close, and the Search and Clear names), such as `localize` from `tosijs-ui`. Call `queueRender()` when the locale changes. A function rather
   than a `localized` attribute so the palette does not import the localization module (and,
   through it, `<tosi-select>`) for every page that uses it.
 - `shortcut` — a key that opens it from anywhere on the page, such as `mod+k` (`mod` is ⌘ on a

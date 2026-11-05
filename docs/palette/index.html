@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=573ed7931041" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=d3f367e1f149" data-tosi-doc-system />
   <title>&lt;tosi-palette&gt; command palette — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-palette&gt; is a command palette: a search field that opens a keyboard-driven modal of ranked results from sources you supply." />
   <link rel="canonical" href="https://ui.tosijs.net/palette/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="&lt;tosi-palette&gt; command palette — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-palette> command palette","description":"\u003ctosi-palette> is a command palette: a search field that opens a keyboard-driven modal of ranked results from sources you supply.","url":"https://ui.tosijs.net/palette/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-01T22:10:18+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-palette> command palette","description":"\u003ctosi-palette> is a command palette: a search field that opens a keyboard-driven modal of ranked results from sources you supply.","url":"https://ui.tosijs.net/palette/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-05T13:44:05.595Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Components","item":"https://ui.tosijs.net/components/"},{"@type":"ListItem","position":2,"name":"palette","item":"https://ui.tosijs.net/palette/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b2f27a71ba34" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=2f22b9b04a78" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="palette.ts">
 <h1 id="palette">palette</h1>
 <p><code>&lt;tosi-palette&gt;</code> looks like a small search field. Click it (or press its shortcut) and it
@@ -134,8 +134,9 @@ preview.append(palette)
 <ul>
 <li><p><code>placeholder</code> — the hint in the field, and in the trigger.</p>
 </li>
-<li><p><code>localizer</code> — a function the placeholder goes through before it is shown, such as
-<code>localize</code> from <code>tosijs-ui</code>. Call <code>queueRender()</code> when the locale changes. A function rather
+<li><p><code>localizer</code> — a function every caption the palette owns goes through before it is shown
+or announced (the placeholder, <code>emptyCaption</code>, <code>quickLinksCaption</code>, the footer&#39;s Navigate,
+Select and Close, and the Search and Clear names), such as <code>localize</code> from <code>tosijs-ui</code>. Call <code>queueRender()</code> when the locale changes. A function rather
 than a <code>localized</code> attribute so the palette does not import the localization module (and,
 through it, <code>&lt;tosi-select&gt;</code>) for every page that uses it.</p>
 </li>
@@ -280,6 +281,6 @@ chosen fires <code>action</code> with <code>{ query }</code> as its detail, so a
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-wn1qsakt.js"></script>
+  <script type="module" src="../hydrate-as3z78xx.js"></script>
 </body>
 </html>

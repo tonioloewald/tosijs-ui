@@ -453,8 +453,13 @@ export function createDocBrowser(options) {
             if (filename)
                 return filename;
         }
-        // Clean `/slug/` path form (only meaningful when slugs are in play).
-        if (!memoryRouting && routing !== 'query') {
+        /*
+        Clean `/slug/` path form (only meaningful when slugs are in play). Memory routing too: it is
+        the form the site build's own pages link with, and `rewriteContentLinks` turns every link
+        into it, so excluding memory routing here made EVERY doc-to-doc link in an embedded
+        browser a full page load (tosijs-ui#243).
+        */
+        if (routing !== 'query') {
             const filename = known(filenameForPath(url.pathname, slugMap, aliases));
             if (filename)
                 return filename;
@@ -992,7 +997,9 @@ export function createDocBrowser(options) {
         for (const anchor of docContent.querySelectorAll('a')) {
             const filename = docFilenameForHref(anchor);
             if (filename !== null) {
-                anchor.setAttribute('href', hrefFor(filename));
+                // Keep a `#heading`: canonicalising the path must not change where the link lands.
+                const { hash } = new URL(anchor.getAttribute('href') || '', document.location.href);
+                anchor.setAttribute('href', hrefFor(filename) + hash);
                 anchor.dataset.docLink = filename;
             }
         }
@@ -1215,7 +1222,27 @@ export function createDocBrowser(options) {
         if (filename === null)
             return;
         event.preventDefault();
-        go(filename);
+        if (!go(filename))
+            return;
+        /*
+        `/slug/#heading`: path routing gets the scroll from the URL (scrollToHashExample); memory
+        routing never touches the URL, so it goes to the heading itself, once the doc has drawn.
+        */
+        const hash = new URL(anchor.href, document.location.href).hash.slice(1);
+        if (memoryRouting && hash) {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                let id = hash;
+                try {
+                    id = decodeURIComponent(hash);
+                }
+                catch {
+                    // a stray % — look it up as written
+                }
+                docContent
+                    .querySelector(`#${CSS.escape(id)}`)
+                    ?.scrollIntoView({ block: 'start' });
+            }));
+        }
     });
     // ── Edit page source (Foundation B / #4) ──────────────────────────────────
     // The "view source" affordance opens a menu: edit the whole source file in a

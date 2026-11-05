@@ -295,3 +295,51 @@ test('a field trigger is named by its text; an icon trigger by aria-label; the s
     icon.remove()
   }
 })
+
+/*
+Every caption the palette owns goes through the localizer, not only the placeholder
+(tosijs-ui#247): in a Finnish UI the footer and the accessible names stayed English.
+*/
+test('the footer, the Search and Clear names and the empty caption are localized, and follow a locale change', async () => {
+  let locale = 'fi'
+  const strings: Record<string, string> = {
+    Navigate: 'Siirry',
+    Select: 'Valitse',
+    Close: 'Sulje',
+    Search: 'Haku',
+    Clear: 'Tyhjennä',
+    'No results': 'Ei tuloksia',
+  }
+  const localizer = (text: string) =>
+    locale === 'fi' ? strings[text] ?? text : text
+  const palette = tosiPalette({ placeholder: 'Search', localizer })
+  document.body.append(palette)
+  const nextFrame = () =>
+    new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+  const shown = () => ({
+    footer: [...palette.querySelectorAll('.palette-caption')].map(
+      (span) => span.textContent
+    ),
+    dialog: palette.querySelector('dialog')!.getAttribute('aria-label'),
+    clear: palette.querySelector('.palette-clear')!.getAttribute('aria-label'),
+  })
+  try {
+    palette.queueRender()
+    await nextFrame()
+    expect(shown()).toEqual({
+      footer: ['Siirry', 'Valitse', 'Sulje'],
+      dialog: 'Haku',
+      clear: 'Tyhjennä',
+    })
+    locale = 'en'
+    palette.queueRender()
+    await nextFrame()
+    expect(shown()).toEqual({
+      footer: ['Navigate', 'Select', 'Close'],
+      dialog: 'Search',
+      clear: 'Clear',
+    })
+  } finally {
+    palette.remove()
+  }
+})

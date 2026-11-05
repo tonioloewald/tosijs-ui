@@ -199,9 +199,10 @@ async function checkExamplesInChild(docsJson, importPrefix, contextKeys = [], li
                 ...(modules ? { TOSI_EXAMPLE_MODULES: '1' } : {}),
             },
         });
-        // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
-        // child blocks writing to it, and we deadlock waiting for an exit that can't come
-        // — and the undrained buffer leaks besides.
+        // Read both pipes while awaiting exit, so the result is complete when we report it.
+        // NOT a deadlock guard: `Bun.spawn`'s 'pipe' buffers eagerly, so an unread pipe never
+        // blocks the child (see drainChild). `node:child_process` would block; don't port this
+        // assuming otherwise.
         const [out, err, code] = await Promise.all([
             new Response(child.stdout).text(),
             new Response(child.stderr).text(),
@@ -282,9 +283,12 @@ async function finalizeStamp(publicDir, lastGoodDir, fresh) {
 /*
 Read a child's stdout+stderr to completion, concurrently.
 
-Draining BOTH pipes matters: an undrained pipe fills its buffer, the child blocks writing to
-it, and we wait forever for an exit that cannot come — the same deadlock `checkExamplesInChild`
-documents. Concurrently, for the same reason.
+Both, so a failure reports everything the child said; concurrently, so a long stderr does not
+wait behind a long stdout. This is NOT the fill-the-buffer deadlock: `Bun.spawn`'s 'pipe'
+drains the fd eagerly into a growable buffer, so an unread pipe never blocks the child
+(measured on Bun 1.4.2: 100MB unread on each stream, exit in 87ms; tosijs-ui#240).
+`node:child_process` with piped stdio DOES block there, so don't carry this pattern across
+runtimes on the assumption that it is safe.
 */
 async function drainChild(child) {
     const [out, err] = await Promise.all([

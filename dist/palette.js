@@ -93,8 +93,9 @@ test('opens a centred modal, ranks results and closes on a choice', async () => 
 ## Properties
 
 - `placeholder` — the hint in the field, and in the trigger.
-- `localizer` — a function the placeholder goes through before it is shown, such as
-  `localize` from `tosijs-ui`. Call `queueRender()` when the locale changes. A function rather
+- `localizer` — a function every caption the palette owns goes through before it is shown
+  or announced (the placeholder, `emptyCaption`, `quickLinksCaption`, the footer's Navigate,
+  Select and Close, and the Search and Clear names), such as `localize` from `tosijs-ui`. Call `queueRender()` when the locale changes. A function rather
   than a `localized` attribute so the palette does not import the localization module (and,
   through it, `<tosi-select>`) for every page that uses it.
 - `shortcut` — a key that opens it from anywhere on the page, such as `mod+k` (`mod` is ⌘ on a
@@ -651,8 +652,8 @@ export class TosiPalette extends withAttributes({
         this.field.focus();
     };
     /**
-     * Localizes the placeholder (see `localizer` in the docs above); `null` shows it as is.
-     * Declared before `content`, which reads it through `hint`.
+     * Localizes every caption the palette owns (see `localizer` in the docs above); `null` shows
+     * them as they are. Declared before `content`, which reads it.
      */
     localizer = null;
     content = () => [
@@ -668,7 +669,7 @@ export class TosiPalette extends withAttributes({
         }, icons.search(), span({ class: 'palette-trigger-label', part: 'label' }, this.hint), kbd({ part: 'shortcut', hidden: true })),
         dialog({
             part: 'dialog',
-            ariaLabel: 'Search',
+            ariaLabel: this.localized('Search'),
             onCancel: this.handleCancel,
             onClick: this.handleDialogClick,
         }, div({ class: 'palette-header' }, icons.search(), span({ class: 'palette-spinner', hidden: true }, icons.loader()), div({ class: 'palette-field', style: { display: 'contents' } }), button({
@@ -676,8 +677,8 @@ export class TosiPalette extends withAttributes({
             // Shown only with something to clear: an ✕ in a dialog's corner reads as "close".
             hidden: true,
             type: 'button',
-            title: 'Clear',
-            ariaLabel: 'Clear',
+            title: this.localized('Clear'),
+            ariaLabel: this.localized('Clear'),
             onClick: this.clearField,
         }, icons.x())), div({
             class: 'palette-list',
@@ -685,13 +686,13 @@ export class TosiPalette extends withAttributes({
             id: this.listId,
             onClick: this.handleListPointer,
             onMousemove: this.handleListPointer,
-        }), div({ class: 'palette-footer' }, span({ class: 'palette-keys' }, kbd('↑'), kbd('↓'), span('Navigate'), kbd('↵'), span('Select')), span({ class: 'elastic' }), 
+        }), div({ class: 'palette-footer' }, span({ class: 'palette-keys' }, kbd('↑'), kbd('↓'), span({ class: 'palette-caption', 'data-caption': 'Navigate' }, this.localized('Navigate')), kbd('↵'), span({ class: 'palette-caption', 'data-caption': 'Select' }, this.localized('Select'))), span({ class: 'elastic' }), 
         // A button as well as a key hint: on a phone it is the way to close.
         button({
             class: 'palette-close',
             type: 'button',
             onClick: this.closeClicked,
-        }, span('Close'), kbd('Esc')))),
+        }, span({ class: 'palette-caption', 'data-caption': 'Close' }, this.localized('Close')), kbd('Esc')))),
     ];
     /*
     A field trigger shrinks to its icon when the room it is given drops below `compactWidth`. The
@@ -709,7 +710,11 @@ export class TosiPalette extends withAttributes({
     };
     /** The placeholder as shown. */
     get hint() {
-        return this.localizer ? this.localizer(this.placeholder) : this.placeholder;
+        return this.localized(this.placeholder);
+    }
+    /** Any caption the palette shows or speaks, through `localizer` (tosijs-ui#247). */
+    localized(caption) {
+        return this.localizer ? this.localizer(caption) : caption;
     }
     connectedCallback() {
         super.connectedCallback();
@@ -803,7 +808,7 @@ export class TosiPalette extends withAttributes({
             this.pending = 0;
             this.show(this.quickLinks.map((link) => ({
                 ...link,
-                group: link.group ?? this.quickLinksCaption,
+                group: link.group ?? this.localized(this.quickLinksCaption),
             })), query);
             return;
         }
@@ -888,7 +893,7 @@ export class TosiPalette extends withAttributes({
             query.trim() &&
             this.pending === 0 &&
             !this.problems.length) {
-            rows.push(div({ class: 'palette-status' }, this.emptyCaption));
+            rows.push(div({ class: 'palette-status' }, this.localized(this.emptyCaption)));
         }
         for (const problem of this.problems)
             rows.push(div({ class: 'palette-status' }, problem));
@@ -956,6 +961,15 @@ export class TosiPalette extends withAttributes({
         const label = this.querySelector('.palette-trigger-label');
         if (label)
             label.textContent = this.hint;
+        // Every other caption it owns, so a locale change reaches them too (tosijs-ui#247).
+        for (const caption of this.querySelectorAll('.palette-caption'))
+            caption.textContent = this.localized(caption.dataset.caption);
+        this.querySelector('dialog')?.setAttribute('aria-label', this.localized('Search'));
+        const clear = this.querySelector('.palette-clear');
+        if (clear) {
+            clear.title = this.localized('Clear');
+            clear.setAttribute('aria-label', this.localized('Clear'));
+        }
         const hint = this.querySelector('.palette-trigger > kbd');
         if (hint) {
             hint.hidden = !this.shortcut;

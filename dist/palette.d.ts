@@ -70,8 +70,8 @@ export declare class TosiPalette extends TosiPalette_base {
     private closeClicked;
     private clearField;
     /**
-     * Localizes the placeholder (see `localizer` in the docs above); `null` shows it as is.
-     * Declared before `content`, which reads it through `hint`.
+     * Localizes every caption the palette owns (see `localizer` in the docs above); `null` shows
+     * them as they are. Declared before `content`, which reads it.
      */
     localizer: ((text: string) => string) | null;
     content: () => (HTMLButtonElement | HTMLDialogElement)[];
@@ -80,6 +80,8 @@ export declare class TosiPalette extends TosiPalette_base {
     private handleResize;
     /** The placeholder as shown. */
     get hint(): string;
+    /** Any caption the palette shows or speaks, through `localizer` (tosijs-ui#247). */
+    private localized;
     connectedCallback(): void;
     disconnectedCallback(): void;
     /** The query field: a text box when `multiline`, re-made when that changes. */
