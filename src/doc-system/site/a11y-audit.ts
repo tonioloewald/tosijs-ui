@@ -41,6 +41,32 @@ export type AxeAuditResult =
   | { ran: true; violations: AxeFinding[]; unsettled: UnsettledPage[] }
   | { ran: false; reason: string }
 
+/**
+ * The file in `root` a request path names for the audit server, or null when it is not one.
+ *
+ * Containment is `root + sep`, not a bare prefix: `startsWith(root)` let `/..%2fdocs-private/x`
+ * serve a sibling directory whose name starts with the output dir's (#3861). A malformed
+ * percent-escape is not a file either.
+ */
+export function auditFileFor(
+  root: string,
+  prefix: string,
+  rawPathname: string
+): string | null {
+  let pathname: string
+  try {
+    pathname = decodeURIComponent(rawPathname)
+  } catch {
+    return null
+  }
+  if (prefix && pathname.startsWith(prefix))
+    pathname = pathname.slice(prefix.length) || '/'
+  if (pathname.endsWith('/')) pathname += 'index.html'
+  const base = path.resolve(root)
+  const file = path.join(base, pathname)
+  return file === base || file.startsWith(base + path.sep) ? file : null
+}
+
 export async function auditBuiltSite(opts: {
   outputDir: string
   basePath?: string
