@@ -1290,7 +1290,15 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // memory routing (which must never touch window.location).
   const scrollToHashExample = (): void => {
     if (memoryRouting) return
-    let hash = location.hash.replace(/^#/, '')
+    scrollToTarget(location.hash)
+  }
+
+  /*
+  Scroll to the element a `#hash` names in the content: the URL's hash on arrival (path and
+  query routing), or a clicked link's (memory routing, which never touches the URL).
+  */
+  const scrollToTarget = (rawHash: string): void => {
+    let hash = rawHash.replace(/^#/, '')
     if (!hash) return
     try {
       // A heading id can hold non-ASCII letters, which arrive percent-encoded.
@@ -1448,14 +1456,15 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // User-initiated navigation: record the new location (history for path/query,
   // the onRouteChange callback for memory) and then render the doc. Every nav
   // click funnels through here so memory mode never touches window.history.
-  const go = (filename: string): boolean => {
+  const go = (filename: string, hash = ''): boolean => {
     // If the source editor is open with unsaved changes, confirm before leaving;
     // on confirm it discards + closes, otherwise navigation is aborted (false).
     if (!confirmLeaveEditor()) return false
     if (memoryRouting) {
       onRouteChange?.(slugFor(filename))
     } else {
-      const href = hrefFor(filename)
+      // The link's `#heading` goes into the URL, where showDoc's scrollToHashExample finds it.
+      const href = hrefFor(filename) + hash
       /*
       A link to the document already showing REPLACES the entry rather than pushing one, as a
       native same-URL navigation does. Pushing left a duplicate the reader had to Back
@@ -1468,10 +1477,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       */
       const same =
         filename === String(app.currentDoc.filename) &&
-        document.location.hash === ''
+        document.location.hash === '' &&
+        hash === ''
       window.history[same ? 'replaceState' : 'pushState']({ href }, '', href)
     }
     navigateTo(filename)
+    if (memoryRouting) scrollToTarget(hash)
     return true
   }
 
@@ -1502,27 +1513,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const filename = docFilenameForHref(anchor)
     if (filename === null) return
     event.preventDefault()
-    if (!go(filename)) return
-    /*
-    `/slug/#heading`: path routing gets the scroll from the URL (scrollToHashExample); memory
-    routing never touches the URL, so it goes to the heading itself, once the doc has drawn.
-    */
-    const hash = new URL(anchor.href, document.location.href).hash.slice(1)
-    if (memoryRouting && hash) {
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          let id = hash
-          try {
-            id = decodeURIComponent(hash)
-          } catch {
-            // a stray % — look it up as written
-          }
-          docContent
-            .querySelector(`#${CSS.escape(id)}`)
-            ?.scrollIntoView({ block: 'start' })
-        })
-      )
-    }
+    go(filename, new URL(anchor.href, document.location.href).hash)
   })
 
   // ── Edit page source (Foundation B / #4) ──────────────────────────────────

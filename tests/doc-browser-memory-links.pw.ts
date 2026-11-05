@@ -86,3 +86,35 @@ test('a memory-routed browser follows /slug/ and ?filename links in memory', asy
   // Memory routing never touches the page URL.
   expect(page.url()).toBe(before)
 })
+
+test('under path routing, a /slug/#heading link lands on the heading and keeps the hash (#3859)', async ({
+  page,
+}) => {
+  await page.goto('/readme/')
+  await page.waitForSelector('tosi-doc-system .doc-content h1')
+  await page.evaluate(() => {
+    const link = document.createElement('a')
+    link.href = '/data-table/#row-detail'
+    link.id = 'heading-link'
+    link.textContent = 'row detail'
+    document.querySelector('.doc-content')!.prepend(link)
+  })
+  await page.click('#heading-link')
+  await page.waitForFunction(() => location.pathname === '/data-table/')
+  await page.waitForTimeout(400)
+  const landed = await page.evaluate(() => {
+    const heading = document.querySelector('#row-detail') as HTMLElement
+    let scroller: HTMLElement | null = heading.parentElement
+    while (scroller && scroller.scrollHeight <= scroller.clientHeight + 5)
+      scroller = scroller.parentElement
+    return {
+      hash: location.hash,
+      offset: Math.abs(
+        heading.getBoundingClientRect().top -
+          (scroller as HTMLElement).getBoundingClientRect().top
+      ),
+    }
+  })
+  expect(landed.hash).toBe('#row-detail')
+  expect(landed.offset).toBeLessThan(80)
+})
