@@ -397,6 +397,26 @@ async function drainChild(child: {
   return [out, err].filter((s) => s.trim()).join('\n')
 }
 
+/*
+The change in a bundle's gzip size since the committed baseline, `dist-sizes.json`
+(`{ version, gzip: { [file]: bytes } }`, recorded at a release), or nothing without one. A
+release that grows the bundle then says so on every build, and the baseline's version is in the
+line, so a stale one is visible (practices/releasing.md "Track bundle size", #3866).
+*/
+function sizeDelta(file: string, bytes: number): string {
+  try {
+    const baseline = JSON.parse(readFileSync('dist-sizes.json', 'utf8'))
+    const before = baseline?.gzip?.[file]
+    if (typeof before !== 'number') return ''
+    const diff = (bytes - before) / 1024
+    return `, ${diff >= 0 ? '+' : ''}${diff.toFixed(1)}kb since ${
+      baseline.version
+    }`
+  } catch {
+    return ''
+  }
+}
+
 async function gzipSizeInChild(file: string): Promise<number> {
   try {
     const out =
@@ -1401,7 +1421,13 @@ export async function buildSite(
         // ~1.6% (378.6kb vs 384.9kb here), and this number is quoted in the docs and
         // tracked across releases. Moving the work must not silently move the measurement.
         const bytes = await gzipSizeInChild(`${BUNDLE_DIR}/${scriptName}`)
-        const gzipKb = bytes > 0 ? ` (${(bytes / 1024).toFixed(1)}kb gzip)` : ''
+        const gzipKb =
+          bytes > 0
+            ? ` (${(bytes / 1024).toFixed(1)}kb gzip${sizeDelta(
+                scriptName,
+                bytes
+              )})`
+            : ''
         console.log(
           `${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(
             1

@@ -457,6 +457,11 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
 | `bundleOutDir`    | `outputDir` | where the bundle is BUILT; set only when it is itself a published artifact |
 
+The build prints the bundle's size, gzipped. With a `dist-sizes.json` in the project root
+(`{ "version": "1.2.0", "gzip": { "iife.js": 518412 } }`, keyed by the bundle's file name),
+it also prints the change since that baseline and the version it was recorded at. Re-record
+it at each release, so the change reads release over release rather than since whenever.
+
 ### Example checking
 
 | field           | default | purpose                                                                                                   |

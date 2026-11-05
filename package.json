@@ -22,6 +22,7 @@
     "latest": "rm -rf node_modules bun.lock && bun update",
     "release-notes": "bun bin/release-notes.ts",
     "release-check": "bun bin/release-notes.ts --check",
+    "sizes": "bun bin/record-sizes.ts",
     "stop": "bun bin/dev.ts --stop"
   },
   "keywords": [

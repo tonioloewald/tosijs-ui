@@ -122,7 +122,8 @@ The load-bearing fact: **a running dev server keeps executing the code it loaded
 
 Text-shaped assets (`js`, `css`, `html`, `json`, `svg`, `map`, `wasm`, …) are served
 **brotli or gzip** per the client's `Accept-Encoding`; already-compressed formats stream
-untouched. Measured on this repo: `iife.js` 1236KB → **366KB** brotli / 396KB gzip.
+untouched. Measured on this repo at 1.16.x: `iife.js` 1236KB → **366KB** brotli / 396KB gzip
+(the bundle has grown since: 1.17.0's is 506KB gzip; see `dist-sizes.json`).
 
 Brotli runs at **quality 5, not 11** — measured, q5 is 19ms for 0.36MB while q11 is
 **1169ms** for 0.32MB. Sixty times the cost for four percent.
@@ -898,7 +899,8 @@ Ships as `tosijs-release-notes` so adopters get the same workflow.
 3. `bun run release-check` — every annotation since the last tag is written up
 4. Run **all four lanes**: `bun test` → `bun run test-browser` → `bun playwright test` → `bun run test-consumer`. `bun tests` covers only two of them; a lane the gate skips rots silently.
 5. `bun format` — CI now runs `bun run format-check`, so an unformatted tree fails the gate
-6. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
+6. Build: `bun run build`, then `bun run sizes` to re-record `dist-sizes.json` at this version
+   (the baseline the build prints its size delta against; release-doctor warns when it is stale) (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
 7. Commit changes including `dist/` and `docs/`
 8. Tag release: `git tag v1.x.x`
 9. Push: `git push origin main` **and** `git push origin v1.x.x`. The maintainer then runs **Actions → Publish** with the tag and approves the staged version (see "`bun.lock` is committed, and publishing goes through GitHub Actions"). The workflow's green run replaces the manual checks in step 10's code block; step 10's git-side check still applies.
