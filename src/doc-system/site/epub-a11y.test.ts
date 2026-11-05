@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import {
@@ -107,18 +107,51 @@ test('without Ace in the project or on PATH it did not run, and says why', async
   }
 })
 
+// A fake install laid out as npm lays one out: the bin is a symlink into the package.
+function fakeAce(dir: string, binDir: string, name: string): string {
+  const pkg = path.join(dir, 'pkg-' + name.replace(/\W/g, '-'))
+  mkdirSync(path.join(pkg, 'bin'), { recursive: true })
+  writeFileSync(path.join(pkg, 'package.json'), JSON.stringify({ name }))
+  writeFileSync(path.join(pkg, 'bin', 'ace.js'), '#!/bin/sh\n', { mode: 0o755 })
+  mkdirSync(binDir, { recursive: true })
+  const link = path.join(binDir, 'ace')
+  symlinkSync(path.join(pkg, 'bin', 'ace.js'), link)
+  return link
+}
+
 test('Ace is found on PATH when the project does not have it (#3577)', () => {
   const project = mkdtempSync(path.join(tmpdir(), 'tosijs-ace-path-'))
   const bin = path.join(project, 'global-bin')
   try {
-    mkdirSync(bin)
-    writeFileSync(path.join(bin, 'ace'), '#!/bin/sh\n', { mode: 0o755 })
-    expect(findAce(project, bin)).toBe(path.join(bin, 'ace'))
+    const global = fakeAce(project, bin, '@daisy/ace')
+    expect(findAce(project, bin)).toBe(global)
     // the project's own copy wins
-    mkdirSync(path.join(project, 'node_modules', '.bin'), { recursive: true })
-    const local = path.join(project, 'node_modules', '.bin', 'ace')
-    writeFileSync(local, '#!/bin/sh\n', { mode: 0o755 })
+    const local = fakeAce(
+      path.join(project, 'node_modules'),
+      path.join(project, 'node_modules', '.bin'),
+      '@daisy/ace-cli'
+    )
     expect(findAce(project, bin)).toBe(local)
+  } finally {
+    rmSync(project, { recursive: true, force: true })
+  }
+})
+
+test('an `ace` that is not DAISY Ace is skipped, and named (#3864)', async () => {
+  const project = mkdtempSync(path.join(tmpdir(), 'tosijs-ace-impostor-'))
+  const impostorBin = path.join(project, 'impostor-bin')
+  const realBin = path.join(project, 'real-bin')
+  try {
+    const impostor = fakeAce(project, impostorBin, 'ace-editor-cli')
+    expect(findAce(project, impostorBin)).toBe(null)
+    const result = await runAce('book.epub', project, impostorBin)
+    expect(result.ran).toBe(false)
+    expect((result as { reason: string }).reason).toContain(impostor)
+    // A real one later on PATH is still found.
+    const real = fakeAce(project, realBin, '@daisy/ace')
+    expect(findAce(project, [impostorBin, realBin].join(path.delimiter))).toBe(
+      real
+    )
   } finally {
     rmSync(project, { recursive: true, force: true })
   }

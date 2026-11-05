@@ -799,7 +799,19 @@ try {
       `})\n` +
       `process.exit((await buildSite(config)) ? 0 : 1)\n`
   )
-  const a11yBuild = await $`bun build.ts`.cwd(a11y).nothrow().quiet()
+  /*
+  Hermetic: no directory holding an `ace` stays on PATH, so the checks below ("no Ace is
+  installed") hold on a machine that has DAISY Ace globally, as the docs recommend (#3864).
+  */
+  const pathWithoutAce = (process.env.PATH ?? '')
+    .split(path.delimiter)
+    .filter((dir) => dir && !existsSync(path.join(dir, 'ace')))
+    .join(path.delimiter)
+  const a11yBuild = await $`bun build.ts`
+    .cwd(a11y)
+    .env({ ...process.env, PATH: pathWithoutAce })
+    .nothrow()
+    .quiet()
   const a11yOut = a11yBuild.stdout.toString() + a11yBuild.stderr.toString()
   check(
     'an accessibility-mode build succeeds',
