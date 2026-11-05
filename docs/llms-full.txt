@@ -3208,6 +3208,9 @@ Folder names control CSS classes on the generated SVGs:
 - `color/` — icons with baked-in colors (class `color`, fill/stroke preserved)
 - `stroked/` — stroke-only icons (class `stroked`, fill styles removed)
 - `filled/` — fill-only icons (class `filled`, stroke styles removed)
+- a folder that is both (`stroked/filled/`) — classes `stroked filled`; fill colours are
+  removed (the renderer supplies the fill), but an element's own `fill="none"` (or
+  `fill:none` in its style) is kept, because that is what keeps an arc or arrowhead open
 
 ### Directional folders
 

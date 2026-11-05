@@ -32,6 +32,9 @@ Folder names control CSS classes on the generated SVGs:
 - `color/` — icons with baked-in colors (class `color`, fill/stroke preserved)
 - `stroked/` — stroke-only icons (class `stroked`, fill styles removed)
 - `filled/` — fill-only icons (class `filled`, stroke styles removed)
+- a folder that is both (`stroked/filled/`) — classes `stroked filled`; fill colours are
+  removed (the renderer supplies the fill), but an element's own `fill="none"` (or
+  `fill:none` in its style) is kept, because that is what keeps an arc or arrowhead open
 
 ### Directional folders
 
@@ -195,6 +198,9 @@ function getDirectionConfig(dir) {
   return DIRECTION_FOLDERS[dirName] || null
 }
 
+// Stands in for an element's `fill="none"` while the strips run (see keepsOpenPaths).
+const OPEN_PATH_MARK = 'data-tosi-open-path'
+
 function generateDirectionalRedirects(name, dirConfig) {
   // Find the base direction word in the camelCase name
   const baseDir = dirConfig.base
@@ -239,7 +245,28 @@ function findIcons(dirs, ignore = []) {
               .replace(/-([a-z0-9])/g, (_, char) => char.toLocaleUpperCase())
           )
         const name = names[0]
-        let svgSource = content
+        /*
+        In a folder that is BOTH stroked and filled, a fill is a knockout (the renderer sets
+        it on the root) and an element's own `fill="none"` is what keeps a path OPEN: an arc,
+        an arrowhead. Every strip below removes fills, so such an element filled with the
+        knockout colour, and an open arc painted a lens over whatever it crossed
+        (tosijs-ui#249). Mark those elements first; the mark survives the strips and becomes
+        `fill="none"` again at the end. The root <svg> is not an element here: its fill is
+        the folder's to decide.
+        */
+        const keepsOpenPaths = dir.includes('stroked') && dir.includes('filled')
+        let svgSource = (
+          keepsOpenPaths
+            ? content.replace(/<(?!svg\b)(\w+)\b[^>]*>/g, (tag) =>
+                /\bfill="none"|\bfill\s*:\s*none/.test(tag)
+                  ? tag
+                      .replace(/\s?\bfill="none"/, '')
+                      .replace(/\bfill\s*:\s*none\s*;?/, '')
+                      .replace(/^<\w+/, (open) => `${open} ${OPEN_PATH_MARK}`)
+                  : tag
+              )
+            : content
+        )
           .replace(/(<\?xml.*?>|<!DOCTYPE.*?>)\s?/g, '')
           .replace(/<svg.*?>/, (a) =>
             a.replace(
@@ -280,7 +307,7 @@ function findIcons(dirs, ignore = []) {
           out of the tinting path for an unrelated reason (tosijs-ui#30).
           */
           svgSource = svgSource.replace(
-            /(fill|stroke)(?!-rule)(-\w+)?:[^;]+;?/g,
+            /(fill|stroke)(?!-rule)(-\w+)?:[^;"]+;?/g,
             ''
           )
         }
@@ -289,12 +316,20 @@ function findIcons(dirs, ignore = []) {
         // survives every strip. `clip-rule` likewise.
         if (dir.includes('stroked')) {
           classes.push('stroked')
-          svgSource = svgSource.replace(/(fill)(?!-rule)(-\w+)?:[^;]+;?/g, '')
+          svgSource = svgSource.replace(/(fill)(?!-rule)(-\w+)?:[^;"]+;?/g, '')
         }
         if (dir.includes('filled')) {
           classes.push('filled')
-          svgSource = svgSource.replace(/(stroke)(?!-rule)(-\w+)?:[^;]+;?/g, '')
+          svgSource = svgSource.replace(
+            /(stroke)(?!-rule)(-\w+)?:[^;"]+;?/g,
+            ''
+          )
         }
+        if (keepsOpenPaths) {
+          svgSource = svgSource.replaceAll(OPEN_PATH_MARK, 'fill="none"')
+        }
+        // A style that held only colours is empty now.
+        svgSource = svgSource.replace(/\sstyle=""/g, '')
         if (classes.length) {
           svgSource = svgSource.replace(
             /^<svg/,
