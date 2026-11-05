@@ -56,8 +56,10 @@ import {
 import {
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readdirSync,
   readFileSync,
+  rmSync,
   unlinkSync,
   writeFileSync,
 } from 'fs'
@@ -667,6 +669,8 @@ export async function buildSite(
   rebuild, so its own builds proceed. `opts.lock: false` is the escape hatch for a caller
   that manages ownership itself.
   */
+  // Private temp directories this build made, removed when it ends however it ends.
+  const scratchDirs: string[] = []
   const lock =
     opts.lock === false
       ? { ok: true, release: () => {} }
@@ -1925,10 +1929,12 @@ export async function buildSite(
           `♿ altText: ${patched.supplied} of ${patched.asked} image(s) given alt text`
         )
         if (patched.supplied) {
-          altTextCorpus = path.join(
-            tmpdir(),
-            `tosijs-alt-corpus-${process.pid}.json`
+          // A private directory (it can hold hidden docs), removed when the build ends (#3862).
+          const corpusDir = mkdtempSync(
+            path.join(tmpdir(), 'tosijs-alt-corpus-')
           )
+          scratchDirs.push(corpusDir)
+          altTextCorpus = path.join(corpusDir, 'docs.json')
           await Bun.write(altTextCorpus, JSON.stringify(docs))
         }
       }
@@ -2260,5 +2266,6 @@ export async function buildSite(
     // Release even on a thrown/early exit — a lock outliving its build would refuse the
     // NEXT build until someone found a file in the temp dir they do not know exists.
     lock.release()
+    for (const dir of scratchDirs) rmSync(dir, { recursive: true, force: true })
   }
 }

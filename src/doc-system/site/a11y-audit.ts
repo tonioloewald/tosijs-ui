@@ -10,8 +10,8 @@ What it never does is report a pass it did not earn: when Playwright, axe-core o
 missing, the result says the audit did not run and why, and the build prints that.
 */
 
-import { spawn } from 'bun'
-import { existsSync } from 'fs'
+import { existsSync, mkdtempSync, rmSync } from 'fs'
+import { runBounded } from './bounded-child.js'
 import { tmpdir } from 'os'
 import * as path from 'path'
 
@@ -53,7 +53,10 @@ export async function auditBuiltSite(opts: {
 }): Promise<AxeAuditResult> {
   const cliTs = `${import.meta.dir}/a11y-audit-cli.ts`
   const cli = existsSync(cliTs) ? cliTs : `${import.meta.dir}/a11y-audit-cli.js`
-  const payloadPath = path.join(tmpdir(), `tosijs-a11y-${process.pid}.json`)
+  // A private directory, removed afterwards: a predictable name in a shared /tmp could be
+  // planted, and the payloads were never cleaned up (#3862).
+  const workDir = mkdtempSync(path.join(tmpdir(), 'tosijs-a11y-'))
+  const payloadPath = path.join(workDir, 'payload.json')
   await Bun.write(
     payloadPath,
     JSON.stringify({
@@ -63,18 +66,31 @@ export async function auditBuiltSite(opts: {
       slowPageMs: opts.slowPageMs,
     })
   )
+  /*
+  The worst case, plus a minute: every page waits out the slow-page limit, four at a time. A
+  run past that is hung, and is killed rather than hanging the build (#3860).
+  */
+  const timeoutMs =
+    60_000 + Math.ceil(opts.pages.length / 4) * (opts.slowPageMs ?? 30_000) * 2
   // `--no-install`: without it Bun resolves a package the project does not have from its global
   // cache, so "not installed" would never be said and the audit would use a Playwright nobody chose.
-  const child = spawn(['bun', '--no-install', cli, payloadPath], {
-    cwd: opts.projectDir,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  })
-  const [stdout, stderr, code] = await Promise.all([
-    new Response(child.stdout).text(),
-    new Response(child.stderr).text(),
-    child.exited,
-  ])
+  let run
+  try {
+    run = await runBounded(['bun', '--no-install', cli, payloadPath], {
+      cwd: opts.projectDir,
+      timeoutMs,
+    })
+  } finally {
+    rmSync(workDir, { recursive: true, force: true })
+  }
+  const { stdout, stderr, code } = run
+  if (run.timedOut)
+    return {
+      ran: false,
+      reason: `the audit did not finish in ${Math.round(
+        timeoutMs / 1000
+      )}s and was stopped`,
+    }
   if (code === NOT_RUN_EXIT) return { ran: false, reason: stderr.trim() }
   const line = stdout.trim().split('\n').pop() ?? ''
   try {

@@ -13,7 +13,7 @@ alone: a conformance claim nothing verified is worse than none (an e-book distri
 claim at face value). DAISY Ace is the verifier, when the adopter has it installed.
 */
 
-import { spawn } from 'bun'
+import { runBounded } from './bounded-child.js'
 import { existsSync, mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
@@ -119,6 +119,8 @@ export function findAce(
   return Bun.which('ace', { PATH: searchPath }) ?? null
 }
 
+const ACE_TIMEOUT_MS = 10 * 60_000
+
 /** Check a built `.epub` with DAISY Ace (`@daisy/ace`). */
 export async function runAce(
   epubFile: string,
@@ -129,18 +131,18 @@ export async function runAce(
   if (!bin) return { ran: false, reason: ACE_NOT_INSTALLED }
   const out = mkdtempSync(path.join(tmpdir(), 'tosijs-ace-'))
   try {
-    const child = spawn(
+    // Ace drives a browser; ten minutes is far past any real book, so past it Ace is hung (#3860).
+    const { stderr, code, timedOut } = await runBounded(
       [bin, '--silent', '--force', '--outdir', out, epubFile],
-      {
-        cwd: projectDir,
-        stdout: 'pipe',
-        stderr: 'pipe',
-      }
+      { cwd: projectDir, timeoutMs: ACE_TIMEOUT_MS }
     )
-    const [stderr, code] = await Promise.all([
-      new Response(child.stderr).text(),
-      child.exited,
-    ])
+    if (timedOut)
+      return {
+        ran: false,
+        reason: `DAISY Ace did not finish in ${
+          ACE_TIMEOUT_MS / 60_000
+        } minutes and was stopped`,
+      }
     const reportFile = path.join(out, 'report.json')
     if (!existsSync(reportFile))
       return {
