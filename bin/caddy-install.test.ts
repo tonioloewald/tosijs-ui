@@ -1,4 +1,12 @@
-import { test, expect, beforeEach, afterEach, describe } from 'bun:test'
+import {
+  test,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll,
+  afterEach,
+  describe,
+} from 'bun:test'
 import {
   mkdtempSync,
   writeFileSync,
@@ -29,25 +37,44 @@ let bin: string
 
 const REPO = new URL('..', import.meta.url).pathname
 
+/*
+The fake `ssh`, `caddy` and `systemctl` are written ONCE per file and find the current test's
+sandbox through $CADDY_TEST_SANDBOX. macOS checks an executable the first time it runs, about a
+quarter of a second each, and writing three fresh ones per test made this file 12 seconds of
+mostly waiting (#3868). `systemctl`'s behaviour for a test lives in a file in the sandbox.
+*/
+beforeAll(() => {
+  bin = mkdtempSync(join(tmpdir(), 'caddy-install-bin-'))
+  // `ssh` that runs the piped script locally against the sandbox instead of a real box.
+  writeFileSync(
+    join(bin, 'ssh'),
+    `#!/bin/sh\nsed -e "s|/etc/caddy|$CADDY_TEST_SANDBOX/etc-caddy|g" -e "s|/var/log/caddy|$CADDY_TEST_SANDBOX/var-log-caddy|g" | bash\n`
+  )
+  // `caddy fmt --overwrite F` / `caddy validate --config F` — accept anything.
+  writeFileSync(join(bin, 'caddy'), '#!/bin/sh\nexit 0\n')
+  // `systemctl`, as configured by fakeSystemctl() in $CADDY_TEST_SANDBOX/systemctl.conf.
+  writeFileSync(
+    join(bin, 'systemctl'),
+    `#!/bin/sh
+. "$CADDY_TEST_SANDBOX/systemctl.conf"
+case "$1" in
+  show) [ "$3" = User ] && echo "$FAKE_USER"; [ "$3" = Group ] && echo "$FAKE_GROUP"; exit 0 ;;
+  is-active) exit $FAKE_ACTIVE ;;
+  "$FAKE_FAIL") exit 1 ;;
+esac
+exit 0
+`
+  )
+  for (const f of ['ssh', 'caddy', 'systemctl']) chmodSync(join(bin, f), 0o755)
+})
+
+afterAll(() => rmSync(bin, { recursive: true, force: true }))
+
 beforeEach(() => {
   sandbox = mkdtempSync(join(tmpdir(), 'caddy-install-'))
   mkdirSync(join(sandbox, 'etc-caddy'), { recursive: true })
   mkdirSync(join(sandbox, 'var-log-caddy'), { recursive: true })
-  bin = join(sandbox, 'bin')
-  mkdirSync(bin)
-
-  // `ssh` that runs the piped script locally against the sandbox instead of a real box.
-  writeFileSync(
-    join(bin, 'ssh'),
-    `#!/bin/sh\nsed -e "s|/etc/caddy|${join(
-      sandbox,
-      'etc-caddy'
-    )}|g" -e "s|/var/log/caddy|${join(sandbox, 'var-log-caddy')}|g" | bash\n`
-  )
-  // `caddy fmt --overwrite F` / `caddy validate --config F` — accept anything.
-  writeFileSync(join(bin, 'caddy'), '#!/bin/sh\nexit 0\n')
   fakeSystemctl()
-  for (const f of ['ssh', 'caddy', 'systemctl']) chmodSync(join(bin, f), 0o755)
 })
 
 afterEach(() => rmSync(sandbox, { recursive: true, force: true }))
@@ -68,19 +95,12 @@ function fakeSystemctl(
   } = {}
 ) {
   writeFileSync(
-    join(bin, 'systemctl'),
-    `#!/bin/sh
-case "$1" in
-  show) [ "$3" = User ] && echo '${
-    opts.user ?? ''
-  }'; [ "$3" = Group ] && echo '${opts.group ?? ''}'; exit 0 ;;
-  is-active) exit ${opts.active === false ? 3 : 0} ;;
-  ${opts.fail ?? 'never'}) exit 1 ;;
-esac
-exit 0
-`
+    join(sandbox, 'systemctl.conf'),
+    `FAKE_USER='${opts.user ?? ''}'\nFAKE_GROUP='${opts.group ?? ''}'\n` +
+      `FAKE_ACTIVE=${opts.active === false ? 3 : 0}\nFAKE_FAIL='${
+        opts.fail ?? 'never'
+      }'\n`
   )
-  chmodSync(join(bin, 'systemctl'), 0o755)
 }
 
 // A group and user this process may chgrp to, standing in for `caddy`.
@@ -95,12 +115,11 @@ const FULL_ENV =
   'PREVIEW_TOKEN=s3cret-invite\nACME_EMAIL=me@example.com\nPREVIEW_DOMAIN=dev.example.com\n'
 
 /*
-Every test here cold-starts a real `bun` to run the bin, so its cost is interpreter startup,
-not the assertion. Measured: ~1.2s each in isolation, and the file swings between 3.5s and
-10.1s depending on what else the machine is doing — which put single tests past bun's 5s
-default roughly one run in ten. That is a budget that does not describe the work, not a hang:
-`SPAWN_TIMEOUT` is what a cold interpreter under contention actually needs. A test that
-exceeds THIS is a real defect.
+Every test here starts a real `bun` to run the bin. Most of what used to look like interpreter
+startup was macOS checking the three fake executables each test wrote fresh (~270ms each on
+first run, measured); they are written once now (beforeAll), and the file went from ~12s to
+~2.5s (#3868). A run still takes ~50ms of real work, and more on a contended machine, so
+`SPAWN_TIMEOUT` stays generous. A test that exceeds IT is a real defect.
 */
 const SPAWN_TIMEOUT = 20_000
 
@@ -129,6 +148,7 @@ async function run(
           )
         ),
         PATH: `${bin}:${process.env.PATH}`,
+        CADDY_TEST_SANDBOX: sandbox,
       },
       stdout: 'pipe',
       stderr: 'pipe',
