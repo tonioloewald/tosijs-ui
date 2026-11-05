@@ -1028,3 +1028,27 @@ gap, recorded rather than hidden.
 - Open dependency: #3601's real fix reads `/# … #/` through tjs-lang's `findDocCommentSpans`,
   exported in tjs-lang d20e936 (#3604) but not yet in a published rc (rc.9 predates it). Until
   then the build names the files it could not read.
+
+## 1.17.0-beta.5 – 1.17.0 (2026-11-02 – 2026-11-05)
+
+- **The gate caught what the betas shipped:** the pre-minor review (14 agents, ~9 min) found an
+  Enter-to-open regression in `<tosi-select>` (my own a11y restructure, beta.5), alt text that
+  broke out of its attribute (exploitable through the beta.1 `altText` hook), and an mXSS round
+  trip in beta.5's `sanitize` hook that a verifier exploited in three engines. All three passed
+  every lane, including the a11y spec written for the same work. No lane tested keyboard
+  activation, hostile hook output, or a parse-serialize-parse round trip. The betas were
+  deprecated on npm for the two security fixes.
+- **A test that passed without the fix:** the nested-list-roles test passed on the old code
+  until the cell's list was rendered late, as a real component does; `dataCell` is a template,
+  so the first version mutated the original rather than the stamped cells. Reverting each fix
+  and re-running caught it. Do that for every fix-with-test, not only when asked.
+- **The tool that needed the server stopped the server:** `bun run og` wrote cards into a watched
+  static dir, and the dev server's rebuild-loop guard (correctly) shut it down mid-run. Twice
+  more, the unit lane raced a dev server rebuilding `dist/` (36–40 false failures, clean on
+  rerun). Both are tools sharing one tree with a long-lived watcher.
+- **Late asks were cheap when taken one at a time:** snowfox's elastic columns, tosijs-3d's icon
+  fix (smoked against their icon set: identical to their post-pass), and four GitHub issues
+  landed between beta.5 and the final, each with a test; #244 (embed seam) was held back as a
+  feature.
+- `latest` = 1.17.0; publish run 42044110924 green; published `dist/` identical to the repo's.
+  iife +4.3 kB gzip (+0.9%) over 1.16.41. Follow-ups #3859–#3870.
