@@ -9,7 +9,8 @@ Carousel	Carrousel	Karuselli	Karusell	旋转木马	カルーセル	회전목마	
 Category	Catégorie	Kategoria	Kategori	类别	カテゴリ	범주	Categoría	Kategorie	Categoria
 Center	Centre	Keskusta	Centrum	中心	中心	센터	Centro	Mitte	Centro
 Check if Breached	Vérifier si une violation a eu lieu.	Tarkista, onko rikottu	Kontrollera om intrång skett	检查是否违规	違反があったかどうかを確認する	침해되었는지 확인하세요	Comprobar si se ha infringido	Prüfen, ob ein Verstoß vorliegt	Controlla se violato
-Close	Fermer	Lähellä	Nära	关闭	近い	닫다	Cerca	Schließen	Vicino
+Clear	Effacer	Tyhjennä	Rensa	清除	クリア	지우기	Borrar	Löschen	Cancella
+Close	Fermer	Sulje	Stäng	关闭	閉じる	닫기	Cerrar	Schließen	Chiudi
 Code	Code	Koodi	Koda	代码	コード	암호	Código	Code	Codice
 Color Theme	Thème de couleurs	Väriteema	Färgtema	颜色主题	カラーテーマ	색상 테마	Tema de color	Farbthema	Tema colore
 Copy	Copie	Kopioida	Kopiera	复制	コピー	복사	Copiar	Kopie	Copia
@@ -43,6 +44,7 @@ Minimize	Minimiser	Minimoida	Minimera	最小化	最小化	최소화하다	Minimi
 Moderate	Modéré	Kohtalainen	Måttlig	缓和	適度	보통의	Moderado	Mäßig	Moderare
 Move	Se déplacer	Liikkua	Flytta	移动	動く	이동하다	Mover	Bewegen	Mossa
 Name	Nom	Nimi	Namn	姓名	名前	이름	Nombre	Name	Nome
+Navigate	Naviguer	Siirry	Navigera	导航	移動	이동	Navegar	Navigieren	Naviga
 New	Nouveau	Uusi	Ny	新的	新しい	새로운	Nuevo	Neu	Nuovo
 No	Non	Ei	Inga	不	いいえ	아니요	No	Nein	No
 Notifications	Notifications	Ilmoitukset	Aviseringar	通知	通知	알림	Notificaciones	Benachrichtigungen	Notifiche
@@ -55,6 +57,7 @@ Rating	Notation	Arvosana	Gradering	等级	評価	평가	Clasificación	Bewertung
 Redo	Refaire	Tee uudelleen	Göra om	重做	やり直す	다시 하다	Rehacer	Wiederholen	Rifare
 Right#direction	Droite	Oikea	Höger	右	右	오른쪽	Derecha	Rechts	Destra
 Save	Sauvegarder	Tallentaa	Spara	节省	保存	구하다	Ahorrar	Speichern	Salva
+Search	Rechercher	Haku	Sök	搜索	検索	검색	Buscar	Suchen	Cerca
 Select	Sélectionner	Valitse	Välja	选择	選択	선택하다	Seleccionar	Wählen	Selezionare
 Show Column	Afficher la colonne	Näytä sarake	Visa kolumn	显示列	列を表示	열 표시	Mostrar columna	Spalte einblenden	Mostra colonna
 Sidebar	barre latérale	Sivupalkki	Sidofält	侧边栏	サイドバー	사이드바	Barra lateral	Seitenleiste	Barra laterale

@@ -9,7 +9,8 @@ import { ExampleContext, TransformFn } from './types.js';
  */
 export declare function registerComponentsInIframe(iframeWindow: Window, context: ExampleContext): void;
 export interface ExecutionOptions {
-    html: string;
+    /** Markup, or a fragment a `sanitize` hook returned (inserted as it is, never re-parsed). */
+    html: string | DocumentFragment;
     css: string;
     js: string;
     context: ExampleContext;

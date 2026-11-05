@@ -4134,8 +4134,12 @@ export class TosiTable extends withAttributes({
         const area = this._scrollArea;
         if (!area)
             return;
+        // This table's own rows only: a list inside a cell (a <tosi-tag-list>, a nested table's
+        // rows) keeps its own roles.
         const fix = (el) => {
-            if (el.getAttribute('role') === 'listitem')
+            if (el.getAttribute('role') === 'listitem' &&
+                el.classList.contains('tr') &&
+                !el.parentElement?.closest('.td, [role="gridcell"]'))
                 el.setAttribute('role', 'row');
         };
         for (const child of Array.from(area.children))

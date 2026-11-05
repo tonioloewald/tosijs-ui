@@ -77,17 +77,24 @@ export function exampleHooks(): Readonly<ExampleHooks> {
 /**
  * The example's markup after the page's `sanitize` hook, or unchanged when there is none.
  * Parsed in a `<template>`, so nothing in it loads or runs before the hook has seen it.
+ *
+ * With a hook, the result is the hook's FRAGMENT, which the preview inserts as it is. It used to
+ * be serialized and parsed again, and HTML does not round-trip: foreign content (MathML, SVG)
+ * re-parses into a different tree, so markup the hook had judged harmless came back as a live
+ * `<img onerror>` (mXSS; the 1.17.0 review ran it in all three engines). What the hook saw must
+ * be what the page gets.
  */
 export function sanitizeExampleHtml(
   html: string,
   example: HTMLElement
-): string {
+): string | DocumentFragment {
   const { sanitize } = hooks
   if (!sanitize || !html) return html
   const template = document.createElement('template')
   template.innerHTML = html
   const result = sanitize(template.content, example) ?? template.content
-  const holder = document.createElement('template')
-  holder.content.append(result)
-  return holder.innerHTML
+  if (result instanceof DocumentFragment) return result
+  const fragment = document.createDocumentFragment()
+  fragment.append(result)
+  return fragment
 }

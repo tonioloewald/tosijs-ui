@@ -449,8 +449,8 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | field             | default     | purpose                                                                    |
 | ----------------- | ----------- | -------------------------------------------------------------------------- |
 | `bundleEntry`     | —           | your IIFE entrypoint; omit to use the fallback bundle                      |
-| `kind`            | `'documentation'` | `'book'` makes each page a `Chapter` of a `Book` in the structured data, numbered in reading order, with `rel="prev/next"` links |
-| `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`; `'no-code'` — only `html` and `css` run, for a host with a strict CSP. See "Marking a fence display-only" and "No-code examples" |
+| `kind`            | `'documentation'` | `'book'` makes each page a `Chapter` of a `Book` in the structured data, numbered in reading order, with `rel="prev/next"` links. Any other value fails the build |
+| `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`; `'no-code'` — only `html` and `css` run, for a host with a strict CSP. See "Marking a fence display-only" and "No-code examples". Any other value fails the build |
 | `exampleModules`  | `false`     | write each script example to `_examples/<hash>.js` and run it by `import()`, for a strict CSP. See "Script examples under a strict CSP" |
 | `exampleTabs`     | all         | the tabs an example's code panel shows: `'js'`, `'html'`, `'css'`, `'test'`, `'console'`, `'chat'`. Under `'no-code'` the default is `['html', 'css', 'chat']`. A fence overrides it with `{"tabs": [...]}` |
 | `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
@@ -804,7 +804,8 @@ fingerprint of its own config (`?config=`), and a server started with a differen
 `409` without building: edit the site config, and `bun run build` tells you to restart the dev
 server instead of writing the old config's site and reporting success. "Different" includes a
 config that reads the environment and was loaded with different variables. A server too old to
-report its config is refused the same way.
+check the fingerprint has already built with its old config by the time it replies, but the
+build still fails and says to restart it, rather than reporting success.
 
 The dev server also watches the `bundleEntry` file, so editing it rebuilds the hydration bundle.
 Files it imports from outside the watched folders need `watchPaths`. A dev server predating

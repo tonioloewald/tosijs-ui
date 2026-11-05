@@ -283,3 +283,22 @@ test('#245: a bake with a module names it on the hidden script, for the page to 
     '<script type="application/tosi-transpiled" data-dialect="js" data-module="/_examples/abc.js">'
   )
 })
+
+/*
+marked wrote alt text into the attribute unescaped (1.17.0 review M2): a `"` ended it, so an
+ordinary caption broke the tag and generated alt text could inject markup.
+*/
+test('alt and title text are escaped, so they cannot end the attribute', () => {
+  for (const alt of [
+    '"><img src=x onerror=alert(1)>',
+    'A sign reading "Open" & <b>',
+  ]) {
+    const div = document.createElement('div')
+    div.innerHTML = renderDocMarkdown(`![${alt}](a.png "say \\"hi\\"")`)
+    const images = div.querySelectorAll('img')
+    expect(images.length).toBe(1)
+    expect(images[0].getAttribute('alt')).toBe(alt)
+    expect(images[0].getAttribute('title')).toBe('say "hi"')
+    expect(images[0].getAttribute('onerror')).toBe(null)
+  }
+})

@@ -215,7 +215,10 @@ export function nothingToRun(js, compiledJs) {
 export async function executeInline(options) {
     const { html, css, js, context, transform, compiledJs, module, exampleElement, styleElement, widgetsElement, onError, onScope, onRepl, console: exampleConsole, } = options;
     const preview = div({ class: 'preview' });
-    preview.innerHTML = html;
+    if (typeof html === 'string')
+        preview.innerHTML = html;
+    else
+        preview.append(html);
     styleElement.innerText = css;
     const oldPreview = exampleElement.querySelector('.preview');
     if (oldPreview) {
@@ -338,7 +341,7 @@ export async function executeInIframe(options) {
   </style>
 </head>
 <body>
-  <div class="preview">${html}</div>
+  <div class="preview">${typeof html === 'string' ? html : ''}</div>
 </body>
 </html>`);
     iframeDoc.close();
@@ -349,6 +352,9 @@ export async function executeInIframe(options) {
         console.error('Could not find preview element in iframe');
         return null;
     }
+    // A sanitized fragment goes in as nodes, after the frame's elements are registered.
+    if (typeof html !== 'string')
+        preview.append(iframeDoc.importNode(html, true));
     // No script: not even the iframe's `eval` that fetches its AsyncFunction (see nothingToRun).
     if (nothingToRun(js, compiledJs))
         return preview;

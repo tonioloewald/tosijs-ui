@@ -46,3 +46,18 @@ test('one question per distinct image on a page; alt text is escaped onto one li
     '![A \\[bracketed\\] line](a.png) and again ![A \\[bracketed\\] line](a.png)'
   )
 })
+
+test('hostile or quoted alt text from the hook stays inside the alt attribute (1.17.0 review M2)', async () => {
+  const { renderDocMarkdown } = await import('../render.js')
+  for (const answer of [
+    '"><img src=x onerror=alert(1)>',
+    'A sign reading "Open" & <b>',
+  ]) {
+    const { docs } = await applyAltText([doc('![](bare.png)')], () => answer)
+    const div = document.createElement('div')
+    div.innerHTML = renderDocMarkdown(docs[0].text)
+    const images = div.querySelectorAll('img')
+    expect(images.length).toBe(1)
+    expect(images[0].getAttribute('alt')).toBe(answer)
+  }
+})

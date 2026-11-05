@@ -4568,8 +4568,15 @@ export class TosiTable extends withAttributes({
     this._rowRoleObserver?.disconnect()
     const area = this._scrollArea
     if (!area) return
+    // This table's own rows only: a list inside a cell (a <tosi-tag-list>, a nested table's
+    // rows) keeps its own roles.
     const fix = (el: Element) => {
-      if (el.getAttribute('role') === 'listitem') el.setAttribute('role', 'row')
+      if (
+        el.getAttribute('role') === 'listitem' &&
+        el.classList.contains('tr') &&
+        !el.parentElement?.closest('.td, [role="gridcell"]')
+      )
+        el.setAttribute('role', 'row')
     }
     for (const child of Array.from(area.children)) fix(child)
     this._rowRoleObserver = new MutationObserver((records) => {

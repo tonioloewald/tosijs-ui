@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=d3f367e1f149" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=d8896c49c3ae" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-05T15:39:35+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-05T14:11:18.471Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=2f22b9b04a78" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=88c4cf48836d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -547,12 +547,12 @@ something you review before it becomes authored text. Return nothing to leave an
 <tr>
 <td><code>kind</code></td>
 <td><code>&#39;documentation&#39;</code></td>
-<td><code>&#39;book&#39;</code> makes each page a <code>Chapter</code> of a <code>Book</code> in the structured data, numbered in reading order, with <code>rel=&quot;prev/next&quot;</code> links</td>
+<td><code>&#39;book&#39;</code> makes each page a <code>Chapter</code> of a <code>Book</code> in the structured data, numbered in reading order, with <code>rel=&quot;prev/next&quot;</code> links. Any other value fails the build</td>
 </tr>
 <tr>
 <td><code>liveExamples</code></td>
 <td><code>&#39;auto&#39;</code></td>
-<td><code>&#39;auto&#39;</code> — the six executable fence languages run; <code>&#39;opt-in&#39;</code> — nothing runs unless the fence asks with <code>:inline</code>/<code>:iframe</code>/<code>:ide</code>; <code>&#39;no-code&#39;</code> — only <code>html</code> and <code>css</code> run, for a host with a strict CSP. See &quot;Marking a fence display-only&quot; and &quot;No-code examples&quot;</td>
+<td><code>&#39;auto&#39;</code> — the six executable fence languages run; <code>&#39;opt-in&#39;</code> — nothing runs unless the fence asks with <code>:inline</code>/<code>:iframe</code>/<code>:ide</code>; <code>&#39;no-code&#39;</code> — only <code>html</code> and <code>css</code> run, for a host with a strict CSP. See &quot;Marking a fence display-only&quot; and &quot;No-code examples&quot;. Any other value fails the build</td>
 </tr>
 <tr>
 <td><code>exampleModules</code></td>
@@ -1054,7 +1054,8 @@ fingerprint of its own config (<code>?config=</code>), and a server started with
 <code>409</code> without building: edit the site config, and <code>bun run build</code> tells you to restart the dev
 server instead of writing the old config&#39;s site and reporting success. &quot;Different&quot; includes a
 config that reads the environment and was loaded with different variables. A server too old to
-report its config is refused the same way.</p>
+check the fingerprint has already built with its old config by the time it replies, but the
+build still fails and says to restart it, rather than reporting success.</p>
 <p>The dev server also watches the <code>bundleEntry</code> file, so editing it rebuilds the hydration bundle.
 Files it imports from outside the watched folders need <code>watchPaths</code>. A dev server predating
 this endpoint answers with the SPA shell, which the caller detects and reports as &quot;restart your
@@ -2688,6 +2689,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-as3z78xx.js"></script>
+  <script type="module" src="../hydrate-7xtyx7m1.js"></script>
 </body>
 </html>

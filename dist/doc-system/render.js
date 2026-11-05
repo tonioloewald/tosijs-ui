@@ -154,6 +154,25 @@ export function accessibleTokens(tokens, title) {
 const docMarked = new Marked();
 docMarked.use({
     renderer: {
+        /*
+        marked's own image renderer writes the alt text into the attribute unescaped, so a `"` in
+        it ended the attribute: an ordinary caption (`A sign reading "Open"`) broke the tag, and
+        alt text from an `altText` hook (machine-generated, so untrusted) could inject a live
+        `<img onerror>` (1.17.0 review M2). The same as marked otherwise, src included.
+        */
+        image(token) {
+            const alt = token.tokens
+                ? this.parser.parseInline(token.tokens, this.parser.textRenderer)
+                : token.text;
+            let src;
+            try {
+                src = encodeURI(token.href).replace(/%25/g, '%');
+            }
+            catch {
+                return escapeHtml(alt);
+            }
+            return `<img src="${src}" alt="${escapeAttr(alt)}"${token.title ? ` title="${escapeAttr(token.title)}"` : ''}>`;
+        },
         // Every heading gets an id, so `[text](#that-heading)` resolves — see heading-id.ts.
         heading(token) {
             const id = headingIds.next(headingSlug(token));

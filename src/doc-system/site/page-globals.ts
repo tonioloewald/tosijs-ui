@@ -17,6 +17,30 @@ export interface PageGlobalsConfig {
   dialects?: string[]
 }
 
+const LIVE_EXAMPLE_POLICIES = ['auto', 'opt-in', 'no-code']
+const SITE_KINDS = ['documentation', 'book']
+
+/**
+ * A site config switch set to a value nothing reads, or null. Each silently fell back to its
+ * default: `liveExamples: 'nocode'` ran every example on a site meant to run none (under a CSP
+ * that was the point), and `kind: 'Book'` built a documentation site (1.17.0 review).
+ */
+export function siteSwitchProblem(config: {
+  liveExamples?: string
+  kind?: string
+}): string | null {
+  const wrong = (name: string, value: unknown, allowed: string[]) =>
+    value !== undefined && !allowed.includes(value as string)
+      ? `SiteConfig.${name} is ${JSON.stringify(
+          value
+        )}; it must be one of ${allowed.map((a) => `'${a}'`).join(', ')}`
+      : null
+  return (
+    wrong('liveExamples', config.liveExamples, LIVE_EXAMPLE_POLICIES) ??
+    wrong('kind', config.kind, SITE_KINDS)
+  )
+}
+
 export function pageGlobalsHead(config: PageGlobalsConfig): string {
   // A misspelt tab would hide a tab on every example with nothing to say why.
   const tabsProblem =

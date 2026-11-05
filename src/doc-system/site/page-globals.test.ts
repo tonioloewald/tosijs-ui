@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { tmpdir } from 'os'
-import { pageGlobalsHead } from './page-globals.js'
+import { pageGlobalsHead, siteSwitchProblem } from './page-globals.js'
 import { generateSite } from './generate-site.js'
 
 describe('pageGlobalsHead', () => {
@@ -73,4 +73,13 @@ describe('dialects (#2463)', () => {
     )
     expect(pageGlobalsHead({ dialects: [] })).toBe('')
   })
+})
+
+test('a misspelt liveExamples or kind is named, with the values it may take', () => {
+  expect(siteSwitchProblem({})).toBe(null)
+  expect(siteSwitchProblem({ liveExamples: 'no-code', kind: 'book' })).toBe(
+    null
+  )
+  expect(siteSwitchProblem({ liveExamples: 'nocode' })).toContain("'no-code'")
+  expect(siteSwitchProblem({ kind: 'Book' })).toContain('SiteConfig.kind')
 })

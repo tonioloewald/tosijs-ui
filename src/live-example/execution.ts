@@ -80,7 +80,8 @@ export function registerComponentsInIframe(
 }
 
 export interface ExecutionOptions {
-  html: string
+  /** Markup, or a fragment a `sanitize` hook returned (inserted as it is, never re-parsed). */
+  html: string | DocumentFragment
   css: string
   js: string
   context: ExampleContext
@@ -333,7 +334,8 @@ export async function executeInline(
   } = options
 
   const preview = div({ class: 'preview' })
-  preview.innerHTML = html
+  if (typeof html === 'string') preview.innerHTML = html
+  else preview.append(html)
   styleElement.innerText = css
 
   const oldPreview = exampleElement.querySelector('.preview')
@@ -497,7 +499,7 @@ export async function executeInIframe(
   </style>
 </head>
 <body>
-  <div class="preview">${html}</div>
+  <div class="preview">${typeof html === 'string' ? html : ''}</div>
 </body>
 </html>`)
   iframeDoc.close()
@@ -510,6 +512,8 @@ export async function executeInIframe(
     console.error('Could not find preview element in iframe')
     return null
   }
+  // A sanitized fragment goes in as nodes, after the frame's elements are registered.
+  if (typeof html !== 'string') preview.append(iframeDoc.importNode(html, true))
 
   // No script: not even the iframe's `eval` that fetches its AsyncFunction (see nothingToRun).
   if (nothingToRun(js, compiledJs)) return preview

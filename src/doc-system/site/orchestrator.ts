@@ -12,7 +12,7 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 
-import { pageGlobalsHead } from './page-globals.js'
+import { pageGlobalsHead, siteSwitchProblem } from './page-globals.js'
 import type { ExamplePolicy } from '../example-policy.js'
 import { liveFenceLanguages, misconfigured } from './build-warnings.js'
 import { TJS_VERSION } from '../../live-example/code-transform.js'
@@ -702,6 +702,9 @@ export async function buildSite(
     const PROJECT_ROOT = './'
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs')
     const DIST = path.resolve(PROJECT_ROOT, 'dist')
+    // A misspelt switch falls back to its default without a word; refuse it before building.
+    const switchProblem = siteSwitchProblem(config)
+    if (switchProblem) throw new Error(switchProblem)
     /*
     Two copies of CodeMirror blank every <tosi-code>, and nothing else says so (#3248). Asked
     first, of the module resolver: it costs a couple of dozen resolutions, and a site built

@@ -475,7 +475,12 @@ export class TosiSelect extends withAttributes({
         event.preventDefault();
     };
     handleKey = (event) => {
-        if (event.key === 'Enter') {
+        /*
+        Enter in the editable field must not submit its form. On the button it is the button's
+        activation, which opens the list: cancelling it there made a select you pick from ignore
+        Enter (1.17.0 review M1).
+        */
+        if (event.key === 'Enter' && event.target === this.parts.value) {
             event.preventDefault();
         }
         if (event.key === 'ArrowDown' && !this.isExpanded) {
