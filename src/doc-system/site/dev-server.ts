@@ -17,7 +17,7 @@ import { $, spawn, gzipSync } from 'bun'
 import { brotliCompressSync, constants as zlibConstants } from 'node:zlib'
 import type { SiteConfig } from './site-config.js'
 import { buildSite } from './orchestrator.js'
-import { configFingerprint } from './config-fingerprint.js'
+import { buildRequestRefusal, configFingerprint } from './config-fingerprint.js'
 import { preflight } from './preflight.js'
 import { auditDependencies, reportAudit } from './audit-guard.js'
 import { openDevBrowser } from './open-browser.js'
@@ -2944,36 +2944,16 @@ export async function devServer(
       build used to write the old config's site and report success. The caller compares and
       refuses.
       */
-      const requestedRoot = new URL(request.url).searchParams.get('root')
-      if (requestedRoot !== null && requestedRoot !== path.resolve('./')) {
-        return new Response(
-          JSON.stringify({
-            ok: false,
-            detail: `this server builds ${path.resolve(
-              './'
-            )}, not ${requestedRoot}`,
-            pid: process.pid,
-            root: path.resolve('./'),
-          }),
-          { status: 409, headers: { 'Content-Type': 'application/json' } }
-        )
-      }
-      const requestedConfig = new URL(request.url).searchParams.get('config')
-      if (requestedConfig !== null && requestedConfig !== launchedConfig) {
-        return new Response(
-          JSON.stringify({
-            ok: false,
-            detail:
-              `🛑 this dev server (pid ${process.pid}) was started with a different site config ` +
-              `(edited since, or loaded with a different environment), so it would build the ` +
-              `old one. Restart it, then build again.`,
-            pid: process.pid,
-            root: path.resolve('./'),
-            config: launchedConfig,
-          }),
-          { status: 409, headers: { 'Content-Type': 'application/json' } }
-        )
-      }
+      const refusal = buildRequestRefusal(new URL(request.url).searchParams, {
+        root: path.resolve('./'),
+        pid: process.pid,
+        config: launchedConfig,
+      })
+      if (refusal)
+        return new Response(JSON.stringify(refusal), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        })
       const result = await requestBuild()
       return new Response(
         JSON.stringify({

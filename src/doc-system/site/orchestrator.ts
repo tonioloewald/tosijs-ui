@@ -83,7 +83,7 @@ import {
 } from './check-examples.js'
 import type { ExampleBake, ExampleBakes } from '../render.js'
 import { ensureSections } from './sections.js'
-import { configFingerprint } from './config-fingerprint.js'
+import { configFingerprint, staleConfigMessage } from './config-fingerprint.js'
 import { generateLlmsTxt, generateLlmsFullTxt } from './make-llms-txt.js'
 import { lintMetadata, metadataReport } from './page-metadata.js'
 import { sourceDates } from './page-dates.js'
@@ -545,14 +545,12 @@ async function delegateBuild(
     catches one that predates the check, which sends no fingerprint and so cannot be trusted
     with it.
     */
-    if (body.config !== fingerprint) {
-      console.error(
-        `🛑 the dev server on ${port} is building ${
-          body.config === undefined
-            ? 'with a version of tosijs-ui that cannot say which site config it has'
-            : 'a different site config from this one (edited since it started, or loaded with a different environment)'
-        }. Restart it (pid ${holder.pid}), then build again.\n`
-      )
+    const stale = staleConfigMessage(body.config, fingerprint, {
+      port: port!,
+      pid: holder.pid,
+    })
+    if (stale) {
+      console.error(stale)
       return false
     }
 
