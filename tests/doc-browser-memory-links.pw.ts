@@ -118,3 +118,62 @@ test('under path routing, a /slug/#heading link lands on the heading and keeps t
   expect(landed.hash).toBe('#row-detail')
   expect(landed.offset).toBeLessThan(80)
 })
+
+test('memory routing resolves links against its own corpus, whatever the host page is (#3869)', async ({
+  page,
+}) => {
+  // The host page is /data-table/, and the embedded corpus has its own `data-table` page.
+  await page.goto('/data-table/')
+  await page.waitForFunction(() => (window as any).xinjsui?.createDocBrowser)
+  const before = page.url()
+  const result = await page.evaluate(async () => {
+    const ui: any = (window as any).xinjsui
+    const docs = [
+      {
+        filename: 'a.md',
+        title: 'Alpha',
+        path: 'a.md',
+        text: '# Alpha\n\n[inner](/data-table/) [pricing](/pricing/)',
+      },
+      {
+        filename: 'data-table.md',
+        title: 'Inner table',
+        path: 'data-table.md',
+        text: '# Inner table',
+      },
+    ]
+    const box = document.createElement('div')
+    box.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#fff'
+    document.body.append(box)
+    const browser = ui.createDocBrowser({
+      docs,
+      projectName: 'probe',
+      routing: 'memory',
+      initialRoute: 'a',
+    })
+    box.append(browser)
+    await (globalThis as any).__settled()
+    // Record whether the browser took each click, and stop the page actually leaving.
+    const taken: Record<string, boolean> = {}
+    document.addEventListener('click', (event) => {
+      const a = (event.target as HTMLElement).closest('a')
+      if (a) taken[a.textContent!] = event.defaultPrevented
+      event.preventDefault()
+    })
+    const link = (text: string) =>
+      [...browser.querySelectorAll('.doc-content a')].find(
+        (a: any) => a.textContent === text
+      ) as HTMLElement
+    link('pricing').click()
+    link('inner').click()
+    await (globalThis as any).__settled()
+    return {
+      taken,
+      shown: browser.querySelector('.doc-content h1')?.textContent,
+    }
+  })
+  // A doc slug is a doc, in memory; a path that is not one is left to the browser.
+  expect(result.taken).toEqual({ pricing: false, inner: true })
+  expect(result.shown).toBe('Inner table')
+  expect(page.url()).toBe(before)
+})
