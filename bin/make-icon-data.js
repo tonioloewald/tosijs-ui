@@ -16,6 +16,15 @@ Ingests SVG files from icon directories and generates an icon-data module
 - `--input <dir1,dir2,...>` — directories to scan (default: `./icons`)
 - `--output <path>` — output file (default: `./src/icon-data.ts`)
 - `--optimize <true|false>` — round coordinates based on viewBox size (default: true)
+- `--modules <dir>` — also write one module per icon into `dir` (`export const name = '…'`),
+  plus an `index`, so code can import just the icons it draws. tosijs-ui's own build writes
+  `src/icons/data/` this way; files there that are no longer icons are removed.
+- `--creators <dir>` — with `--modules`, also write one module per icon that exports it as a
+  function, `export const chevronDown = iconCreator(…)`, registering it once when it loads.
+  A redirect's module imports the icon it redirects to. tosijs-ui's own build writes
+  `src/icons/` this way, published as `tosijs-ui/icons/<name>`.
+- `--core <specifier>` — where `--creators` modules import `iconCreator` from (default
+  `tosijs-ui/icon-core`)
 
 ### Examples
 
@@ -99,6 +108,9 @@ const defaultOptions = {
   input: './icons',
   output: './src/icon-data.ts',
   optimize: true, // Optimize coordinate precision based on viewBox size
+  modules: '', // A directory to also write one module per icon into
+  creators: '', // A directory to also write one creator module per icon into
+  core: 'tosijs-ui/icon-core', // Where creator modules import iconCreator from
 }
 const flags = Object.keys(defaultOptions)
 
@@ -128,7 +140,14 @@ for (const flag of flags) {
 }
 
 // Destructure options for easier use
-const { input: iconDirectories, output: outputFilePath, optimize } = options
+const {
+  input: iconDirectories,
+  output: outputFilePath,
+  optimize,
+  modules: modulesDir,
+  creators: creatorsDir,
+  core: coreSpecifier,
+} = options
 const isTypescript = outputFilePath.endsWith('.ts')
 const shouldOptimize = optimize === true || optimize === 'true'
 
@@ -484,4 +503,151 @@ try {
 
 fs.writeFileSync(outputFilePath, source, 'utf8')
 
+/*
+One module per icon, so a component can import the handful it draws instead of all of them
+(tosijs-ui#3885). They are written from the same data in the same run, so they cannot drift
+from the combined module: the 1.4.1 copies were written once, by hand, and by 1.17 a sixth of
+them were wrong. A redirect's module holds the redirect, not its target; whoever registers
+it registers the target too.
+
+Files in the directory that are not icons any more are removed, but only ones this generator
+writes (a module that starts `export const` or an index of `export {` lines), so a stray file
+of someone else's survives.
+*/
+if (typeof modulesDir === 'string' && modulesDir !== '') {
+  const ext = isTypescript ? '.ts' : '.js'
+  fs.mkdirSync(modulesDir, { recursive: true })
+  /*
+  The export is the icon's name, unless that is not a name a module can bind: `delete` and (in
+  a module) `package` look like identifiers and are reserved, so they export `deleteIcon` and
+  `packageIcon` from `delete` and `package`, as the 1.4.1 modules did. Ask the parser, not a
+  pattern.
+  */
+  const bindable = (name) => {
+    try {
+      new Function(`"use strict"; let ${name}`)
+      return true
+    } catch {
+      return false
+    }
+  }
+  const valid = (name) => /^[A-Za-z_$][\w$]*$/.test(name)
+  const names = Object.keys(iconData).filter(valid)
+  const exportName = (name) => (bindable(name) ? name : name + 'Icon')
+  const skipped = Object.keys(iconData).filter((name) => !valid(name))
+  if (skipped.length > 0) {
+    console.warn(
+      `make-icon-data: no module for ${skipped.join(', ')} (not an identifier)`
+    )
+  }
+  const wanted = new Set([...names.map((n) => n + ext), 'index' + ext])
+  for (const file of fs.readdirSync(modulesDir)) {
+    if (wanted.has(file) || !file.endsWith(ext)) continue
+    const full = path.join(modulesDir, file)
+    const head = fs.readFileSync(full, 'utf8').slice(0, 13)
+    if (head.startsWith('export const') || head.startsWith('export {')) {
+      fs.rmSync(full)
+    }
+  }
+  for (const name of names) {
+    const file = path.join(modulesDir, name + ext)
+    const text = `export const ${exportName(name)} = ${JSON.stringify(
+      iconData[name]
+    )}\n`
+    if (!fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== text) {
+      fs.writeFileSync(file, text, 'utf8')
+    }
+  }
+  /*
+  The index re-exports every icon by name and, as its default, the whole set keyed by icon
+  name (so `delete`, not `deleteIcon`). Code that needs every icon imports the default, which
+  is built from the same modules a component imports one at a time: one copy of each string in
+  a bundle that has both, not two.
+  */
+  const key = (n) => (/^[A-Za-z_$][\w$]*$/.test(n) ? n : quote(n))
+  fs.writeFileSync(
+    path.join(modulesDir, 'index' + ext),
+    names
+      .map((n) => `import { ${exportName(n)} } from './${n}.js'\n`)
+      .join('') +
+      `\nexport {\n${names.map((n) => `  ${exportName(n)},\n`).join('')}}\n` +
+      `\nexport default {\n${names
+        .map((n) =>
+          exportName(n) === n ? `  ${n},\n` : `  ${key(n)}: ${exportName(n)},\n`
+        )
+        .join('')}}\n`,
+    'utf8'
+  )
+  if (typeof creatorsDir === 'string' && creatorsDir !== '') {
+    writeCreators(creatorsDir, names, exportName, ext)
+  }
+}
+
 console.log(`Successfully generated icon data to: ${outputFilePath}`)
+
+/*
+A redirect draws another icon (`chevronDown` is `chevronRight90r`), so its creator module
+imports that icon's, and registering one registers what it needs. The icon a redirect draws
+is the longest icon name its value starts with, per `$`-stacked layer; a value that names no
+icon (a composition rule's) imports nothing and resolves the way any unregistered name does.
+*/
+function redirectTargets(name) {
+  const spec = iconData[name]
+  if (spec.startsWith('<')) return []
+  const targets = new Set()
+  for (const layer of spec.split('$')) {
+    let best = ''
+    for (const other of Object.keys(iconData)) {
+      if (
+        other !== name &&
+        layer.startsWith(other) &&
+        other.length > best.length
+      )
+        best = other
+    }
+    if (best) targets.add(best)
+  }
+  return [...targets]
+}
+
+function writeCreators(dir, names, exportName, ext) {
+  if (typeof modulesDir !== 'string' || modulesDir === '') {
+    throw new Error('make-icon-data: --creators needs --modules')
+  }
+  fs.mkdirSync(dir, { recursive: true })
+  let dataPath = path.relative(dir, modulesDir).split(path.sep).join('/')
+  if (!dataPath.startsWith('.')) dataPath = './' + dataPath
+  const named = new Set(names)
+  for (const name of names) {
+    const exported = exportName(name)
+    const lines = [
+      '// Generated by make-icon-data. One icon, registered when this module loads.',
+      `import { iconCreator } from ${quote(coreSpecifier)}`,
+      ...redirectTargets(name)
+        .filter((t) => named.has(t))
+        .map((t) => `import './${t}.js'`),
+      `import { ${exported} as spec } from '${dataPath}/${name}.js'`,
+      '',
+      `export const ${exported} = iconCreator(${quote(name)}, spec)`,
+      '',
+    ]
+    const file = path.join(dir, name + ext)
+    const text = lines.join('\n')
+    if (!fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== text) {
+      fs.writeFileSync(file, text, 'utf8')
+    }
+  }
+  const wanted = new Set(names.map((n) => n + ext))
+  for (const file of fs.readdirSync(dir)) {
+    if (wanted.has(file) || !file.endsWith(ext)) continue
+    const full = path.join(dir, file)
+    if (!fs.statSync(full).isFile()) continue
+    if (
+      fs
+        .readFileSync(full, 'utf8')
+        .startsWith('// Generated by make-icon-data.')
+    ) {
+      fs.rmSync(full)
+    }
+  }
+}

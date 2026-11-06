@@ -8,7 +8,7 @@ of a name instead, and threw for `redLock`. DOM-free, so `icon-svg.ts` can impor
 Rules an app adds with `iconRules.push()` are seen by both, as long as they are pushed
 before the name is asked for.
 */
-import iconData from './icon-data.js';
+import { iconData } from './icon-store.js';
 import { splitSuffixes } from './icon-suffixes.js';
 /**
  * Style suffixes on a registered icon (`checkCircle90r`), split, or null. Such a name is

@@ -69,7 +69,11 @@ After an element's position, size, or rotation are adjusted a `change` event is 
 /*{ "parent": "Components", "description": "<tosi-editable> adds handles to an absolutely positioned element to move, resize and rotate it, with optional grid and angle snapping." }*/
 
 import { elements, vars, withAttributes } from 'tosijs'
-import { icons } from './icons.js'
+import { move as moveIcon } from './icons/move.js'
+import { resize as resizeIcon } from './icons/resize.js'
+import { refreshCw as refreshCwIcon } from './icons/refreshCw.js'
+import { unlock as unlockIcon } from './icons/unlock.js'
+import { lock as lockIcon } from './icons/lock.js'
 import { trackDrag } from './track-drag.js'
 
 const { div, slot } = elements
@@ -394,7 +398,7 @@ export class EditableRect extends withAttributes({
         part: 'move',
         style: { top: '50%', left: '50%', transform: 'translate(-50%,-50%)' },
       },
-      icons.move()
+      moveIcon()
     ),
     div({
       part: 'left',
@@ -425,14 +429,14 @@ export class EditableRect extends withAttributes({
         part: 'resize',
         style: { top: '100%', left: '100%' },
       },
-      icons.resize()
+      resizeIcon()
     ),
     div(
       {
         part: 'rotate',
         style: { top: '50%', right: '0' },
       },
-      icons.refreshCw()
+      refreshCwIcon()
     ),
     div(
       {
@@ -440,8 +444,8 @@ export class EditableRect extends withAttributes({
         title: 'lock left',
         style: { top: '50%', left: 0, transform: 'translate(-100%, -50%)' },
       },
-      icons.unlock(),
-      icons.lock()
+      unlockIcon(),
+      lockIcon()
     ),
     div(
       {
@@ -449,8 +453,8 @@ export class EditableRect extends withAttributes({
         title: 'lock right',
         style: { top: '50%', left: '100%', transform: 'translate(0%, -50%)' },
       },
-      icons.unlock(),
-      icons.lock()
+      unlockIcon(),
+      lockIcon()
     ),
     div(
       {
@@ -458,8 +462,8 @@ export class EditableRect extends withAttributes({
         title: 'lock top',
         style: { top: 0, left: '50%', transform: 'translate(-50%, -100%)' },
       },
-      icons.unlock(),
-      icons.lock()
+      unlockIcon(),
+      lockIcon()
     ),
     div(
       {
@@ -467,8 +471,8 @@ export class EditableRect extends withAttributes({
         title: 'lock bottom',
         style: { top: '100%', left: '50%', transform: 'translate(-50%, 0%)' },
       },
-      icons.unlock(),
-      icons.lock()
+      unlockIcon(),
+      lockIcon()
     ),
     slot(),
   ]

@@ -442,6 +442,10 @@ try {
     'tosijs-ui/highlight-block',
     // Nested, through the wildcard: what an editor imports to save data (#3365).
     'tosijs-ui/doc-system/data-client',
+    // One icon as a function, and as a string (#3885): `tosijs-ui/icons` is a named export
+    // AND a directory, so these resolve only through the wildcard.
+    'tosijs-ui/icons/chevronDown',
+    'tosijs-ui/icons/data/chevronDown',
   ]) {
     check(
       `node resolves ${entry} (no missing-module error)`,
@@ -457,6 +461,8 @@ try {
     "let threw=false;try{m.iconSvg('spin90Loader')}catch(e){threw=e.message.includes('icons.spin90Loader()')}",
     "if(!threw)throw new Error('no throw');",
     "if(m.iconSvg('nonsense')!==undefined)throw new Error('unknown name');",
+    "return import('tosijs-ui/icons/data/chevronDown')}).then(d=>{",
+    "if(d.chevronDown!=='chevronRight90r')throw new Error('per-icon data module');",
     "console.log('OK')})",
   ].join('')
   const iconRun = await $`node -e ${iconScript}`.cwd(proj).nothrow().quiet()

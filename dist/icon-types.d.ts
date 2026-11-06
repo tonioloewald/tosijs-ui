@@ -34,3 +34,5 @@ export type SVGIconMap = {
 } & {
     [key: string]: ElementCreator<IconElement>;
 };
+/** One icon as a function of its own, as `icons.name` is: `chevronDown(...parts)`. */
+export type IconCreator = ElementCreator<IconElement>;

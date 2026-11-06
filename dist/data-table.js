@@ -1313,7 +1313,10 @@ import { elements, vars, varDefault, tosiValue, getListItem, getListBinding, tos
 import { trackDrag } from './track-drag.js';
 import { naturalSorter } from './natural-compare.js';
 import { resolveRowGroupId, withForcedGroups, clusterByGroup, groupRenderMeta, groupCounts, } from './row-grouping.js';
-import { icons } from './icons.js';
+import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
+import { sortAscending as sortAscendingIcon } from './icons/sortAscending.js';
+import { sortDescending as sortDescendingIcon } from './icons/sortDescending.js';
+import { moreVertical as moreVerticalIcon } from './icons/moreVertical.js';
 import { valueRenderer, } from './value-renderer.js';
 import { fieldForProperty, collectErrors, coerceToSchema, fieldEditable, } from './schema-form/fields.js';
 import { getSchemaValidator, warnNoValidator } from './schema-form/validator.js';
@@ -2827,7 +2830,7 @@ export class TosiTable extends withAttributes({
                     if (item != null)
                         this.toggleRowDetail(item);
                 },
-            }, icons.chevronRight()));
+            }, chevronRightIcon()));
             return cell;
         }
         if (this.columnEditable(col)) {
@@ -2949,12 +2952,12 @@ export class TosiTable extends withAttributes({
         let sortIcon;
         switch (col.sort) {
             case 'ascending':
-                sortIcon = icons.sortAscending();
+                sortIcon = sortAscendingIcon();
                 ariaSort = 'descending';
                 break;
             case 'descending':
                 ariaSort = 'ascending';
-                sortIcon = icons.sortDescending();
+                sortIcon = sortDescendingIcon();
                 break;
         }
         // An expander column has nothing to sort by and should not be hidden by accident.
@@ -2966,7 +2969,7 @@ export class TosiTable extends withAttributes({
                     popColumnMenu(event.target, col);
                     event.stopPropagation();
                 },
-            }, sortIcon || icons.moreVertical())
+            }, sortIcon || moreVerticalIcon())
             : {};
         const cell = col.headerCell !== undefined
             ? col.headerCell(col)

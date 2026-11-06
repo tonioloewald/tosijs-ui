@@ -18,4 +18,5 @@ docs/**          merge=ours linguist-generated
 demo/docs.json   merge=ours linguist-generated
 llms.txt         merge=ours linguist-generated
 src/icon-data.ts merge=ours linguist-generated
+src/icons/** merge=ours linguist-generated
 src/version.ts   merge=ours linguist-generated

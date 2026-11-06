@@ -150,7 +150,9 @@ form.addEventListener('reset', () => {
 
 import { PartsMap, elements, varDefault, withAttributes } from 'tosijs'
 import { tosiSelect, TosiSelect } from './select.js'
-import { icons } from './icons.js'
+import { chevronLeft as chevronLeftIcon } from './icons/chevronLeft.js'
+import { calendar as calendarIcon } from './icons/calendar.js'
+import { chevronRight as chevronRightIcon } from './icons/chevronRight.js'
 import { popMenu, MenuItem } from './menu.js'
 
 const { div, span, button } = elements
@@ -454,7 +456,7 @@ export class TosiMonth extends withAttributes({
           title: 'previous month',
           onClick: this.previousMonth,
         },
-        icons.chevronLeft()
+        chevronLeftIcon()
       ),
       span({ style: { flex: '1' } }),
       button(
@@ -463,7 +465,7 @@ export class TosiMonth extends withAttributes({
           title: 'go to date',
           onClick: this.jumpMenu,
         },
-        icons.calendar()
+        calendarIcon()
       ),
       tosiSelect({
         part: 'month',
@@ -484,7 +486,7 @@ export class TosiMonth extends withAttributes({
           title: 'next month',
           onClick: this.nextMonth,
         },
-        icons.chevronRight()
+        chevronRightIcon()
       )
     ),
     div({ part: 'week' }),

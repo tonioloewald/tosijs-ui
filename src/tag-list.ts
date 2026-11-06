@@ -176,7 +176,7 @@ import {
 } from 'tosijs'
 import { tagColors } from './tag-colors.js'
 import { popMenu, MenuItem, MenuAction } from './menu.js'
-import { icons } from './icons.js'
+import { chevronDown as chevronDownIcon } from './icons/chevronDown.js'
 
 const { div, input, button } = elements
 
@@ -481,7 +481,7 @@ export class TosiTagList extends withAttributes({
         // function at hydration, so a replacement made after connection did nothing (#172).
         onClick: () => this.popSelectMenu(),
       },
-      icons.chevronDown()
+      chevronDownIcon()
     ),
   ]
 

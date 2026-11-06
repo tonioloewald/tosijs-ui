@@ -148,7 +148,9 @@ form.addEventListener('reset', () => {
 /*{ "headTitle": "<tosi-month> calendar and date picker — tosijs-ui", "parent": "Form Components", "description": "<tosi-month> shows a calendar month and, when selectable, lets readers pick a date or a date range: a friendlier date picker." }*/
 import { elements, varDefault, withAttributes } from 'tosijs';
 import { tosiSelect } from './select.js';
-import { icons } from './icons.js';
+import { chevronLeft as chevronLeftIcon } from './icons/chevronLeft.js';
+import { calendar as calendarIcon } from './icons/calendar.js';
+import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
 import { popMenu } from './menu.js';
 const { div, span, button } = elements;
 const DAY_MS = 24 * 3600 * 1000;
@@ -417,11 +419,11 @@ export class TosiMonth extends withAttributes({
             part: 'previous',
             title: 'previous month',
             onClick: this.previousMonth,
-        }, icons.chevronLeft()), span({ style: { flex: '1' } }), button({
+        }, chevronLeftIcon()), span({ style: { flex: '1' } }), button({
             part: 'jump',
             title: 'go to date',
             onClick: this.jumpMenu,
-        }, icons.calendar()), tosiSelect({
+        }, calendarIcon()), tosiSelect({
             part: 'month',
             title: 'month',
             options: this.months,
@@ -435,7 +437,7 @@ export class TosiMonth extends withAttributes({
             part: 'next',
             title: 'next month',
             onClick: this.nextMonth,
-        }, icons.chevronRight())),
+        }, chevronRightIcon())),
         div({ part: 'week' }),
         div({ part: 'days' }),
     ];

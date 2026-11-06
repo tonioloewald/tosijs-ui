@@ -165,7 +165,7 @@ Placeholder shown on input field.
 import { elements, vars, varDefault, deprecated, StyleSheet, withAttributes, } from 'tosijs';
 import { tagColors } from './tag-colors.js';
 import { popMenu } from './menu.js';
-import { icons } from './icons.js';
+import { chevronDown as chevronDownIcon } from './icons/chevronDown.js';
 const { div, input, button } = elements;
 // Tags are serialised as a comma-delimited string (the form `value`). A
 // literal comma inside a tag is escaped as `\,` so it survives the
@@ -428,7 +428,7 @@ export class TosiTagList extends withAttributes({
             // documented "replace this method" hook, and passing the property captured the ORIGINAL
             // function at hydration, so a replacement made after connection did nothing (#172).
             onClick: () => this.popSelectMenu(),
-        }, icons.chevronDown()),
+        }, chevronDownIcon()),
     ];
     removeTag = (event) => {
         if (this.editable && !this.disabled) {

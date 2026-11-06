@@ -13,7 +13,7 @@ cdn
 #
 # If a generated file's style bothers you, change the GENERATOR (bin/make-icon-data.js),
 # not the output.
-src/icons/data/
+src/icons/
 src/icon-data.ts
 src/version.ts
 demo/docs.json

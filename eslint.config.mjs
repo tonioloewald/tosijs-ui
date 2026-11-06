@@ -53,7 +53,7 @@ export default tseslint.config(
       'node_modules/',
       'www/',
       'cdn/',
-      'src/icons/data/',
+      'src/icons/',
       'src/icon-data.ts',
       'src/version.ts',
       'playwright-report/',

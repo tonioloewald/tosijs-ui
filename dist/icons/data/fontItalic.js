@@ -1,1 +1,1 @@
-export const fontItalic = "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><g><path style=\"\" d=\"M17.00,4.50 C17.00,4.50,13.00,4.50,13.00,4.50\"/><path style=\"\" d=\"M11.00,19.50 C11.00,19.50,7.00,19.50,7.00,19.50\"/><path style=\"\" d=\"M15.00,4.50 C15.00,4.50,9.00,19.50,9.00,19.50\"/></g></svg> ";
+export const fontItalic = "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><g><path d=\"M17,4.5 C17,4.5,13,4.5,13,4.5\"/><path d=\"M11,19.5 C11,19.5,7,19.5,7,19.5\"/><path d=\"M15,4.5 C15,4.5,9,19.5,9,19.5\"/></g></svg> ";

@@ -288,7 +288,7 @@ How many hints are currently listed (0 when the list is closed).
 import { elements, vars, varDefault, StyleSheet, withAttributes, } from 'tosijs';
 import { popFloat } from './pop-float.js';
 import { tosiTag, TosiTag } from './tag.js';
-import { icons } from './icons.js';
+import { x as xIcon } from './icons/x.js';
 import { tagColors } from './tag-colors.js';
 const { div, input, button } = elements;
 /*
@@ -587,7 +587,7 @@ export class TosiSearchField extends withAttributes({
             ariaLabel: 'Clear search',
             hidden: true,
             onClick: this.handleClear,
-        }, icons.x()),
+        }, xIcon()),
     ];
     constructor() {
         super();

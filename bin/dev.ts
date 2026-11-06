@@ -102,7 +102,7 @@ const config = {
       await Bun.write('src/version.ts', versionSrc)
     }
     console.log(pkg.version)
-    await $`bun ./bin/make-icon-data.js`.text()
+    await $`bun ./bin/make-icon-data.js --modules ./src/icons/data --creators ./src/icons --core ../icon-core.js`.text()
   },
 }
 

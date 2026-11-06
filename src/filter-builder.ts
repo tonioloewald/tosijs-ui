@@ -153,7 +153,9 @@ import {
   PartsMap,
   withAttributes,
 } from 'tosijs'
-import { icons } from './icons.js'
+import { trash as trashIcon } from './icons/trash.js'
+import { plus as plusIcon } from './icons/plus.js'
+import { x as xIcon } from './icons/x.js'
 import { tosiSelect, TosiSelect, SelectOption } from './select.js'
 
 const { div, input, button, span } = elements
@@ -357,7 +359,7 @@ export class FilterPart extends withAttributes({
     tosiSelect({ part: 'condition', title: 'condition' }),
     input({ part: 'needle', type: 'search', title: 'value' }),
     span({ part: 'padding' }),
-    button({ part: 'remove', title: 'delete' }, icons.trash()),
+    button({ part: 'remove', title: 'delete' }, trashIcon()),
   ]
 
   filter: Filter = passAnything
@@ -569,12 +571,12 @@ export class FilterBuilder extends WebComponent<FilterBuilderParts> {
         onClick: this.addFilter,
         class: 'round',
       },
-      icons.plus()
+      plusIcon()
     ),
     div({ part: 'filterContainer' }),
     button(
       { part: 'reset', title: 'reset filter', onClick: this.reset },
-      icons.x()
+      xIcon()
     ),
   ]
 

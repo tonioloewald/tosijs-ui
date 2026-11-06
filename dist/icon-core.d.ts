@@ -1,0 +1,46 @@
+import { ElementCreator, ElementPart } from 'tosijs';
+import { SVGIconMap, IconCreator } from './icon-types.js';
+export { iconRules, type IconRule } from './icon-rules.js';
+export declare const defineIcons: (newIcons: {
+    [key: string]: string;
+}) => void;
+export type { IconElement, IconName, SVGIconMap, IconCreator, } from './icon-types.js';
+export declare const svg2DataUrl: (icon: Element, fill?: string, stroke?: string, strokeWidth?: number) => string;
+/** Wrap icon elements in a composite container (for custom function rules) */
+export declare function wrapIcon(prop: string, parts: ElementPart[], ...children: Element[]): HTMLSpanElement;
+/** Resolve an icon name through the full pipeline (redirects, suffixes, rules, stacking) */
+export declare function resolveIcon(prop: string, parts: ElementPart[]): Element;
+export declare function iconCreator(name: string, spec: string): IconCreator;
+export declare const icons: SVGIconMap;
+declare const SvgIcon_base: import("tosijs").WithAttributes<{
+    icon: string;
+    size: number;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+}>;
+export declare class SvgIcon extends SvgIcon_base {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            '--tosi-icon-size': string;
+            '--tosi-icon-stroke-width': string;
+            '--tosi-icon-stroke-linejoin': string;
+            '--tosi-icon-stroke-linecap': string;
+            '--tosi-icon-fill': string;
+            display: string;
+            verticalAlign: string;
+            stroke: string;
+            strokeWidth: string;
+            strokeLinejoin: string;
+            strokeLinecap: string;
+            fill: string;
+            height: string;
+        };
+        ':host svg, :host .tosi-icon-composite': {
+            height: string;
+        };
+    };
+    render(): void;
+}
+export declare const svgIcon: ElementCreator<SvgIcon>;

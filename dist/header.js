@@ -89,7 +89,11 @@ preview.append(
 */
 /*{ "headTitle": "<tosi-header> flex header bar — tosijs-ui", "parent": "Components", "description": "<tosi-header> is a flex header bar; compose it with elastic() and spacer() to place a title, links and menus where you want them." }*/
 import { Component, elements, varDefault } from 'tosijs';
-import { icons } from './icons.js';
+import { tosi as tosiIcon } from './icons/tosi.js';
+import { discord as discordIcon } from './icons/discord.js';
+import { blog as blogIcon } from './icons/blog.js';
+import { github as githubIcon } from './icons/github.js';
+import { npm as npmIcon } from './icons/npm.js';
 const { a } = elements;
 // ============================================================================
 // Header Component
@@ -114,11 +118,11 @@ export class TosiHeader extends Component {
 }
 export const tosiHeader = TosiHeader.elementCreator();
 const linkIcons = {
-    tosijs: () => icons.tosi(),
-    discord: () => icons.discord(),
-    blog: () => icons.blog(),
-    github: () => icons.github(),
-    npm: () => icons.npm(),
+    tosijs: () => tosiIcon(),
+    discord: () => discordIcon(),
+    blog: () => blogIcon(),
+    github: () => githubIcon(),
+    npm: () => npmIcon(),
 };
 export class TosiHeaderLinks extends Component {
     static preferredTagName = 'tosi-header-links';

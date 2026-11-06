@@ -145,7 +145,9 @@ interface FilterMaker {
 */
 /*{ "headTitle": "<tosi-filter> query and filter builder — tosijs-ui", "parent": "Form Components", "description": "<tosi-filter> builds array filter functions from a Finder-style query editor, with extensible filter types and a state you can save as JSON." }*/
 import { Component as WebComponent, elements, withAttributes, } from 'tosijs';
-import { icons } from './icons.js';
+import { trash as trashIcon } from './icons/trash.js';
+import { plus as plusIcon } from './icons/plus.js';
+import { x as xIcon } from './icons/x.js';
 import { tosiSelect } from './select.js';
 const { div, input, button, span } = elements;
 const passThru = (array) => array;
@@ -304,7 +306,7 @@ export class FilterPart extends withAttributes({
         tosiSelect({ part: 'condition', title: 'condition' }),
         input({ part: 'needle', type: 'search', title: 'value' }),
         span({ part: 'padding' }),
-        button({ part: 'remove', title: 'delete' }, icons.trash()),
+        button({ part: 'remove', title: 'delete' }, trashIcon()),
     ];
     filter = passAnything;
     get state() {
@@ -465,9 +467,9 @@ export class FilterBuilder extends WebComponent {
             title: 'add filter condition',
             onClick: this.addFilter,
             class: 'round',
-        }, icons.plus()),
+        }, plusIcon()),
         div({ part: 'filterContainer' }),
-        button({ part: 'reset', title: 'reset filter', onClick: this.reset }, icons.x()),
+        button({ part: 'reset', title: 'reset filter', onClick: this.reset }, xIcon()),
     ];
     filters = availableFilters;
     reset = () => {

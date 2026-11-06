@@ -35,9 +35,13 @@ Deliberately a separate module from `icons.ts`: that one imports tosijs to build
 importing it drags in code that needs `HTMLElement` and throws in a build script, the exact
 context that wanted the markup. This module imports nothing but the data and the grammars.
 */
-import iconData from './icon-data.js';
+// The whole set, built from the same per-icon modules components import one at a time.
+import builtInIcons from './icons/data/index.js';
+import { iconData, registerAllIcons } from './icon-store.js';
 import { suffixNumber } from './icon-suffixes.js';
 import { canResolve, ruleDraws, suffixedIcon } from './icon-rules.js';
+// Markup for any built-in name, so this carries the whole set.
+registerAllIcons(builtInIcons);
 const data = iconData;
 // Rotation and flip, the only suffixes the built-in redirects use (`chevronDown` is
 // `chevronRight90r`). Anything else needs the DOM renderer.

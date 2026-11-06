@@ -4,7 +4,7 @@ tag-list page. Its own module so importing a chip does not import the tag list's
 `tag-list.ts` re-exports everything here.
 */
 import { elements, vars, varDefault, deprecated, withAttributes, } from 'tosijs';
-import { icons } from './icons.js';
+import { x as xIcon } from './icons/x.js';
 const { span, button } = elements;
 export class TosiTag extends withAttributes({
     caption: '',
@@ -61,7 +61,7 @@ export class TosiTag extends withAttributes({
     };
     content = () => [
         span({ part: 'caption' }, this.caption),
-        button(icons.x(), {
+        button(xIcon(), {
             type: 'button',
             part: 'remove',
             hidden: !this.removeable,

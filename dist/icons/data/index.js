@@ -1,313 +1,643 @@
-export { activity } from './activity.js';
-export { airplay } from './airplay.js';
-export { alertCircle } from './alertCircle.js';
-export { alertOctagon } from './alertOctagon.js';
-export { alertTriangle } from './alertTriangle.js';
-export { alignCenter } from './alignCenter.js';
-export { alignJustify } from './alignJustify.js';
-export { alignLeft } from './alignLeft.js';
-export { alignRight } from './alignRight.js';
-export { anchor } from './anchor.js';
-export { aperture } from './aperture.js';
-export { archive } from './archive.js';
-export { arrowDown } from './arrowDown.js';
-export { arrowDownCircle } from './arrowDownCircle.js';
-export { arrowDownLeft } from './arrowDownLeft.js';
-export { arrowDownRight } from './arrowDownRight.js';
-export { arrowLeft } from './arrowLeft.js';
-export { arrowLeftCircle } from './arrowLeftCircle.js';
-export { arrowRight } from './arrowRight.js';
-export { arrowRightCircle } from './arrowRightCircle.js';
-export { arrowUp } from './arrowUp.js';
-export { arrowUpCircle } from './arrowUpCircle.js';
-export { arrowUpLeft } from './arrowUpLeft.js';
-export { arrowUpRight } from './arrowUpRight.js';
-export { atSign } from './atSign.js';
-export { award } from './award.js';
-export { barChart } from './barChart.js';
-export { barChart2 } from './barChart2.js';
-export { battery } from './battery.js';
-export { batteryCharging } from './batteryCharging.js';
-export { bell } from './bell.js';
-export { bellOff } from './bellOff.js';
-export { blog } from './blog.js';
-export { blueprint } from './blueprint.js';
-export { bluetooth } from './bluetooth.js';
-export { bold } from './bold.js';
-export { book } from './book.js';
-export { bookOpen } from './bookOpen.js';
-export { bookmark } from './bookmark.js';
-export { box } from './box.js';
-export { briefcase } from './briefcase.js';
-export { bug } from './bug.js';
-export { calendar } from './calendar.js';
-export { camera } from './camera.js';
-export { cameraOff } from './cameraOff.js';
-export { cast } from './cast.js';
-export { check } from './check.js';
-export { checkCircle } from './checkCircle.js';
-export { checkSquare } from './checkSquare.js';
-export { chevronDown } from './chevronDown.js';
-export { chevronLeft } from './chevronLeft.js';
-export { chevronRight } from './chevronRight.js';
-export { chevronUp } from './chevronUp.js';
-export { chevronsDown } from './chevronsDown.js';
-export { chevronsLeft } from './chevronsLeft.js';
-export { chevronsRight } from './chevronsRight.js';
-export { chevronsUp } from './chevronsUp.js';
-export { chrome } from './chrome.js';
-export { circle } from './circle.js';
-export { clipboard } from './clipboard.js';
-export { clock } from './clock.js';
-export { cloud } from './cloud.js';
-export { cloudDrizzle } from './cloudDrizzle.js';
-export { cloudLightning } from './cloudLightning.js';
-export { cloudOff } from './cloudOff.js';
-export { cloudRain } from './cloudRain.js';
-export { cloudSnow } from './cloudSnow.js';
-export { cmy } from './cmy.js';
-export { code } from './code.js';
-export { codepen } from './codepen.js';
-export { codesandbox } from './codesandbox.js';
-export { coffee } from './coffee.js';
-export { columns } from './columns.js';
-export { command } from './command.js';
-export { compass } from './compass.js';
-export { copy } from './copy.js';
-export { cornerDownLeft } from './cornerDownLeft.js';
-export { cornerDownRight } from './cornerDownRight.js';
-export { cornerLeftDown } from './cornerLeftDown.js';
-export { cornerLeftUp } from './cornerLeftUp.js';
-export { cornerRightDown } from './cornerRightDown.js';
-export { cornerRightUp } from './cornerRightUp.js';
-export { cornerUpLeft } from './cornerUpLeft.js';
-export { cornerUpRight } from './cornerUpRight.js';
-export { cpu } from './cpu.js';
-export { creditCard } from './creditCard.js';
-export { crop } from './crop.js';
-export { crosshair } from './crosshair.js';
-export { database } from './database.js';
-export { deleteIcon } from './delete.js';
-export { disc } from './disc.js';
-export { discord } from './discord.js';
-export { divide } from './divide.js';
-export { divideCircle } from './divideCircle.js';
-export { divideSquare } from './divideSquare.js';
-export { dollarSign } from './dollarSign.js';
-export { download } from './download.js';
-export { downloadCloud } from './downloadCloud.js';
-export { dribbble } from './dribbble.js';
-export { droplet } from './droplet.js';
-export { earth } from './earth.js';
-export { edit } from './edit.js';
-export { edit2 } from './edit2.js';
-export { edit3 } from './edit3.js';
-export { externalLink } from './externalLink.js';
-export { eye } from './eye.js';
-export { eyeOff } from './eyeOff.js';
-export { facebook } from './facebook.js';
-export { fastForward } from './fastForward.js';
-export { feather } from './feather.js';
-export { figma } from './figma.js';
-export { file } from './file.js';
-export { fileMinus } from './fileMinus.js';
-export { filePlus } from './filePlus.js';
-export { fileText } from './fileText.js';
-export { film } from './film.js';
-export { filter } from './filter.js';
-export { flag } from './flag.js';
-export { folder } from './folder.js';
-export { folderMinus } from './folderMinus.js';
-export { folderPlus } from './folderPlus.js';
-export { fontBold } from './fontBold.js';
-export { fontItalic } from './fontItalic.js';
-export { fontUnderline } from './fontUnderline.js';
-export { framer } from './framer.js';
-export { frown } from './frown.js';
-export { game } from './game.js';
-export { gift } from './gift.js';
-export { gitBranch } from './gitBranch.js';
-export { gitCommit } from './gitCommit.js';
-export { gitMerge } from './gitMerge.js';
-export { gitPullRequest } from './gitPullRequest.js';
-export { github } from './github.js';
-export { gitlab } from './gitlab.js';
-export { globe } from './globe.js';
-export { google } from './google.js';
-export { grid } from './grid.js';
-export { hardDrive } from './hardDrive.js';
-export { hash } from './hash.js';
-export { headphones } from './headphones.js';
-export { heart } from './heart.js';
-export { helpCircle } from './helpCircle.js';
-export { hexagon } from './hexagon.js';
-export { home } from './home.js';
-export { image } from './image.js';
-export { inbox } from './inbox.js';
-export { indent } from './indent.js';
-export { info } from './info.js';
-export { instagram } from './instagram.js';
-export { italic } from './italic.js';
-export { key } from './key.js';
-export { layers } from './layers.js';
-export { layout } from './layout.js';
-export { lifeBuoy } from './lifeBuoy.js';
-export { link } from './link.js';
-export { link2 } from './link2.js';
-export { linkedin } from './linkedin.js';
-export { list } from './list.js';
-export { listBullet } from './listBullet.js';
-export { listNumber } from './listNumber.js';
-export { loader } from './loader.js';
-export { lock } from './lock.js';
-export { logIn } from './logIn.js';
-export { logOut } from './logOut.js';
-export { mail } from './mail.js';
-export { map } from './map.js';
-export { mapPin } from './mapPin.js';
-export { maximize } from './maximize.js';
-export { maximize2 } from './maximize2.js';
-export { meh } from './meh.js';
-export { menu } from './menu.js';
-export { messageCircle } from './messageCircle.js';
-export { messageSquare } from './messageSquare.js';
-export { mic } from './mic.js';
-export { micOff } from './micOff.js';
-export { minimize } from './minimize.js';
-export { minimize2 } from './minimize2.js';
-export { minus } from './minus.js';
-export { minusCircle } from './minusCircle.js';
-export { minusSquare } from './minusSquare.js';
-export { monitor } from './monitor.js';
-export { moon } from './moon.js';
-export { moreHorizontal } from './moreHorizontal.js';
-export { moreVertical } from './moreVertical.js';
-export { mousePointer } from './mousePointer.js';
-export { move } from './move.js';
-export { music } from './music.js';
-export { navigation } from './navigation.js';
-export { navigation2 } from './navigation2.js';
-export { npm } from './npm.js';
-export { octagon } from './octagon.js';
-export { outdent } from './outdent.js';
-export { packageIcon } from './package.js';
-export { paperclip } from './paperclip.js';
-export { pause } from './pause.js';
-export { pauseCircle } from './pauseCircle.js';
-export { penTool } from './penTool.js';
-export { percent } from './percent.js';
-export { phone } from './phone.js';
-export { phoneCall } from './phoneCall.js';
-export { phoneForwarded } from './phoneForwarded.js';
-export { phoneIncoming } from './phoneIncoming.js';
-export { phoneMissed } from './phoneMissed.js';
-export { phoneOff } from './phoneOff.js';
-export { phoneOutgoing } from './phoneOutgoing.js';
-export { pieChart } from './pieChart.js';
-export { play } from './play.js';
-export { playCircle } from './playCircle.js';
-export { plus } from './plus.js';
-export { plusCircle } from './plusCircle.js';
-export { plusSquare } from './plusSquare.js';
-export { pocket } from './pocket.js';
-export { power } from './power.js';
-export { printer } from './printer.js';
-export { radio } from './radio.js';
-export { refreshCcw } from './refreshCcw.js';
-export { refreshCw } from './refreshCw.js';
-export { repeat } from './repeat.js';
-export { resize } from './resize.js';
-export { rewind } from './rewind.js';
-export { rgb } from './rgb.js';
-export { rotateCcw } from './rotateCcw.js';
-export { rotateCw } from './rotateCw.js';
-export { rss } from './rss.js';
-export { save } from './save.js';
-export { scissors } from './scissors.js';
-export { search } from './search.js';
-export { send } from './send.js';
-export { server } from './server.js';
-export { settings } from './settings.js';
-export { share } from './share.js';
-export { share2 } from './share2.js';
-export { shield } from './shield.js';
-export { shieldOff } from './shieldOff.js';
-export { shoppingBag } from './shoppingBag.js';
-export { shoppingCart } from './shoppingCart.js';
-export { shuffle } from './shuffle.js';
-export { sidebar } from './sidebar.js';
-export { skipBack } from './skipBack.js';
-export { skipForward } from './skipForward.js';
-export { slack } from './slack.js';
-export { slash } from './slash.js';
-export { sliders } from './sliders.js';
-export { smartphone } from './smartphone.js';
-export { smile } from './smile.js';
-export { sortAscending } from './sortAscending.js';
-export { sortDescending } from './sortDescending.js';
-export { speaker } from './speaker.js';
-export { square } from './square.js';
-export { star } from './star.js';
-export { stopCircle } from './stopCircle.js';
-export { sun } from './sun.js';
-export { sunrise } from './sunrise.js';
-export { sunset } from './sunset.js';
-export { table } from './table.js';
-export { tablet } from './tablet.js';
-export { tag } from './tag.js';
-export { target } from './target.js';
-export { terminal } from './terminal.js';
-export { thermometer } from './thermometer.js';
-export { thumbsDown } from './thumbsDown.js';
-export { thumbsUp } from './thumbsUp.js';
-export { toggleLeft } from './toggleLeft.js';
-export { toggleRight } from './toggleRight.js';
-export { tool } from './tool.js';
-export { tosi } from './tosi.js';
-export { tosiFavicon } from './tosiFavicon.js';
-export { tosiPlatform } from './tosiPlatform.js';
-export { tosiUi } from './tosiUi.js';
-export { tosiXr } from './tosiXr.js';
-export { trash } from './trash.js';
-export { trash2 } from './trash2.js';
-export { trello } from './trello.js';
-export { trendingDown } from './trendingDown.js';
-export { trendingUp } from './trendingUp.js';
-export { triangle } from './triangle.js';
-export { truck } from './truck.js';
-export { tv } from './tv.js';
-export { twitch } from './twitch.js';
-export { twitter } from './twitter.js';
-export { type } from './type.js';
-export { umbrella } from './umbrella.js';
-export { underline } from './underline.js';
-export { unlock } from './unlock.js';
-export { upload } from './upload.js';
-export { uploadCloud } from './uploadCloud.js';
-export { user } from './user.js';
-export { userCheck } from './userCheck.js';
-export { userMinus } from './userMinus.js';
-export { userPlus } from './userPlus.js';
-export { userX } from './userX.js';
-export { users } from './users.js';
-export { video } from './video.js';
-export { videoOff } from './videoOff.js';
-export { voicemail } from './voicemail.js';
-export { volume } from './volume.js';
-export { volume1 } from './volume1.js';
-export { volume2 } from './volume2.js';
-export { volumeX } from './volumeX.js';
-export { watch } from './watch.js';
-export { wifi } from './wifi.js';
-export { wifiOff } from './wifiOff.js';
-export { wind } from './wind.js';
-export { x } from './x.js';
-export { xCircle } from './xCircle.js';
-export { xOctagon } from './xOctagon.js';
-export { xSquare } from './xSquare.js';
-export { xrColor } from './xrColor.js';
-export { youtube } from './youtube.js';
-export { zap } from './zap.js';
-export { zapOff } from './zapOff.js';
-export { zoomIn } from './zoomIn.js';
-export { zoomOut } from './zoomOut.js';
+import { blueprint } from './blueprint.js';
+import { earth } from './earth.js';
+import { cmy } from './cmy.js';
+import { rgb } from './rgb.js';
+import { xrColor } from './xrColor.js';
+import { tosiFavicon } from './tosiFavicon.js';
+import { tosiPlatform } from './tosiPlatform.js';
+import { tosiUi } from './tosiUi.js';
+import { tosiXr } from './tosiXr.js';
+import { tosi } from './tosi.js';
+import { discord } from './discord.js';
+import { facebook } from './facebook.js';
+import { game } from './game.js';
+import { google } from './google.js';
+import { npm } from './npm.js';
+import { youtube } from './youtube.js';
+import { blog } from './blog.js';
+import { bug } from './bug.js';
+import { activity } from './activity.js';
+import { airplay } from './airplay.js';
+import { alertCircle } from './alertCircle.js';
+import { alertOctagon } from './alertOctagon.js';
+import { alertTriangle } from './alertTriangle.js';
+import { alignCenter } from './alignCenter.js';
+import { alignJustify } from './alignJustify.js';
+import { alignLeft } from './alignLeft.js';
+import { alignRight } from './alignRight.js';
+import { anchor } from './anchor.js';
+import { aperture } from './aperture.js';
+import { archive } from './archive.js';
+import { arrowUpRight } from './arrowUpRight.js';
+import { atSign } from './atSign.js';
+import { award } from './award.js';
+import { barChart2 } from './barChart2.js';
+import { barChart } from './barChart.js';
+import { batteryCharging } from './batteryCharging.js';
+import { battery } from './battery.js';
+import { bellOff } from './bellOff.js';
+import { bell } from './bell.js';
+import { bluetooth } from './bluetooth.js';
+import { bold } from './bold.js';
+import { bookOpen } from './bookOpen.js';
+import { book } from './book.js';
+import { bookmark } from './bookmark.js';
+import { box } from './box.js';
+import { briefcase } from './briefcase.js';
+import { calendar } from './calendar.js';
+import { cameraOff } from './cameraOff.js';
+import { camera } from './camera.js';
+import { cast } from './cast.js';
+import { checkCircle } from './checkCircle.js';
+import { checkSquare } from './checkSquare.js';
+import { check } from './check.js';
+import { chrome } from './chrome.js';
+import { circle } from './circle.js';
+import { clipboard } from './clipboard.js';
+import { clock } from './clock.js';
+import { cloudDrizzle } from './cloudDrizzle.js';
+import { cloudLightning } from './cloudLightning.js';
+import { cloudOff } from './cloudOff.js';
+import { cloudRain } from './cloudRain.js';
+import { cloudSnow } from './cloudSnow.js';
+import { cloud } from './cloud.js';
+import { code } from './code.js';
+import { codepen } from './codepen.js';
+import { codesandbox } from './codesandbox.js';
+import { coffee } from './coffee.js';
+import { columns } from './columns.js';
+import { command } from './command.js';
+import { compass } from './compass.js';
+import { copy } from './copy.js';
+import { cpu } from './cpu.js';
+import { creditCard } from './creditCard.js';
+import { crop } from './crop.js';
+import { crosshair } from './crosshair.js';
+import { database } from './database.js';
+import { deleteIcon } from './delete.js';
+import { disc } from './disc.js';
+import { divideCircle } from './divideCircle.js';
+import { divideSquare } from './divideSquare.js';
+import { divide } from './divide.js';
+import { dollarSign } from './dollarSign.js';
+import { downloadCloud } from './downloadCloud.js';
+import { download } from './download.js';
+import { dribbble } from './dribbble.js';
+import { droplet } from './droplet.js';
+import { edit2 } from './edit2.js';
+import { edit3 } from './edit3.js';
+import { edit } from './edit.js';
+import { externalLink } from './externalLink.js';
+import { eyeOff } from './eyeOff.js';
+import { eye } from './eye.js';
+import { fastForward } from './fastForward.js';
+import { feather } from './feather.js';
+import { figma } from './figma.js';
+import { fileMinus } from './fileMinus.js';
+import { filePlus } from './filePlus.js';
+import { fileText } from './fileText.js';
+import { file } from './file.js';
+import { film } from './film.js';
+import { filter } from './filter.js';
+import { flag } from './flag.js';
+import { folderMinus } from './folderMinus.js';
+import { folderPlus } from './folderPlus.js';
+import { folder } from './folder.js';
+import { framer } from './framer.js';
+import { frown } from './frown.js';
+import { gift } from './gift.js';
+import { gitBranch } from './gitBranch.js';
+import { gitCommit } from './gitCommit.js';
+import { gitMerge } from './gitMerge.js';
+import { gitPullRequest } from './gitPullRequest.js';
+import { github } from './github.js';
+import { gitlab } from './gitlab.js';
+import { globe } from './globe.js';
+import { grid } from './grid.js';
+import { hardDrive } from './hardDrive.js';
+import { hash } from './hash.js';
+import { headphones } from './headphones.js';
+import { heart } from './heart.js';
+import { helpCircle } from './helpCircle.js';
+import { hexagon } from './hexagon.js';
+import { home } from './home.js';
+import { image } from './image.js';
+import { inbox } from './inbox.js';
+import { info } from './info.js';
+import { instagram } from './instagram.js';
+import { italic } from './italic.js';
+import { key } from './key.js';
+import { layers } from './layers.js';
+import { layout } from './layout.js';
+import { lifeBuoy } from './lifeBuoy.js';
+import { link2 } from './link2.js';
+import { link } from './link.js';
+import { linkedin } from './linkedin.js';
+import { list } from './list.js';
+import { loader } from './loader.js';
+import { lock } from './lock.js';
+import { logIn } from './logIn.js';
+import { logOut } from './logOut.js';
+import { mail } from './mail.js';
+import { mapPin } from './mapPin.js';
+import { map } from './map.js';
+import { maximize2 } from './maximize2.js';
+import { maximize } from './maximize.js';
+import { meh } from './meh.js';
+import { menu } from './menu.js';
+import { messageCircle } from './messageCircle.js';
+import { messageSquare } from './messageSquare.js';
+import { micOff } from './micOff.js';
+import { mic } from './mic.js';
+import { minimize2 } from './minimize2.js';
+import { minimize } from './minimize.js';
+import { minusCircle } from './minusCircle.js';
+import { minusSquare } from './minusSquare.js';
+import { minus } from './minus.js';
+import { monitor } from './monitor.js';
+import { moon } from './moon.js';
+import { moreHorizontal } from './moreHorizontal.js';
+import { moreVertical } from './moreVertical.js';
+import { mousePointer } from './mousePointer.js';
+import { move } from './move.js';
+import { music } from './music.js';
+import { navigation2 } from './navigation2.js';
+import { navigation } from './navigation.js';
+import { octagon } from './octagon.js';
+import { packageIcon } from './package.js';
+import { paperclip } from './paperclip.js';
+import { pauseCircle } from './pauseCircle.js';
+import { pause } from './pause.js';
+import { penTool } from './penTool.js';
+import { percent } from './percent.js';
+import { phoneCall } from './phoneCall.js';
+import { phoneForwarded } from './phoneForwarded.js';
+import { phoneIncoming } from './phoneIncoming.js';
+import { phoneMissed } from './phoneMissed.js';
+import { phoneOff } from './phoneOff.js';
+import { phoneOutgoing } from './phoneOutgoing.js';
+import { phone } from './phone.js';
+import { pieChart } from './pieChart.js';
+import { playCircle } from './playCircle.js';
+import { play } from './play.js';
+import { plusCircle } from './plusCircle.js';
+import { plusSquare } from './plusSquare.js';
+import { plus } from './plus.js';
+import { pocket } from './pocket.js';
+import { power } from './power.js';
+import { printer } from './printer.js';
+import { radio } from './radio.js';
+import { repeat } from './repeat.js';
+import { rewind } from './rewind.js';
+import { cornerDownRight } from './cornerDownRight.js';
+import { cornerRightDown } from './cornerRightDown.js';
+import { cornerRightUp } from './cornerRightUp.js';
+import { cornerUpRight } from './cornerUpRight.js';
+import { refreshCw } from './refreshCw.js';
+import { rotateCw } from './rotateCw.js';
+import { skipForward } from './skipForward.js';
+import { toggleRight } from './toggleRight.js';
+import { rss } from './rss.js';
+import { save } from './save.js';
+import { scissors } from './scissors.js';
+import { search } from './search.js';
+import { send } from './send.js';
+import { server } from './server.js';
+import { settings } from './settings.js';
+import { share2 } from './share2.js';
+import { share } from './share.js';
+import { shieldOff } from './shieldOff.js';
+import { shield } from './shield.js';
+import { shoppingBag } from './shoppingBag.js';
+import { shoppingCart } from './shoppingCart.js';
+import { shuffle } from './shuffle.js';
+import { sidebar } from './sidebar.js';
+import { slack } from './slack.js';
+import { slash } from './slash.js';
+import { sliders } from './sliders.js';
+import { smartphone } from './smartphone.js';
+import { smile } from './smile.js';
+import { speaker } from './speaker.js';
+import { square } from './square.js';
+import { star } from './star.js';
+import { stopCircle } from './stopCircle.js';
+import { sun } from './sun.js';
+import { sunrise } from './sunrise.js';
+import { sunset } from './sunset.js';
+import { table } from './table.js';
+import { tablet } from './tablet.js';
+import { tag } from './tag.js';
+import { target } from './target.js';
+import { terminal } from './terminal.js';
+import { thermometer } from './thermometer.js';
+import { tool } from './tool.js';
+import { trash2 } from './trash2.js';
+import { trash } from './trash.js';
+import { trello } from './trello.js';
+import { trendingDown } from './trendingDown.js';
+import { trendingUp } from './trendingUp.js';
+import { triangle } from './triangle.js';
+import { truck } from './truck.js';
+import { tv } from './tv.js';
+import { twitch } from './twitch.js';
+import { twitter } from './twitter.js';
+import { type } from './type.js';
+import { umbrella } from './umbrella.js';
+import { underline } from './underline.js';
+import { unlock } from './unlock.js';
+import { thumbsUp } from './thumbsUp.js';
+import { arrowRightCircle } from './arrowRightCircle.js';
+import { arrowRight } from './arrowRight.js';
+import { chevronRight } from './chevronRight.js';
+import { chevronsRight } from './chevronsRight.js';
+import { uploadCloud } from './uploadCloud.js';
+import { upload } from './upload.js';
+import { userCheck } from './userCheck.js';
+import { userMinus } from './userMinus.js';
+import { userPlus } from './userPlus.js';
+import { userX } from './userX.js';
+import { user } from './user.js';
+import { users } from './users.js';
+import { videoOff } from './videoOff.js';
+import { video } from './video.js';
+import { voicemail } from './voicemail.js';
+import { volume1 } from './volume1.js';
+import { volume2 } from './volume2.js';
+import { volumeX } from './volumeX.js';
+import { volume } from './volume.js';
+import { watch } from './watch.js';
+import { wifiOff } from './wifiOff.js';
+import { wifi } from './wifi.js';
+import { wind } from './wind.js';
+import { xCircle } from './xCircle.js';
+import { xOctagon } from './xOctagon.js';
+import { xSquare } from './xSquare.js';
+import { x } from './x.js';
+import { zapOff } from './zapOff.js';
+import { zap } from './zap.js';
+import { zoomIn } from './zoomIn.js';
+import { zoomOut } from './zoomOut.js';
+import { fontBold } from './fontBold.js';
+import { fontItalic } from './fontItalic.js';
+import { fontUnderline } from './fontUnderline.js';
+import { indent } from './indent.js';
+import { listBullet } from './listBullet.js';
+import { listNumber } from './listNumber.js';
+import { outdent } from './outdent.js';
+import { pin } from './pin.js';
+import { resize } from './resize.js';
+import { shift } from './shift.js';
+import { sortAscending } from './sortAscending.js';
+import { sortDescending } from './sortDescending.js';
+import { tab } from './tab.js';
+import { cornerDownLeft } from './cornerDownLeft.js';
+import { cornerLeftDown } from './cornerLeftDown.js';
+import { cornerLeftUp } from './cornerLeftUp.js';
+import { cornerUpLeft } from './cornerUpLeft.js';
+import { refreshCcw } from './refreshCcw.js';
+import { rotateCcw } from './rotateCcw.js';
+import { skipBack } from './skipBack.js';
+import { toggleLeft } from './toggleLeft.js';
+import { thumbsDown } from './thumbsDown.js';
+import { arrowDownCircle } from './arrowDownCircle.js';
+import { arrowLeftCircle } from './arrowLeftCircle.js';
+import { arrowUpCircle } from './arrowUpCircle.js';
+import { arrowDown } from './arrowDown.js';
+import { arrowLeft } from './arrowLeft.js';
+import { arrowUp } from './arrowUp.js';
+import { chevronDown } from './chevronDown.js';
+import { chevronLeft } from './chevronLeft.js';
+import { chevronUp } from './chevronUp.js';
+import { chevronsDown } from './chevronsDown.js';
+import { chevronsLeft } from './chevronsLeft.js';
+import { chevronsUp } from './chevronsUp.js';
+import { arrowDownRight } from './arrowDownRight.js';
+import { arrowDownLeft } from './arrowDownLeft.js';
+import { arrowUpLeft } from './arrowUpLeft.js';
+import { fatArrowUp } from './fatArrowUp.js';
+import { fatArrowRight } from './fatArrowRight.js';
+import { fatArrowDown } from './fatArrowDown.js';
+import { fatArrowLeft } from './fatArrowLeft.js';
+export { blueprint, earth, cmy, rgb, xrColor, tosiFavicon, tosiPlatform, tosiUi, tosiXr, tosi, discord, facebook, game, google, npm, youtube, blog, bug, activity, airplay, alertCircle, alertOctagon, alertTriangle, alignCenter, alignJustify, alignLeft, alignRight, anchor, aperture, archive, arrowUpRight, atSign, award, barChart2, barChart, batteryCharging, battery, bellOff, bell, bluetooth, bold, bookOpen, book, bookmark, box, briefcase, calendar, cameraOff, camera, cast, checkCircle, checkSquare, check, chrome, circle, clipboard, clock, cloudDrizzle, cloudLightning, cloudOff, cloudRain, cloudSnow, cloud, code, codepen, codesandbox, coffee, columns, command, compass, copy, cpu, creditCard, crop, crosshair, database, deleteIcon, disc, divideCircle, divideSquare, divide, dollarSign, downloadCloud, download, dribbble, droplet, edit2, edit3, edit, externalLink, eyeOff, eye, fastForward, feather, figma, fileMinus, filePlus, fileText, file, film, filter, flag, folderMinus, folderPlus, folder, framer, frown, gift, gitBranch, gitCommit, gitMerge, gitPullRequest, github, gitlab, globe, grid, hardDrive, hash, headphones, heart, helpCircle, hexagon, home, image, inbox, info, instagram, italic, key, layers, layout, lifeBuoy, link2, link, linkedin, list, loader, lock, logIn, logOut, mail, mapPin, map, maximize2, maximize, meh, menu, messageCircle, messageSquare, micOff, mic, minimize2, minimize, minusCircle, minusSquare, minus, monitor, moon, moreHorizontal, moreVertical, mousePointer, move, music, navigation2, navigation, octagon, packageIcon, paperclip, pauseCircle, pause, penTool, percent, phoneCall, phoneForwarded, phoneIncoming, phoneMissed, phoneOff, phoneOutgoing, phone, pieChart, playCircle, play, plusCircle, plusSquare, plus, pocket, power, printer, radio, repeat, rewind, cornerDownRight, cornerRightDown, cornerRightUp, cornerUpRight, refreshCw, rotateCw, skipForward, toggleRight, rss, save, scissors, search, send, server, settings, share2, share, shieldOff, shield, shoppingBag, shoppingCart, shuffle, sidebar, slack, slash, sliders, smartphone, smile, speaker, square, star, stopCircle, sun, sunrise, sunset, table, tablet, tag, target, terminal, thermometer, tool, trash2, trash, trello, trendingDown, trendingUp, triangle, truck, tv, twitch, twitter, type, umbrella, underline, unlock, thumbsUp, arrowRightCircle, arrowRight, chevronRight, chevronsRight, uploadCloud, upload, userCheck, userMinus, userPlus, userX, user, users, videoOff, video, voicemail, volume1, volume2, volumeX, volume, watch, wifiOff, wifi, wind, xCircle, xOctagon, xSquare, x, zapOff, zap, zoomIn, zoomOut, fontBold, fontItalic, fontUnderline, indent, listBullet, listNumber, outdent, pin, resize, shift, sortAscending, sortDescending, tab, cornerDownLeft, cornerLeftDown, cornerLeftUp, cornerUpLeft, refreshCcw, rotateCcw, skipBack, toggleLeft, thumbsDown, arrowDownCircle, arrowLeftCircle, arrowUpCircle, arrowDown, arrowLeft, arrowUp, chevronDown, chevronLeft, chevronUp, chevronsDown, chevronsLeft, chevronsUp, arrowDownRight, arrowDownLeft, arrowUpLeft, fatArrowUp, fatArrowRight, fatArrowDown, fatArrowLeft, };
+export default {
+    blueprint,
+    earth,
+    cmy,
+    rgb,
+    xrColor,
+    tosiFavicon,
+    tosiPlatform,
+    tosiUi,
+    tosiXr,
+    tosi,
+    discord,
+    facebook,
+    game,
+    google,
+    npm,
+    youtube,
+    blog,
+    bug,
+    activity,
+    airplay,
+    alertCircle,
+    alertOctagon,
+    alertTriangle,
+    alignCenter,
+    alignJustify,
+    alignLeft,
+    alignRight,
+    anchor,
+    aperture,
+    archive,
+    arrowUpRight,
+    atSign,
+    award,
+    barChart2,
+    barChart,
+    batteryCharging,
+    battery,
+    bellOff,
+    bell,
+    bluetooth,
+    bold,
+    bookOpen,
+    book,
+    bookmark,
+    box,
+    briefcase,
+    calendar,
+    cameraOff,
+    camera,
+    cast,
+    checkCircle,
+    checkSquare,
+    check,
+    chrome,
+    circle,
+    clipboard,
+    clock,
+    cloudDrizzle,
+    cloudLightning,
+    cloudOff,
+    cloudRain,
+    cloudSnow,
+    cloud,
+    code,
+    codepen,
+    codesandbox,
+    coffee,
+    columns,
+    command,
+    compass,
+    copy,
+    cpu,
+    creditCard,
+    crop,
+    crosshair,
+    database,
+    delete: deleteIcon,
+    disc,
+    divideCircle,
+    divideSquare,
+    divide,
+    dollarSign,
+    downloadCloud,
+    download,
+    dribbble,
+    droplet,
+    edit2,
+    edit3,
+    edit,
+    externalLink,
+    eyeOff,
+    eye,
+    fastForward,
+    feather,
+    figma,
+    fileMinus,
+    filePlus,
+    fileText,
+    file,
+    film,
+    filter,
+    flag,
+    folderMinus,
+    folderPlus,
+    folder,
+    framer,
+    frown,
+    gift,
+    gitBranch,
+    gitCommit,
+    gitMerge,
+    gitPullRequest,
+    github,
+    gitlab,
+    globe,
+    grid,
+    hardDrive,
+    hash,
+    headphones,
+    heart,
+    helpCircle,
+    hexagon,
+    home,
+    image,
+    inbox,
+    info,
+    instagram,
+    italic,
+    key,
+    layers,
+    layout,
+    lifeBuoy,
+    link2,
+    link,
+    linkedin,
+    list,
+    loader,
+    lock,
+    logIn,
+    logOut,
+    mail,
+    mapPin,
+    map,
+    maximize2,
+    maximize,
+    meh,
+    menu,
+    messageCircle,
+    messageSquare,
+    micOff,
+    mic,
+    minimize2,
+    minimize,
+    minusCircle,
+    minusSquare,
+    minus,
+    monitor,
+    moon,
+    moreHorizontal,
+    moreVertical,
+    mousePointer,
+    move,
+    music,
+    navigation2,
+    navigation,
+    octagon,
+    package: packageIcon,
+    paperclip,
+    pauseCircle,
+    pause,
+    penTool,
+    percent,
+    phoneCall,
+    phoneForwarded,
+    phoneIncoming,
+    phoneMissed,
+    phoneOff,
+    phoneOutgoing,
+    phone,
+    pieChart,
+    playCircle,
+    play,
+    plusCircle,
+    plusSquare,
+    plus,
+    pocket,
+    power,
+    printer,
+    radio,
+    repeat,
+    rewind,
+    cornerDownRight,
+    cornerRightDown,
+    cornerRightUp,
+    cornerUpRight,
+    refreshCw,
+    rotateCw,
+    skipForward,
+    toggleRight,
+    rss,
+    save,
+    scissors,
+    search,
+    send,
+    server,
+    settings,
+    share2,
+    share,
+    shieldOff,
+    shield,
+    shoppingBag,
+    shoppingCart,
+    shuffle,
+    sidebar,
+    slack,
+    slash,
+    sliders,
+    smartphone,
+    smile,
+    speaker,
+    square,
+    star,
+    stopCircle,
+    sun,
+    sunrise,
+    sunset,
+    table,
+    tablet,
+    tag,
+    target,
+    terminal,
+    thermometer,
+    tool,
+    trash2,
+    trash,
+    trello,
+    trendingDown,
+    trendingUp,
+    triangle,
+    truck,
+    tv,
+    twitch,
+    twitter,
+    type,
+    umbrella,
+    underline,
+    unlock,
+    thumbsUp,
+    arrowRightCircle,
+    arrowRight,
+    chevronRight,
+    chevronsRight,
+    uploadCloud,
+    upload,
+    userCheck,
+    userMinus,
+    userPlus,
+    userX,
+    user,
+    users,
+    videoOff,
+    video,
+    voicemail,
+    volume1,
+    volume2,
+    volumeX,
+    volume,
+    watch,
+    wifiOff,
+    wifi,
+    wind,
+    xCircle,
+    xOctagon,
+    xSquare,
+    x,
+    zapOff,
+    zap,
+    zoomIn,
+    zoomOut,
+    fontBold,
+    fontItalic,
+    fontUnderline,
+    indent,
+    listBullet,
+    listNumber,
+    outdent,
+    pin,
+    resize,
+    shift,
+    sortAscending,
+    sortDescending,
+    tab,
+    cornerDownLeft,
+    cornerLeftDown,
+    cornerLeftUp,
+    cornerUpLeft,
+    refreshCcw,
+    rotateCcw,
+    skipBack,
+    toggleLeft,
+    thumbsDown,
+    arrowDownCircle,
+    arrowLeftCircle,
+    arrowUpCircle,
+    arrowDown,
+    arrowLeft,
+    arrowUp,
+    chevronDown,
+    chevronLeft,
+    chevronUp,
+    chevronsDown,
+    chevronsLeft,
+    chevronsUp,
+    arrowDownRight,
+    arrowDownLeft,
+    arrowUpLeft,
+    fatArrowUp,
+    fatArrowRight,
+    fatArrowDown,
+    fatArrowLeft,
+};

@@ -14,6 +14,15 @@ Ingests SVG files from icon directories and generates an icon-data module
 - `--input <dir1,dir2,...>` — directories to scan (default: `./icons`)
 - `--output <path>` — output file (default: `./src/icon-data.ts`)
 - `--optimize <true|false>` — round coordinates based on viewBox size (default: true)
+- `--modules <dir>` — also write one module per icon into `dir` (`export const name = '…'`),
+  plus an `index`, so code can import just the icons it draws. tosijs-ui's own build writes
+  `src/icons/data/` this way; files there that are no longer icons are removed.
+- `--creators <dir>` — with `--modules`, also write one module per icon that exports it as a
+  function, `export const chevronDown = iconCreator(…)`, registering it once when it loads.
+  A redirect's module imports the icon it redirects to. tosijs-ui's own build writes
+  `src/icons/` this way, published as `tosijs-ui/icons/<name>`.
+- `--core <specifier>` — where `--creators` modules import `iconCreator` from (default
+  `tosijs-ui/icon-core`)
 
 ### Examples
 

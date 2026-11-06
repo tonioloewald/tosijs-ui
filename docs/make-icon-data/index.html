@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=6841e90c5442" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=c82600b26c04" data-tosi-doc-system />
   <title>make-icon-data — tosijs-ui</title>
   <meta name="description" content="A build tool that turns folders of SVG files into the icon-data module behind the tosijs-ui icon system, optimizing the paths as it goes." />
   <link rel="canonical" href="https://ui.tosijs.net/make-icon-data/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="make-icon-data — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"make-icon-data","description":"A build tool that turns folders of SVG files into the icon-data module behind the tosijs-ui icon system, optimizing the paths as it goes.","url":"https://ui.tosijs.net/make-icon-data/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-05T15:30:49+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"make-icon-data","description":"A build tool that turns folders of SVG files into the icon-data module behind the tosijs-ui icon system, optimizing the paths as it goes.","url":"https://ui.tosijs.net/make-icon-data/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-06T19:10:52.463Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Components","item":"https://ui.tosijs.net/components/"},{"@type":"ListItem","position":2,"name":"icons","item":"https://ui.tosijs.net/icons/"},{"@type":"ListItem","position":3,"name":"make-icon-data","item":"https://ui.tosijs.net/make-icon-data/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e028a3359f10" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=49f3fc5739ee" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="make-icon-data.js">
 <h1 id="make-icon-data">make-icon-data</h1>
 <!--{ "pin": "bottom" }-->
@@ -60,6 +60,15 @@
 <li><code>--input &lt;dir1,dir2,...&gt;</code> — directories to scan (default: <code>./icons</code>)</li>
 <li><code>--output &lt;path&gt;</code> — output file (default: <code>./src/icon-data.ts</code>)</li>
 <li><code>--optimize &lt;true|false&gt;</code> — round coordinates based on viewBox size (default: true)</li>
+<li><code>--modules &lt;dir&gt;</code> — also write one module per icon into <code>dir</code> (<code>export const name = &#39;…&#39;</code>),
+plus an <code>index</code>, so code can import just the icons it draws. tosijs-ui&#39;s own build writes
+<code>src/icons/data/</code> this way; files there that are no longer icons are removed.</li>
+<li><code>--creators &lt;dir&gt;</code> — with <code>--modules</code>, also write one module per icon that exports it as a
+function, <code>export const chevronDown = iconCreator(…)</code>, registering it once when it loads.
+A redirect&#39;s module imports the icon it redirects to. tosijs-ui&#39;s own build writes
+<code>src/icons/</code> this way, published as <code>tosijs-ui/icons/&lt;name&gt;</code>.</li>
+<li><code>--core &lt;specifier&gt;</code> — where <code>--creators</code> modules import <code>iconCreator</code> from (default
+<code>tosijs-ui/icon-core</code>)</li>
 </ul>
 <h3 id="examples">Examples</h3>
 <pre><code>bun run bin/make-icon-data.js
@@ -222,6 +231,6 @@ your prettier config, which it now honours) — not the output.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nygtnspf.js"></script>
+  <script type="module" src="../hydrate-2hst9ybn.js"></script>
 </body>
 </html>

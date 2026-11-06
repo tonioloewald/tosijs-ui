@@ -92,7 +92,11 @@ preview.append(
 
 import { Component, ElementCreator, elements, varDefault } from 'tosijs'
 
-import { icons } from './icons.js'
+import { tosi as tosiIcon } from './icons/tosi.js'
+import { discord as discordIcon } from './icons/discord.js'
+import { blog as blogIcon } from './icons/blog.js'
+import { github as githubIcon } from './icons/github.js'
+import { npm as npmIcon } from './icons/npm.js'
 
 const { a } = elements
 
@@ -138,11 +142,11 @@ export interface HeaderLinks {
 }
 
 const linkIcons: Record<string, () => Element> = {
-  tosijs: () => icons.tosi(),
-  discord: () => icons.discord(),
-  blog: () => icons.blog(),
-  github: () => icons.github(),
-  npm: () => icons.npm(),
+  tosijs: () => tosiIcon(),
+  discord: () => discordIcon(),
+  blog: () => blogIcon(),
+  github: () => githubIcon(),
+  npm: () => npmIcon(),
 }
 
 export class TosiHeaderLinks extends Component {

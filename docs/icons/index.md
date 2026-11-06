@@ -205,6 +205,32 @@ with `--tosi-icon-fill` and `--tosi-icon-stroke`, or per icon with the `F` and `
 (see [Icon modifier suffixes](#icon-modifier-suffixes)). The icon data is generated from a
 directory of SVGs (see [Building icon data](#building-icon-data)).
 
+## Importing only the icons you draw
+
+`icons` carries all of them. To carry only the ones you draw, import each from its own module.
+It exports the icon as a function, the same one `icons.name` gives you:
+
+```js:static
+import { chevronDown } from 'tosijs-ui/icons/chevronDown'
+import { x } from 'tosijs-ui/icons/x'
+
+button(x(), 'Close')
+```
+
+Each module registers its icon once, however many modules import it, and brings any icon it
+is drawn from (`chevronDown` is `chevronRight` turned), so names, suffixes and composition
+work for it as for any icon. The two names that are reserved words export `deleteIcon` and
+`packageIcon`. tosijs-ui's components that draw only their own icons import them this way:
+a `<tosi-tag>` carries one icon, not all of them.
+
+A name that nobody registered still draws. On a page that has not loaded the whole set, it
+appears a moment late: the whole set loads on first use, and the icon takes its place.
+Import `tosijs-ui/icons` (or anything from `tosijs-ui`) up front to rule that out, for
+example on a page that draws icons by names users supply.
+
+`tosijs-ui/icons/data/<name>` exports the icon's SVG source as a string, for code without a
+DOM.
+
 ## Need More Icons?
 
 [lucide](https://lucide.dev) is a fork and expansion of feather that maintains the style and

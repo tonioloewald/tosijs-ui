@@ -1335,7 +1335,10 @@ import {
   groupRenderMeta,
   groupCounts,
 } from './row-grouping.js'
-import { icons } from './icons.js'
+import { chevronRight as chevronRightIcon } from './icons/chevronRight.js'
+import { sortAscending as sortAscendingIcon } from './icons/sortAscending.js'
+import { sortDescending as sortDescendingIcon } from './icons/sortDescending.js'
+import { moreVertical as moreVerticalIcon } from './icons/moreVertical.js'
 import type { IconElement } from './icon-types.js'
 import {
   valueRenderer,
@@ -3120,7 +3123,7 @@ export class TosiTable extends withAttributes({
               if (item != null) this.toggleRowDetail(item)
             },
           },
-          icons.chevronRight()
+          chevronRightIcon()
         )
       )
       return cell
@@ -3262,12 +3265,12 @@ export class TosiTable extends withAttributes({
     let sortIcon: IconElement | undefined
     switch (col.sort) {
       case 'ascending':
-        sortIcon = icons.sortAscending()
+        sortIcon = sortAscendingIcon()
         ariaSort = 'descending'
         break
       case 'descending':
         ariaSort = 'ascending'
-        sortIcon = icons.sortDescending()
+        sortIcon = sortDescendingIcon()
         break
     }
 
@@ -3283,7 +3286,7 @@ export class TosiTable extends withAttributes({
                 event.stopPropagation()
               },
             },
-            sortIcon || icons.moreVertical()
+            sortIcon || moreVerticalIcon()
           )
         : {}
 

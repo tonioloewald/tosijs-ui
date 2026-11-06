@@ -125,7 +125,16 @@ form.addEventListener('submit', (e) => {
 */
 /*{ "parent": "Form Components", "description": "<tosi-rich-text> is a small, extensible WYSIWYG editor with a customizable toolbar, editing its own contents or a value you set." }*/
 import { elements, deprecated, withAttributes, } from 'tosijs';
-import { icons } from './icons.js';
+import { alignLeft as alignLeftIcon } from './icons/alignLeft.js';
+import { alignCenter as alignCenterIcon } from './icons/alignCenter.js';
+import { alignRight as alignRightIcon } from './icons/alignRight.js';
+import { listBullet as listBulletIcon } from './icons/listBullet.js';
+import { listNumber as listNumberIcon } from './icons/listNumber.js';
+import { indent as indentIcon } from './icons/indent.js';
+import { outdent as outdentIcon } from './icons/outdent.js';
+import { fontBold as fontBoldIcon } from './icons/fontBold.js';
+import { fontItalic as fontItalicIcon } from './icons/fontItalic.js';
+import { fontUnderline as fontUnderlineIcon } from './icons/fontUnderline.js';
 import { tosiSelect, TosiSelect } from './select.js';
 import { spacer as layoutSpacer } from './layout.js';
 const { tosiSlot, div, button } = elements;
@@ -171,20 +180,20 @@ export function commandButton(title, dataCommand, icon) {
     return button({ slot: 'toolbar', dataCommand, title }, icon);
 }
 const paragraphStyleWidgets = () => [
-    commandButton('left-justify', 'justifyLeft', icons.alignLeft()),
-    commandButton('center', 'justifyCenter', icons.alignCenter()),
-    commandButton('right-justify', 'justifyRight', icons.alignRight()),
+    commandButton('left-justify', 'justifyLeft', alignLeftIcon()),
+    commandButton('center', 'justifyCenter', alignCenterIcon()),
+    commandButton('right-justify', 'justifyRight', alignRightIcon()),
     spacer(),
-    commandButton('bullet list', 'insertUnorderedList', icons.listBullet()),
-    commandButton('numbered list', 'insertOrderedList', icons.listNumber()),
+    commandButton('bullet list', 'insertUnorderedList', listBulletIcon()),
+    commandButton('numbered list', 'insertOrderedList', listNumberIcon()),
     spacer(),
-    commandButton('indent', 'indent', icons.indent()),
-    commandButton('indent', 'outdent', icons.outdent()),
+    commandButton('indent', 'indent', indentIcon()),
+    commandButton('indent', 'outdent', outdentIcon()),
 ];
 const characterStyleWidgets = () => [
-    commandButton('bold', 'bold', icons.fontBold()),
-    commandButton('italic', 'italic', icons.fontItalic()),
-    commandButton('underline', 'underline', icons.fontUnderline()),
+    commandButton('bold', 'bold', fontBoldIcon()),
+    commandButton('italic', 'italic', fontItalicIcon()),
+    commandButton('underline', 'underline', fontUnderlineIcon()),
 ];
 const minimalWidgets = () => [
     blockStyle(),

@@ -1,6 +1,6 @@
 import { test, expect, afterEach } from 'bun:test'
 import { iconSvg, iconNames } from './icon-svg.js'
-import iconData from './icon-data.js'
+import { iconData } from './icon-store.js'
 import { iconRules } from './icon-rules.js'
 
 // The point of this module is that it works with NO DOM — a build script, an ePub
@@ -20,7 +20,7 @@ test('returns undefined for an unknown icon rather than throwing', () => {
 
 // Stand-in icons go straight into the data (no DOM needed) and are removed after each test,
 // so a later test that walks iconNames() never meets a deliberate cycle.
-const data = iconData as Record<string, string>
+const data = iconData
 const added: string[] = []
 function define(icons: Record<string, string>): void {
   Object.assign(data, icons)

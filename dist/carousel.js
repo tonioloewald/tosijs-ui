@@ -72,7 +72,8 @@ This is a minimalist carousel component that supports the usual stuff.
 */
 /*{ "parent": "Components", "description": "A minimal carousel with optional arrows and dots, several items per page, looping, and auto-advance that holds still while someone is looking." }*/
 import { elements, vars, withAttributes } from 'tosijs';
-import { icons } from './icons.js';
+import { chevronLeft as chevronLeftIcon } from './icons/chevronLeft.js';
+import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
 import { prefersReducedMotion } from './reduced-motion.js';
 const { button, slot, div } = elements;
 export class TosiCarousel extends withAttributes({
@@ -382,12 +383,12 @@ export class TosiCarousel extends withAttributes({
         }
     }
     content = () => [
-        div({ part: 'pager' }, button({ title: 'previous slide', part: 'back' }, icons.chevronLeft()), div(
+        div({ part: 'pager' }, button({ title: 'previous slide', part: 'back' }, chevronLeftIcon()), div(
         /*
         Focusable, so the strip can be scrolled from the keyboard (#3573); ← and → page it,
         like the arrow buttons.
         */
-        { title: 'slides', role: 'group', part: 'scroller', tabindex: 0 }, div({ part: 'grid' }, slot())), button({ title: 'next slide', part: 'forward' }, icons.chevronRight())),
+        { title: 'slides', role: 'group', part: 'scroller', tabindex: 0 }, div({ part: 'grid' }, slot())), button({ title: 'next slide', part: 'forward' }, chevronRightIcon())),
         div({ title: 'choose slide to display', role: 'group', part: 'progress' }),
     ];
     connectedCallback() {

@@ -137,7 +137,7 @@ initTooltips()
 /*{ "parent": "Components", "headTitle": "<tosi-tabs> tab panel — tosijs-ui", "description": "<tosi-tabs> builds a tab panel from its children's name attributes, with closeable tabs and methods to add or remove tabs." }*/
 import { elements, vars, withAttributes, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize.js';
-import { icons } from './icons.js';
+import { x as xIcon } from './icons/x.js';
 const { div, slot, span } = elements;
 export class TosiTabs extends withAttributes({
     localized: false,
@@ -162,7 +162,7 @@ export class TosiTabs extends withAttributes({
                 title: 'close',
                 class: 'close',
                 ariaHidden: 'true',
-            }, icons.x())
+            }, xIcon())
             : {});
         /*
         The panel is in the light DOM and the tab in the shadow root, where an id cannot reach, so

@@ -1,0 +1,1 @@
+export const tab = "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><line x1=\"3\" y1=\"12\" x2=\"16\" y2=\"12\"></line><polyline points=\"10 6 16 12 10 18\"></polyline><line x1=\"20\" y1=\"5\" x2=\"20\" y2=\"19\"></line></svg> ";

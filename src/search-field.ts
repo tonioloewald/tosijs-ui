@@ -299,7 +299,7 @@ import {
 import { popFloat } from './pop-float.js'
 import type { TosiFloat } from './float.js'
 import { tosiTag, TosiTag } from './tag.js'
-import { icons } from './icons.js'
+import { x as xIcon } from './icons/x.js'
 import { tagColors } from './tag-colors.js'
 
 const { div, input, button } = elements
@@ -654,7 +654,7 @@ export class TosiSearchField extends withAttributes({
         hidden: true,
         onClick: this.handleClear,
       },
-      icons.x()
+      xIcon()
     ),
   ]
 

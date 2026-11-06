@@ -224,7 +224,8 @@ be used to load `.glb` files. Setting `src` calls this for you on connect.
 /*{ "parent": "Components", "headTitle": "<tosi-3d> Babylon.js wrapper (deprecated) — tosijs-ui", "description": "Deprecated: <tosi-3d> is a thin Babylon.js wrapper kept for compatibility. New 3D work should use the tosijs-3d package." }*/
 import { ElementCreator, elements, withAttributes } from 'tosijs'
 import { scriptTag } from './via-tag.js'
-import { icons, svg2DataUrl } from './icons.js'
+import { svg2DataUrl } from './icon-core.js'
+import { xrColor as xrColorIcon } from './icons/xrColor.js'
 
 type B3dCallback =
   | ((element: B3d, BABYLON: any) => void)
@@ -335,7 +336,7 @@ export class B3d extends withAttributes({
       width: 80,
       backgroundColor: 'transparent',
       filter: 'drop-shadow(0 0 4px #000c)',
-      backgroundImage: svg2DataUrl(icons.xrColor()),
+      backgroundImage: svg2DataUrl(xrColorIcon()),
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
       border: 'none',

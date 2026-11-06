@@ -10,7 +10,7 @@ before the name is asked for.
 */
 
 import type { ElementPart } from 'tosijs'
-import iconData from './icon-data.js'
+import { iconData } from './icon-store.js'
 import { splitSuffixes } from './icon-suffixes.js'
 
 // Compositional icon rules — when an icon isn't found, try to compose it

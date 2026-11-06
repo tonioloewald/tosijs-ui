@@ -147,7 +147,7 @@ import {
 
 import { tosiLocalized, TosiLocalized } from './localize.js'
 
-import { icons } from './icons.js'
+import { x as xIcon } from './icons/x.js'
 
 const { div, slot, span } = elements
 
@@ -190,7 +190,7 @@ export class TosiTabs extends withAttributes({
               class: 'close',
               ariaHidden: 'true',
             },
-            icons.x()
+            xIcon()
           )
         : {}
     )

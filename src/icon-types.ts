@@ -34,3 +34,6 @@ export type IconName = keyof typeof builtInIcons
 export type SVGIconMap = {
   [K in IconName]: ElementCreator<IconElement>
 } & { [key: string]: ElementCreator<IconElement> }
+
+/** One icon as a function of its own, as `icons.name` is: `chevronDown(...parts)`. */
+export type IconCreator = ElementCreator<IconElement>
