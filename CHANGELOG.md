@@ -1,5 +1,54 @@
 # Changelog
 
+## 1.17.1
+
+> Fixes from the 1.17.0 review, plus elastic table columns that can be dragged narrower. Nothing
+> to change on upgrade. **`dist/iife.js` is unchanged in size** (506.2 kB gzip).
+
+### Security
+
+Both affect sites that turn on the accessibility mode in **1.17.0 and its betas**; no advisory is
+filed, because each needs the build running and the reach is local. Upgrade if you build with
+the accessibility mode on a shared machine or network.
+
+- The accessibility audit's temporary server bound every interface, and its root check was a bare
+  prefix, so for the length of the audit a request like `/..%2fdocs-private/key.txt` was served a
+  sibling directory whose name starts with the output directory's. It now listens on localhost
+  only and contains paths with root + separator.
+- The audit's payload and the altText corpus, which can hold hidden pages, were written to
+  predictable names in the shared temp directory and never removed. They now go in private
+  temporary directories removed when the build ends.
+
+### Added
+
+- With a `dist-sizes.json` in the project root (`bun run sizes` writes one in this repo), the site
+  build prints the bundle's gzip size change since that baseline and the version it was recorded
+  at.
+
+### Fixed
+
+- `<tosi-table>`: an elastic column can now be dragged narrower than the width it is drawn at.
+  The last elastic column's edge is the table's edge, so dragging it moved nothing and quietly
+  shrank its `width` to the minimum, and a middle one fought the columns beside it. A drag now
+  fixes the dragged column, and the elastic columns to its left, at the width they are drawn at
+  (it sets `width` and `elastic: false`), so the edge follows the pointer exactly. Elastic
+  columns to its right absorb the difference; with none, the space it gives up is left beside
+  the columns, painted with `--tosi-table-fill`.
+- Under path or query routing, clicking a `/slug/#heading` link in a doc puts the hash in the URL
+  and scrolls to the heading. It pushed the page's URL without the hash and landed at the top.
+- The accessibility mode's axe audit and DAISY Ace run with a time limit (the audit's worst case
+  plus a minute; Ace ten minutes). One that hangs is stopped and reported as not having run,
+  instead of hanging the build, and a build stopped with Ctrl-C or SIGTERM stops them too,
+  instead of leaving them and their browser running.
+- The ePub accessibility check accepted any program named `ace` on PATH as DAISY Ace, so an
+  unrelated tool could decide whether a book claims WCAG conformance. It now accepts only an
+  `ace` inside a `@daisy/ace` package; another is skipped and named in the reason the check did
+  not run, and a real Ace later on PATH is still found.
+- `llms.txt` link titles no longer carry the project suffix ("Menus — tosijs-ui" on every line).
+- When a delegated build is refused because the dev server has a different site config, the
+  message now says that a refusal on every build means the config computes a value per process
+  (`Date.now()`, a random id, an environment variable one process lacks), and how to fix that.
+
 ## 1.17.0
 
 > Accessibility and SEO for doc sites, and the components themselves passing WCAG 2.2 AA. A doc
