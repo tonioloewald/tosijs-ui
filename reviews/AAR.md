@@ -1052,3 +1052,19 @@ gap, recorded rather than hidden.
   feature.
 - `latest` = 1.17.0; publish run 42044110924 green; published `dist/` identical to the repo's.
   iife +4.3 kB gzip (+0.9%) over 1.16.41. Follow-ups #3859–#3870.
+
+## 1.17.1 (2026-11-06) — the 1.17.0 review follow-ups
+
+- **The slow unit lane was the OS, not our code:** the lane went 23.8s → 14.4s once caddy-install's
+  tests stopped writing three fresh fake executables per test; macOS checks each new executable on
+  its first run (~270ms). Measure where time goes before optimising anything.
+- **A test that could not fail:** the nested-roles test passed on the old code because the cell was
+  cloned from a template. Reverting each fix and re-running caught it, as at 1.17.0.
+- **A user found what the tests did not:** elastic columns could not be dragged narrower. The
+  drag test only dragged wider, and the fix (pin the dragged column and the elastic ones to its
+  left) also deleted the bisection the old approach needed.
+- **The gate warned on a test file:** release-check flagged `bin/caddy-install.test.ts` as a
+  security-surface change in a patch; the bin itself was unchanged (diffed against v1.17.0).
+- `latest` = 1.17.1; publish run 42268326503 green; published `dist/` identical to the repo's.
+  iife unchanged (506.2 kB gzip). Next: the size work, starting with icons (the 1.4.1 per-icon
+  modules are unused and stale).
