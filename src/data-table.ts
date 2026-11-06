@@ -1000,8 +1000,11 @@ creator) and every column is elastic unless it says `elastic: false`, which is t
 get it for columns inferred from the data. Pinned columns are never elastic. Elastic
 columns take precedence over `full-width-header`.
 
-Dragging an elastic column's edge keeps the edge under the pointer; the other elastic
-columns give up or take the difference.
+Dragging a column's edge resizes it to exactly where you drop it, narrower than its share
+included. The drag fixes that column, and any elastic columns to its left, at the width
+they were drawn at (it sets their `width` and `elastic: false`, as a resize always sets
+`width`): elastic columns to its right take up or give back the difference, and with none
+to its right, the space it gives up is left beside the columns.
 
 ### Filling the space beside the columns
 
@@ -1402,7 +1405,8 @@ export interface ColumnOptions {
    * Whether this column takes a share of the space left over when the columns add up to
    * less than the table's width. Elastic columns grow in proportion to their `width`, and
    * never shrink below it. Defaults to the table's `elastic`. A pinned column is never
-   * elastic: its sticky offset is its width.
+   * elastic: its sticky offset is its width. Resizing a column by dragging sets this to
+   * `false` on it and on the elastic columns to its left, at the widths they were drawn at.
    */
   elastic?: boolean
   sort?: false | 'ascending' | 'descending'
@@ -3445,9 +3449,8 @@ export class TosiTable extends withAttributes({
       first drag on a fresh page into a text selection. See track-drag.ts, and #107.)
       */
       const prop = grabbed.prop
-      let anchor = grabbed
-      let anchorWidth = Number(grabbed.width)
-      let anchorEdge = this.drawnEdge(grabbed)
+      let anchor: ColumnOptions | undefined
+      let anchorWidth = 0
       let anchorDx = 0
       const isTouchEvent = event.touches !== undefined
       const touchIdentifier = isTouchEvent
@@ -3466,15 +3469,18 @@ export class TosiTable extends withAttributes({
           }
           const live = this.columns.find((c) => c.prop === prop)
           if (!live) return true
+          // A click on the edge changes nothing: pin the columns on the first movement.
+          if (anchor === undefined && dx === 0) {
+            return event.type === 'mouseup' || undefined
+          }
           if (live !== anchor) {
+            this.pinElasticThrough(live)
+            // The drag measures from where it started; a replaced column rebases on this step.
+            anchorDx = anchor === undefined ? 0 : dx
             anchor = live
             anchorWidth = Number(live.width)
-            anchorEdge = this.drawnEdge(live)
-            anchorDx = dx
           }
-          const width = this.isElastic(live)
-            ? this.widthForEdge(live, anchorEdge + (dx - anchorDx))
-            : anchorWidth + (dx - anchorDx)
+          const width = anchorWidth + (dx - anchorDx)
           live.width = width > this.minColumnWidth ? width : this.minColumnWidth
           this.setColumnWidths()
           if (event.type === 'mouseup') {
@@ -4022,32 +4028,26 @@ export class TosiTable extends withAttributes({
     this.addEventListener('keydown', this.handleKeyNav)
   }
 
-  /** Where `col`'s right edge is drawn, from the left of the columns. */
-  private drawnEdge(col: ColumnOptions): number {
-    const cols = this.visibleColumns
-    const { drawn } = this.layoutColumns(cols)
-    const index = cols.indexOf(col)
-    return drawn.slice(0, index + 1).reduce((sum, w) => sum + w, 0)
-  }
-
   /*
-  The width that draws an elastic column's right edge at `edge`, so a resize drag keeps the edge
-  under the pointer. An elastic column is drawn wider than its width and shares the leftover with
-  the others, so `width + dx` would move the edge by some fraction of dx. Its edge only ever
-  moves right as its width grows, so a bisection finds it.
+  Before a drag resizes `col`, fix it and every elastic column to its left at the width they are
+  drawn at. An elastic column's drawn width is not its width: the table's leftover space is shared
+  out over the elastic columns, so the last one's right edge is the table's right edge whatever
+  its width says, and dragging it narrower moved nothing (its width shrank to the minimum while
+  it stayed drawn wide). Once they are fixed, the dragged edge is the sum of fixed widths and
+  follows the pointer exactly; elastic columns to its right still share the leftover, and with
+  none, the leftover is the space beside the columns. Nothing moves when the drag starts: the
+  columns to the right are drawn at the same widths as before.
   */
-  private widthForEdge(col: ColumnOptions, edge: number): number {
-    const original = col.width
-    let lo = this.minColumnWidth
-    let hi = Math.max(lo, edge) * 64
-    for (let i = 0; i < 40; i++) {
-      const mid = (lo + hi) / 2
-      col.width = mid
-      if (this.drawnEdge(col) < edge) lo = mid
-      else hi = mid
+  private pinElasticThrough(col: ColumnOptions): void {
+    const cols = this.visibleColumns
+    const index = cols.indexOf(col)
+    if (index === -1) return
+    const { drawn } = this.layoutColumns(cols)
+    for (let i = 0; i <= index; i++) {
+      if (!this.isElastic(cols[i])) continue
+      cols[i].width = Math.round(drawn[i])
+      cols[i].elastic = false
     }
-    col.width = original
-    return Math.round(hi)
   }
 
   private isElastic(col: ColumnOptions): boolean {

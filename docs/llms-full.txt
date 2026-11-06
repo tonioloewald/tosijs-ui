@@ -7740,8 +7740,11 @@ creator) and every column is elastic unless it says `elastic: false`, which is t
 get it for columns inferred from the data. Pinned columns are never elastic. Elastic
 columns take precedence over `full-width-header`.
 
-Dragging an elastic column's edge keeps the edge under the pointer; the other elastic
-columns give up or take the difference.
+Dragging a column's edge resizes it to exactly where you drop it, narrower than its share
+included. The drag fixes that column, and any elastic columns to its left, at the width
+they were drawn at (it sets their `width` and `elastic: false`, as a resize always sets
+`width`): elastic columns to its right take up or give back the difference, and with none
+to its right, the space it gives up is left beside the columns.
 
 ### Filling the space beside the columns
 

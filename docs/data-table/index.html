@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=a67312989fe9" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=f72e3c7d3007" data-tosi-doc-system />
   <title>&lt;tosi-table&gt; virtual data table — tosijs-ui</title>
   <meta name="description" content="A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail." />
   <link rel="canonical" href="https://ui.tosijs.net/data-table/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/data-table.webp" />
   <meta name="twitter:image:alt" content="&lt;tosi-table&gt; virtual data table — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-table> virtual data table","description":"A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail.","url":"https://ui.tosijs.net/data-table/","inLanguage":"en","image":"https://ui.tosijs.net/og/data-table.webp","dateModified":"2026-11-05T16:12:18+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-table> virtual data table","description":"A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail.","url":"https://ui.tosijs.net/data-table/","inLanguage":"en","image":"https://ui.tosijs.net/og/data-table.webp","dateModified":"2026-11-06T07:25:05.881Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Components","item":"https://ui.tosijs.net/components/"},{"@type":"ListItem","position":2,"name":"table","item":"https://ui.tosijs.net/data-table/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=87d745d3bf68" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=e028a3359f10" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="data-table.ts">
 <h1 id="table">table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
@@ -931,8 +931,11 @@ still scrolls. Put the <strong><code>elastic</code></strong> attribute on the ta
 creator) and every column is elastic unless it says <code>elastic: false</code>, which is the way to
 get it for columns inferred from the data. Pinned columns are never elastic. Elastic
 columns take precedence over <code>full-width-header</code>.</p>
-<p>Dragging an elastic column&#39;s edge keeps the edge under the pointer; the other elastic
-columns give up or take the difference.</p>
+<p>Dragging a column&#39;s edge resizes it to exactly where you drop it, narrower than its share
+included. The drag fixes that column, and any elastic columns to its left, at the width
+they were drawn at (it sets their <code>width</code> and <code>elastic: false</code>, as a resize always sets
+<code>width</code>): elastic columns to its right take up or give back the difference, and with none
+to its right, the space it gives up is left beside the columns.</p>
 <h3 id="filling-the-space-beside-the-columns">Filling the space beside the columns</h3>
 <p>When the columns don&#39;t fill the table, the space to their right shows the table&#39;s
 background. Set <strong><code>--tosi-table-fill</code></strong> to paint it differently, to make it obvious where
@@ -1305,6 +1308,6 @@ happy with the untranslated headers.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-2fwezkfa.js"></script>
+  <script type="module" src="../hydrate-mqy12gsk.js"></script>
 </body>
 </html>

@@ -15,7 +15,8 @@ export interface ColumnOptions {
      * Whether this column takes a share of the space left over when the columns add up to
      * less than the table's width. Elastic columns grow in proportion to their `width`, and
      * never shrink below it. Defaults to the table's `elastic`. A pinned column is never
-     * elastic: its sticky offset is its width.
+     * elastic: its sticky offset is its width. Resizing a column by dragging sets this to
+     * `false` on it and on the elastic columns to its left, at the widths they were drawn at.
      */
     elastic?: boolean;
     sort?: false | 'ascending' | 'descending';
@@ -502,9 +503,7 @@ export declare class TosiTable extends TosiTable_base {
     private focusCell;
     private handleKeyNav;
     connectedCallback(): void;
-    /** Where `col`'s right edge is drawn, from the left of the columns. */
-    private drawnEdge;
-    private widthForEdge;
+    private pinElasticThrough;
     private isElastic;
     private layoutColumns;
     setColumnWidths(): void;

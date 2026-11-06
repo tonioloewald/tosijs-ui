@@ -246,3 +246,56 @@ test('dragging an elastic column keeps its edge under the pointer', async ({
   const end = await edge()
   expect(Math.abs(end.x - (start.x + 40))).toBeLessThan(3)
 })
+
+/*
+Elastic columns fill the table, so the last one's right edge is the table's right edge whatever
+its width says: dragging it narrower moved nothing, and its `width` collapsed to the minimum
+while it was still drawn wide. A drag fixes the dragged column, and the elastic columns to its
+left, at the width they are drawn at; elastic columns to its right still share the leftover,
+and with none, the leftover is the space beside the columns.
+*/
+for (const [name, index] of [
+  ['last', 2],
+  ['middle', 1],
+] as const) {
+  test(`dragging the ${name} elastic column narrower makes it narrower`, async ({
+    page,
+  }) => {
+    await page.goto('/data-table/')
+    await measure(page, {
+      width: '600px',
+      full: false,
+      attr: 'elastic',
+      columns: THREE_100,
+    })
+    await page.evaluate(() => {
+      ;(document.querySelector('#fw-host') as HTMLElement).style.cssText +=
+        ';position:fixed;top:0;left:0;height:200px;z-index:9999;background:#fff'
+    })
+    const cells = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('#fw-host .th')].map((th) => {
+          const r = th.getBoundingClientRect()
+          return { right: r.right, width: r.width, y: r.top + r.height / 2 }
+        })
+      )
+    const before = await cells()
+    const start = before[index]
+    await page.mouse.move(start.right - 2, start.y)
+    await page.mouse.down()
+    await page.mouse.move(start.right - 2 - 80, start.y, { steps: 4 })
+    await page.mouse.up()
+    const after = await cells()
+    expect(Math.abs(after[index].right - (start.right - 80))).toBeLessThan(3)
+    expect(Math.abs(after[index].width - (start.width - 80))).toBeLessThan(3)
+    // The columns to its left do not move.
+    for (let i = 0; i < index; i++) {
+      expect(Math.abs(after[i].width - before[i].width)).toBeLessThan(2)
+    }
+    // Let go and look again: the drag left no layout that settles somewhere else.
+    await page.waitForTimeout(50)
+    expect(
+      Math.abs((await cells())[index].right - after[index].right)
+    ).toBeLessThan(2)
+  })
+}
