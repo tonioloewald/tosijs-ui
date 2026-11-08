@@ -28,7 +28,7 @@ test('the per-icon data modules are the combined data, icon for icon (#3885)', (
   )
   expect(wrong).toEqual([])
   // The whole set that `tosijs-ui/icons` registers is built from the same modules.
-  expect(wholeSet).toEqual(all)
+  expect(wholeSet as Record<string, string>).toEqual(all)
 })
 
 test('every icon creator module brings everything its icon needs (#3885)', () => {
