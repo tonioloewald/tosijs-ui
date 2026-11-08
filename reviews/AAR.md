@@ -1068,3 +1068,21 @@ gap, recorded rather than hidden.
 - `latest` = 1.17.1; publish run 42268326503 green; published `dist/` identical to the repo's.
   iife unchanged (506.2 kB gzip). Next: the size work, starting with icons (the 1.4.1 per-icon
   modules are unused and stale).
+
+## 1.17.2 (2026-11-08) — components carry only their own icons; affix centring
+
+- **What surprised us:** "we made icons tree-shakeable" (1.4.1) was true of nothing that shipped
+  in use. The per-icon modules existed, no component imported them, and they had drifted: 54 of
+  313 stale and 6 missing. A measure of what a single component actually bundles found it, not
+  a review.
+- **Cost accepted, measured first:** keeping the whole set and the per-icon modules as two copies
+  grew the iife 4.7 kB; building the set from the modules costs 1.8 kB. Each component imported
+  alone ships about 20 kB less.
+- **The maintainer found the bug, not a lane:** the affix's own doc example showed an off-centre
+  caption. Every geometry test used content that filled its cell, which is the one case where
+  the bug cannot show.
+- **A flaky test hid behind a fixed wait:** the WebKit affix fallback test failed 6 of 6 at
+  HEAD on one run and passed 3 of 3 on another; it waited 100ms for a ResizeObserver. It
+  polls now. Bisecting against a stash is what showed it was not this release's change.
+- **Measurement trap:** an ESM size measured without `--splitting` inlines dynamic imports, so
+  the late-icon fallback made every slim component look like it still carried the whole set.
