@@ -1,6 +1,6 @@
 import { ElementProps, PartsMap } from 'tosijs';
 import { FloatPosition } from './pop-float.js';
-import { SvgIcon } from './icons.js';
+import { SvgIcon } from './icon-core.js';
 export type ActionCallback = () => void | Promise<void>;
 export interface MenuAction {
     caption: string;

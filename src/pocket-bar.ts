@@ -113,7 +113,10 @@ import {
   varDefault,
   withAttributes,
 } from 'tosijs'
-import { svgIcon, SvgIcon } from './icons.js'
+import { svgIcon, SvgIcon } from './icon-core.js'
+// The default handle icons, drawn by name.
+import './icons/moreVertical.js'
+import './icons/moreHorizontal.js'
 import { positionFloat, FloatPosition } from './pop-float.js'
 
 const { button, div, slot } = elements

@@ -76,7 +76,9 @@ and (in my opinion) common sense, but  not like [MUI's rating widget](https://mu
 */
 /*{ "headTitle": "<tosi-rating> star rating input — tosijs-ui", "parent": "Form Components", "description": "<tosi-rating> is a form-associated rating input drawn with icons, with half steps, custom icons and sizes, that behaves like an <input>." }*/
 import { elements, deprecated, withAttributes, } from 'tosijs';
-import { icons } from './icons.js';
+import { icons } from './icon-core.js';
+// The default icon, drawn by name.
+import './icons/star.js';
 const { span } = elements;
 export class TosiRating extends withAttributes({
     max: 5,

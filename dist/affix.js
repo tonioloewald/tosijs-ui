@@ -259,6 +259,17 @@ export class TosiAffix extends Component {
             // a positioned child of the content is placed against the content, not the fixture
             position: 'relative',
         },
+        /*
+        Content narrower than its cell — a fixed width in a wider affix, or under a fixture wider
+        than it — follows the fixture, so a centred caption is centred on the content and not on
+        the cell. Auto margins do nothing to content that fills its cell.
+        */
+        ':host > [part="content"][data-align="center"]::slotted(*)': {
+            marginInline: 'auto',
+        },
+        ':host > [part="content"][data-align="end"]::slotted(*)': {
+            marginInlineStart: 'auto',
+        },
         ':host > [part="fixture"]': {
             display: 'flex',
             flexDirection: 'var(--tosi-affix-direction)',
@@ -436,6 +447,14 @@ export class TosiAffix extends Component {
             borderRadius: outerCorners(cell.edge, placement.inside, 'var(--tosi-affix-radius, var(--tosi-border-radius, 4px))'),
         });
         this.style.setProperty('--tosi-affix-direction', cell.direction);
+        // beside the content, it hugs the edge it is on; above, below or inside, it lines up with it
+        const side = cell.edge === 'e' || cell.edge === 'w';
+        this.parts.content.dataset.align =
+            side && !placement.inside
+                ? cell.edge === 'e'
+                    ? 'end'
+                    : 'start'
+                : cell.justifySelf;
     }
     render() {
         super.render();

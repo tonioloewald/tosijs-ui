@@ -50,6 +50,12 @@ export declare class TosiAffix extends Component<AffixParts> {
             minHeight: string;
             position: string;
         };
+        ':host > [part="content"][data-align="center"]::slotted(*)': {
+            marginInline: string;
+        };
+        ':host > [part="content"][data-align="end"]::slotted(*)': {
+            marginInlineStart: string;
+        };
         ':host > [part="fixture"]': {
             display: string;
             flexDirection: string;

@@ -1,4 +1,5 @@
 import { ElementCreator } from 'tosijs';
+import './icons/star.js';
 declare const TosiRating_base: import("tosijs").WithAttributes<{
     max: number;
     min: 0 | 1;

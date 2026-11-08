@@ -220,13 +220,14 @@ button(x(), 'Close')
 Each module registers its icon once, however many modules import it, and brings any icon it
 is drawn from (`chevronDown` is `chevronRight` turned), so names, suffixes and composition
 work for it as for any icon. The two names that are reserved words export `deleteIcon` and
-`packageIcon`. tosijs-ui's components that draw only their own icons import them this way:
-a `<tosi-tag>` carries one icon, not all of them.
+`packageIcon`. tosijs-ui's components import their own icons this way: a `<tosi-tag>`
+carries one icon, not all of them.
 
-A name that nobody registered still draws. On a page that has not loaded the whole set, it
-appears a moment late: the whole set loads on first use, and the icon takes its place.
-Import `tosijs-ui/icons` (or anything from `tosijs-ui`) up front to rule that out, for
-example on a page that draws icons by names users supply.
+A component that draws an icon you name — a menu item's `icon: 'folder'`, a select option's,
+a rating's — carries only its own. Import the icon's module, or pass the icon itself where an element is
+accepted (`icon: folder()`), and it draws at once. A name that nobody registered still draws: on a page that has
+not loaded the whole set, it appears a moment late, like a web font, while the whole set
+loads. Import `tosijs-ui/icons` (or anything from `tosijs-ui`) up front to rule that out.
 
 `tosijs-ui/icons/data/<name>` exports the icon's SVG source as a string, for code without a
 DOM.

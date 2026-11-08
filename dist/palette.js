@@ -141,7 +141,10 @@ query)` the default row, and `highlight(text, query)` the row's title with each 
 */
 /*{ "headTitle": "<tosi-palette> command palette — tosijs-ui", "parent": "Components", "description": "<tosi-palette> is a command palette: a search field that opens a keyboard-driven modal of ranked results from sources you supply." }*/
 import { elements, vars, varDefault, withAttributes, } from 'tosijs';
-import { icons } from './icons.js';
+import { icons } from './icon-core.js';
+import { search as searchIcon } from './icons/search.js';
+import { loader as loaderIcon } from './icons/loader.js';
+import { x as xIcon } from './icons/x.js';
 import { findHighestZ } from './track-drag.js';
 const { button, span, kbd, div, dialog, input, textarea, mark } = elements;
 const isMac = () => typeof navigator !== 'undefined' &&
@@ -666,13 +669,13 @@ export class TosiPalette extends withAttributes({
             // name is a button a screen reader announces as just "button". render() adds an
             // aria-label only for the icon trigger, which shows no text.
             onClick: () => this.open(),
-        }, icons.search(), span({ class: 'palette-trigger-label', part: 'label' }, this.hint), kbd({ part: 'shortcut', hidden: true })),
+        }, searchIcon(), span({ class: 'palette-trigger-label', part: 'label' }, this.hint), kbd({ part: 'shortcut', hidden: true })),
         dialog({
             part: 'dialog',
             ariaLabel: this.localized('Search'),
             onCancel: this.handleCancel,
             onClick: this.handleDialogClick,
-        }, div({ class: 'palette-header' }, icons.search(), span({ class: 'palette-spinner', hidden: true }, icons.loader()), div({ class: 'palette-field', style: { display: 'contents' } }), button({
+        }, div({ class: 'palette-header' }, searchIcon(), span({ class: 'palette-spinner', hidden: true }, loaderIcon()), div({ class: 'palette-field', style: { display: 'contents' } }), button({
             class: 'palette-clear',
             // Shown only with something to clear: an ✕ in a dialog's corner reads as "close".
             hidden: true,
@@ -680,7 +683,7 @@ export class TosiPalette extends withAttributes({
             title: this.localized('Clear'),
             ariaLabel: this.localized('Clear'),
             onClick: this.clearField,
-        }, icons.x())), div({
+        }, xIcon())), div({
             class: 'palette-list',
             role: 'listbox',
             id: this.listId,

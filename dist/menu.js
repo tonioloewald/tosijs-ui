@@ -795,7 +795,8 @@ preview.append(btn)
 /*{ "headTitle": "Pop-up, nested and drop menus — tosijs-ui", "parent": "Components", "description": "Pop up a menu anywhere with popMenu() or <tosi-menu>: nested submenus, icons, keyboard shortcuts, and drop menus that accept drags." }*/
 import { elements, varDefault, vars, StyleSheet, withAttributes, } from 'tosijs';
 import { popFloat } from './pop-float.js';
-import { icons } from './icons.js';
+import { icons } from './icon-core.js';
+import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
 import { localize } from './localize.js';
 import { matchShortcut, displayShortcut } from './match-shortcut.js';
 import { isTypeAllowed, stringToTypes } from './drag-and-drop.js';
@@ -1231,7 +1232,7 @@ export const createSubMenu = (item, options) => {
             }
             removeLastMenu(0);
         },
-    }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), icons.chevronRight({ style: { justifySelf: 'flex-end' } }));
+    }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), chevronRightIcon({ style: { justifySelf: 'flex-end' } }));
     submenuItem.classList.add('xin-menu-item', 'tosi-menu-item');
     if (item.tooltip) {
         submenuItem.dataset.tooltip = item.tooltip;

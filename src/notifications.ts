@@ -171,7 +171,9 @@ This is simply a wrapper for `TosiNotification.post()`.
 /*{ "parent": "Components", "description": "postNotification() shows stacked toast notifications: info, success, warning, error or progress, timed or persistent, newest on top." }*/
 
 import { Component, elements, vars, varDefault } from 'tosijs'
-import { icons } from './icons.js'
+import { icons } from './icon-core.js'
+import { info as infoIcon } from './icons/info.js'
+import { x as xIcon } from './icons/x.js'
 import type { IconElement } from './icon-types.js'
 import { findHighestZ } from './track-drag.js'
 const { div, button } = elements
@@ -567,7 +569,7 @@ export class TosiNotification extends Component {
       TosiNotification.removeNote(note)
     }
     const iconElement: IconElement =
-      icon instanceof SVGElement ? icon : icon ? icons[icon]() : icons.info()
+      icon instanceof SVGElement ? icon : icon ? icons[icon]() : infoIcon()
     // Use assertive for errors/warnings, polite for info/success
     const isUrgent = type === 'error' || type === 'warn'
     const note = div(
@@ -595,7 +597,7 @@ export class TosiNotification extends Component {
             elt.addEventListener('click', closeCallback)
           },
         },
-        icons.x()
+        xIcon()
       )
     )
 

@@ -136,7 +136,7 @@ The following CSS variables can be used to control customize the `<tosi-segmente
 */
 /*{ "parent": "Form Components", "description": "<tosi-segmented> is a form-associated segmented control for choosing one value or several, with icons and labels." }*/
 import { elements, varDefault, deprecated, withAttributes, } from 'tosijs';
-import { icons } from './icons.js';
+import { icons } from './icon-core.js';
 import { tosiLocalized } from './localize.js';
 import { splitCaptionIcon } from './caption-icon.js';
 const { div, slot, label, span, input } = elements;

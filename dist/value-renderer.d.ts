@@ -1,3 +1,5 @@
+import './icons/checkSquare.js';
+import './icons/square.js';
 export type Alignment = 'left' | 'right' | 'center';
 /**
  * A value-renderer type string. The bare base names autocomplete; parameterized

@@ -169,7 +169,9 @@ This is simply a wrapper for `TosiNotification.post()`.
 */
 /*{ "parent": "Components", "description": "postNotification() shows stacked toast notifications: info, success, warning, error or progress, timed or persistent, newest on top." }*/
 import { Component, elements, vars, varDefault } from 'tosijs';
-import { icons } from './icons.js';
+import { icons } from './icon-core.js';
+import { info as infoIcon } from './icons/info.js';
+import { x as xIcon } from './icons/x.js';
 import { findHighestZ } from './track-drag.js';
 const { div, button } = elements;
 const COLOR_MAP = {
@@ -530,7 +532,7 @@ export class TosiNotification extends Component {
             }
             TosiNotification.removeNote(note);
         };
-        const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]() : icons.info();
+        const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]() : infoIcon();
         // Use assertive for errors/warnings, polite for info/success
         const isUrgent = type === 'error' || type === 'warn';
         const note = div({
@@ -548,7 +550,7 @@ export class TosiNotification extends Component {
             apply(elt) {
                 elt.addEventListener('click', closeCallback);
             },
-        }, icons.x()));
+        }, xIcon()));
         TosiNotification.closers.set(note, closeCallback);
         singleton.moveTo(() => root.append(note));
         if (progressBar instanceof HTMLProgressElement &&

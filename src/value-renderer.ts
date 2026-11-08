@@ -49,7 +49,10 @@ preview.append(
 /*{ "parent": "Helper Libraries", "description": "valueRenderer() turns a short type string into a formatter for numbers, currency, bytes or booleans, each with a default alignment." }*/
 
 import { i18n } from './localize.js'
-import { icons } from './icons.js'
+import { icons } from './icon-core.js'
+// The boolean format's default icons, drawn by name.
+import './icons/checkSquare.js'
+import './icons/square.js'
 
 export type Alignment = 'left' | 'right' | 'center'
 

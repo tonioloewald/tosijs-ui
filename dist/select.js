@@ -208,7 +208,8 @@ preview.append(
 */
 /*{ "headTitle": "<tosi-select> styleable select menu — tosijs-ui", "parent": "Form Components", "description": "<tosi-select> replaces <select> with a styleable menu that supports icons, separators, submenus, editable values and missing options." }*/
 import { elements, vars, varDefault, throttle, deprecated, withAttributes, } from 'tosijs';
-import { icons } from './icons.js';
+import { icons } from './icon-core.js';
+import { chevronDown as chevronDownIcon } from './icons/chevronDown.js';
 import { popMenu, removeLastMenu, resolveMenuItems, findShortcutAction, } from './menu.js';
 import { localize, XinLocalized } from './localize.js';
 import { splitCaptionIcon } from './caption-icon.js';
@@ -555,7 +556,7 @@ export class TosiSelect extends withAttributes({
             ariaExpanded: 'false',
             onClick: this.popOptions,
             onKeydown: this.handleKey,
-        }, span(), span({ part: 'caption' }), icons.chevronDown()),
+        }, span(), span({ part: 'caption' }), chevronDownIcon()),
         div({ part: 'field', hidden: true }, span(), input({
             part: 'value',
             value: this.value,
@@ -567,7 +568,7 @@ export class TosiSelect extends withAttributes({
             onKeydown: this.handleKey,
             onInput: this.filterMenu,
             onChange: this.handleChange,
-        }), icons.chevronDown({ onClick: this.popOptions })),
+        }), chevronDownIcon({ onClick: this.popOptions })),
     ];
     get allOptions() {
         const all = [];

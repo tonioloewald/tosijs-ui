@@ -150,7 +150,10 @@ import {
   XinStyleSheet,
   withAttributes,
 } from 'tosijs'
-import { icons } from './icons.js'
+import { icons } from './icon-core.js'
+import { search as searchIcon } from './icons/search.js'
+import { loader as loaderIcon } from './icons/loader.js'
+import { x as xIcon } from './icons/x.js'
 import { findHighestZ } from './track-drag.js'
 
 const { button, span, kbd, div, dialog, input, textarea, mark } = elements
@@ -728,7 +731,7 @@ export class TosiPalette extends withAttributes({
         // aria-label only for the icon trigger, which shows no text.
         onClick: () => this.open(),
       },
-      icons.search(),
+      searchIcon(),
       span({ class: 'palette-trigger-label', part: 'label' }, this.hint),
       kbd({ part: 'shortcut', hidden: true })
     ),
@@ -741,8 +744,8 @@ export class TosiPalette extends withAttributes({
       },
       div(
         { class: 'palette-header' },
-        icons.search(),
-        span({ class: 'palette-spinner', hidden: true }, icons.loader()),
+        searchIcon(),
+        span({ class: 'palette-spinner', hidden: true }, loaderIcon()),
         div({ class: 'palette-field', style: { display: 'contents' } }),
         button(
           {
@@ -754,7 +757,7 @@ export class TosiPalette extends withAttributes({
             ariaLabel: this.localized('Clear'),
             onClick: this.clearField,
           },
-          icons.x()
+          xIcon()
         )
       ),
       div({

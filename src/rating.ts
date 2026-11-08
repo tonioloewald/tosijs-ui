@@ -84,7 +84,9 @@ import {
   deprecated,
   withAttributes,
 } from 'tosijs'
-import { icons } from './icons.js'
+import { icons } from './icon-core.js'
+// The default icon, drawn by name.
+import './icons/star.js'
 
 const { span } = elements
 

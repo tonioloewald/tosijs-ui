@@ -805,7 +805,8 @@ import {
   withAttributes,
 } from 'tosijs'
 import { popFloat, FloatPosition } from './pop-float.js'
-import { icons, SvgIcon } from './icons.js'
+import { icons, SvgIcon } from './icon-core.js'
+import { chevronRight as chevronRightIcon } from './icons/chevronRight.js'
 import { localize } from './localize.js'
 import { matchShortcut, displayShortcut } from './match-shortcut.js'
 import { isTypeAllowed, stringToTypes } from './drag-and-drop.js'
@@ -1358,7 +1359,7 @@ export const createSubMenu = (
     },
     icon,
     options.localized ? span(localize(item.caption)) : span(item.caption),
-    icons.chevronRight({ style: { justifySelf: 'flex-end' } })
+    chevronRightIcon({ style: { justifySelf: 'flex-end' } })
   )
   submenuItem.classList.add('xin-menu-item', 'tosi-menu-item')
   if (item.tooltip) {

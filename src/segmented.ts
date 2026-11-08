@@ -144,7 +144,7 @@ import {
   deprecated,
   withAttributes,
 } from 'tosijs'
-import { icons } from './icons.js'
+import { icons } from './icon-core.js'
 import type { IconElement } from './icon-types.js'
 import { tosiLocalized } from './localize.js'
 import { splitCaptionIcon } from './caption-icon.js'

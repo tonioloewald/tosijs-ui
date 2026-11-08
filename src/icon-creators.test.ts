@@ -135,3 +135,40 @@ test('a component draws its own icons without the whole set, and any other name 
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+/*
+The components that draw icons by caller-supplied names import the store, not the whole set:
+their own fixed icons (and defaults drawn by name) are registered, and nothing else is.
+*/
+test('components that draw caller-named icons do not import the whole set (#3885)', () => {
+  const src = import.meta.dir
+  const slim = {
+    menu: ['chevronRight'],
+    select: ['chevronDown'],
+    notifications: ['info', 'x'],
+    palette: ['search', 'loader', 'x'],
+    rating: ['star'],
+    'pocket-bar': ['moreVertical', 'moreHorizontal'],
+    'value-renderer': ['checkSquare', 'square'],
+    segmented: [],
+  }
+  for (const [file, own] of Object.entries(slim)) {
+    const script = `
+      await import(${JSON.stringify(path.join(src, file + '.ts'))})
+      const store = await import(${JSON.stringify(
+        path.join(src, 'icon-store.ts')
+      )})
+      console.log(JSON.stringify({
+        complete: store.allIconsRegistered(),
+        registered: Object.keys(store.iconData),
+      }))
+    `
+    const run = Bun.spawnSync(
+      ['bun', '--preload', path.join(src, 'test-setup.ts'), '-e', script],
+      { cwd: path.join(src, '..') }
+    )
+    const out = JSON.parse(run.stdout.toString().trim().split('\n').pop()!)
+    expect({ file, complete: out.complete }).toEqual({ file, complete: false })
+    for (const name of own) expect(out.registered).toContain(name)
+  }
+})

@@ -104,7 +104,10 @@ and desaturates until checked, so a toggle needs no extra CSS.
 */
 /*{ "parent": "Components" }*/
 import { elements, vars, varDefault, withAttributes, } from 'tosijs';
-import { svgIcon } from './icons.js';
+import { svgIcon } from './icon-core.js';
+// The default handle icons, drawn by name.
+import './icons/moreVertical.js';
+import './icons/moreHorizontal.js';
 import { positionFloat } from './pop-float.js';
 const { button, div, slot } = elements;
 export class TosiPocketBar extends withAttributes({

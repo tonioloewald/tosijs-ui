@@ -220,7 +220,8 @@ import {
   deprecated,
   withAttributes,
 } from 'tosijs'
-import { icons } from './icons.js'
+import { icons } from './icon-core.js'
+import { chevronDown as chevronDownIcon } from './icons/chevronDown.js'
 import {
   popMenu,
   MenuItem,
@@ -630,7 +631,7 @@ export class TosiSelect extends withAttributes({
       },
       span(),
       span({ part: 'caption' }),
-      icons.chevronDown()
+      chevronDownIcon()
     ),
     div(
       { part: 'field', hidden: true },
@@ -647,7 +648,7 @@ export class TosiSelect extends withAttributes({
         onInput: this.filterMenu,
         onChange: this.handleChange,
       }),
-      icons.chevronDown({ onClick: this.popOptions })
+      chevronDownIcon({ onClick: this.popOptions })
     ),
   ]
 
