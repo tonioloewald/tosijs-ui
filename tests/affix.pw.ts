@@ -126,6 +126,42 @@ test('alignment along the edge follows the second letter', async ({ page }) => {
   expect(g.fixture.bottom).toBe(g.content.bottom)
 })
 
+test('content narrower than its cell lines up with the fixture', async ({
+  page,
+}) => {
+  await open(page)
+  const mid = (a: { left: number; right: number }) => (a.left + a.right) / 2
+  // a caption wider than the content widens the content's column: the doc page's own example
+  await mount(page, { position: 's' }, { width: 40, height: 40 }, 5)
+  let g = await geometry(page)
+  expect(g.fixture.right - g.fixture.left).toBeGreaterThan(40)
+  expect(Math.abs(mid(g.fixture) - mid(g.content))).toBeLessThan(1)
+  // an affix wider than its fixed-width content
+  for (const [position, edge] of [
+    ['s', 'mid'],
+    ['ne', 'right'],
+    ['e', 'right'],
+  ] as const) {
+    await mount(page, { position })
+    await page.evaluate(() => {
+      ;(
+        document.querySelector('#affix-under-test') as HTMLElement
+      ).style.width = '400px'
+    })
+    await page.waitForTimeout(100)
+    g = await geometry(page)
+    if (edge === 'mid') {
+      expect(Math.abs(mid(g.fixture) - mid(g.content)), position).toBeLessThan(
+        1
+      )
+    } else if (position === 'ne') {
+      expect(g.fixture.right, position).toBe(g.content.right)
+    } else {
+      expect(g.fixture.left, position).toBe(g.content.right)
+    }
+  }
+})
+
 test('inside: the fixture sits within the content, against its edge', async ({
   page,
 }) => {
@@ -161,7 +197,10 @@ test('falls back when the fixture is longer than its edge, and comes back', asyn
       document.querySelector('#affix-under-test .content') as HTMLElement
     ).style.height = '300px'
   })
-  await page.waitForTimeout(100)
+  // the ResizeObserver answers on its own schedule; WebKit under load takes over 100ms
+  await expect
+    .poll(async () => (await geometry(page)).position, { timeout: 2000 })
+    .toBe('en')
   g = await geometry(page)
   expect(g.position).toBe('en')
   expect(g.inside).toBe(false)
