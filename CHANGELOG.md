@@ -1,5 +1,48 @@
 # Changelog
 
+## 1.17.2
+
+> Components carry only the icons they draw, and `<tosi-affix>` centres a caption on its
+> content. Nothing to change on upgrade. An app that imports components one at a time ships
+> about 20 kB gzip less per component; **`dist/iife.js` grows 1.8 kB** (508.0 kB gzip),
+> because the whole set is now assembled from per-icon modules.
+
+### Added
+
+- `tosijs-ui/icons/<name>` exports one icon as a function, the same one `icons.name` gives:
+  `import { chevronDown } from 'tosijs-ui/icons/chevronDown'`. Each module registers its icon
+  once however many modules import it, and imports any icon it is drawn from (`chevronDown`
+  brings `chevronRight`), so a bundler keeps only the icons something imports. `delete` and
+  `package` export `deleteIcon` and `packageIcon`.
+- `tosijs-make-icons` gains `--modules <dir>` (one string module per icon, plus an index whose
+  default is the whole set), `--creators <dir>` (one creator module per icon) and
+  `--core <specifier>` (where creators import `iconCreator` from; default
+  `tosijs-ui/icon-core`).
+
+### Changed
+
+- Components import only the icons they draw, not all 320. Measured gzip, each imported alone:
+  `tosiTag` 4.4 kB, `tosiCarousel` 6.2 kB (was 23.8), menu 13.9 kB (was 34.2), select 13.7
+  (34.0), tabs 15.1 (35.4), month 15.9 (36.1), table 29.1 (48.9), rating 5.0 (25.5). Importing
+  `tosijs-ui` itself still brings the whole set, so nothing changes for an app that does.
+- An icon a caller names (a menu item's `icon: 'folder'`, a select option's, a rating's) still
+  draws. On a page that has not loaded the whole set it appears a moment late, like a web font,
+  while the set loads. Import the icon's module, pass the icon itself where an element is
+  accepted (`icon: folder()`), or import `tosijs-ui/icons` up front, to draw it at once.
+
+### Fixed
+
+- `<tosi-affix>`: a centred caption is centred on its content, not on the content's cell. A
+  fixture wider than fixed-width content (the doc page's own "a caption, centred below")
+  widened the content's column, and the content sat at its start; the same happened in any
+  affix wider than its content, where an `ne` or `e` fixture also stood off the content's edge.
+  The content now takes the fixture's alignment with auto margins, which leave content that
+  fills its cell untouched.
+- `tosijs-ui/icons/data/<name>` shipped stale icons: the per-icon modules were written once in
+  1.4.1 and never regenerated, so 54 of 313 differed from the icons actually drawn (including
+  1.17.0's open-path fix) and six (`fatArrowDown/Left/Right/Up`, `pin`, `shift`) had no module.
+  The build now writes them from the same data, and a test fails if they drift.
+
 ## 1.17.1
 
 > Fixes from the 1.17.0 review, plus elastic table columns that can be dragged narrower. Nothing
