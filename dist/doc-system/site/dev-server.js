@@ -1228,10 +1228,15 @@ export async function devServer(config, opts = {}) {
         */
         if (!isUnderRoot(directory, basePath))
             return null;
-        const suffixes = ['', '.html', 'index.html'];
-        for (const suffix of suffixes) {
+        // `/slug` is the build's `slug.html` (written for that URL) before `slug/index.html`;
+        // `/slug/` is only ever the folder's index
+        const candidates = [
+            basePath,
+            ...(reqPath.endsWith('/') ? [] : [basePath + '.html']),
+            path.join(basePath, 'index.html'),
+        ];
+        for (const pathWithSuffix of candidates) {
             try {
-                const pathWithSuffix = path.join(basePath, suffix);
                 const stat = statSync(pathWithSuffix);
                 if (stat && stat.isFile()) {
                     return pathWithSuffix;

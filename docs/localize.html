@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    document.documentElement.classList.add('tosi-js')
+    document.addEventListener('click', function (e) {
+      if (customElements.get('tosi-doc-system')) return
+      var b = e.target.closest && e.target.closest('.doc-nav .nav-toggle')
+      if (!b) return
+      var open = b.closest('.nav-branch').classList.toggle('-open')
+      b.setAttribute('aria-expanded', String(open))
+    })
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="doc-system.css?v=348c95b5ff33" data-tosi-doc-system />
+  <title>localize — tosijs-ui</title>
+  <meta name="description" content="Localize an interface: localize() for strings, &lt;tosi-localized&gt; for markup, and &lt;tosi-locale-picker&gt; so readers can choose the language." />
+  <link rel="canonical" href="https://ui.tosijs.net/localize/" />
+  <link rel="alternate" type="text/markdown" href="index.md" title="localize — tosijs-ui (markdown)" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="localize — tosijs-ui" />
+  <meta property="og:description" content="Localize an interface: localize() for strings, &lt;tosi-localized&gt; for markup, and &lt;tosi-locale-picker&gt; so readers can choose the language." />
+  <meta property="og:url" content="https://ui.tosijs.net/localize/" />
+  <meta property="og:image" content="https://ui.tosijs.net/og/localize.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="localize — tosijs-ui" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://ui.tosijs.net/og/localize.webp" />
+  <meta name="twitter:image:alt" content="localize — tosijs-ui" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"localize","description":"Localize an interface: localize() for strings, \u003ctosi-localized> for markup, and \u003ctosi-locale-picker> so readers can choose the language.","url":"https://ui.tosijs.net/localize/","inLanguage":"en","image":"https://ui.tosijs.net/og/localize.webp","dateModified":"2026-10-29T17:33:42+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"localize","item":"https://ui.tosijs.net/localize/"}]}</script>
+  <link rel="icon" href="favicon.svg" />
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
+</head>
+<body>
+  <tosi-doc-system docs="docs.json?v=e51ddb92e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <article class="doc-content" data-doc="localize.ts">
+<h1 id="localize">localize</h1>
+<p><code>tosijs-ui</code> provides support for localization via the <code>localize</code> method and the <code>&lt;tosi-locale-picker&gt;</code>
+and <code>&lt;tosi-localized&gt;</code> custom-elements.</p>
+<blockquote>
+<h2 id="important-note">Important note</h2>
+<p>This module deals with the <strong>language</strong> used in the user interface. &quot;locale&quot; is
+<em>not the same thing</em>. The (usually) two-letter codes used designate <strong>language</strong>
+and <strong>not locale</strong>.</p>
+<p>E.g. the US <em>locale</em> includes things like measurement systems
+and date format. Most European locales use commas where we use decimal points in the US.</p>
+<p>Similarly, <code>ja</code> is the code for the Japanese <strong>language</strong> while <code>jp</code> is the <strong>locale</strong>.</p>
+</blockquote>
+<h2 id="initlocalizationlocalizationdata-string"><code>initLocalization(localizationData: string)</code></h2>
+<p>Enables localization from TSV string data.</p>
+<h2 id="tosilocalepicker">TosiLocalePicker</h2>
+<p>A selector that lets the user pick from among supported languages.</p>
+<pre><code class="language-html">&lt;h3&gt;Locale Picker&lt;/h3&gt;
+&lt;tosi-locale-picker&gt;&lt;/tosi-locale-picker&gt;
+
+&lt;h3&gt;Locale Picker with &lt;code&gt;hide-captions&lt;/code&gt;&lt;/h3&gt;
+&lt;tosi-locale-picker hide-caption&gt;&lt;/tosi-locale-picker&gt;
+</code></pre>
+<h2 id="localize-1"><code>localize()</code></h2>
+<p>If you just want to localize a string with code, use <code>localize(s: string): string</code>.</p>
+<p>If the reference string only matches when both are converted to
+lowercase, the output string will also be lowercase.</p>
+<p>E.g. if you have localized <code>Cancel</code> as <code>Annuler</code>, then <code>localize(&quot;cancel&quot;) will output </code>annuler`.</p>
+<h3 id="ellipses">ellipses</h3>
+<p>If you end a string with an ellipsis, <code>localize</code> will ignore the ellipsis,
+localize the string, and then append the ellipsis.</p>
+<h3 id="placeholders">placeholders</h3>
+<p><code>localize(pattern, values)</code> fills <code>{name}</code> placeholders <strong>after</strong> translating, so the
+translation key is the whole sentence:</p>
+<pre><code class="language-js">import { localize } from &#39;tosijs-ui&#39;
+
+preview.textContent = localize(&#39;Add {item}&#39;, { item: &#39;line item&#39; })
+</code></pre>
+<p>Do this rather than building the sentence by concatenation. <code>localize(&#39;Add &#39;) + item</code> makes
+the <em>pattern</em> untranslatable — a translator can only ever see a dangling fragment, and cannot
+move the placeholder to where their language puts it. Neither can they fix
+<code>localize(&#39;Sort&#39;) + &#39; &#39; + localize(&#39;Ascending&#39;)</code>, which assumes English word order and
+silently imposes it on every language.</p>
+<p>An unknown placeholder is left on screen as <code>{name}</code> rather than blanked, so a typo in a
+translation is visible instead of a hole.</p>
+<h3 id="whole-sentences-with-a-fallback">whole sentences, with a fallback</h3>
+<p>When a caption is built from parts, <code>localizePhrase(key, fragments)</code> asks for the <strong>sentence</strong>
+first and joins the fragments only if nobody has translated it:</p>
+<pre><code class="language-js">import { localizePhrase } from &#39;tosijs-ui&#39;
+
+preview.textContent = localizePhrase(&#39;Sort Ascending&#39;, [
+  &#39;Sort#order&#39;,
+  &#39;Ascending#sort-order&#39;,
+])
+</code></pre>
+<p>The sentence key needs <strong>no <code>#</code></strong> — an annotation answers <em>&quot;which sense?&quot;</em>, and a whole
+sentence has already answered it.</p>
+<p>This is not a style preference; it is the only form that can be right. Measured against this
+project&#39;s own table, <code>localize(&#39;Sort&#39;) + &#39; &#39; + localize(&#39;Ascending&#39;)</code> was wrong in every
+language checked, in three different ways:</p>
+<table>
+<thead>
+<tr>
+<th>language</th>
+<th>joined fragments</th>
+<th>correct</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>German</td>
+<td><code>Sortieren Aufsteigend</code></td>
+<td><code>Aufsteigend sortieren</code> — verb goes last</td>
+</tr>
+<tr>
+<td>Korean</td>
+<td><code>정렬 오름차순</code></td>
+<td><code>오름차순 정렬</code> — modifier first</td>
+</tr>
+<tr>
+<td>Japanese</td>
+<td><code>非表示 カラム</code></td>
+<td><code>列を非表示</code> — particle, and no space</td>
+</tr>
+<tr>
+<td>Chinese</td>
+<td><code>隐藏 列</code></td>
+<td><code>隐藏列</code> — no space between words</td>
+</tr>
+<tr>
+<td>French</td>
+<td><code>Cacher Colonne</code></td>
+<td><code>Masquer la colonne</code> — article</td>
+</tr>
+</tbody></table>
+<p><strong>The fallback is what makes adopting it safe.</strong> A translation table that predates the
+sentence key keeps exactly the behaviour it has, because <code>localize</code> returns its input when
+nothing matches; add one row and it upgrades. No existing translation is orphaned, so moving
+to sentence keys does not have to wait for a major version.</p>
+<h2 id="setlocalelanguage-string"><code>setLocale(language: string)</code></h2>
+<pre><code class="language-js">import { button, p } from &#39;tosijs&#39;.elements
+import { setLocale } from &#39;tosijs-ui&#39;
+
+preview.append(
+  p(
+    button(
+      {
+        onClick() {
+          setLocale(&#39;en-US&#39;)
+        }
+      },
+      &#39;setLocale(&quot;en-US&quot;)&#39;
+    )
+  ),
+  p(
+    button(
+      {
+        onClick() {
+          setLocale(&#39;fr&#39;)
+        }
+      },
+      &#39;setLocale(&quot;fr&quot;)&#39;
+    )
+  ),
+  p(
+    button(
+      {
+        onClick() {
+          setLocale(&#39;qq&#39;)
+        }
+      },
+      &#39;setLocale(&quot;qq&quot;) (see console for error message)&#39;
+    )
+  ),
+)
+</code></pre>
+<p>If you want to directly set locale, just use <code>setLocale()</code>.</p>
+<h2 id="data-tosi-localized-directive"><code>data-tosi-localized</code> directive</h2>
+<p>Set the <code>data-tosi-localized</code> attribute on any element with a JSON object mapping
+attribute names to localization keys. The library applies <code>localize()</code> to each
+key and writes the result to the corresponding attribute — immediately when the
+element appears in the DOM, on every locale change, and whenever the
+<code>data-tosi-localized</code> attribute itself is mutated.</p>
+<p>The keys must be reference strings that exist in your localization data — try
+switching languages with the locale picker above and watch the <code>title</code> and
+<code>placeholder</code> below update (hover the button to see its tooltip).</p>
+<pre><code class="language-html">&lt;button data-tosi-localized=&#39;{&quot;title&quot;:&quot;Delete&quot;,&quot;aria-label&quot;:&quot;Delete&quot;}&#39;&gt;
+  &lt;tosi-localized&gt;Delete&lt;/tosi-localized&gt;
+&lt;/button&gt;
+&lt;input data-tosi-localized=&#39;{&quot;placeholder&quot;:&quot;Filter…&quot;}&#39;&gt;
+</code></pre>
+<p>You never need to set the underlying attributes (<code>title</code> / <code>aria-label</code> /
+<code>placeholder</code>) yourself — the data attribute is the source of truth and stays
+reactive across locale switches. JSON (not a comma-separated mini-format) is
+deliberate: real translation keys contain commas and colons.</p>
+<p><strong>Scope.</strong> The library observes the light DOM with a <code>MutationObserver</code>. On
+locale change, the walk also descends into <strong>open</strong> shadow roots, so existing
+elements get re-applied. <em>Insertions</em> inside a shadow root between locale
+changes are not picked up automatically — call <code>applyLocalized(el)</code> from the
+component&#39;s <code>connectedCallback</code> (or after building the shadow tree) when you
+add localized elements inside a shadow root. Closed shadow roots are
+inaccessible by design.</p>
+<p>If the JSON is malformed, the directive logs a warning and skips that element
+— it never throws.</p>
+<pre><code class="language-html">&lt;button
+  id=&quot;tdl-demo&quot;
+  data-tosi-localized=&#39;{&quot;title&quot;:&quot;Cancel&quot;,&quot;aria-label&quot;:&quot;Cancel&quot;}&#39;
+&gt;Hover me&lt;/button&gt;
+</code></pre>
+<pre><code class="language-test">test(&#39;data-tosi-localized: insert and runtime mutation both apply&#39;, async () =&gt; {
+  const wait = () =&gt; new Promise((r) =&gt; setTimeout(r, 0))
+  // Combine on-insert and runtime-mutation checks into one test — the
+  // page-wide locale-change path is exercised by the unit tests and by
+  // localization.pw.ts; changing the locale here would cascade through
+  // every localized example on the page.
+  await wait(); await wait()
+  const btn = preview.querySelector(&#39;#tdl-demo&#39;)
+  expect(btn.getAttribute(&#39;title&#39;)).toBeTruthy()
+  expect(btn.getAttribute(&#39;title&#39;)).toBe(btn.getAttribute(&#39;aria-label&#39;))
+  const before = btn.getAttribute(&#39;title&#39;)
+  btn.setAttribute(&#39;data-tosi-localized&#39;, JSON.stringify({ title: &#39;Yes&#39; }))
+  await wait(); await wait()
+  expect(btn.getAttribute(&#39;title&#39;)).not.toBe(before)
+})
+</code></pre>
+<h2 id="tosilocalized">TosiLocalized</h2>
+<p>A span-replacement that automatically localizes its text content.
+By default the case in the localized data is preserved unless the
+reference text is all lowercase, in which case the localized text
+is also lowercased.</p>
+<p>While viewing this documentation, all <code>&lt;tosi-localized&gt;</code> elements should display a <strong>red
+underline</strong>.</p>
+<pre><code class="language-html">&lt;h3&gt;Localized Widgets&lt;/h3&gt;
+&lt;button&gt;&lt;tosi-localized&gt;Yes&lt;/tosi-localized&gt;&lt;/button&gt;
+&lt;button&gt;&lt;tosi-localized&gt;No&lt;/tosi-localized&gt;&lt;/button&gt;
+&lt;button&gt;&lt;tosi-localized&gt;Open…&lt;/tosi-localized&gt;&lt;/button&gt; &lt;i&gt;note the ellipsis&lt;/i&gt;
+
+&lt;h3&gt;Lowercase is preserved&lt;/h3&gt;
+&lt;button&gt;&lt;tosi-localized&gt;yes&lt;/tosi-localized&gt;&lt;/button&gt;
+&lt;button&gt;&lt;tosi-localized&gt;no&lt;/tosi-localized&gt;&lt;/button&gt;
+&lt;button&gt;&lt;tosi-localized&gt;open…&lt;/tosi-localized&gt;&lt;/button&gt;
+
+&lt;h3&gt;Localized Attribute&lt;/h3&gt;
+&lt;input&gt;
+</code></pre>
+<pre><code class="language-css">tosi-localized {
+  border-bottom: 2px solid red;
+}
+</code></pre>
+<pre><code class="language-js">import { tosiLocalized, localize } from &#39;tosijs-ui&#39;
+
+preview.append(tosiLocalized({
+  refString: &#39;localized placeholder&#39;,
+  localeChanged() {
+    this.previousElementSibling.setAttribute(&#39;placeholder&#39;, localize(this.refString))
+  }
+}))
+</code></pre>
+<p><code>&lt;tosi-localized&gt;</code> has a <code>refString</code> attribute (which defaults to its initial <code>textContent</code>)
+which is the text that it localizes. You can set it directly.</p>
+<p>It also has an <code>localeChanged</code> method which defaults to setting the content of the element
+to the localized reference string, but which you can override, to (for example) set a property
+or attribute of the parent element.</p>
+<blockquote>
+<p><code>&lt;tosi-localized&gt;</code> <em>can</em> be used inside the shadowDOM of other custom-elements.</p>
+</blockquote>
+<h2 id="i18n"><code>i18n</code></h2>
+<p>All of the data can be bound in the <code>i18n</code> proxy (<code>xin.i18n</code>), including the currently selected
+locale (which will default to <code>navigator.language</code>).</p>
+<p>You can take a look at <code>xin.i18n</code> in the console. <code>i18n</code> can be used to access localization
+data directly, and also to determine which locales are available <code>i18n.locales</code> and set the
+locale programmatically (e.g. <code>i18n.locale = &#39;en&#39;</code>).</p>
+<pre><code>if (i18n.locales.includes(&#39;fr&#39;)) {
+  i18n.locale = &#39;fr&#39;
+}
+</code></pre>
+<h2 id="string-annotations-">String Annotations (<code>#</code>)</h2>
+<p>Sometimes a single term in your reference language needs different translations
+depending on context. For example, &quot;OK&quot; might translate to both &quot;D&#39;accord&quot; and
+&quot;Bien&quot; in French depending on usage.</p>
+<p>Use <code>#</code> annotations to create context-specific variants:</p>
+<ul>
+<li>In your TSV data, add rows like <code>OK#confirm</code> or <code>OK#accept</code> alongside the base <code>OK</code> row.</li>
+<li>Use <code>&quot;</code> (a double-quote) in any language column to mean &quot;same as the base translation.&quot;
+This avoids duplicating translations for languages that don&#39;t need a variant.</li>
+<li><code>localize(&#39;OK#confirm&#39;)</code> looks up the <code>OK#confirm</code> entry first. If no entry exists
+(or the cell is empty), it falls back to the base <code>OK</code> translation.</li>
+<li>The <code>#</code> annotation is always stripped from the output — the user never sees it.</li>
+</ul>
+<h3 id="literal-">Literal <code>#</code></h3>
+<p>An annotation is a <strong>suffix identifier</strong>, so only a <code>#</code> that looks like one is treated as
+one: immediately preceded by a non-space, followed by letters/digits/<code>_</code>/<code>-</code>, running to
+the end of the string. Everything else is literal:</p>
+<table>
+<thead>
+<tr>
+<th>string</th>
+<th>read as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Okay#confirm</code></td>
+<td>annotation</td>
+</tr>
+<tr>
+<td><code>C# Tutorial</code></td>
+<td>literal — space after the <code>#</code></td>
+</tr>
+<tr>
+<td><code>Issue #42</code></td>
+<td>literal — space before the <code>#</code></td>
+</tr>
+<tr>
+<td><code>#hashtag</code></td>
+<td>literal — nothing before the <code>#</code></td>
+</tr>
+<tr>
+<td><code>C#</code></td>
+<td>literal — no annotation after the <code>#</code></td>
+</tr>
+</tbody></table>
+<p>Escape with <code>\#</code> for a literal that genuinely looks like an annotation (<code>tag\#42</code> →
+<code>tag#42</code>).</p>
+<p>Translations are never scanned for annotations — an annotation belongs to the lookup key,
+not to the translated text, so a translation may contain <code>#</code> freely.</p>
+<p>Example TSV rows:</p>
+<pre><code>OK	D&#39;accord	Ok	好的
+OK#confirm	&quot;	&quot;	&quot;
+OK#accept	Bien	&quot;	&quot;
+</code></pre>
+<p>With the above data:</p>
+<ul>
+<li><code>localize(&#39;OK&#39;)</code> → <code>D&#39;accord</code> (French), <code>Ok</code> (Finnish), <code>好的</code> (Chinese)</li>
+<li><code>localize(&#39;OK#confirm&#39;)</code> → <code>D&#39;accord</code> (French — inherited via <code>&quot;</code>)</li>
+<li><code>localize(&#39;OK#accept&#39;)</code> → <code>Bien</code> (French — specific override), <code>Ok</code> (Finnish — inherited)</li>
+</ul>
+<p>Ellipsis and case handling work normally with annotations:</p>
+<ul>
+<li><code>localize(&#39;ok#confirm&#39;)</code> → <code>d&#39;accord</code> (lowercase preserved)</li>
+<li><code>localize(&#39;OK#confirm…&#39;)</code> → <code>D&#39;accord…</code></li>
+</ul>
+<h3 id="a-worked-example-from-our-own-table">A worked example, from our own table</h3>
+<p>This is not a hypothetical. <code>&lt;tosi-table&gt;</code>&#39;s column-header menu used to ask for the bare
+word <code>Right</code>, and the table shipped with this project had it translated in <strong>the wrong
+sense in four of nine languages</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>language</th>
+<th>was</th>
+<th>means</th>
+<th>should be</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Swedish</td>
+<td><code>Rätt</code></td>
+<td>correct</td>
+<td><code>Höger</code></td>
+</tr>
+<tr>
+<td>Chinese</td>
+<td><code>正确的</code></td>
+<td>correct</td>
+<td><code>右</code></td>
+</tr>
+<tr>
+<td>Spanish</td>
+<td><code>Bien</code></td>
+<td>well, fine</td>
+<td><code>Derecha</code></td>
+</tr>
+<tr>
+<td>Italian</td>
+<td><code>Giusto</code></td>
+<td>just, correct</td>
+<td><code>Destra</code></td>
+</tr>
+</tbody></table>
+<p>It was not only <code>Right</code>. <code>Column</code> came back as <code>柱子</code> — a <em>pillar</em>. <code>Sort</code> became <code>种类</code>
+and <code>종류</code>, both meaning <em>a kind of thing</em>. <code>Show</code> became <code>Espectáculo</code> and <code>Spettacolo</code>,
+the kind with a stage.</p>
+<p>Every one of these is a competent translation of the word it was given. That is the whole
+point: <strong>the translator was handed <code>Right</code> with no context, and half the time guessed
+wrong.</strong> No amount of care downstream fixes a key that does not say which &quot;right&quot; it means
+— and nobody notices, because the menu still looks like a menu.</p>
+<p>So the menu now asks for <code>Right#direction</code>, <code>Column#table</code>, <code>Sort#order</code>, <code>Show#reveal</code>,
+and the table has rows to match. The annotation costs one word and is the only place the
+disambiguation <em>can</em> live: it travels with the key, into the spreadsheet, in front of the
+person doing the translating.</p>
+<p><strong>Annotating a key is backward compatible.</strong> <code>localize(&#39;Right#direction&#39;)</code> falls back to a
+plain <code>Right</code> row when there is no annotated one, so adding an annotation to a library&#39;s
+key cannot orphan a translation table that predates it. Annotate freely.</p>
+<p>Name the annotation for the <strong>sense</strong>, not the call site. <code>Right#direction</code> tells a
+translator what to do; <code>Right#1</code> and <code>Right#table-menu</code> tell them where it appears, which
+is not the question they need answered.</p>
+<h2 id="creating-localized-string-data">Creating Localized String Data</h2>
+<p>You can create your own localization data using any spreadsheet and exporting TSV.</p>
+<p>E.g. you can automatically create localization data
+using something like my <a href="https://docs.google.com/spreadsheets/d/1L0_4g_dDhVCwVVxLzYbMj_H86xSp9lsRCKj7IS9psso/edit?usp=sharing">localized</a>
+Google Sheet which leverages <code>googletranslate</code> to automatically translate reference strings
+(and which you can manually override as you like).</p>
+<p>E.g. in this demo I&#39;ve replaced the incorrect translation of &quot;Finnish&quot;
+(<code>googletranslate</code> used the word for Finnish nationality rather than the language).</p>
+<p>The format of the input data is a table in TSV format, that looks like this:</p>
+<table>
+<thead>
+<tr>
+<th>en-US</th>
+<th>fr</th>
+<th>fi</th>
+<th>sv</th>
+<th>zh</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>English (US)</td>
+<td>French</td>
+<td>Finnish</td>
+<td>Swedish</td>
+<td>Chinese (Mandarin)</td>
+</tr>
+<tr>
+<td>English (US)</td>
+<td>Français</td>
+<td>suomi</td>
+<td>svenska</td>
+<td>中文（普通话）</td>
+</tr>
+<tr>
+<td>🇺🇸</td>
+<td>🇫🇷</td>
+<td>🇫🇮</td>
+<td>🇸🇪</td>
+<td>🇨🇳</td>
+</tr>
+<tr>
+<td>Icon</td>
+<td>Icône</td>
+<td>Kuvake</td>
+<td>Ikon</td>
+<td>图标</td>
+</tr>
+<tr>
+<td>Ok</td>
+<td>D&#39;accord</td>
+<td>Ok</td>
+<td>Ok</td>
+<td>好的</td>
+</tr>
+<tr>
+<td>Cancel</td>
+<td>Annuler</td>
+<td>Peruuttaa</td>
+<td>Avboka</td>
+<td>取消</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Column 1 is your reference language.</li>
+<li>Row 1 is <a href="https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes">language code</a>.</li>
+<li>Row 2 is the name of the language in your reference language.</li>
+<li>Row 3 is the name of the language in itself (because it&#39;s silly to expect people
+to know the name of their language in a language they don&#39;t know)</li>
+<li>Row 4 is the flag emoji for that language (yes, that&#39;s problematic, but languages
+do not have flags, per se)</li>
+<li>Rows 5 and on are user interface strings you want to localize</li>
+</ul>
+<p>In the spreadsheet provided, each cell contains a formula that translates the term
+in the left-most column from the language in that column to the language in the
+destination column. Once you have an automatic translation, you can hand off the
+sheet to language experts to vet the translations.</p>
+<p>Finally, create a <code>tsv</code> file and then turn that into a Typescript file by wrapping
+the content thus:</p>
+<pre><code>export default `( content of tsv file )`
+</code></pre>
+<p>You use this data using <code>initLocalization()</code>.</p>
+<h2 id="leveraging-tosilocalized-automatic-updates">Leveraging TosiLocalized Automatic Updates</h2>
+<p>If you want to leverage TosiLocalized&#39;s automatic updates you simply need to
+implement <code>updateLocale</code> and register yourself with <code>TosiLocalized.allInstances</code>
+(which is a `Set<AbstractLocalized>).</p>
+<p>Typically, this would look like something like:</p>
+<pre><code>class MyLocalizedComponent extends Component {
+  ...
+
+  // register yourself as a localized component
+  connectecCallback() {
+    super.connectedCallback()
+
+    TosiLocalized.allInstances.add(this)
+  }
+
+  // avoid leaking!
+  disconnectecCallback() {
+    super.connectedCallback()
+
+    TosiLocalized.allInstances.delete(this)
+  }
+
+  // presumably your render method does the right things
+  updateLocale = () =&gt;  {
+    this.queueRender()
+  }
+}
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a class="doc-link" href="./">tosijs-ui</a></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-components" aria-label="Components"></button><a class="doc-link" href="components/">Components</a></div>
+    <ul id="tosi-nav-components">
+      <li><a class="doc-link" href="babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="affix/">affix</a></li>
+      <li><a class="doc-link" href="carousel/">carousel</a></li>
+      <li><a class="doc-link" href="code-editor/">code</a></li>
+      <li><a class="doc-link" href="crud/">crud</a></li>
+      <li><a class="doc-link" href="dialog/">dialog</a></li>
+      <li><a class="doc-link" href="diff/">diff</a></li>
+      <li><a class="doc-link" href="editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="component/">example</a></li>
+      <li><a class="doc-link" href="float/">float</a></li>
+      <li><a class="doc-link" href="gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="header/">header</a></li>
+      <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-icons" aria-label="icons"></button><a class="doc-link" href="icons/">icons</a></div>
+      <ul id="tosi-nav-icons">
+        <li><a class="doc-link" href="icon-composition/">Icon Composition</a></li>
+        <li><a class="doc-link" href="icon-svg/">iconSvg — icon markup without a DOM</a></li>
+        <li><a class="doc-link" href="make-icon-data/">make-icon-data</a></li>
+      </ul></li>
+      <li><a class="doc-link" href="layout/">layout</a></li>
+      <li><a class="doc-link" href="bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="mapbox/">map</a></li>
+      <li><a class="doc-link" href="markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="menu/">menu</a></li>
+      <li><a class="doc-link" href="notifications/">notifications</a></li>
+      <li><a class="doc-link" href="palette/">palette</a></li>
+      <li><a class="doc-link" href="pocket-bar/">pocket bar</a></li>
+      <li><a class="doc-link" href="pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="schema-form/">schema-form</a></li>
+      <li><a class="doc-link" href="side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="size-break/">size-break</a></li>
+      <li><a class="doc-link" href="sizer/">sizer</a></li>
+      <li><a class="doc-link" href="data-table/">table</a></li>
+      <li><a class="doc-link" href="tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="tooltip/">tooltip</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-form-components" aria-label="Form Components"></button><a class="doc-link" href="form-components/">Form Components</a></div>
+    <ul id="tosi-nav-form-components">
+      <li><a class="doc-link" href="color-input/">color input field</a></li>
+      <li><a class="doc-link" href="filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="form/">forms</a></li>
+      <li><a class="doc-link" href="month/">month</a></li>
+      <li><a class="doc-link" href="password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="rating/">rating</a></li>
+      <li><a class="doc-link" href="rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="search-field/">search-field</a></li>
+      <li><a class="doc-link" href="segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="select/">select</a></li>
+      <li><a class="doc-link" href="tag-list/">tag-list</a></li>
+    </ul></li>
+    <li class="nav-branch -open"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="true" aria-controls="tosi-nav-helper-libraries" aria-label="Helper Libraries"></button><a class="doc-link" href="helper-libraries/">Helper Libraries</a></div>
+    <ul id="tosi-nav-helper-libraries">
+      <li><a class="doc-link" href="ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="hash-state/">hash-state</a></li>
+      <li><a class="doc-link" href="live-theme/">live-theme</a></li>
+      <li><a class="doc-link current" href="localize/" aria-current="page">localize</a></li>
+      <li><a class="doc-link" href="make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="natural-compare/">naturalCompare</a></li>
+      <li><a class="doc-link" href="router/">router</a></li>
+      <li><a class="doc-link" href="via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="theme/">theme</a></li>
+      <li><a class="doc-link" href="track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="value-renderer/">valueRenderer</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-documentation-system" aria-label="Documentation System"></button><a class="doc-link" href="documentation-system/">Documentation System</a></div>
+    <ul id="tosi-nav-documentation-system">
+      <li><a class="doc-link" href="adopting-the-doc-system/">Adopting the doc system</a></li>
+      <li><a class="doc-link" href="one-source-every-artifact/">One Source</a></li>
+      <li><a class="doc-link" href="doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="docs/">docs</a></li>
+      <li><a class="doc-link" href="highlight-block/">highlight-block</a></li>
+      <li><a class="doc-link" href="highlight-styles/">highlight-styles</a></li>
+      <li><a class="doc-link" href="data-client/">data client</a></li>
+      <li><a class="doc-link" href="full-screen-demo/">Full-screen layout</a></li>
+      <li><a class="doc-link" href="no-header-demo/">Page without the header</a></li>
+      <li><a class="doc-link" href="kitchen-sink/">kitchen sink</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-appendices" aria-label="Appendices"></button><a class="doc-link" href="appendices/">Appendices</a></div>
+    <ul id="tosi-nav-appendices">
+      <li><a class="doc-link" href="release-notes/">release-notes</a></li>
+      <li><a class="doc-link" href="migrating/">Migrating from older versions</a></li>
+    </ul></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script type="module" src="hydrate-0neye2tn.js"></script>
+</body>
+</html>

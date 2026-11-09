@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    document.documentElement.classList.add('tosi-js')
+    document.addEventListener('click', function (e) {
+      if (customElements.get('tosi-doc-system')) return
+      var b = e.target.closest && e.target.closest('.doc-nav .nav-toggle')
+      if (!b) return
+      var open = b.closest('.nav-branch').classList.toggle('-open')
+      b.setAttribute('aria-expanded', String(open))
+    })
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="doc-system.css?v=348c95b5ff33" data-tosi-doc-system />
+  <title>Migrating from older versions — tosijs-ui</title>
+  <meta name="description" content="Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release." />
+  <link rel="canonical" href="https://ui.tosijs.net/migrating/" />
+  <link rel="alternate" type="text/markdown" href="index.md" title="Migrating from older versions — tosijs-ui (markdown)" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="Migrating from older versions — tosijs-ui" />
+  <meta property="og:description" content="Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release." />
+  <meta property="og:url" content="https://ui.tosijs.net/migrating/" />
+  <meta property="og:image" content="https://ui.tosijs.net/og/index.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Migrating from older versions — tosijs-ui" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
+  <meta name="twitter:image:alt" content="Migrating from older versions — tosijs-ui" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-10-29T15:40:17+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Appendices","item":"https://ui.tosijs.net/appendices/"},{"@type":"ListItem","position":2,"name":"Migrating from older versions","item":"https://ui.tosijs.net/migrating/"}]}</script>
+  <link rel="icon" href="favicon.svg" />
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
+</head>
+<body>
+  <tosi-doc-system docs="docs.json?v=e51ddb92e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <article class="doc-content" data-doc="migrating.md">
+<h1 id="migrating-from-older-versions">Migrating from older versions</h1>
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release." }-->
+
+<p>Notices for releases you may be upgrading <em>past</em>. If you are starting fresh, none of
+this applies — go to the <a href="/">Quick Start</a> instead.</p>
+<p>Current releases are described in <a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<h2 id="tosijs-1109--11621">tosijs <code>^1.10.9</code> — 1.16.21</h2>
+<p>tosijs-ui now needs <strong>tosijs <code>^1.10.9</code></strong>; upgrade it alongside. <code>&lt;tosi-table&gt;</code> relies on that
+release to keep a row in place when its detail opens or closes. On an older tosijs the row
+jumps, with nothing in the console to say why. <code>dist/iife.js</code> already includes 1.10.9.</p>
+<h2 id="iconsvg-throws-for-a-name-it-cannot-draw-as-one-svg--11619"><code>iconSvg()</code> throws for a name it cannot draw as one SVG — 1.16.19</h2>
+<p>A stack (<code>tosi$hat</code>), a composition rule (<code>unLock</code>, <code>spin90Loader</code>), a style suffix other
+than rotation or flip (<code>check50o</code>), a redirect to a missing icon, or a redirect cycle used to
+return <code>undefined</code>. Each now <strong>throws</strong>, naming the problem. A name nothing would draw still
+returns <code>undefined</code>. Code that relied on <code>undefined</code> for those names should catch, or draw them
+with <code>icons.&lt;name&gt;()</code> where there is a DOM.</p>
+<h2 id="tjs-examples-compile-with-tjs-lang-014--11617"><code>tjs</code> examples compile with tjs-lang 0.14 — 1.16.17</h2>
+<p>Sites that load tjs-lang from the CDN (no copy of their own installed) now get
+<strong>0.14.0-rc.5</strong>. It refuses some code 0.13 accepted, among others <code>||</code> in a type (a union is
+<code>|</code>), <code>unsafe var</code> and <code>unsafe eval</code>; tjs-lang&#39;s
+<a href="https://github.com/tonioloewald/tjs-lang/blob/main/CHANGELOG.md">changelog</a> lists them. Fix
+the example, or install <code>tjs-lang@0.13.13</code> in your project: the build ships the installed copy
+with your pages and they prefer it to the CDN.</p>
+<h2 id="tosi-md-sanitizes-by-default--1160"><code>&lt;tosi-md&gt;</code> sanitizes by default — 1.16.0</h2>
+<p>A <code>&lt;tosi-md&gt;</code> with no <code>sanitize</code> attribute now strips executable content from the rendered
+markdown, and <strong>unwraps custom elements</strong> (their content stays, the element goes). 1.15.3 logged a
+console warning announcing this.</p>
+<ul>
+<li><strong>Markdown you control</strong> (your own docs, posts you wrote) that embeds HTML such as a <code>&lt;form&gt;</code>,
+<code>&lt;iframe&gt;</code>, <code>&lt;style&gt;</code> or <code>&lt;script&gt;</code>: set <code>sanitize=&quot;off&quot;</code> on that element to keep the old
+behaviour.</li>
+<li><strong>Markdown that embeds your own display components</strong> (<code>&lt;tosi-icon&gt;</code>, a tag chip): keep
+sanitizing and allow them by name, <code>allowed-elements=&quot;tosi-icon tosi-tag&quot;</code>.</li>
+<li><strong>Markdown from anyone else</strong> (comments, issue bodies, API data): leave it sanitized. That is
+the point of the change: unsanitized, such text can run script in your page.</li>
+</ul>
+<p><code>tosi-md</code>, <code>tosi-example</code> and <code>tosi-doc-system</code> can&#39;t be allowed; they render raw HTML or run code.</p>
+<h2 id="tosijs-110-components-are-typed-from-their-attributes--1160">tosijs 1.10: components are typed from their attributes — 1.16.0</h2>
+<p>tosijs-ui now needs <strong>tosijs <code>^1.10.3</code></strong>; upgrade it alongside. Nothing changes at runtime. What
+changes is what TypeScript knows about a component instance:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">const</span> rating <span class="token operator">=</span> <span class="token function">tosiRating</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+rating<span class="token punctuation">.</span>max        <span class="token comment">// number — was unknown to TypeScript on tosijs 1.9</span>
+rating<span class="token punctuation">.</span>maxx       <span class="token comment">// now a type error (a typo)</span>
+rating<span class="token punctuation">.</span><span class="token keyword">readonly</span> <span class="token operator">=</span> <span class="token string">'yes'</span> <span class="token comment">// now a type error (wrong type)</span>
+</code></pre>
+<p>So TypeScript code that read or wrote a property a component does not have, or with the wrong
+type, stops compiling. That is the point: those were bugs the old typing hid. (Our own
+migration found one: filter-builder read a <code>selectedIndex</code> that <code>&lt;tosi-select&gt;</code> never had, and
+returned an empty string every time.)</p>
+<p><strong>Your own components</strong> built on tosijs <code>Component</code> get the same benefit by moving
+<code>static initAttributes</code> into the class header, as tosijs&#39;s migration notes describe:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token comment">// before</span>
+<span class="token keyword">class</span> <span class="token class-name">MyWidget</span> <span class="token keyword">extends</span> <span class="token class-name">Component<span class="token operator">&lt;</span>MyParts<span class="token operator">></span></span> <span class="token punctuation">{</span>
+  <span class="token keyword">static</span> initAttributes <span class="token operator">=</span> <span class="token punctuation">{</span> size<span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span> label<span class="token operator">:</span> <span class="token string">''</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// after</span>
+<span class="token keyword">class</span> <span class="token class-name">MyWidget</span> <span class="token keyword">extends</span> <span class="token class-name">withAttributes</span><span class="token punctuation">(</span><span class="token punctuation">{</span> size<span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span> label<span class="token operator">:</span> <span class="token string">''</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token operator">&lt;</span>MyParts<span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+</code></pre>
+<p>Element-creator arguments are not typed by this: <code>tosiRating({ maxx: 1 })</code> still compiles.</p>
+<h2 id="the-doc-system-cluster-moved-off-the-root-barrel--1140">The doc-system cluster moved off the root barrel — 1.14.0</h2>
+<p>If you import <code>&lt;tosi-code&gt;</code>, the doc browser, <code>&lt;tosi-doc-system&gt;</code> or <code>&lt;live-example&gt;</code> from the
+package root, change the import. Everything else is unaffected.</p>
+<pre><code class="language-typescript" data-highlighted><span class="token comment">// before</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> tosiCode<span class="token punctuation">,</span> createDocBrowser <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
+
+<span class="token comment">// after — the same things, by subpath</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> tosiCode <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/code-editor'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createDocBrowser <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-browser'</span>
+</code></pre>
+<p><strong>This one can fail at RUNTIME rather than at build time.</strong> A bare <code>import &#39;tosijs-ui&#39;</code> used to
+register <code>&lt;tosi-code&gt;</code>, <code>&lt;tosi-doc-system&gt;</code> and <code>&lt;live-example&gt;</code> as a side effect; it no longer
+does, so a page using those tags renders nothing and the console says only that an unknown
+element was not upgraded. If a custom element stopped appearing after this upgrade, this is why.</p>
+<p>Why: those four modules pull CodeMirror and tjs-lang, and because the package has no
+<code>sideEffects</code> field (correctly — <code>elementCreator()</code> registers elements at import time, so a
+blanket <code>sideEffects: false</code> would tree-shake a bare import down to zero registrations) a
+bundler had to treat them as reachable from <em>any</em> import of the barrel. Measured on a real
+15 MB app bundle: <strong>1.35 MB / 8.9% saved</strong>. The doc site and CDN <code>&lt;script&gt;</code> users are
+unaffected — the IIFE imports all four explicitly.</p>
+<h2 id="validation-is-supplied-not-imported--1110">Validation is supplied, not imported — 1.11.0</h2>
+<p>If you use <code>&lt;tosi-schema-form&gt;</code>, <code>&lt;tosi-crud&gt;</code> or an editable <code>&lt;tosi-table&gt;</code> <strong>from ESM</strong>, add
+one line. Nothing else changes, and nothing breaks silently — a form with no validator warns
+in the console and reports <code>validationAvailable === false</code>.</p>
+<pre data-example-mode="static"><code class="language-js" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> setSchemaValidator <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> validate<span class="token punctuation">,</span> inferSchema<span class="token punctuation">,</span> unenforcedKeywords <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-schema'</span> <span class="token comment">// ^1.8.0</span>
+
+<span class="token function">setSchemaValidator</span><span class="token punctuation">(</span><span class="token punctuation">{</span> validate<span class="token punctuation">,</span> inferSchema<span class="token punctuation">,</span> unenforcedKeywords <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Pass all three.</strong> <code>unenforcedKeywords</code> is what lets a field ask the validator <em>&quot;do you
+actually check this keyword?&quot;</em> — omit it and the form falls back to a list frozen at
+tosijs-schema 1.7.0 and labels every <code>oneOf</code> and <code>exclusiveMinimum</code> field &quot;not validated&quot;
+while it is being validated.</p>
+<p>Nothing to do if you load the CDN <code>&lt;script&gt;</code> build or use <code>tosijs-ui/site</code> — both register it
+themselves.</p>
+<p><strong>Why it changed.</strong> A bare <code>import(&#39;tosijs-schema&#39;)</code> in shipped code is either resolved by
+your bundler — which fails the build for anyone who did not install it, including people using
+only <code>&lt;tosi-table&gt;</code> — or left external, which cannot resolve in a browser and kills validation
+for everyone. Both were measured; there is no third option. Asking for two functions instead
+of a package also means anything can supply them: an Ajv wrapper, a house validator, a stub.</p>
+<h2 id="tjs-lang-peer-moves-to-0131--1110"><code>tjs-lang</code> peer moves to <code>^0.13.1</code> — 1.11.0</h2>
+<p>Only affects you if you have <code>tjs-lang</code> installed (it is an optional peer, for live examples
+and <code>.tjs</code> sources). <code>^0.12.0</code> could not reach 0.13.x — caret pins the minor on <code>0.x</code> — so an
+adopter on current tjs-lang hit a hard <code>ERESOLVE</code>.</p>
+<p><strong>0.12.0 is deprecated on npm</strong>, and the deprecation names this exact combination: *&quot;tosijs-schema</p>
+<blockquote>
+<p>=1.5.0 breaks the battery atoms&#39; output validation in these versions. Upgrade to 0.13.1.&quot;*
+Since 1.11.0 also floors <code>tosijs-schema</code> at <code>^1.8.0</code>, staying on 0.12.0 is the pairing the
+upstream author deprecated it over.</p>
+</blockquote>
+<h2 id="edit-links-are-shorter-and-shorter-lived--1110">Edit links are shorter and shorter-lived — 1.11.0</h2>
+<p>Only affects <code>tosijs-ui/site</code> users running the <code>tosijs-tunnel</code> bin. The token is now <strong>7 Crockford
+base32 characters</strong> instead of 22, and <code>linkTtlMinutes</code> defaults to <strong>5</strong> rather than 15. A
+link minted by an older dev server is not redeemable by a newer one; both live in memory, so
+this only matters across a restart mid-session.</p>
+<p>The token is case-insensitive and forgives the lookalikes — <code>I</code>/<code>L</code> read as <code>1</code>, <code>O</code> as <code>0</code>,
+hyphens ignored — because it is meant to be read off one screen and typed on another.</p>
+<p><strong>Changed again in 1.14.0:</strong> the token is now eight letters with no digits. See
+<a href="/doc-site-system/#the-token-is-eight-letters-and-you-can-type-it">the token is eight letters</a>.</p>
+<h2 id="cannot-find-module-under-node--fixed-in-191"><code>Cannot find module</code> under Node — fixed in 1.9.1</h2>
+<p>If an import of <code>tosijs-ui</code> (any entry point) fails under <strong>Node</strong> with something like:</p>
+<pre><code class="language-text" data-highlighted>Cannot find module '.../dist/doc-system/site/site-config'
+imported from '.../dist/doc-system/site/index.js'
+</code></pre>
+<p>you are on <strong>1.9.0 or earlier</strong>. Upgrade to <strong>1.9.1</strong>; there is no workaround on the older
+versions and no code change needed on yours.</p>
+<p>Shipped <code>dist/</code> used extensionless relative imports (<code>from &#39;./site-config&#39;</code>). Bun resolves
+those; Node ESM does not — it requires the extension. So the package worked perfectly
+under bun and failed on the very first import under Node, on every entry point, going back
+well before 1.8.0.</p>
+<p><strong>Not deprecated, deliberately.</strong> The failure is loud and immediate — it stops your build
+on the first import, so nobody is quietly running broken code. A deprecation warning would
+only nag the bun users for whom every version worked. If you are pinned to an older line
+and need this backported, open an issue; it is a mechanical change.</p>
+<p>Worth knowing while you are here, because the error messages name symptoms rather than
+causes:</p>
+<table>
+<thead>
+<tr>
+<th>entry point</th>
+<th>runtime it needs</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tosijs-ui/site</code></td>
+<td><strong>bun</strong> — it shells out, builds and spawns. Under Node: <code>Cannot find package &#39;bun&#39;</code></td>
+</tr>
+<tr>
+<td><code>tosijs-ui</code>, <code>tosijs-ui/&lt;component&gt;</code></td>
+<td>a <strong>browser</strong> or a bundler targeting one. Under bare Node: <code>HTMLElement is not defined</code></td>
+</tr>
+<tr>
+<td><code>tosijs-ui/icon-svg</code></td>
+<td>anything — deliberately DOM-free, which is why it exists</td>
+</tr>
+</tbody></table>
+<p>Those three are unchanged in 1.9.1 and are not bugs; only the module <em>resolution</em> was.</p>
+<h2 id="️-breaking-change-in-170--tosi-code-ace--codemirror-6">⚠️ Breaking change in 1.7.0 — <code>&lt;tosi-code&gt;</code> (ACE → CodeMirror 6)</h2>
+<p><strong>1.7.0 is a breaking release shipping under a minor version, deliberately.</strong> <code>&lt;tosi-code&gt;</code>
+moved from ACE to CodeMirror 6. <code>value</code>, <code>mode</code>, the <code>change</code> event, <code>disabled</code>, and
+<code>undo</code>/<code>redo</code> are unchanged; the ACE-era <strong><code>theme</code></strong> and <strong><code>options</code></strong> props are <strong>removed</strong>: setting
+one warns once and does nothing. Dark mode is now automatic (<code>body.darkmode</code>) and styling comes from <code>--code-bg</code> /
+<code>--text-color</code>. The <code>2.0</code> name is reserved for the tjs-native tosijs port, so this ships as
+1.7.0 — <strong>pin <code>tosijs-ui@1.6</code> to defer.</strong> Full detail and rationale in
+<a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<h2 id="migrating-to-v130">Migrating to v1.3.0</h2>
+<p>v1.3.0 completes the rename from <code>xinjs-ui</code> to <code>tosijs-ui</code>. All custom element
+tags now use the <code>tosi-</code> prefix and all exports use <code>Tosi*</code>/<code>tosi*</code> names.</p>
+<h3 id="breaking-changes">Breaking changes</h3>
+<ul>
+<li><strong>Custom element tags</strong> have changed from <code>&lt;xin-*&gt;</code> to <code>&lt;tosi-*&gt;</code>.
+For example: <code>&lt;xin-select&gt;</code> is now <code>&lt;tosi-select&gt;</code>, <code>&lt;xin-icon&gt;</code> is now
+<code>&lt;tosi-icon&gt;</code>, <code>&lt;xin-example&gt;</code> is now <code>&lt;tosi-example&gt;</code>, etc.</li>
+<li><strong>CSS selectors</strong> targeting old tag names (e.g. <code>xin-select { ... }</code>) must
+be updated.</li>
+<li><strong>CSS custom properties</strong> in component <code>styleSpec</code> objects retain <code>--xin-*</code>
+fallbacks for backward compatibility, but new code should use <code>--tosi-*</code>.</li>
+</ul>
+<h3 id="deprecated-exports-still-work">Deprecated exports still work</h3>
+<p>The old <code>xin*</code> JavaScript exports (<code>xinSelect</code>, <code>xinTabs</code>, <code>xinTable</code>, etc.)
+remain available and will continue to work. Most log a runtime deprecation
+warning; a few are silent aliases marked with JSDoc <code>@deprecated</code>. They will
+be removed in a future major version.</p>
+<h3 id="migration-checklist">Migration checklist</h3>
+<ol>
+<li>Search your HTML for <code>&lt;xin-</code> and replace with <code>&lt;tosi-</code></li>
+<li>Search your CSS for <code>xin-</code> selectors and update to <code>tosi-</code></li>
+<li>Search your JS/TS for <code>xinSelect</code>, <code>xinTabs</code>, etc. and switch to <code>tosiSelect</code>, <code>tosiTabs</code>, etc.</li>
+<li>Search for <code>--xin-</code> CSS variable overrides and switch to <code>--tosi-</code></li>
+</ol>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a class="doc-link" href="./">tosijs-ui</a></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-components" aria-label="Components"></button><a class="doc-link" href="components/">Components</a></div>
+    <ul id="tosi-nav-components">
+      <li><a class="doc-link" href="babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="affix/">affix</a></li>
+      <li><a class="doc-link" href="carousel/">carousel</a></li>
+      <li><a class="doc-link" href="code-editor/">code</a></li>
+      <li><a class="doc-link" href="crud/">crud</a></li>
+      <li><a class="doc-link" href="dialog/">dialog</a></li>
+      <li><a class="doc-link" href="diff/">diff</a></li>
+      <li><a class="doc-link" href="editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="component/">example</a></li>
+      <li><a class="doc-link" href="float/">float</a></li>
+      <li><a class="doc-link" href="gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="header/">header</a></li>
+      <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-icons" aria-label="icons"></button><a class="doc-link" href="icons/">icons</a></div>
+      <ul id="tosi-nav-icons">
+        <li><a class="doc-link" href="icon-composition/">Icon Composition</a></li>
+        <li><a class="doc-link" href="icon-svg/">iconSvg — icon markup without a DOM</a></li>
+        <li><a class="doc-link" href="make-icon-data/">make-icon-data</a></li>
+      </ul></li>
+      <li><a class="doc-link" href="layout/">layout</a></li>
+      <li><a class="doc-link" href="bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="mapbox/">map</a></li>
+      <li><a class="doc-link" href="markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="menu/">menu</a></li>
+      <li><a class="doc-link" href="notifications/">notifications</a></li>
+      <li><a class="doc-link" href="palette/">palette</a></li>
+      <li><a class="doc-link" href="pocket-bar/">pocket bar</a></li>
+      <li><a class="doc-link" href="pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="schema-form/">schema-form</a></li>
+      <li><a class="doc-link" href="side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="size-break/">size-break</a></li>
+      <li><a class="doc-link" href="sizer/">sizer</a></li>
+      <li><a class="doc-link" href="data-table/">table</a></li>
+      <li><a class="doc-link" href="tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="tooltip/">tooltip</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-form-components" aria-label="Form Components"></button><a class="doc-link" href="form-components/">Form Components</a></div>
+    <ul id="tosi-nav-form-components">
+      <li><a class="doc-link" href="color-input/">color input field</a></li>
+      <li><a class="doc-link" href="filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="form/">forms</a></li>
+      <li><a class="doc-link" href="month/">month</a></li>
+      <li><a class="doc-link" href="password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="rating/">rating</a></li>
+      <li><a class="doc-link" href="rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="search-field/">search-field</a></li>
+      <li><a class="doc-link" href="segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="select/">select</a></li>
+      <li><a class="doc-link" href="tag-list/">tag-list</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-helper-libraries" aria-label="Helper Libraries"></button><a class="doc-link" href="helper-libraries/">Helper Libraries</a></div>
+    <ul id="tosi-nav-helper-libraries">
+      <li><a class="doc-link" href="ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="hash-state/">hash-state</a></li>
+      <li><a class="doc-link" href="live-theme/">live-theme</a></li>
+      <li><a class="doc-link" href="localize/">localize</a></li>
+      <li><a class="doc-link" href="make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="natural-compare/">naturalCompare</a></li>
+      <li><a class="doc-link" href="router/">router</a></li>
+      <li><a class="doc-link" href="via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="theme/">theme</a></li>
+      <li><a class="doc-link" href="track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="value-renderer/">valueRenderer</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-documentation-system" aria-label="Documentation System"></button><a class="doc-link" href="documentation-system/">Documentation System</a></div>
+    <ul id="tosi-nav-documentation-system">
+      <li><a class="doc-link" href="adopting-the-doc-system/">Adopting the doc system</a></li>
+      <li><a class="doc-link" href="one-source-every-artifact/">One Source</a></li>
+      <li><a class="doc-link" href="doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="docs/">docs</a></li>
+      <li><a class="doc-link" href="highlight-block/">highlight-block</a></li>
+      <li><a class="doc-link" href="highlight-styles/">highlight-styles</a></li>
+      <li><a class="doc-link" href="data-client/">data client</a></li>
+      <li><a class="doc-link" href="full-screen-demo/">Full-screen layout</a></li>
+      <li><a class="doc-link" href="no-header-demo/">Page without the header</a></li>
+      <li><a class="doc-link" href="kitchen-sink/">kitchen sink</a></li>
+    </ul></li>
+    <li class="nav-branch -open"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="true" aria-controls="tosi-nav-appendices" aria-label="Appendices"></button><a class="doc-link" href="appendices/">Appendices</a></div>
+    <ul id="tosi-nav-appendices">
+      <li><a class="doc-link" href="release-notes/">release-notes</a></li>
+      <li><a class="doc-link current" href="migrating/" aria-current="page">Migrating from older versions</a></li>
+    </ul></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script type="module" src="hydrate-0neye2tn.js"></script>
+</body>
+</html>

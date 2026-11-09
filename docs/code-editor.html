@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    document.documentElement.classList.add('tosi-js')
+    document.addEventListener('click', function (e) {
+      if (customElements.get('tosi-doc-system')) return
+      var b = e.target.closest && e.target.closest('.doc-nav .nav-toggle')
+      if (!b) return
+      var open = b.closest('.nav-branch').classList.toggle('-open')
+      b.setAttribute('aria-expanded', String(open))
+    })
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="doc-system.css?v=348c95b5ff33" data-tosi-doc-system />
+  <title>&lt;tosi-code&gt; CodeMirror 6 code editor — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-code&gt; embeds a CodeMirror 6 editor for JavaScript, TypeScript, CSS, HTML and Markdown, with undo, a diff view and a change event." />
+  <link rel="canonical" href="https://ui.tosijs.net/code-editor/" />
+  <link rel="alternate" type="text/markdown" href="index.md" title="&lt;tosi-code&gt; CodeMirror 6 code editor — tosijs-ui (markdown)" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="&lt;tosi-code&gt; CodeMirror 6 code editor — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-code&gt; embeds a CodeMirror 6 editor for JavaScript, TypeScript, CSS, HTML and Markdown, with undo, a diff view and a change event." />
+  <meta property="og:url" content="https://ui.tosijs.net/code-editor/" />
+  <meta property="og:image" content="https://ui.tosijs.net/og/code-editor.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="&lt;tosi-code&gt; CodeMirror 6 code editor — tosijs-ui" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://ui.tosijs.net/og/code-editor.webp" />
+  <meta name="twitter:image:alt" content="&lt;tosi-code&gt; CodeMirror 6 code editor — tosijs-ui" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-code> CodeMirror 6 code editor","description":"\u003ctosi-code> embeds a CodeMirror 6 editor for JavaScript, TypeScript, CSS, HTML and Markdown, with undo, a diff view and a change event.","url":"https://ui.tosijs.net/code-editor/","inLanguage":"en","image":"https://ui.tosijs.net/og/code-editor.webp","dateModified":"2026-11-01T22:10:18+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Components","item":"https://ui.tosijs.net/components/"},{"@type":"ListItem","position":2,"name":"code","item":"https://ui.tosijs.net/code-editor/"}]}</script>
+  <link rel="icon" href="favicon.svg" />
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
+</head>
+<body>
+  <tosi-doc-system docs="docs.json?v=e51ddb92e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <article class="doc-content" data-doc="code-editor.ts">
+<h1 id="code">code</h1>
+<p>A <a href="https://codemirror.net/">CodeMirror 6</a> wrapper.</p>
+<p>Sometimes, it&#39;s nice to be able to just toss a code-editor in a web-page.</p>
+<p><code>&lt;tosi-code&gt;</code>&#39;s <code>value</code> is the code it contains. Its <code>mode</code> attribute sets the
+language (<code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>ajs</code>, <code>css</code>, <code>html</code>, <code>markdown</code>).</p>
+<pre><code class="language-html">&lt;tosi-code style=&quot;width: 100%; height: 100%&quot; mode=&quot;css&quot;&gt;
+body {
+  box-sizing: border-box;
+}
+&lt;/tosi-code&gt;
+</code></pre>
+<h2 id="properties--events">Properties &amp; events</h2>
+<table>
+<thead>
+<tr>
+<th>member</th>
+<th>what it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>value</code></td>
+<td>the code in the editor (get/set)</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td><code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>ajs</code>, <code>css</code>, <code>html</code>, <code>markdown</code></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>makes the editor read-only</td>
+</tr>
+<tr>
+<td><code>original</code> + <code>showDiff(on)</code></td>
+<td>diff the current <code>value</code> against a baseline, as an overlay</td>
+</tr>
+<tr>
+<td><code>diffResolvable</code></td>
+<td>make that overlay <strong>resolvable</strong>: each change gets keep/revert buttons, and the choices are applied to <code>value</code> when the diff closes</td>
+</tr>
+<tr>
+<td><code>diffOriginalLabel</code> / <code>diffModifiedLabel</code></td>
+<td>what the two buttons say (default <code>Original</code>/<code>Modified</code>)</td>
+</tr>
+<tr>
+<td><code>editor</code></td>
+<td>the underlying CodeMirror <a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a> (<code>undefined</code> until loaded) — see <strong>Extending the editor</strong> below</td>
+</tr>
+<tr>
+<td><code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code></td>
+<td>history control</td>
+</tr>
+<tr>
+<td><code>tjsAutocomplete</code></td>
+<td>runtime-value autocomplete hooks (tjs mode) — see below</td>
+</tr>
+<tr>
+<td><code>change</code> event</td>
+<td>fires when the text changes; <code>event.detail.value</code> is the new text</td>
+</tr>
+</tbody></table>
+<p>In <code>tjs</code>/<code>ajs</code> mode the editor loads tjs-lang&#39;s CodeMirror language and completion
+source (if <code>tjs-lang</code> is installed — it&#39;s an optional peer). Set <code>tjsAutocomplete</code>
+to a <code>TjsAutocompleteConfig</code> and completion will suggest the <strong>real members of live
+runtime values</strong> — including proxy members no static analysis can see:</p>
+<pre><code class="language-typescript" data-highlighted>codeEl<span class="token punctuation">.</span>tjsAutocomplete <span class="token operator">=</span> <span class="token punctuation">{</span> <span class="token function-variable function">getLiveBindings</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">(</span><span class="token punctuation">{</span> app<span class="token punctuation">,</span> elements <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+</code></pre>
+<h2 id="selective-revert">Selective revert</h2>
+<p><code>showDiff(on)</code> shows a read-only diff. Set <code>diffResolvable</code> first and the overlay becomes a
+review surface instead: every change carries keep/revert buttons, defaulting to <strong>keep</strong>, and
+whatever you leave alone survives. This is what <code>&lt;tosi-example&gt;</code>&#39;s <strong>View changes</strong> uses — you
+tried four things and three worked, so revert the one you regret rather than all four.</p>
+<p>The choices are applied when the diff <strong>closes</strong>, not as you click, and a <code>change</code> event fires
+if the text moved. That is deliberate: writing each choice straight back into <code>value</code> would
+feed the new text into the overlay&#39;s <code>modified</code>, and <code>&lt;tosi-diff&gt;</code> resets its decisions when
+either input changes — so live application would wipe the choices making it and renumber the
+hunks under the pointer.</p>
+<pre><code class="language-typescript" data-highlighted>codeEl<span class="token punctuation">.</span>original <span class="token operator">=</span> savedSource
+codeEl<span class="token punctuation">.</span>diffResolvable <span class="token operator">=</span> <span class="token boolean">true</span>
+codeEl<span class="token punctuation">.</span>diffOriginalLabel <span class="token operator">=</span> <span class="token string">'Source'</span>
+codeEl<span class="token punctuation">.</span>diffModifiedLabel <span class="token operator">=</span> <span class="token string">'Yours'</span>
+codeEl<span class="token punctuation">.</span><span class="token function">showDiff</span><span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span>
+<span class="token comment">// …user reverts a hunk or two…</span>
+codeEl<span class="token punctuation">.</span><span class="token function">showDiff</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span>   <span class="token comment">// codeEl.value now reflects their choices</span>
+</code></pre>
+<h2 id="bundling">Bundling</h2>
+<p>CodeMirror is a <strong>lazy chunk</strong>: with a bundler (ESM), a page that never uses
+<code>&lt;tosi-code&gt;</code> doesn&#39;t load it. <strong>This is not true of the IIFE</strong> (<code>dist/iife.js</code>) —
+bun&#39;s IIFE format cannot code-split, so CodeMirror is inlined there. That is a
+deliberate trade: the doc-system&#39;s editor (and its save-to-source flow) is the
+point of the IIFE, so it carries the editor; see the README for what the IIFE weighs.</p>
+<h2 id="migrating-from-the-ace-editor-pre-17">Migrating from the ACE editor (pre-1.7)</h2>
+<p>1.7 replaced ACE with CodeMirror 6. <code>value</code>, <code>original</code>/<code>showDiff()</code>, <code>mode</code> and
+<code>disabled</code> are unchanged. Removed (each warns once, then no-ops):</p>
+<table>
+<thead>
+<tr>
+<th>removed</th>
+<th>replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>theme</code></td>
+<td>style with <code>--code-bg</code> / <code>--text-color</code></td>
+</tr>
+<tr>
+<td><code>options</code> (ACE-shaped)</td>
+<td>configure via <code>editor</code> (an <code>EditorView</code>)</td>
+</tr>
+<tr>
+<td><code>ace</code></td>
+<td>there is no ACE global; use <code>editor</code></td>
+</tr>
+<tr>
+<td><code>editor.session.getUndoManager()</code></td>
+<td><code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code></td>
+</tr>
+</tbody></table>
+<p><code>editor</code> <strong>changed type in place</strong> — it was an ACE <code>Editor</code>, it is now a CodeMirror
+<code>EditorView</code>. Code that reached into it needs revisiting; a grep for removed names
+won&#39;t catch this one.</p>
+<h2 id="extending-the-editor">Extending the editor</h2>
+<p>Import CodeMirror from <strong><code>tosijs-ui/codemirror</code></strong>, not from <code>@codemirror/*</code> directly:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> gutter<span class="token punctuation">,</span> GutterMarker<span class="token punctuation">,</span> StateField<span class="token punctuation">,</span> StateEffect <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/codemirror'</span>
+
+<span class="token keyword">const</span> view <span class="token operator">=</span> codeEl<span class="token punctuation">.</span>editor <span class="token comment">// undefined until the editor has loaded</span>
+view<span class="token operator">?.</span><span class="token function">dispatch</span><span class="token punctuation">(</span><span class="token punctuation">{</span> effects<span class="token operator">:</span> StateEffect<span class="token punctuation">.</span>appendConfig<span class="token punctuation">.</span><span class="token function">of</span><span class="token punctuation">(</span><span class="token punctuation">[</span>myField<span class="token punctuation">,</span> myGutter<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>This matters more than it looks.</strong> CodeMirror 6 keys facets, <code>StateField</code>s and gutters by
+<strong>object identity</strong>, not by module name. If your <code>@codemirror/view</code> resolves to a different
+copy than the one <code>&lt;tosi-code&gt;</code> uses — which a package manager will happily arrange when the
+versions don&#39;t dedupe — the view <strong>silently ignores</strong> your extension. No error, no warning;
+the gutter simply never renders, and every reading of your code says it should.</p>
+<p>The re-export removes that failure by construction: there is only ever one copy, because it is
+the one this package resolves. Nothing to pin, no <code>overrides</code> to write.</p>
+<p>Only <code>@codemirror/state</code> and <code>@codemirror/view</code> are re-exported — the two you need to extend a
+view. The language, lint and search packages are internal composition details; ask if you need
+one exposed.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a class="doc-link" href="./">tosijs-ui</a></li>
+    <li class="nav-branch -open"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="true" aria-controls="tosi-nav-components" aria-label="Components"></button><a class="doc-link" href="components/">Components</a></div>
+    <ul id="tosi-nav-components">
+      <li><a class="doc-link" href="babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="affix/">affix</a></li>
+      <li><a class="doc-link" href="carousel/">carousel</a></li>
+      <li><a class="doc-link current" href="code-editor/" aria-current="page">code</a></li>
+      <li><a class="doc-link" href="crud/">crud</a></li>
+      <li><a class="doc-link" href="dialog/">dialog</a></li>
+      <li><a class="doc-link" href="diff/">diff</a></li>
+      <li><a class="doc-link" href="editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="component/">example</a></li>
+      <li><a class="doc-link" href="float/">float</a></li>
+      <li><a class="doc-link" href="gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="header/">header</a></li>
+      <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-icons" aria-label="icons"></button><a class="doc-link" href="icons/">icons</a></div>
+      <ul id="tosi-nav-icons">
+        <li><a class="doc-link" href="icon-composition/">Icon Composition</a></li>
+        <li><a class="doc-link" href="icon-svg/">iconSvg — icon markup without a DOM</a></li>
+        <li><a class="doc-link" href="make-icon-data/">make-icon-data</a></li>
+      </ul></li>
+      <li><a class="doc-link" href="layout/">layout</a></li>
+      <li><a class="doc-link" href="bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="mapbox/">map</a></li>
+      <li><a class="doc-link" href="markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="menu/">menu</a></li>
+      <li><a class="doc-link" href="notifications/">notifications</a></li>
+      <li><a class="doc-link" href="palette/">palette</a></li>
+      <li><a class="doc-link" href="pocket-bar/">pocket bar</a></li>
+      <li><a class="doc-link" href="pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="schema-form/">schema-form</a></li>
+      <li><a class="doc-link" href="side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="size-break/">size-break</a></li>
+      <li><a class="doc-link" href="sizer/">sizer</a></li>
+      <li><a class="doc-link" href="data-table/">table</a></li>
+      <li><a class="doc-link" href="tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="tooltip/">tooltip</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-form-components" aria-label="Form Components"></button><a class="doc-link" href="form-components/">Form Components</a></div>
+    <ul id="tosi-nav-form-components">
+      <li><a class="doc-link" href="color-input/">color input field</a></li>
+      <li><a class="doc-link" href="filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="form/">forms</a></li>
+      <li><a class="doc-link" href="month/">month</a></li>
+      <li><a class="doc-link" href="password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="rating/">rating</a></li>
+      <li><a class="doc-link" href="rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="search-field/">search-field</a></li>
+      <li><a class="doc-link" href="segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="select/">select</a></li>
+      <li><a class="doc-link" href="tag-list/">tag-list</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-helper-libraries" aria-label="Helper Libraries"></button><a class="doc-link" href="helper-libraries/">Helper Libraries</a></div>
+    <ul id="tosi-nav-helper-libraries">
+      <li><a class="doc-link" href="ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="hash-state/">hash-state</a></li>
+      <li><a class="doc-link" href="live-theme/">live-theme</a></li>
+      <li><a class="doc-link" href="localize/">localize</a></li>
+      <li><a class="doc-link" href="make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="natural-compare/">naturalCompare</a></li>
+      <li><a class="doc-link" href="router/">router</a></li>
+      <li><a class="doc-link" href="via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="theme/">theme</a></li>
+      <li><a class="doc-link" href="track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="value-renderer/">valueRenderer</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-documentation-system" aria-label="Documentation System"></button><a class="doc-link" href="documentation-system/">Documentation System</a></div>
+    <ul id="tosi-nav-documentation-system">
+      <li><a class="doc-link" href="adopting-the-doc-system/">Adopting the doc system</a></li>
+      <li><a class="doc-link" href="one-source-every-artifact/">One Source</a></li>
+      <li><a class="doc-link" href="doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="docs/">docs</a></li>
+      <li><a class="doc-link" href="highlight-block/">highlight-block</a></li>
+      <li><a class="doc-link" href="highlight-styles/">highlight-styles</a></li>
+      <li><a class="doc-link" href="data-client/">data client</a></li>
+      <li><a class="doc-link" href="full-screen-demo/">Full-screen layout</a></li>
+      <li><a class="doc-link" href="no-header-demo/">Page without the header</a></li>
+      <li><a class="doc-link" href="kitchen-sink/">kitchen sink</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-appendices" aria-label="Appendices"></button><a class="doc-link" href="appendices/">Appendices</a></div>
+    <ul id="tosi-nav-appendices">
+      <li><a class="doc-link" href="release-notes/">release-notes</a></li>
+      <li><a class="doc-link" href="migrating/">Migrating from older versions</a></li>
+    </ul></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script type="module" src="hydrate-0neye2tn.js"></script>
+</body>
+</html>

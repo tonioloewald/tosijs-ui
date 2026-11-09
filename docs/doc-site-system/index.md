@@ -993,6 +993,28 @@ rewritten so it still reaches the same file. An alias is one lowercase path segm
 (`readme`, `getting-started`); the build fails on one that is not, that takes a page's own path,
 that names a static file or folder the site already has, or that names no page (#3513).
 
+#### The trailing slash is optional
+
+Every page except the root is written a second time as `/{slug}.html` (an alias too, as
+`/{alias}.html`), with its references written for `/slug` with no slash. Hosts answer `/slug`
+by redirecting to `/slug/`. A browser follows the redirect, but a client that does not, which
+is often an agent's URL fetcher, gets a "moved" stub instead of the page. A host that resolves
+an extensionless path to its `.html` file answers `/slug` with the page itself: GitHub Pages,
+Netlify, Cloudflare Pages, and Firebase Hosting with `"cleanUrls": true` in `firebase.json`.
+The dev server does the same. The copy's canonical link is `/slug/`, so search engines see one
+page.
+
+If the site already has a file at `/{slug}.html`, the build leaves it alone, writes no copy,
+and lists the page in a warning.
+
+#### The 404 page
+
+The build writes `404.html`, which GitHub Pages and Firebase serve for any path the site does
+not have. It names the path that was asked for, lists every page, links `llms.txt`, and, with
+JavaScript, suggests the closest page ("Did you mean /guide/?"). Hosts serve it at whatever URL
+was asked for, so every link in it is absolute (`basePath` applied). A site's own `404.html`,
+in its static files, wins.
+
 #### `preview` — deploy the built site to a host you control
 
 A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a

@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/live-theme.webp" />
   <meta name="twitter:image:alt" content="live-theme — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"live-theme","description":"A live theme editor: adjust tosijs-ui theme colours and watch every component update instantly, then read or set the values from code.","url":"https://ui.tosijs.net/live-theme/","inLanguage":"en","image":"https://ui.tosijs.net/og/live-theme.webp","dateModified":"2026-11-01T22:10:18+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"live-theme","description":"A live theme editor: adjust tosijs-ui theme colours and watch every component update instantly, then read or set the values from code.","url":"https://ui.tosijs.net/live-theme/","inLanguage":"en","image":"https://ui.tosijs.net/og/live-theme.webp","dateModified":"2026-11-09T12:43:41.843Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"live-theme","item":"https://ui.tosijs.net/live-theme/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=2b1e3027a2f3" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=e51ddb92e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="live-theme.ts">
 <h1 id="live-theme">live-theme</h1>
 <blockquote>
@@ -55,8 +55,6 @@
 Changes apply instantly to the page. The editor itself is immune to
 theme changes (it uses hardcoded styles in shadow DOM).</p>
 <h2 id="theme-editor">Theme Editor</h2>
-<pre><code class="language-html">&lt;tosi-theme-editor&gt;&lt;/tosi-theme-editor&gt;
-</code></pre>
 <pre><code class="language-js">import { tosiThemeEditor, liveTheme } from &#39;tosijs-ui&#39;
 
 preview.append(tosiThemeEditor())

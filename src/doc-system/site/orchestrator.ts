@@ -1984,6 +1984,7 @@ export async function buildSite(
       const pageCount = await generateSite({
         liveExamples: config.liveExamples,
         docs,
+        llmsTxt: config.llmsTxt !== false,
         aliases: config.aliases,
         searchPlaceholder: config.searchPlaceholder,
         accessibility: config.accessibility,

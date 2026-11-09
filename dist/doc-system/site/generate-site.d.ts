@@ -1,11 +1,14 @@
 import type { Doc } from './docs.js';
 import type { ProjectLinks, LinkItem } from '../../doc-browser.js';
+import { NavNode } from '../nav-tree.js';
 import { type AccessibilityMode, type ExampleBakes } from '../render.js';
 declare global {
     var Bun: any;
 }
 export interface GenerateSiteConfig {
     docs: Doc[];
+    /** whether the site serves `/llms.txt`, which the 404 page then points to */
+    llmsTxt?: boolean;
     /** `SiteConfig.aliases`: { alias path -> slug } (board #3513) */
     aliases?: Record<string, string>;
     /** `SiteConfig.searchPlaceholder` */
@@ -160,3 +163,4 @@ export declare function withStamp(url: string, stamp?: string): string;
  */
 export declare function rebaseRelativeRefs(html: string, fromPath: string, depth: number): string;
 export declare function generateSite(config: GenerateSiteConfig): Promise<number>;
+export declare function notFoundHtml(pages: NavNode<Doc>[], slugMap: Record<string, string>, config: Pick<GenerateSiteConfig, 'projectName' | 'basePath' | 'lang' | 'llmsTxt'>): string;

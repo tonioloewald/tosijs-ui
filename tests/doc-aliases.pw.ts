@@ -58,12 +58,20 @@ test.beforeEach(async ({ page }) => {
       pathname === '/iife.js'
         ? path.resolve('dist/iife.js')
         : path.join(dir, decodeURIComponent(pathname))
-    if (existsSync(file) && statSync(file).isDirectory()) {
+    // as GitHub Pages, Netlify and Firebase (cleanUrls) do: /guide is guide.html
+    if (!pathname.endsWith('/') && existsSync(file + '.html')) {
+      file += '.html'
+    } else if (existsSync(file) && statSync(file).isDirectory()) {
       file = path.join(file, 'index.html')
     }
     if (!existsSync(file)) {
       missing.push(pathname)
-      return route.fulfill({ status: 404, body: '' })
+      // and they answer a miss with the site's 404.html, at the URL asked for
+      return route.fulfill({
+        status: 404,
+        body: readFileSync(path.join(dir, '404.html')),
+        contentType: 'text/html',
+      })
     }
     const type = file.endsWith('.html')
       ? 'text/html'
@@ -114,4 +122,34 @@ test('from an alias page, navigation goes to the pages’ own paths', async ({
   await expect(page).toHaveURL(`${ORIGIN}/readme/`)
   await expect(heading(page)).toHaveText('Read me')
   expect(missingBelowRoot()).toEqual([])
+})
+
+test('/guide with no slash is the page itself, and navigates like it', async ({
+  page,
+}) => {
+  const response = await page.goto(`${ORIGIN}/guide`)
+  expect(response!.status()).toBe(200)
+  await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
+  await expect(heading(page)).toHaveText('Guide')
+  await page
+    .locator('tosi-doc-system .doc-link', { hasText: 'Read me' })
+    .first()
+    .click()
+  await expect(page).toHaveURL(`${ORIGIN}/`)
+  await expect(heading(page)).toHaveText('Read me')
+  expect(missingBelowRoot()).toEqual([])
+})
+
+test('a path the site does not have gets its 404 page, which names the closest', async ({
+  page,
+}) => {
+  const response = await page.goto(`${ORIGIN}/gide/`)
+  expect(response!.status()).toBe(404)
+  await expect(page.locator('h1')).toHaveText('Page not found')
+  await expect(page.locator('#asked')).toHaveText('/gide/')
+  await expect(page.locator('#closest a')).toHaveAttribute('href', '/guide/')
+  await expect(page.locator('ul a', { hasText: 'Guide' })).toHaveAttribute(
+    'href',
+    '/guide/'
+  )
 })

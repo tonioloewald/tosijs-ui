@@ -396,6 +396,10 @@ describe('aliases', () => {
         alias: await read('readme/index.html'),
         aliasMd: await read('readme/index.md'),
         sitemap: (await read('sitemap.xml')) as string,
+        slashless: await read('guide.html'),
+        aliasSlashless: await read('readme.html'),
+        rootSlashless: await read('.html'),
+        notFound: (await read('404.html')) as string,
       }
     } finally {
       await Bun.$`rm -rf ${dir}`.nothrow().quiet()
@@ -420,6 +424,51 @@ describe('aliases', () => {
     expect(alias).toContain(
       '&quot;aliases&quot;:{&quot;readme&quot;:&quot;&quot;}'
     )
+  })
+
+  test('/guide with no slash is the page again, written for that URL', async () => {
+    const { slashless, aliasSlashless, rootSlashless } = await build({
+      readme: '',
+    })
+    // mounted under a subpath, where a reference written for /guide/ would miss
+    const page = 'https://t.test/sub/guide'
+    const at = (re: RegExp) => new URL(slashless!.match(re)![1], page).pathname
+    expect(at(/<link rel="stylesheet" href="([^"?]+)/)).toBe(
+      '/sub/doc-system.css'
+    )
+    expect(at(/<script type="module" src="([^"]+)"/)).toBe(
+      '/sub/hydrate-abc.js'
+    )
+    expect(at(/docs="([^"?]+)/)).toBe('/sub/docs.json')
+    expect(at(/href="([^"]+)">Home</)).toBe('/sub/')
+    expect(slashless).toContain('data-doc="guide.md"')
+    expect(slashless).toContain(
+      '<link rel="canonical" href="https://t.test/guide/" />'
+    )
+    // an alias gets one too; the root page has no slashless form
+    expect(aliasSlashless).toContain('data-doc="README.md"')
+    expect(
+      new URL(
+        aliasSlashless!.match(/<img src="([^"]+)"/)![1],
+        'https://t.test/sub/readme'
+      ).pathname
+    ).toBe('/sub/img/logo.png')
+    expect(rootSlashless).toBeNull()
+  })
+
+  test('the 404 page lists every page by absolute path and names none relatively', async () => {
+    const { notFound } = await build({})
+    expect(notFound).toContain('<a href="/guide/">Guide</a>')
+    expect(notFound).toContain('<meta name="robots" content="noindex" />')
+    // served at whatever URL was asked for, so nothing in it may be relative
+    const refs = [...notFound.matchAll(/(?:href|src)="([^"]*)"/g)].map(
+      (m) => m[1]
+    )
+    expect(refs.filter((r) => !r.startsWith('/'))).toEqual([])
+    // its script is a template-literal string: an escaping slip there is a syntax error
+    // nothing else reports, and the page silently loses its suggestion
+    const script = notFound.match(/<script>([\s\S]*)<\/script>/)![1]
+    expect(() => new Function(script)).not.toThrow()
   })
 
   test('with no aliases the config attribute does not mention them', async () => {

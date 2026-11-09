@@ -8,9 +8,6 @@ theme changes (it uses hardcoded styles in shadow DOM).
 
 ## Theme Editor
 
-```html
-<tosi-theme-editor></tosi-theme-editor>
-```
 ```js
 import { tosiThemeEditor, liveTheme } from 'tosijs-ui'
 

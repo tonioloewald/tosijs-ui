@@ -52,6 +52,8 @@ declare global {
 
 export interface GenerateSiteConfig {
   docs: Doc[]
+  /** whether the site serves `/llms.txt`, which the 404 page then points to */
+  llmsTxt?: boolean
   /** `SiteConfig.aliases`: { alias path -> slug } (board #3513) */
   aliases?: Record<string, string>
   /** `SiteConfig.searchPlaceholder` */
@@ -357,7 +359,9 @@ async function pageHtml(
   configAttr: string,
   wikilinks: Map<string, string>,
   /** the slug this copy is written at: the doc's own, or an alias of it */
-  at = slugMap[doc.filename] ?? ''
+  at = slugMap[doc.filename] ?? '',
+  /** the directory depth its references resolve from: 0 for the `/slug` copy (`slug.html`) */
+  depth = pageDepth(at)
 ): Promise<string> {
   const {
     projectName = '',
@@ -377,7 +381,6 @@ async function pageHtml(
   } = config
   // Functional URLs are emitted relative to THIS page's depth so the build is
   // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
-  const depth = pageDepth(at)
   const own = slugMap[doc.filename] ?? ''
   const localizedAttr = config.localizedStrings
     ? ` localized="${escapeAttr(relativeUrl(depth, localizedUrl))}"`
@@ -430,10 +433,11 @@ async function pageHtml(
         ? relativeUrl(depth, pathForSlug(slugMap[filename]))
         : null
   )
-  // A copy at an alias: what the author wrote relative to the page's own path must still reach
-  // the same file (a README's `img/logo.png` is /img/logo.png, not /readme/img/logo.png).
+  // A copy anywhere but the page's own path (an alias, or `/slug` with no slash): what the
+  // author wrote relative to that path must still reach the same file (a README's
+  // `img/logo.png` is /img/logo.png, not /readme/img/logo.png).
   const body =
-    at === own
+    at === own && depth === pageDepth(own)
       ? rendered
       : rebaseRelativeRefs(rendered, pathForSlug(own), depth)
   const nav = navHtml(config.docs, slugMap, doc.filename, depth)
@@ -855,6 +859,45 @@ export async function generateSite(
       await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n')
     }
   }
+  /*
+  Every page again as `slug.html`, with its references written for `/slug`, so the trailing
+  slash is optional. Hosts serve `/slug` from `slug/index.html` with a redirect, and a client
+  that does not follow it (an agent's fetch tool, onboarding from a typed URL) got a "moved"
+  stub instead of the page. With `slug.html` beside it, a host that resolves extensionless
+  paths to `.html` (GitHub Pages, Netlify, Cloudflare Pages, Firebase with `cleanUrls`)
+  answers `/slug` with the page itself. The canonical link stays `/slug/`.
+  */
+  const slashless: [string, Doc][] = [
+    ...docs.map((doc) => [slugMap[doc.filename], doc] as [string, Doc]),
+    ...Object.entries(aliases).map(
+      ([alias, target]) =>
+        [alias, docs.find((d) => slugMap[d.filename] === target)!] as [
+          string,
+          Doc
+        ]
+    ),
+  ]
+  const occupied: string[] = []
+  for (const [at, doc] of slashless) {
+    if (at === '') continue
+    const file = `${outputDir}/${at}.html`
+    // the output folder starts empty, so a file here is one the site ships: leave it alone
+    if (existsSync(file)) {
+      occupied.push(`    /${at}.html`)
+      continue
+    }
+    await Bun.write(
+      file,
+      await pageHtml(doc, config, slugMap, configAttr, wikilinks, at, 0)
+    )
+  }
+  if (occupied.length) {
+    console.warn(
+      `\n⚠️  These pages are served only at /slug/, because the site already has a file where\n` +
+        `    the /slug copy goes (rename the file to make the trailing slash optional):\n` +
+        `${occupied.join('\n')}\n`
+    )
+  }
   if (danglingWikilinks.length) {
     misconfigured(
       config.strict,
@@ -952,5 +995,111 @@ export async function generateSite(
     }
   }
 
+  // A site's own 404.html (copied from its static files) wins.
+  if (!existsSync(`${outputDir}/404.html`)) {
+    await Bun.write(
+      `${outputDir}/404.html`,
+      notFoundHtml(flattenNav(buildNavTree(docs, slugMap)), slugMap, config)
+    )
+  }
+
   return count
+}
+
+/*
+The page a host serves for a path the site does not have: GitHub Pages and Firebase serve
+`404.html` from the site root, at whatever URL was asked for, so nothing in it may be
+relative. It lists every page, which is what a reader without JavaScript (an agent's fetch
+tool, most often) needs to find its way, and with JavaScript it names the closest page to the
+path asked for. The script is a nicety: under a policy that blocks inline scripts, the list
+is still there.
+*/
+export function notFoundHtml(
+  pages: NavNode<Doc>[],
+  slugMap: Record<string, string>,
+  config: Pick<
+    GenerateSiteConfig,
+    'projectName' | 'basePath' | 'lang' | 'llmsTxt'
+  >
+): string {
+  const { projectName = '', basePath, lang = 'en', llmsTxt } = config
+  const href = (slug: string) => withBase(basePath, pathForSlug(slug))
+  const listed = pages.filter((node) => !node.doc.hidden)
+  const items = listed
+    .map(
+      (node) =>
+        `      <li><a href="${escapeAttr(href(node.slug))}">${escapeText(
+          node.doc.title || node.slug || 'Home'
+        )}</a></li>`
+    )
+    .join('\n')
+  const slugs = JSON.stringify(
+    Object.values(slugMap).filter((slug) => slug !== '')
+  ).replace(/</g, '\\u003c')
+  const title = projectName
+    ? `Page not found — ${projectName}`
+    : 'Page not found'
+  return `<!DOCTYPE html>
+<html lang="${escapeAttr(lang)}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>${escapeText(title)}</title>
+    <style>
+      body { font: 16px/1.5 system-ui, sans-serif; max-width: 40em; margin: 2em auto; padding: 0 1em; }
+      @media (prefers-color-scheme: dark) { body { background: #111; color: #eee; } a { color: #8bf; } }
+    </style>
+  </head>
+  <body>
+    <h1>Page not found</h1>
+    <p>There is no page at <code id="asked"></code> on this site.<span id="closest"></span></p>
+    <p><a href="${escapeAttr(withBase(basePath, '/'))}">Home</a>${
+    llmsTxt
+      ? ` · <a href="${escapeAttr(
+          withBase(basePath, '/llms.txt')
+        )}">llms.txt</a> (every page, for agents)`
+      : ''
+  }</p>
+    <h2>Pages</h2>
+    <ul>
+${items}
+    </ul>
+    <script>
+      ;(() => {
+        const slugs = ${slugs}
+        const base = ${JSON.stringify(withBase(basePath, '/'))}
+        const asked = decodeURIComponent(location.pathname)
+        document.getElementById('asked').textContent = asked
+        const want = asked.slice(base.length - 1).replace(/^\\/+|\\/+$/g, '').toLowerCase()
+        if (!want) return
+        const distance = (a, b) => {
+          const row = Array.from({ length: b.length + 1 }, (_, i) => i)
+          for (let i = 1; i <= a.length; i++) {
+            let prev = row[0]++
+            for (let j = 1; j <= b.length; j++) {
+              const next = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1))
+              prev = row[j]
+              row[j] = next
+            }
+          }
+          return row[b.length]
+        }
+        let best = '', score = Infinity
+        for (const slug of slugs) {
+          const prefix = Math.min(want.length, slug.length) >= 3 && (slug.startsWith(want) || want.startsWith(slug))
+          const d = prefix ? 0.5 : distance(want, slug)
+          if (d < score) [best, score] = [slug, d]
+        }
+        if (score > Math.max(2, want.length / 3)) return
+        const link = document.createElement('a')
+        link.href = base + best + '/'
+        link.textContent = base + best + '/'
+        const closest = document.getElementById('closest')
+        closest.append(' Did you mean ', link, '?')
+      })()
+    </script>
+  </body>
+</html>
+`
 }

@@ -1653,6 +1653,7 @@ export async function buildSite(config, opts = {}) {
             const pageCount = await generateSite({
                 liveExamples: config.liveExamples,
                 docs,
+                llmsTxt: config.llmsTxt !== false,
                 aliases: config.aliases,
                 searchPlaceholder: config.searchPlaceholder,
                 accessibility: config.accessibility,
