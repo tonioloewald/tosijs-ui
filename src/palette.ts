@@ -154,7 +154,6 @@ import { icons } from './icon-core.js'
 import { search as searchIcon } from './icons/search.js'
 import { loader as loaderIcon } from './icons/loader.js'
 import { x as xIcon } from './icons/x.js'
-import { findHighestZ } from './track-drag.js'
 
 const { button, span, kbd, div, dialog, input, textarea, mark } = elements
 
@@ -883,10 +882,9 @@ export class TosiPalette extends withAttributes({
     this.spinner = this.querySelector('.palette-spinner')
     const field = this.ensureField()
     field.placeholder = this.hint
-    if (!this.dialogElement!.open) {
-      this.style.zIndex = String(findHighestZ())
-      this.dialogElement!.showModal()
-    }
+    // showModal() puts the dialog in the top layer, above everything. Do not raise the
+    // element: it also holds the trigger, which then stayed above a maximized example.
+    if (!this.dialogElement!.open) this.dialogElement!.showModal()
     field.focus()
     field.select()
     this.grow()

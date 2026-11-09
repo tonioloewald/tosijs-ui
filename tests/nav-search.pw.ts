@@ -130,6 +130,37 @@ test('the shortcut opens it from anywhere on the page', async ({ page }) => {
   await expect(query(page)).toBeFocused()
 })
 
+/*
+Opening the palette used to raise the whole <tosi-palette> to the page's highest z-index and
+leave it there, so after one Cmd-K the header's search field sat on top of a maximized example.
+It took any overlay on the page to show: on a dev server, haltija's widget (2147483647).
+*/
+test('after the palette closes, a maximized example still covers the search field', async ({
+  page,
+}) => {
+  await page.goto('/live-example/')
+  const example = page.locator('tosi-example').first()
+  await example.locator('button[title="toggle preview size"]').click()
+  await expect(example).toHaveClass(/-maximize/)
+  await page.evaluate(() => {
+    const overlay = document.createElement('div')
+    overlay.style.cssText =
+      'position: fixed; right: 0; bottom: 0; width: 8px; height: 8px; z-index: 1000'
+    document.body.append(overlay)
+  })
+  await page.keyboard.press('ControlOrMeta+k')
+  await expect(dialog(page)).toBeVisible()
+  await query(page).press('Escape')
+  await expect(dialog(page)).toBeHidden()
+  const box = (await trigger(page).boundingBox())!
+  const onTop = await page.evaluate(
+    ([x, y]) =>
+      document.elementFromPoint(x, y)?.closest('tosi-example') !== null,
+    [box.x + box.width / 2, box.y + box.height / 2]
+  )
+  expect(onTop).toBe(true)
+})
+
 test('the search sits in the header, not the sidebar, and shrinks to its icon when squeezed', async ({
   page,
 }) => {
