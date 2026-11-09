@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.17.3
+
+> A doc site answers `/slug` as well as `/slug/`, and a missing page gets a real 404 page.
+> Nothing to change on upgrade. On Firebase, add `"cleanUrls": true` to `firebase.json` for
+> `/slug` to serve the page; GitHub Pages, Netlify and Cloudflare Pages need nothing.
+
+### Added
+
+- Every page (and alias) is also written as `/slug.html`, with its references written for
+  `/slug`, so a host that resolves extensionless paths (GitHub Pages, Netlify, Cloudflare
+  Pages, Firebase with `cleanUrls`) answers `/slug` with the page instead of a redirect. An
+  agent's fetch tool that does not follow redirects got a "moved" stub at
+  virta.tosijs.net/start. The canonical link stays `/slug/`; a file the site already has at
+  `/slug.html` is left alone and named in a warning.
+- The build writes `404.html` (unless the site ships its own): it names the path asked for,
+  suggests the closest page, lists every page and links `llms.txt`. Every link in it is
+  absolute, since hosts serve it at whatever URL was asked for.
+
+### Fixed
+
+- After Cmd-K, the doc site's search field sat on top of a maximized live example. Opening the
+  palette raised the whole `<tosi-palette>` (its trigger included) to the page's highest
+  z-index and never put it back, and any overlay on the page (haltija's widget on a dev
+  server, a toast in an app) made that higher than the example's. The dialog never needed it:
+  `showModal()` already puts it in the top layer.
+- The dev server served `/slug` from `slug/index.html`, whose references are written for
+  `/slug/`; it now serves `slug.html`. (Its `.html` fallback looked for `slug/.html` and never
+  matched.)
+- The live-theme page showed two theme editors: its example had an `html` block and a `js`
+  block that each made one.
+
 ## 1.17.2
 
 > Components carry only the icons they draw, and `<tosi-affix>` centres a caption on its
