@@ -1086,3 +1086,19 @@ gap, recorded rather than hidden.
   polls now. Bisecting against a stash is what showed it was not this release's change.
 - **Measurement trap:** an ESM size measured without `--splitting` inlines dynamic imports, so
   the late-icon fallback made every slim component look like it still carried the whole set.
+
+## 1.17.3 (2026-11-09) — `/slug` without the slash; a real 404; palette z-index
+
+- **The report came from an agent, not a reader:** an onboarding agent's fetch tool did not
+  follow the redirect from `/start` to `/start/` and read a "moved" stub. Every host this
+  project deploys to can answer `/slug` directly once the build writes `slug.html`; Firebase
+  needs `cleanUrls` (filed for virta, #3915).
+- **A test that passed against the bug:** the first palette regression test passed with the
+  old code. The bug needed a higher z-index somewhere on the page to show, and only the dev
+  server has one (haltija's widget, 2147483647); Playwright's server runs without it, which is
+  also why the first round of reproduction found nothing. The test now adds an overlay, and
+  fails in all three engines without the fix.
+- **Repro needed the user's exact sequence:** maximize, then Cmd-K, then dismiss. Toggling the
+  class and opening search in other orders never showed it.
+- **Publish:** approval came after the stage job finished, so `verify` was skipped in the
+  publish run; the `verify_only` re-run (42698511152) went green. Dist identical to the repo.
