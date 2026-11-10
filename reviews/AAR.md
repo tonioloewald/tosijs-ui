@@ -1118,3 +1118,20 @@ gap, recorded rather than hidden.
   reads the target position, and the underline moves without the slide while scrolling.
 - **Publish:** approval landed within the stage job's wait, so `verify` ran in the main run.
   Dist identical to the tag.
+
+## 1.17.5 (2026-11-10) — doc-site fonts, logo path, 404 as home page
+
+- **A bug found by finishing a card, not by any gate:** removing the font `@import` (#3631)
+  meant reading its URL, which read `&famiSpline+Sans+Mono`. The code font had never loaded on
+  any doc site since v0.6.39. No test looked at what the URL asked for; one now parses it and
+  asserts both families.
+- **A test assumption surfaced by ordering:** two alias tests take the FIRST stylesheet link to
+  be `doc-system.css`. Putting the fonts link first broke them; the site's own stylesheet goes
+  first anyway, so the link moved rather than the tests.
+- **One unreproduced unit failure:** a single `bun test src/doc-system` run failed once and
+  passed six times after. The dev server was running and rebuilding; it was killed before the
+  build and every later lane, all green.
+- **Matched a sibling rather than inventing:** the 404 page follows tosijs-platform's
+  service-compris (home page plus a note), at the maintainer's pointer.
+- **Publish:** approval landed while the run waited, so verify ran in-run (42822292648). Dist
+  identical to the tag.
