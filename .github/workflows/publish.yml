@@ -50,6 +50,12 @@ on:
 permissions:
   contents: read
 
+# The practices tools this workflow runs (release-doctor, attest, publish-smoke), pinned to a
+# commit so the YAML and the tools it runs always move together (practices #1616, #1752).
+# Bumping it is a template change: every repo re-copies, and the notice reopens adoption.
+env:
+  PRACTICES_REF: 26e8c001f81839354b3ecd4e32bc2e5aaeb330c8
+
 concurrency:
   group: publish
   cancel-in-progress: false
@@ -71,7 +77,7 @@ jobs:
       TAG: ${{ inputs.tag }}
     steps:
       - name: Check out the tag
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.dry_run && inputs.tag || format('refs/tags/{0}', inputs.tag) }}
           # Full history and tags: release-doctor reads both (tag/publish reconciliation, release
@@ -80,9 +86,10 @@ jobs:
 
       # release-doctor lives in the shared practices repo (public).
       - name: Check out tosijs-coding-practices
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: tonioloewald/tosijs-coding-practices
+          ref: ${{ env.PRACTICES_REF }}
           path: .practices
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -92,9 +99,10 @@ jobs:
           # the version releases are built with locally.
           bun-version-file: .bun-version
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22.x'
+          package-manager-cache: false
 
       - name: Tag, version and dist-tag
         id: meta
@@ -200,7 +208,7 @@ jobs:
       # checks them against the hash this Pack step recorded, which no later step can rewrite.
       - name: Hand the tarball to the stage job
         if: ${{ !inputs.verify_only && !inputs.dry_run }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: package-tarball
           path: ${{ steps.pack.outputs.tarball }}
@@ -210,6 +218,19 @@ jobs:
       # A tag carrying release-attestation.json vouches for a build made and tested LOCALLY
       # (tools/attest.ts). The tarball just packed must contain exactly the files recorded
       # there, so what is staged is what was signed off, and the suite never runs here.
+      # A repo that DECLARES attested lanes must carry the attestation: without it, nothing ran
+      # those suites (CI can't), and only an accident stopped the publish (practices #1751).
+      - name: Attested lanes need an attestation
+        if: ${{ !inputs.verify_only }}
+        run: |
+          set -euo pipefail
+          LANES=$(node -p "((require('./package.json').releaseDoctor||{}).attestedLanes||[]).join(' ')")
+          if [ -n "$LANES" ] && [ ! -f release-attestation.json ]; then
+            echo "::error::package.json declares attested lanes ($LANES) but the tag has no release-attestation.json — run tools/attest.ts locally and tag again"
+            exit 1
+          fi
+          if [ -n "$LANES" ]; then echo "attested lanes: $LANES — attestation present"; else echo "no attested lanes declared"; fi
+
       - name: Tarball matches the attested build
         if: ${{ !inputs.verify_only && hashFiles('release-attestation.json') != '' }}
         env:
@@ -276,9 +297,12 @@ jobs:
       # outputs, so this is the packed bytes' identity even if something after Pack tampered.
       PACKED_INTEGRITY: ${{ needs.build.outputs.integrity }}
     steps:
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22.x' # trusted publishing needs 22.14+
+          # setup-node v5+ caches by default; a cache restored into the job holding the publish
+          # credential is a poisoning path.
+          package-manager-cache: false
           registry-url: 'https://registry.npmjs.org'
 
       # `npm stage` needs npm 11.15.0+, newer than the runner's bundled npm. Pinned EXACTLY:
@@ -289,7 +313,7 @@ jobs:
           npm --version
 
       - name: Receive the tarball
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: package-tarball
           path: ${{ runner.temp }}/stage
@@ -307,6 +331,14 @@ jobs:
             exit 1
           fi
           TARBALL=${FILES[0]}
+          # The bytes received must be the bytes PACKED, checked BEFORE anything is extracted
+          # (practices #2726): reading a tampered archive is already acting on it. Without this,
+          # a step that ran after Pack could swap the tarball.
+          INTEGRITY="sha512-$(openssl dgst -sha512 -binary "$TARBALL" | base64 -w0)"
+          if [ "$INTEGRITY" != "$PACKED_INTEGRITY" ]; then
+            echo "::error::the tarball received ($INTEGRITY) is not the one the build packed ($PACKED_INTEGRITY) — refusing to stage"
+            exit 1
+          fi
           tar -xzf "$TARBALL" -C "$RUNNER_TEMP/stage" package/package.json
           PKG="$RUNNER_TEMP/stage/package/package.json"
           NAME=$(node -p "require(process.argv[1]).name" "$PKG")
@@ -332,13 +364,6 @@ jobs:
               ;;
             *) DIST_TAG=latest ;;
           esac
-          INTEGRITY="sha512-$(openssl dgst -sha512 -binary "$TARBALL" | base64 -w0)"
-          # The bytes received must be the bytes PACKED. Without this, a step that ran after Pack
-          # could swap the tarball, and verify would still report "identical to what was staged".
-          if [ "$INTEGRITY" != "$PACKED_INTEGRITY" ]; then
-            echo "::error::the tarball received ($INTEGRITY) is not the one the build packed ($PACKED_INTEGRITY) — refusing to stage"
-            exit 1
-          fi
           {
             echo "tarball=$TARBALL"
             echo "name=$NAME"
@@ -443,23 +468,25 @@ jobs:
       # The repo too: the smoke test reads its package.json and runs its own `test-consumer`
       # script when it has one. Safe here: this job holds no credential.
       - name: Check out the tag
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ format('refs/tags/{0}', inputs.tag) }}
 
       - name: Check out tosijs-coding-practices
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: tonioloewald/tosijs-coding-practices
+          ref: ${{ env.PRACTICES_REF }}
           path: .practices
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: .bun-version
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22.x'
+          package-manager-cache: false
 
       - name: Install
         run: bun install --frozen-lockfile
