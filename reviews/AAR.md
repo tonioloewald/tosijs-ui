@@ -1135,3 +1135,19 @@ gap, recorded rather than hidden.
   service-compris (home page plus a note), at the maintainer's pointer.
 - **Publish:** approval landed while the run waited, so verify ran in-run (42822292648). Dist
   identical to the tag.
+
+## 1.17.6 (2026-11-10) — board fixes under the standing go-ahead
+
+- **Eight board items, each with a test that fails without its fix,** plus weekly maintenance
+  (deps, CI action pins, publish.yml re-copied from the template). Three were reported by
+  sibling projects (tosijs-pattern, tosijs-product, tjs-lang), one by tosijs.
+- **A test exposed a second bug:** writing a test for the Caddyfile's long-cache rule against
+  the files the build emits (#2446) showed source maps never matched it.
+- **Committed once on a red run:** a lane chained with `;` instead of `&&` let 4f1ca8770 land
+  after a WebKit `goto` timeout. Rerun green, flake filed (#3996); every commit since chains
+  the lanes with `&&`.
+- **A UI change the maintainer asked for got undone:** the faded pass badge was originally their
+  ask; it failed contrast, so it now goes grey without fading (#3642). Flagged in the report
+  rather than decided silently.
+- **Mistaken commit hashes on the board:** two comments cited guessed hashes; corrected with the
+  real ones. Look hashes up, don't recall them.

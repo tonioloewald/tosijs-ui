@@ -1,5 +1,65 @@
 # Changelog
 
+## 1.17.6
+
+> Fixes for live examples and the doc browser: a doc site served over plain http hydrates, an
+> edit saved in one browser no longer runs over a changed source, and a markup sample holding
+> CSS stays one block. Nothing to change on upgrade. `dist/iife.js` is +1.1 kB gzip, from
+> bundling tosijs 1.10.10 and tosijs-schema 1.14.0.
+
+### Fixed
+
+- Served over plain http on a non-localhost name (or a LAN IP), a doc site showed only its
+  static link list: `crypto.randomUUID` exists only in a secure context, and every live example
+  called it in a class field, so none constructed and the page never hydrated. Ids now fall back
+  to `crypto.getRandomValues`. Reported from tosijs-pattern. #3764
+- An edit to a live example saved in one browser kept running indefinitely, long after the
+  page's source had changed: in that browser the example ran old code that threw, the page
+  looked like the source, and every other browser was clean. A saved edit now carries a
+  fingerprint of the source it was made against. When the source has changed since, the example
+  runs its source and the console says why; the edit stays in localStorage, so nothing is
+  discarded unasked. Edits saved before this have no fingerprint and still run. Reported from
+  tosijs. #3276
+- An example running an edit saved in this browser says so in the console, naming the page and
+  example, and pointing at Revert. In the inline views (`{"view": "code"}` / `"console"`), where
+  the toolbar that carries the outline is hidden, the code panel carries it instead. #3276
+- Doc-test results from an example running a saved edit were reported as the page's own, so a
+  run that failed on stale saved code read as a library defect (the dev server printed
+  "2 failed" for one browser profile only). Each such test's name now ends "(ran an edit saved
+  in this browser, not the source)", on the page, in the report and in the terminal. #3276
+- A static markup sample (an `xml` or `html:static` fence) holding a `<style>` body or a
+  `style="…"` attribute hydrated chopped into empty CSS editors, one per style: Prism marks
+  embedded CSS with nested `token language-css` spans, and insertExamples took any `language-*`
+  element as a fence. It now takes only a fence's own `<pre> > <code>`, as the static
+  highlighter does. Reported from tosijs-product (its README's "Pure HTML" sample grew from
+  673px to 2392px). #3820
+- A deployed doc site with no `projectLinks.github` offered "Edit page source", which only showed
+  an alert, and "Download source", which did nothing: there is nowhere to read the source from.
+  Both now appear only when it can be read, from a dev server's source endpoint or from GitHub
+  raw; with neither, the Source submenu is gone. Reported from tjs-lang (GitHub #210). #3272
+- The doc browser's test badge failed contrast whenever tests ran (axe: 2.45-2.9:1): its pulse
+  dimmed it to 0.7 opacity and a settled pass faded to 0.55, so its label blended into the
+  header. The pulse is now a ring around the badge, and a pass settles to grey without fading
+  (white on the greyed pass colour is about 6:1). The ring colour is `--test-ring-color`. #3642
+- `<tosi-md>` templates the values it substitutes (that is how `{"nested": "{{foo.bar}}"}`
+  works), so a context value naming itself, directly or through a loop, recursed until the stack
+  overflowed and the element never rendered. A reference that would loop is now left as written,
+  and nesting stops eight levels deep. Nested templates work as before. #2457
+- `tosijs-release-notes --check` on a second or later prerelease (`1.2.0-beta.2`) reported every
+  bullet from the earlier betas as unwritten: the range starts at the last stable tag, but only
+  the `## 1.2.0-beta.2` section was read. A prerelease now reads every `## 1.2.0…` section
+  together; a final release still reads only its own. #2455
+- The shipped preview Caddyfile (`deploy/Caddyfile`, installed by `tosijs-caddy-install`)
+  long-caches content-hashed files, but its pattern expected `-<hash>.map` where Bun writes
+  `-<hash>.js.map`, so every source map was served `no-cache`. Maps now get the same
+  `immutable` header as the files they describe. Re-run `tosijs-caddy-install --go` to pick it
+  up. #2446
+
+### Changed
+
+- `dist/iife.js` now bundles tosijs 1.10.10 and tosijs-schema 1.14.0 (was 1.10.9 and 1.10.2),
+  and CodeMirror's latest patches; +1.1 kB gzip. Peer ranges are unchanged.
+
 ## 1.17.5
 
 > Doc-site fixes: the code font loads at all, the web fonts no longer block first render in
