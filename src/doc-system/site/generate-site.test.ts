@@ -377,12 +377,16 @@ describe('aliases', () => {
       text: '# Guide\n',
     },
   ]
-  const build = async (aliases: Record<string, string>) => {
+  const build = async (
+    aliases: Record<string, string>,
+    extra: Record<string, unknown> = {}
+  ) => {
     const dir = `${tmpdir()}/tosi-alias-${Math.floor(performance.now() * 1000)}`
     try {
       await generateSite({
         docs: docs as any,
         aliases,
+        ...extra,
         outputDir: dir,
         projectName: 'T',
         baseUrl: 'https://t.test',
@@ -457,19 +461,44 @@ describe('aliases', () => {
     expect(rootSlashless).toBeNull()
   })
 
-  test('the 404 page lists every page by absolute path and names none relatively', async () => {
+  test('the 404 page is the home page with a note, and resolves from any depth (#3631)', async () => {
     const { notFound } = await build({})
-    expect(notFound).toContain('<a href="/guide/">Guide</a>')
+    // the home page, site chrome and all (the nav lists every page)
+    expect(notFound).toContain('data-doc="README.md"')
+    expect(notFound).toContain('<tosi-doc-system')
+    expect(notFound).toContain('Guide')
+    expect(notFound).toContain('<title>Page not found — T</title>')
+    expect(notFound).toContain("404: there's nothing at")
+    // not the home page's URL: noindex, once, and no canonical
+    expect(notFound.match(/name="robots"/g)).toEqual(['name="robots"'])
     expect(notFound).toContain('<meta name="robots" content="noindex" />')
-    // served at whatever URL was asked for, so nothing in it may be relative
-    const refs = [...notFound.matchAll(/(?:href|src)="([^"]*)"/g)].map(
-      (m) => m[1]
+    expect(notFound).not.toContain('rel="canonical"')
+    // served at whatever URL was asked for: every reference resolves through the <base>
+    const base = notFound.match(/<base href="([^"]*)"/)![1]
+    expect(base).toBe('/')
+    const servedAt = 'https://t.test/a/b/c/'
+    const refs = [...notFound.matchAll(/(?:href|src)="([^"#][^"]*)"/g)]
+      .map((m) => m[1])
+      .filter((r) => !/^(https?:)?\/\//.test(r) && r !== base)
+    expect(refs.length).toBeGreaterThan(3)
+    for (const ref of refs)
+      expect(new URL(ref, new URL(base, servedAt)).pathname).not.toStartWith(
+        '/a/'
+      )
+    expect(new URL('img/logo.png', new URL(base, servedAt)).pathname).toBe(
+      '/img/logo.png'
     )
-    expect(refs.filter((r) => !r.startsWith('/'))).toEqual([])
     // its script is a template-literal string: an escaping slip there is a syntax error
-    // nothing else reports, and the page silently loses its suggestion
-    const script = notFound.match(/<script>([\s\S]*)<\/script>/)![1]
+    // nothing else reports, and the note silently loses its path and suggestion
+    const script = [...notFound.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+      .map((m) => m[1])
+      .find((code) => code.includes('not-found-path'))!
     expect(() => new Function(script)).not.toThrow()
+  })
+
+  test('under a basePath the 404 page resolves from the base', async () => {
+    const { notFound } = await build({}, { basePath: '/repo' })
+    expect(notFound).toContain('<base href="/repo/" />')
   })
 
   test('with no aliases the config attribute does not mention them', async () => {

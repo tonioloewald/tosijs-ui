@@ -1013,11 +1013,17 @@ and lists the page in a warning.
 
 #### The 404 page
 
-The build writes `404.html`, which GitHub Pages and Firebase serve for any path the site does
-not have. It names the path that was asked for, lists every page, links `llms.txt`, and, with
-JavaScript, suggests the closest page ("Did you mean /guide/?"). Hosts serve it at whatever URL
-was asked for, so every link in it is absolute (`basePath` applied). A site's own `404.html`,
-in its static files, wins.
+The build writes `404.html`, which GitHub Pages, Netlify and Firebase serve, with status 404,
+for any path the site does not have. It is the home page, site chrome and all, with a note at
+the top: "404: there's nothing at /gide/. Did you mean /guide/? Here's the home page instead."
+The suggestion appears when a page's path is close to the one asked for. The page hydrates like
+any other, its nav lists every page, and the note goes with the first navigation. This is how
+tosijs-platform sites answer a bad URL too.
+
+Hosts serve it at whatever URL was asked for, so it carries a `<base>` at the site root
+(`basePath` applied), and every reference in it resolves from there however deep the missing
+path is. It is `noindex` and has no canonical link. A site's own `404.html`, in its static
+files, wins.
 
 #### `preview` — deploy the built site to a host you control
 

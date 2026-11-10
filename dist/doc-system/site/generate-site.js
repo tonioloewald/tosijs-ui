@@ -686,87 +686,90 @@ export async function generateSite(config) {
         }
     }
     // A site's own 404.html (copied from its static files) wins.
-    if (!existsSync(`${outputDir}/404.html`)) {
-        await Bun.write(`${outputDir}/404.html`, notFoundHtml(flattenNav(buildNavTree(docs, slugMap)), slugMap, config));
+    const home = docs.find((doc) => slugMap[doc.filename] === '');
+    if (home && !existsSync(`${outputDir}/404.html`)) {
+        await Bun.write(`${outputDir}/404.html`, notFoundHtml(await pageHtml(home, config, slugMap, configAttr, wikilinks, '', 0), slugMap, config));
     }
     return count;
 }
 /*
-The page a host serves for a path the site does not have: GitHub Pages and Firebase serve
-`404.html` from the site root, at whatever URL was asked for, so nothing in it may be
-relative. It lists every page, which is what a reader without JavaScript (an agent's fetch
-tool, most often) needs to find its way, and with JavaScript it names the closest page to the
-path asked for. The script is a nicety: under a policy that blocks inline scripts, the list
-is still there.
+The page a host serves for a path the site does not have (#3631). GitHub Pages, Netlify and
+Firebase serve `404.html` from the site root, with status 404, at whatever URL was asked for.
+
+It is the home page, site chrome and all, with a note at the top: "404: there's nothing at
+/gide/. Did you mean /guide/? Here's the home page instead." That is what tosijs-platform's
+service-compris answers for a bad URL (#3913), so the two read the same. It is built from the
+home page's own HTML, so it cannot drift from it, with four changes:
+
+- a `<base>` at the site root, since the page is served at any depth and its URLs are written
+  relative to the root;
+- its own title, `noindex`, and no canonical link (it is not the home page's URL);
+- the note, which names the path and, when one is close, the page that was probably meant;
+- the script that fills the note in. Without JavaScript the note still says there is nothing
+  here, and the nav lists every page.
+
+It hydrates like any page: the doc browser shows the home doc for a path it does not know, and
+the note goes with the first navigation, as the content is replaced.
 */
-export function notFoundHtml(pages, slugMap, config) {
-    const { projectName = '', basePath, lang = 'en', llmsTxt } = config;
-    const href = (slug) => withBase(basePath, pathForSlug(slug));
-    const listed = pages.filter((node) => !node.doc.hidden);
-    const items = listed
-        .map((node) => `      <li><a href="${escapeAttr(href(node.slug))}">${escapeText(node.doc.title || node.slug || 'Home')}</a></li>`)
-        .join('\n');
+export function notFoundHtml(homeHtml, slugMap, config) {
+    const { projectName = '', basePath } = config;
+    const base = withBase(basePath, '/');
     const slugs = JSON.stringify(Object.values(slugMap).filter((slug) => slug !== '')).replace(/</g, '\\u003c');
     const title = projectName
         ? `Page not found — ${projectName}`
         : 'Page not found';
-    return `<!DOCTYPE html>
-<html lang="${escapeAttr(lang)}">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    <title>${escapeText(title)}</title>
-    <style>
-      body { font: 16px/1.5 system-ui, sans-serif; max-width: 40em; margin: 2em auto; padding: 0 1em; }
-      @media (prefers-color-scheme: dark) { body { background: #111; color: #eee; } a { color: #8bf; } }
-    </style>
-  </head>
-  <body>
-    <h1>Page not found</h1>
-    <p>There is no page at <code id="asked"></code> on this site.<span id="closest"></span></p>
-    <p><a href="${escapeAttr(withBase(basePath, '/'))}">Home</a>${llmsTxt
-        ? ` · <a href="${escapeAttr(withBase(basePath, '/llms.txt'))}">llms.txt</a> (every page, for agents)`
-        : ''}</p>
-    <h2>Pages</h2>
-    <ul>
-${items}
-    </ul>
-    <script>
-      ;(() => {
-        const slugs = ${slugs}
-        const base = ${JSON.stringify(withBase(basePath, '/'))}
-        const asked = decodeURIComponent(location.pathname)
-        document.getElementById('asked').textContent = asked
-        const want = asked.slice(base.length - 1).replace(/^\\/+|\\/+$/g, '').toLowerCase()
-        if (!want) return
-        const distance = (a, b) => {
-          const row = Array.from({ length: b.length + 1 }, (_, i) => i)
-          for (let i = 1; i <= a.length; i++) {
-            let prev = row[0]++
-            for (let j = 1; j <= b.length; j++) {
-              const next = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1))
-              prev = row[j]
-              row[j] = next
-            }
+    const note = `<p class="doc-not-found" role="status">404: there's nothing at <code id="not-found-path">this address</code>.<span id="not-found-closest"></span> Here's the home page instead.</p>`;
+    const script = `<script>
+    ;(() => {
+      const slugs = ${slugs}
+      const base = ${JSON.stringify(base)}
+      const asked = decodeURIComponent(location.pathname)
+      document.getElementById('not-found-path').textContent = asked
+      const want = asked.slice(base.length - 1).replace(/^\\/+|\\/+$/g, '').toLowerCase()
+      if (!want) return
+      const distance = (a, b) => {
+        const row = Array.from({ length: b.length + 1 }, (_, i) => i)
+        for (let i = 1; i <= a.length; i++) {
+          let prev = row[0]++
+          for (let j = 1; j <= b.length; j++) {
+            const next = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1))
+            prev = row[j]
+            row[j] = next
           }
-          return row[b.length]
         }
-        let best = '', score = Infinity
-        for (const slug of slugs) {
-          const prefix = Math.min(want.length, slug.length) >= 3 && (slug.startsWith(want) || want.startsWith(slug))
-          const d = prefix ? 0.5 : distance(want, slug)
-          if (d < score) [best, score] = [slug, d]
-        }
-        if (score > Math.max(2, want.length / 3)) return
-        const link = document.createElement('a')
-        link.href = base + best + '/'
-        link.textContent = base + best + '/'
-        const closest = document.getElementById('closest')
-        closest.append(' Did you mean ', link, '?')
-      })()
-    </script>
-  </body>
-</html>
-`;
+        return row[b.length]
+      }
+      let best = '', score = Infinity
+      for (const slug of slugs) {
+        const prefix = Math.min(want.length, slug.length) >= 3 && (slug.startsWith(want) || want.startsWith(slug))
+        const d = prefix ? 0.5 : distance(want, slug)
+        if (d < score) [best, score] = [slug, d]
+      }
+      if (score > Math.max(2, want.length / 3)) return
+      const link = document.createElement('a')
+      link.href = base + best + '/'
+      link.textContent = base + best + '/'
+      document.getElementById('not-found-closest').append(' Did you mean ', link, '?')
+    })()
+  </script>`;
+    // Required anchors: if the page template changes under this, fail the build, not the page.
+    const required = [
+        [/<meta charset="utf-8" \/>/, `$&\n  <base href="${escapeAttr(base)}" />`],
+        [
+            /<title>[^<]*<\/title>/,
+            `<title>${escapeText(title)}</title>\n  <meta name="robots" content="noindex" />`,
+        ],
+        [/<article class="doc-content"[^>]*>/, `$&\n${note}`],
+        [/<\/body>/, `${script}\n</body>`],
+    ];
+    // The home page's own robots and canonical lines, when it has them.
+    let html = homeHtml
+        .replace(/ *<meta name="robots"[^>]*>\n/g, '')
+        .replace(/ *<link rel="canonical"[^>]*>\n/g, '');
+    for (const [pattern, replacement] of required) {
+        if (!pattern.test(html))
+            throw new Error(`notFoundHtml: the home page has no ${pattern}`);
+        html = html.replace(pattern, replacement);
+    }
+    return html;
 }

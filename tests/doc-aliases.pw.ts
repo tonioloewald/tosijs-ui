@@ -140,16 +140,45 @@ test('/guide with no slash is the page itself, and navigates like it', async ({
   expect(missingBelowRoot()).toEqual([])
 })
 
-test('a path the site does not have gets its 404 page, which names the closest', async ({
+/*
+A path the site does not have gets the home page, status 404, with a note that names the path
+and the page probably meant (#3631), as tosijs-platform's service-compris answers (#3913).
+*/
+test('a path the site does not have gets the home page with a 404 note, hydrated', async ({
   page,
 }) => {
   const response = await page.goto(`${ORIGIN}/gide/`)
   expect(response!.status()).toBe(404)
-  await expect(page.locator('h1')).toHaveText('Page not found')
-  await expect(page.locator('#asked')).toHaveText('/gide/')
-  await expect(page.locator('#closest a')).toHaveAttribute('href', '/guide/')
-  await expect(page.locator('ul a', { hasText: 'Guide' })).toHaveAttribute(
-    'href',
-    '/guide/'
+  await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
+  await expect(heading(page)).toHaveText('Read me')
+  const note = page.locator('.doc-not-found')
+  await expect(note).toContainText("404: there's nothing at /gide/.")
+  await expect(note.locator('a')).toHaveAttribute('href', '/guide/')
+  // what an agent or crawler reads, before hydration retitles it as the home page it shows
+  expect(await response!.text()).toContain(
+    '<title>Page not found — Alias Test</title>'
   )
+  // the site works from here, and the note goes with the first navigation
+  await page
+    .locator('tosi-doc-system .doc-link', { hasText: 'Guide' })
+    .first()
+    .click()
+  await expect(page).toHaveURL(`${ORIGIN}/guide/`)
+  await expect(heading(page)).toHaveText('Guide')
+  await expect(note).toHaveCount(0)
+})
+
+test('the 404 page works however deep the missing path is', async ({
+  page,
+}) => {
+  const asked = '/no/such/place/'
+  const response = await page.goto(`${ORIGIN}${asked}`)
+  expect(response!.status()).toBe(404)
+  await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
+  await expect(
+    page.locator('tosi-doc-system .doc-link.current').first()
+  ).toHaveText('Read me')
+  await expect(page.locator('.doc-not-found')).toContainText(asked)
+  // every asset came from the root, not from under the missing path
+  expect(missing.filter((p) => p !== asked && p.startsWith('/no/'))).toEqual([])
 })

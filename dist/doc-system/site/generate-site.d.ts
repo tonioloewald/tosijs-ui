@@ -1,6 +1,5 @@
 import type { Doc } from './docs.js';
 import type { ProjectLinks, LinkItem } from '../../doc-browser.js';
-import { NavNode } from '../nav-tree.js';
 import { type AccessibilityMode, type ExampleBakes } from '../render.js';
 declare global {
     var Bun: any;
@@ -172,4 +171,4 @@ export declare function withStamp(url: string, stamp?: string): string;
  */
 export declare function rebaseRelativeRefs(html: string, fromPath: string, depth: number): string;
 export declare function generateSite(config: GenerateSiteConfig): Promise<number>;
-export declare function notFoundHtml(pages: NavNode<Doc>[], slugMap: Record<string, string>, config: Pick<GenerateSiteConfig, 'projectName' | 'basePath' | 'lang' | 'llmsTxt'>): string;
+export declare function notFoundHtml(homeHtml: string, slugMap: Record<string, string>, config: Pick<GenerateSiteConfig, 'projectName' | 'basePath'>): string;

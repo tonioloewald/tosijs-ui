@@ -694,8 +694,14 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return null
   }
 
-  const docName =
-    filenameFromLocation() || homeDoc(docs) || docs[0]?.filename || 'README.md'
+  /*
+  The doc for a location that names none (a host's 404 page, served at any path): the one at the
+  site root. That is README unless a doc is marked `home`; falling straight to `docs[0]` showed
+  whichever doc the corpus happened to list first.
+  */
+  const rootDoc =
+    filenameForSlug('') || homeDoc(docs) || docs[0]?.filename || 'README.md'
+  const docName = filenameFromLocation() || rootDoc
 
   const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0]
 
@@ -1470,7 +1476,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // Always resolve to the RAW doc from the original array — docs reached via the
   // app.docs proxy expose BoxedScalar fields (doc.text), which break marked().
   const navigateTo = (filename: string) => {
-    const doc = docs.find((d) => d.filename === filename) || docs[0]
+    const doc =
+      docs.find((d) => d.filename === filename) ||
+      docs.find((d) => d.filename === rootDoc) ||
+      docs[0]
     app.currentDoc = doc as any
     showDoc(doc)
     refreshNav(true)
