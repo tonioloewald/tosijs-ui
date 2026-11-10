@@ -1,5 +1,5 @@
 import { ElementCreator } from 'tosijs';
-import type { ExampleTab } from '../doc-system/example-policy.js';
+import type { ExampleTab, ExampleView } from '../doc-system/example-policy.js';
 import { ExampleContext } from './types.js';
 import type { LiveExample } from './component.js';
 /**
@@ -20,5 +20,8 @@ export declare function examplePolicy(): ExamplePolicy;
 export declare function siteExampleTabs(): ExampleTab[] | undefined;
 /** Set the tabs every example's code panel shows; `undefined` restores the default. */
 export declare function setExampleTabs(tabs: ExampleTab[] | undefined): void;
+export declare function siteExampleView(): ExampleView | undefined;
+/** Set the view every example opens in; `undefined` restores the default. */
+export declare function setExampleView(view: ExampleView | undefined): void;
 export declare function setExamplePolicy(policy: ExamplePolicy): void;
 export declare function insertExamples(element: HTMLElement, context: ExampleContext, liveExampleCreator: ElementCreator<LiveExample>, liveExampleTagName: string, sourceFile?: string): void;

@@ -6,7 +6,7 @@ bundle reads when it runs (so they must come BEFORE the bundle script — genera
 Each is emitted only when it differs from the default, so a default site's HTML is unchanged
 byte-for-byte when a new switch is added.
 */
-import { exampleTabsProblem, normalizeDialectNames } from '../example-policy.js';
+import { EXAMPLE_VIEWS, exampleTabsProblem, normalizeDialectNames, } from '../example-policy.js';
 const LIVE_EXAMPLE_POLICIES = ['auto', 'opt-in', 'no-code'];
 const SITE_KINDS = ['documentation', 'book'];
 /**
@@ -19,7 +19,8 @@ export function siteSwitchProblem(config) {
         ? `SiteConfig.${name} is ${JSON.stringify(value)}; it must be one of ${allowed.map((a) => `'${a}'`).join(', ')}`
         : null;
     return (wrong('liveExamples', config.liveExamples, LIVE_EXAMPLE_POLICIES) ??
-        wrong('kind', config.kind, SITE_KINDS));
+        wrong('kind', config.kind, SITE_KINDS) ??
+        wrong('exampleView', config.exampleView, [...EXAMPLE_VIEWS]));
 }
 export function pageGlobalsHead(config) {
     // A misspelt tab would hide a tab on every example with nothing to say why.
@@ -34,6 +35,10 @@ export function pageGlobalsHead(config) {
         // #246: which tabs an example's code panel shows
         config.exampleTabs
             ? `<script>globalThis.__TOSI_EXAMPLE_TABS=${JSON.stringify(config.exampleTabs)}</script>`
+            : '',
+        // #252: the view examples open in
+        config.exampleView && config.exampleView !== 'preview'
+            ? `<script>globalThis.__TOSI_EXAMPLE_VIEW="${config.exampleView}"</script>`
             : '',
         // 1.16.2: the example console
         config.exampleConsole === false

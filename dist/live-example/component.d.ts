@@ -1,5 +1,6 @@
 import { ElementCreator } from 'tosijs';
 import { ExampleContext, ExampleParts } from './types.js';
+import { type ExampleView } from '../doc-system/example-policy.js';
 export declare const testManager: {
     enabled: import("tosijs").BoxedScalar<boolean>;
 } & import("tosijs").TosiProps<{
@@ -79,6 +80,17 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         };
         ':host.-inline-code:not(.-maximize) [part="undo"], :host.-inline-code:not(.-maximize) [part="redo"]': {
             display: string;
+        };
+        ':host.-inline-code:not(.-maximize) > [part="example"]::part(fixture)': {
+            display: string;
+        };
+        ':host:not(.-inline-code) > .code-editors .inline-only, :host.-maximize > .code-editors .inline-only': {
+            display: string;
+        };
+        ':host > .code-editors > [part="editors"]::part(tabs)': {
+            minWidth: string;
+            overflowX: string;
+            scrollbarWidth: string;
         };
         ':host.-console-docked > [part="example"] > .example-console': {
             position: string;
@@ -630,6 +642,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private updateTestStatus;
     private showTestsTab;
     private syncSourceTabs;
+    get initialView(): ExampleView;
     /** Does this example open (or sit) in an inline view? Its tests are then part of the page. */
     private get teaches();
     undo: () => void;

@@ -2,9 +2,9 @@ export { LiveExample, liveExample, enableTests, disableTests, pageTestCount, tes
 export type { ExampleContext, ExampleParts, RemotePayload, TransformFn, } from './types.js';
 export { runTests, createTestContext, expect } from './test-harness.js';
 export type { TestResult, TestResults, TestContext } from './test-harness.js';
-export { insertExamples, setExamplePolicy, setExampleTabs, } from './insert-examples.js';
+export { insertExamples, setExamplePolicy, setExampleTabs, setExampleView, } from './insert-examples.js';
 export type { ExamplePolicy, SiteExamplePolicy } from './insert-examples.js';
-export type { ExampleTab } from '../doc-system/example-policy.js';
+export type { ExampleTab, ExampleView } from '../doc-system/example-policy.js';
 export { setExampleHooks } from './example-hooks.js';
 export type { ExampleHooks, ExampleChatSession, ExampleSource, } from './example-hooks.js';
 export { loadTransform, rewriteImports, executeCode } from './code-transform.js';

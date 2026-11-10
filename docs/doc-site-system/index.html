@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=d7b325688381" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=506b61a4d095" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-09T14:52:41+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-10T09:05:22.840Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e51ddb92e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=276f4ab92557" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -563,6 +563,11 @@ something you review before it becomes authored text. Return nothing to leave an
 <td><code>exampleTabs</code></td>
 <td>all</td>
 <td>the tabs an example&#39;s code panel shows: <code>&#39;js&#39;</code>, <code>&#39;html&#39;</code>, <code>&#39;css&#39;</code>, <code>&#39;test&#39;</code>, <code>&#39;console&#39;</code>, <code>&#39;chat&#39;</code>. Under <code>&#39;no-code&#39;</code> the default is <code>[&#39;html&#39;, &#39;css&#39;, &#39;chat&#39;]</code>. A fence overrides it with <code>{&quot;tabs&quot;: [...]}</code></td>
+</tr>
+<tr>
+<td><code>exampleView</code></td>
+<td><code>&#39;preview&#39;</code></td>
+<td>the view every example opens in: <code>&#39;code&#39;</code> puts the preview beside its code, <code>&#39;console&#39;</code> the console beside the code. A page overrides it with <code>exampleView</code> in its metadata, a fence with <code>{&quot;view&quot;: …}</code>; <code>&#39;preview&#39;</code> opts out. Any other value fails the build</td>
 </tr>
 <tr>
 <td><code>bundleExternals</code></td>
@@ -2278,9 +2283,9 @@ markdown. The first heading is the page title.</li>
 <li><strong>Metadata</strong> via a JSON block — <code>&lt;!--{ &quot;pin&quot;: &quot;top&quot; }--&gt;</code> (html) or
 <code>/*{ &quot;pin&quot;: &quot;bottom&quot; }*/</code> (ts/js/css) — controls nav ordering, plus per-page
 SEO overrides (<code>description</code>, <code>keywords</code>, <code>image</code>, <code>noindex</code>, <code>headTitle</code>), the
-section <code>parent</code>, and the page&#39;s shape (<code>layout</code>, <code>header</code>, <code>home</code>), all in the same
-block. YAML frontmatter can set <code>title</code>, <code>order</code>, <code>author</code>, <code>date</code>, <code>draft</code>, <code>layout</code>,
-<code>header</code> and <code>home</code>.</li>
+section <code>parent</code>, the page&#39;s shape (<code>layout</code>, <code>header</code>, <code>home</code>), and the view its live
+examples open in (<code>exampleView</code>), all in the same block. YAML frontmatter can set <code>title</code>,
+<code>order</code>, <code>author</code>, <code>date</code>, <code>draft</code>, <code>layout</code>, <code>header</code>, <code>home</code> and <code>exampleView</code>.</li>
 <li><strong>Nav order</strong> is: pin bucket (<code>top</code> → none → <code>bottom</code>), then <code>order</code>, then
 title, then filename. Use <strong><code>order</code></strong> (a number, <strong>lower first</strong>; default 500)
 to rank items <em>within</em> the same <code>pin</code> — e.g. two <code>&quot;pin&quot;: &quot;top&quot;</code> docs with
@@ -2713,6 +2718,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-8vdab82s.js"></script>
+  <script type="module" src="../hydrate-bqnddtn2.js"></script>
 </body>
 </html>

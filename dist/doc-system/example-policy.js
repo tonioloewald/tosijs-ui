@@ -119,6 +119,16 @@ export function exampleTabsProblem(value) {
         : undefined;
 }
 /**
+ * The view a live example opens in (#252): `preview` (the default), `code` (the preview beside
+ * its code) or `console` (the console beside the code). Set per fence (`{"view": "code"}`), per
+ * page (`exampleView` in its metadata) or per site (`SiteConfig.exampleView`); the nearest wins,
+ * so `preview` opts one example or page out of a default.
+ */
+export const EXAMPLE_VIEWS = ['preview', 'code', 'console'];
+export function isExampleView(value) {
+    return EXAMPLE_VIEWS.includes(value);
+}
+/**
  * Will this fence become a live example?
  *
  * @param lang  the fence language as written (`js`, `html`, `typescript`, …); case-sensitive

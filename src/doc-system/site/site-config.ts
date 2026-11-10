@@ -21,7 +21,7 @@ import type { EditableDataOptions } from './data-store.js'
 import type { BookManifest } from '../book-manifest.js'
 import type { AccessibilityMode } from '../render.js'
 import type { AltTextHook } from './alt-text.js'
-import type { ExampleTab } from '../example-policy.js'
+import type { ExampleTab, ExampleView } from '../example-policy.js'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 
@@ -232,6 +232,14 @@ export interface SiteConfig {
    * `{"tabs": ["html"]}`. A hidden tab's block still runs; it just can't be edited.
    */
   exampleTabs?: ExampleTab[]
+  /**
+   * The view every live example opens in (1.17.4, #252): `'code'` puts the preview beside its
+   * code, `'console'` the console beside the code. Default `'preview'`, the example alone. For
+   * a book whose small examples should show their code: set it once here instead of
+   * `{"view": "code"}` on every fence. A page overrides it with `exampleView` in its metadata,
+   * and one example with the fence option `{"view": "preview"}`.
+   */
+  exampleView?: ExampleView
   /**
    * Run script examples from same-origin modules (1.17.0, #245), for a site served under a
    * Content Security Policy without `'unsafe-eval'` (`script-src 'self'`).

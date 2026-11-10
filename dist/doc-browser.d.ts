@@ -1,6 +1,6 @@
 import { type AccessibilityMode } from './doc-system/render.js';
 import { TestResults } from './live-example/test-harness.js';
-import { type ExamplePolicy } from './doc-system/example-policy.js';
+import { type ExamplePolicy, type ExampleView } from './doc-system/example-policy.js';
 export declare const hasTestBlock: (text: string | undefined, policy?: ExamplePolicy) => boolean;
 export interface PageTestResults {
     passed: boolean;
@@ -45,6 +45,8 @@ export interface Doc {
     header?: boolean;
     /** `'full-width'` drops the reading measure; `'full-screen'` also puts the nav away. */
     layout?: 'full-width' | 'full-screen';
+    /** the view this page's live examples open in (see the site `Doc.exampleView`) */
+    exampleView?: ExampleView;
     testStatus?: 'passed' | 'failed' | 'pending';
     bakes?: Array<[string, {
         dialect: string;

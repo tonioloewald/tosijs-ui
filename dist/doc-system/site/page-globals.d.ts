@@ -1,8 +1,9 @@
-import type { ExampleTab } from '../example-policy.js';
+import type { ExampleTab, ExampleView } from '../example-policy.js';
 export interface PageGlobalsConfig {
     liveExamples?: 'auto' | 'opt-in' | 'no-code';
     exampleConsole?: boolean;
     exampleTabs?: ExampleTab[];
+    exampleView?: ExampleView;
     dialects?: string[];
 }
 /**
@@ -13,5 +14,6 @@ export interface PageGlobalsConfig {
 export declare function siteSwitchProblem(config: {
     liveExamples?: string;
     kind?: string;
+    exampleView?: string;
 }): string | null;
 export declare function pageGlobalsHead(config: PageGlobalsConfig): string;

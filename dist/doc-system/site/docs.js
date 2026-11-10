@@ -160,6 +160,13 @@ export function parseFrontmatter(content) {
             else if (val)
                 console.error(`unknown layout ${JSON.stringify(val)} in frontmatter`);
         }
+        else if (key === 'exampleview') {
+            // Same reasoning as layout: a misspelt view would silently do nothing.
+            if (val === 'preview' || val === 'code' || val === 'console')
+                data.exampleView = val;
+            else if (val)
+                console.error(`unknown exampleView ${JSON.stringify(val)} in frontmatter`);
+        }
         else if (key === 'header') {
             if (/^(false|no|0)$/i.test(val))
                 data.header = false;

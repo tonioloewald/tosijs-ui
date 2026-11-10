@@ -256,10 +256,21 @@ console.log('total is', total)
 - Closing the code (the `×` in the tab bar) returns the example to its preview, and puts the
   console back among the tabs.
 - From code, `example.showInline('code' | 'console')` does the same thing.
+- The code panel's tab bar carries the example's controls: **refresh** (editing does not
+  re-run an example; this does, as do ⌘S and ⌘R), maximize, and the editor in a new window.
+  There is no toolbar column beside the preview, so the preview and its code touch.
 - The generated JavaScript of a `tjs` or `ts` example is the read-only **JS** tab beside its
   source, in every view.
 - In an ePub or in print an example is its code listing; the view option changes nothing
   there.
+
+### A default view for a site or a page
+
+A book whose small examples should all show their code says so once, not on every fence.
+`exampleView: 'code'` in the site config sets it for every example, and `"exampleView": "code"`
+in a page's metadata (or `exampleView: code` in its frontmatter) for one page. The nearest
+setting wins: a fence's `view`, then the page's, then the site's. `"preview"` at any level opts
+out of the one above it, so a big example on a code-first page takes `{"view": "preview"}`.
 
 ## Adding a dialect
 
@@ -784,12 +795,15 @@ import {
   insertExamples,
   examplePolicy,
   siteExampleTabs,
+  siteExampleView,
 } from './insert-examples.js'
 import { exampleHooks, sanitizeExampleHtml } from './example-hooks.js'
 import {
   EXAMPLE_TABS,
   exampleTabsProblem,
+  isExampleView,
   type ExampleTab,
+  type ExampleView,
 } from '../doc-system/example-policy.js'
 import {
   rewriteExampleBlocks,
@@ -2421,13 +2435,26 @@ export class LiveExample extends withAttributes({
     editors.queueRender()
   }
 
+  /*
+  The view an example opens in (#252): its fence's `view`, else the nearest container's
+  `data-example-view` (the doc browser stamps a page's `exampleView` there), else the site's
+  (`SiteConfig.exampleView`). `"preview"` at any level opts out of a default above it.
+  */
+  get initialView(): ExampleView {
+    for (const value of [
+      this.options.view,
+      this.closest('[data-example-view]')?.getAttribute('data-example-view'),
+      siteExampleView(),
+    ]) {
+      if (isExampleView(value)) return value
+    }
+    return 'preview'
+  }
+
   /** Does this example open (or sit) in an inline view? Its tests are then part of the page. */
   private get teaches(): boolean {
-    const view = this.options.view
     return (
-      view === 'code' ||
-      view === 'console' ||
-      this.classList.contains('-inline-code')
+      this.initialView !== 'preview' || this.classList.contains('-inline-code')
     )
   }
 
@@ -2739,6 +2766,36 @@ export class LiveExample extends withAttributes({
             onClick: this.redo,
           },
           icons.cornerUpRight()
+        ),
+        /*
+        In an inline view these two replace the toolbar column beside the preview (#252): the
+        column split the preview from its code, and its "view/edit code" was already open.
+        */
+        button(
+          {
+            title: 'toggle preview size',
+            class: 'transparent inline-only',
+            onClick: this.toggleMaximize,
+          },
+          icons.maximize()
+        ),
+        button(
+          {
+            title: 'view/edit code in a new window',
+            class: 'transparent inline-only',
+            onClick: this.openEditorWindow,
+          },
+          icons.edit()
+        ),
+        // Editing does not re-run an example; this does (#252). Also in the menu, and ⌘S / ⌘R.
+        button(
+          {
+            title: 'refresh',
+            part: 'refresh',
+            class: 'transparent',
+            onClick: this.doRefresh,
+          },
+          icons.refreshCw()
         ),
         button(
           {
@@ -3291,8 +3348,8 @@ export class LiveExample extends withAttributes({
   private applyInitialView(): void {
     if (this.initialViewApplied || !this.hydrated || this.remoteId !== '')
       return
-    const view = this.options.view
-    if (view !== 'code' && view !== 'console') return
+    const view = this.initialView
+    if (view === 'preview') return
     this.initialViewApplied = true
     if (typeof IntersectionObserver === 'undefined') {
       this.showInline(view)

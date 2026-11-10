@@ -24,6 +24,23 @@ describe('parseFrontmatter', () => {
     ).toBeUndefined()
   })
 
+  test('#252: exampleView is read; a misspelt one is named, not ignored', () => {
+    expect(
+      parseFrontmatter('---\nexampleView: code\n---\n# A').data.exampleView
+    ).toBe('code')
+    const errors: string[] = []
+    const original = console.error
+    console.error = (message: string) => errors.push(message)
+    try {
+      expect(
+        parseFrontmatter('---\nexampleView: inline\n---\n# A').data.exampleView
+      ).toBeUndefined()
+    } finally {
+      console.error = original
+    }
+    expect(errors).toEqual(['unknown exampleView "inline" in frontmatter'])
+  })
+
   test('parses & strips YAML frontmatter, maps keys, body starts at the H1', () => {
     const src = [
       '---',

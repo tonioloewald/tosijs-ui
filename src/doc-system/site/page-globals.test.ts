@@ -32,6 +32,13 @@ describe('pageGlobalsHead', () => {
     expect(head).toContain('__TOSI_EXAMPLE_TABS=["html","chat"]')
   })
 
+  test('#252: exampleView stamps the view examples open in; preview, the default, stamps nothing', () => {
+    expect(pageGlobalsHead({ exampleView: 'code' })).toBe(
+      '<script>globalThis.__TOSI_EXAMPLE_VIEW="code"</script>'
+    )
+    expect(pageGlobalsHead({ exampleView: 'preview' })).toBe('')
+  })
+
   test('#246: a misspelt tab fails the build, by name', () => {
     expect(() =>
       pageGlobalsHead({ exampleTabs: ['html', 'preview'] as any })
@@ -82,4 +89,7 @@ test('a misspelt liveExamples or kind is named, with the values it may take', ()
   )
   expect(siteSwitchProblem({ liveExamples: 'nocode' })).toContain("'no-code'")
   expect(siteSwitchProblem({ kind: 'Book' })).toContain('SiteConfig.kind')
+  expect(siteSwitchProblem({ exampleView: 'inline' })).toContain(
+    "SiteConfig.exampleView is \"inline\"; it must be one of 'preview', 'code', 'console'"
+  )
 })

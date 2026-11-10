@@ -72,6 +72,15 @@ export type ExampleTab = (typeof EXAMPLE_TABS)[number];
 /** Why `value` is not a list of example tabs, or undefined when it is one. */
 export declare function exampleTabsProblem(value: unknown): string | undefined;
 /**
+ * The view a live example opens in (#252): `preview` (the default), `code` (the preview beside
+ * its code) or `console` (the console beside the code). Set per fence (`{"view": "code"}`), per
+ * page (`exampleView` in its metadata) or per site (`SiteConfig.exampleView`); the nearest wins,
+ * so `preview` opts one example or page out of a default.
+ */
+export declare const EXAMPLE_VIEWS: readonly ["preview", "code", "console"];
+export type ExampleView = (typeof EXAMPLE_VIEWS)[number];
+export declare function isExampleView(value: unknown): value is ExampleView;
+/**
  * Will this fence become a live example?
  *
  * @param lang  the fence language as written (`js`, `html`, `typescript`, …); case-sensitive

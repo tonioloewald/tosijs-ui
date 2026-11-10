@@ -76,6 +76,11 @@ export interface Doc {
      * reach them from out here.
      */
     layout?: 'full-width' | 'full-screen';
+    /**
+     * The view this page's live examples open in (1.17.4, #252): `'code'`, `'console'`, or
+     * `'preview'` to opt out of the site's `exampleView`. A fence's `{"view": …}` still wins.
+     */
+    exampleView?: 'preview' | 'code' | 'console';
     headTitle?: string;
     description?: string;
     keywords?: string | string[];

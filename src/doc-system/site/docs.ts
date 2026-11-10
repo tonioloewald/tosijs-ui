@@ -140,6 +140,11 @@ export interface Doc {
    * reach them from out here.
    */
   layout?: 'full-width' | 'full-screen'
+  /**
+   * The view this page's live examples open in (1.17.4, #252): `'code'`, `'console'`, or
+   * `'preview'` to opt out of the site's `exampleView`. A fence's `{"view": …}` still wins.
+   */
+  exampleView?: 'preview' | 'code' | 'console'
   headTitle?: string
   description?: string
   keywords?: string | string[]
@@ -263,6 +268,14 @@ export function parseFrontmatter(content: string): {
       if (val === 'full-width' || val === 'full-screen') data.layout = val
       else if (val)
         console.error(`unknown layout ${JSON.stringify(val)} in frontmatter`)
+    } else if (key === 'exampleview') {
+      // Same reasoning as layout: a misspelt view would silently do nothing.
+      if (val === 'preview' || val === 'code' || val === 'console')
+        data.exampleView = val
+      else if (val)
+        console.error(
+          `unknown exampleView ${JSON.stringify(val)} in frontmatter`
+        )
     } else if (key === 'header') {
       if (/^(false|no|0)$/i.test(val)) data.header = false
     } else if (key === 'home') {

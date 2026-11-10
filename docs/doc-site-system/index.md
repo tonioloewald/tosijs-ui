@@ -453,6 +453,7 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`; `'no-code'` — only `html` and `css` run, for a host with a strict CSP. See "Marking a fence display-only" and "No-code examples". Any other value fails the build |
 | `exampleModules`  | `false`     | write each script example to `_examples/<hash>.js` and run it by `import()`, for a strict CSP. See "Script examples under a strict CSP" |
 | `exampleTabs`     | all         | the tabs an example's code panel shows: `'js'`, `'html'`, `'css'`, `'test'`, `'console'`, `'chat'`. Under `'no-code'` the default is `['html', 'css', 'chat']`. A fence overrides it with `{"tabs": [...]}` |
+| `exampleView`     | `'preview'` | the view every example opens in: `'code'` puts the preview beside its code, `'console'` the console beside the code. A page overrides it with `exampleView` in its metadata, a fence with `{"view": …}`; `'preview'` opts out. Any other value fails the build |
 | `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
 | `bundleOutDir`    | `outputDir` | where the bundle is BUILT; set only when it is itself a published artifact |
@@ -2118,9 +2119,9 @@ case is fully covered.
 - **Metadata** via a JSON block — `<!--{ "pin": "top" }-->` (html) or
   `/*{ "pin": "bottom" }*/` (ts/js/css) — controls nav ordering, plus per-page
   SEO overrides (`description`, `keywords`, `image`, `noindex`, `headTitle`), the
-  section `parent`, and the page's shape (`layout`, `header`, `home`), all in the same
-  block. YAML frontmatter can set `title`, `order`, `author`, `date`, `draft`, `layout`,
-  `header` and `home`.
+  section `parent`, the page's shape (`layout`, `header`, `home`), and the view its live
+  examples open in (`exampleView`), all in the same block. YAML frontmatter can set `title`,
+  `order`, `author`, `date`, `draft`, `layout`, `header`, `home` and `exampleView`.
 - **Nav order** is: pin bucket (`top` → none → `bottom`), then `order`, then
   title, then filename. Use **`order`** (a number, **lower first**; default 500)
   to rank items _within_ the same `pin` — e.g. two `"pin": "top"` docs with

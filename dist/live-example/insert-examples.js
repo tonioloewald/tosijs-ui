@@ -1,4 +1,4 @@
-import { BUILT_IN_DIALECTS, exampleTabsProblem, isDialectLanguage, isLiveFence, languageOfClass, } from '../doc-system/example-policy.js';
+import { BUILT_IN_DIALECTS, EXAMPLE_VIEWS, exampleTabsProblem, isExampleView, isDialectLanguage, isLiveFence, languageOfClass, } from '../doc-system/example-policy.js';
 import { isBuiltInDialect } from './dialects.js';
 // A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
 // transpiled">` carrying its build-time transpiled JS (see
@@ -73,6 +73,25 @@ export function siteExampleTabs() {
 export function setExampleTabs(tabs) {
     ;
     globalThis.__TOSI_EXAMPLE_TABS = tabs;
+}
+/*
+The view a site's examples open in (`SiteConfig.exampleView`, stamped as `__TOSI_EXAMPLE_VIEW`),
+or undefined for the default. A page's `exampleView` and a fence's `view` override it.
+*/
+export function siteExampleView() {
+    const view = globalThis
+        .__TOSI_EXAMPLE_VIEW;
+    if (view === undefined)
+        return undefined;
+    if (isExampleView(view))
+        return view;
+    console.error(`live examples: __TOSI_EXAMPLE_VIEW is ${JSON.stringify(view)}; it must be one of ${EXAMPLE_VIEWS.join(', ')}`);
+    return undefined;
+}
+/** Set the view every example opens in; `undefined` restores the default. */
+export function setExampleView(view) {
+    ;
+    globalThis.__TOSI_EXAMPLE_VIEW = view;
 }
 export function setExamplePolicy(policy) {
     ;

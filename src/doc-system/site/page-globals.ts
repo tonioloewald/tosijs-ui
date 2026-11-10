@@ -7,13 +7,18 @@ Each is emitted only when it differs from the default, so a default site's HTML 
 byte-for-byte when a new switch is added.
 */
 
-import { exampleTabsProblem, normalizeDialectNames } from '../example-policy.js'
-import type { ExampleTab } from '../example-policy.js'
+import {
+  EXAMPLE_VIEWS,
+  exampleTabsProblem,
+  normalizeDialectNames,
+} from '../example-policy.js'
+import type { ExampleTab, ExampleView } from '../example-policy.js'
 
 export interface PageGlobalsConfig {
   liveExamples?: 'auto' | 'opt-in' | 'no-code'
   exampleConsole?: boolean
   exampleTabs?: ExampleTab[]
+  exampleView?: ExampleView
   dialects?: string[]
 }
 
@@ -28,6 +33,7 @@ const SITE_KINDS = ['documentation', 'book']
 export function siteSwitchProblem(config: {
   liveExamples?: string
   kind?: string
+  exampleView?: string
 }): string | null {
   const wrong = (name: string, value: unknown, allowed: string[]) =>
     value !== undefined && !allowed.includes(value as string)
@@ -37,7 +43,8 @@ export function siteSwitchProblem(config: {
       : null
   return (
     wrong('liveExamples', config.liveExamples, LIVE_EXAMPLE_POLICIES) ??
-    wrong('kind', config.kind, SITE_KINDS)
+    wrong('kind', config.kind, SITE_KINDS) ??
+    wrong('exampleView', config.exampleView, [...EXAMPLE_VIEWS])
   )
 }
 
@@ -56,6 +63,10 @@ export function pageGlobalsHead(config: PageGlobalsConfig): string {
       ? `<script>globalThis.__TOSI_EXAMPLE_TABS=${JSON.stringify(
           config.exampleTabs
         )}</script>`
+      : '',
+    // #252: the view examples open in
+    config.exampleView && config.exampleView !== 'preview'
+      ? `<script>globalThis.__TOSI_EXAMPLE_VIEW="${config.exampleView}"</script>`
       : '',
     // 1.16.2: the example console
     config.exampleConsole === false

@@ -89,6 +89,28 @@ export const liveExampleStyleSpec = {
     {
       display: 'none',
     },
+  /*
+  Inline, the toolbar column beside the preview goes (#252): it stood between the preview and
+  its code. Maximize and the new-window editor move to the code panel's tab bar (.inline-only);
+  "view/edit code" is already open, and the tests check means nothing where tests always run.
+  */
+  ':host.-inline-code:not(.-maximize) > [part="example"]::part(fixture)': {
+    display: 'none',
+  },
+  ':host:not(.-inline-code) > .code-editors .inline-only, :host.-maximize > .code-editors .inline-only':
+    {
+      display: 'none',
+    },
+  /*
+  The tab names give way to the controls, not the reverse: in a narrow column they scroll, and
+  the controls (close among them) stay inside the panel. The tab row would otherwise push them
+  past its clipped edge.
+  */
+  ':host > .code-editors > [part="editors"]::part(tabs)': {
+    minWidth: '0',
+    overflowX: 'auto',
+    scrollbarWidth: 'none',
+  },
 
   // `view: console`: the console sits where the preview would be, beside the code. Under the
   // toolbar (z-index 100), over the preview, which is still there for the code to write to.

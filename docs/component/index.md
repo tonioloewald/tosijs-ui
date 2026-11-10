@@ -255,10 +255,21 @@ console.log('total is', total)
 - Closing the code (the `×` in the tab bar) returns the example to its preview, and puts the
   console back among the tabs.
 - From code, `example.showInline('code' | 'console')` does the same thing.
+- The code panel's tab bar carries the example's controls: **refresh** (editing does not
+  re-run an example; this does, as do ⌘S and ⌘R), maximize, and the editor in a new window.
+  There is no toolbar column beside the preview, so the preview and its code touch.
 - The generated JavaScript of a `tjs` or `ts` example is the read-only **JS** tab beside its
   source, in every view.
 - In an ePub or in print an example is its code listing; the view option changes nothing
   there.
+
+### A default view for a site or a page
+
+A book whose small examples should all show their code says so once, not on every fence.
+`exampleView: 'code'` in the site config sets it for every example, and `"exampleView": "code"`
+in a page's metadata (or `exampleView: code` in its frontmatter) for one page. The nearest
+setting wins: a fence's `view`, then the page's, then the site's. `"preview"` at any level opts
+out of the one above it, so a big example on a code-first page takes `{"view": "preview"}`.
 
 ## Adding a dialect
 

@@ -140,7 +140,12 @@ import { TestResults } from './live-example/test-harness.js'
 import { highlightBlocks } from './doc-system/highlight.js'
 import { examplePolicy } from './live-example/insert-examples.js'
 import { collectCodeTokens } from './doc-system/code-fences.js'
-import { isLiveFence, type ExamplePolicy } from './doc-system/example-policy.js'
+import {
+  isExampleView,
+  isLiveFence,
+  type ExamplePolicy,
+  type ExampleView,
+} from './doc-system/example-policy.js'
 import { tosiSidenav, TosiSidenav } from './side-nav.js'
 import { icons } from './icons.js'
 import { tosiPalette, type PaletteResult } from './palette.js'
@@ -389,6 +394,8 @@ export interface Doc {
   header?: boolean
   /** `'full-width'` drops the reading measure; `'full-screen'` also puts the nav away. */
   layout?: 'full-width' | 'full-screen'
+  /** the view this page's live examples open in (see the site `Doc.exampleView`) */
+  exampleView?: ExampleView
   testStatus?: 'passed' | 'failed' | 'pending'
   // Build-time transpiled JS for this doc's `tjs` examples ([source, {dialect, js}]
   // entries), attached to docs.json by generate-site so client-side navigation runs
@@ -1232,6 +1239,21 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // render from doc text. Every navigation funnels through navigateTo() -> showDoc().
   const docContent = contentElement || div()
   docContent.classList.add('doc-content')
+  /*
+  A page's `exampleView` (#252), where its examples look for it: on the content they sit in. A
+  value the metadata block got wrong is reported, not ignored, as frontmatter's is.
+  */
+  const stampExampleView = (doc: Doc): void => {
+    const view = doc.exampleView
+    if (view !== undefined && !isExampleView(view))
+      console.error(
+        `${doc.path || doc.filename}: unknown exampleView ${JSON.stringify(
+          view
+        )}`
+      )
+    if (isExampleView(view)) docContent.setAttribute('data-example-view', view)
+    else docContent.removeAttribute('data-example-view')
+  }
   Object.assign(docContent.style, {
     display: 'block',
     // Same var the pre-hydration `:not(:defined)` layout uses (doc-system-styles.ts).
@@ -1407,6 +1429,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path
     // is the extracted file (.md, or a source file with doc comments).
+    stampExampleView(doc)
     LiveExample.insertExamples(docContent, context, doc.path || undefined)
     focusableCodeBlocks(docContent)
     /*
@@ -1669,6 +1692,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         { wikilinks, accessible: !!accessibility, title: editUI.doc.title }
       )
       rewriteContentLinks()
+      stampExampleView(editUI.doc)
       LiveExample.insertExamples(
         docContent,
         context,

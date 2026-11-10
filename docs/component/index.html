@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=d7b325688381" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=506b61a4d095" data-tosi-doc-system />
   <title>&lt;tosi-example&gt; live code examples — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; turns code blocks into live, editable examples with a preview, a console and inline tests, in JavaScript, TypeScript, HTML or CSS." />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -39,13 +39,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/component.webp" />
   <meta name="twitter:image:alt" content="&lt;tosi-example&gt; live code examples — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-example> live code examples","description":"\u003ctosi-example> turns code blocks into live, editable examples with a preview, a console and inline tests, in JavaScript, TypeScript, HTML or CSS.","url":"https://ui.tosijs.net/component/","inLanguage":"en","image":"https://ui.tosijs.net/og/component.webp","dateModified":"2026-11-01T22:10:18+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-example> live code examples","description":"\u003ctosi-example> turns code blocks into live, editable examples with a preview, a console and inline tests, in JavaScript, TypeScript, HTML or CSS.","url":"https://ui.tosijs.net/component/","inLanguage":"en","image":"https://ui.tosijs.net/og/component.webp","dateModified":"2026-11-10T09:07:02.186Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Components","item":"https://ui.tosijs.net/components/"},{"@type":"ListItem","position":2,"name":"example","item":"https://ui.tosijs.net/component/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e51ddb92e228" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=276f4ab92557" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="component.ts">
 <h1 id="example">example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -271,11 +271,20 @@ what the reader scrolls past, not twenty editors at load.</li>
 <li>Closing the code (the <code>×</code> in the tab bar) returns the example to its preview, and puts the
 console back among the tabs.</li>
 <li>From code, <code>example.showInline(&#39;code&#39; | &#39;console&#39;)</code> does the same thing.</li>
+<li>The code panel&#39;s tab bar carries the example&#39;s controls: <strong>refresh</strong> (editing does not
+re-run an example; this does, as do ⌘S and ⌘R), maximize, and the editor in a new window.
+There is no toolbar column beside the preview, so the preview and its code touch.</li>
 <li>The generated JavaScript of a <code>tjs</code> or <code>ts</code> example is the read-only <strong>JS</strong> tab beside its
 source, in every view.</li>
 <li>In an ePub or in print an example is its code listing; the view option changes nothing
 there.</li>
 </ul>
+<h3 id="a-default-view-for-a-site-or-a-page">A default view for a site or a page</h3>
+<p>A book whose small examples should all show their code says so once, not on every fence.
+<code>exampleView: &#39;code&#39;</code> in the site config sets it for every example, and <code>&quot;exampleView&quot;: &quot;code&quot;</code>
+in a page&#39;s metadata (or <code>exampleView: code</code> in its frontmatter) for one page. The nearest
+setting wins: a fence&#39;s <code>view</code>, then the page&#39;s, then the site&#39;s. <code>&quot;preview&quot;</code> at any level opts
+out of the one above it, so a big example on a code-first page takes <code>{&quot;view&quot;: &quot;preview&quot;}</code>.</p>
 <h2 id="adding-a-dialect">Adding a dialect</h2>
 <p><code>js</code>, <code>tjs</code> and <code>ts</code> are the built-in entries of a <strong>dialect registry</strong>, and a site can add
 its own with <code>registerDialect</code> from <code>tosijs-ui/live-example</code>. A fence in a registered
@@ -793,6 +802,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-8vdab82s.js"></script>
+  <script type="module" src="../hydrate-bqnddtn2.js"></script>
 </body>
 </html>

@@ -25,9 +25,10 @@ export {
   insertExamples,
   setExamplePolicy,
   setExampleTabs,
+  setExampleView,
 } from './insert-examples.js'
 export type { ExamplePolicy, SiteExamplePolicy } from './insert-examples.js'
-export type { ExampleTab } from '../doc-system/example-policy.js'
+export type { ExampleTab, ExampleView } from '../doc-system/example-policy.js'
 
 // What a host page plugs into every example (#246): sanitize, hydrate, and a chat panel
 export { setExampleHooks } from './example-hooks.js'

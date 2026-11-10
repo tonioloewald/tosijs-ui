@@ -46,6 +46,121 @@ test('view: code shows the preview beside the editor, in the page', async ({
   await expect(button).toHaveText('clicked 1 times')
 })
 
+/*
+#252: inline, the toolbar column beside the preview went: it stood between the preview and its
+code. Its controls are in the code panel's tab bar, with a refresh button, since editing does
+not re-run an example.
+*/
+test('view: code keeps its controls in the tab bar, and the preview touches the code', async ({
+  page,
+}) => {
+  const host = example(page, 'code')
+  await host.scrollIntoViewIfNeeded()
+  const editors = host.locator('.code-editors')
+  await expect(editors).toBeVisible()
+  const fixture = () =>
+    host
+      .locator('[part="example"]')
+      .evaluate(
+        (el: Element) =>
+          getComputedStyle(el.shadowRoot!.querySelector('[part="fixture"]')!)
+            .display
+      )
+  expect(await fixture()).toBe('none')
+  await expect(host.locator('button[title="view/edit code"]')).toBeHidden()
+  const code = await editors.boundingBox()
+  const content = await host
+    .locator('[part="example"]')
+    .evaluate(
+      (el: Element) =>
+        el
+          .shadowRoot!.querySelector('[part="content"]')!
+          .getBoundingClientRect().right
+    )
+  expect(code!.x - content).toBeLessThanOrEqual(1)
+
+  // Refresh re-runs the example: its click count starts again.
+  const button = host.locator('.preview button')
+  await button.click()
+  await expect(button).toHaveText('clicked 1 times')
+  await editors.locator('button[title="refresh"]').click()
+  await expect(host.locator('.preview button')).toHaveText('clicked 0 times')
+
+  // Maximize from the tab bar; the toolbar comes back inside, and restoring returns inline.
+  await editors.locator('button[title="toggle preview size"]').click()
+  await expect(host).toHaveClass(/-maximize/)
+  expect(await fixture()).not.toBe('none')
+  await expect(
+    editors.locator('button[title="toggle preview size"]')
+  ).toBeHidden()
+  await host
+    .locator('[part="exampleWidgets"] button[title="toggle preview size"]')
+    .click()
+  await expect(host).not.toHaveClass(/-maximize/)
+  expect(await fixture()).toBe('none')
+})
+
+test("a site's exampleView opens every example in it", async ({ page }) => {
+  await page.addInitScript(() => {
+    ;(globalThis as any).__TOSI_EXAMPLE_VIEW = 'code'
+  })
+  await page.goto('/rating/')
+  const host = page.locator('tosi-example').first()
+  await host.scrollIntoViewIfNeeded()
+  await expect(host).toHaveClass(/-inline-code/)
+  await expect(host.locator('.code-editors')).toBeVisible()
+})
+
+test("a page's exampleView opens its examples in it, and leaves the next page's alone", async ({
+  page,
+}) => {
+  await page.goto('/readme/')
+  await page.waitForFunction(() => (window as any).xinjsui?.createDocBrowser)
+  const result = await page.evaluate(async () => {
+    const ui: any = (window as any).xinjsui
+    const example = "```js\npreview.append('hi')\n```"
+    const docs = [
+      {
+        filename: 'a.md',
+        title: 'Alpha',
+        path: 'a.md',
+        exampleView: 'code',
+        text: `# Alpha\n\n${example}`,
+      },
+      {
+        filename: 'b.md',
+        title: 'Beta',
+        path: 'b.md',
+        text: `# Beta\n\n${example}`,
+      },
+    ]
+    const settle = () => (globalThis as any).__settled()
+    const box = document.createElement('div')
+    box.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#fff'
+    document.body.append(box)
+    const browser = ui.createDocBrowser({
+      docs,
+      projectName: 'probe',
+      routing: 'memory',
+      initialRoute: 'a',
+    })
+    box.append(browser)
+    await settle()
+    const view = async () => {
+      const el = browser.querySelector('.doc-content tosi-example')
+      await el.refresh()
+      return el.initialView
+    }
+    const shown = [await view()]
+    browser.navigate('b')
+    await settle()
+    shown.push(await view())
+    box.remove()
+    return shown
+  })
+  expect(result).toEqual(['code', 'preview'])
+})
+
 test('view: console puts a working console where the preview would be', async ({
   page,
 }) => {

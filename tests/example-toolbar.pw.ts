@@ -10,6 +10,9 @@ On each, every toolbar control must be on screen and actually receive a click th
 laid over it: the docked console, the code pane, the preview), and the toolbar must not cover
 what it sits beside. The toolbar element itself is `display: contents` (the affix lays out
 its controls), so its box is the union of its controls'.
+
+The inline views have no toolbar column (#252): it stood between the preview and its code.
+Their controls are in the code panel's tab bar, and the same rule holds for those.
 */
 
 type Box = { x: number; y: number; width: number; height: number }
@@ -114,8 +117,51 @@ test('a plain example: the toolbar is a column beside the preview', async ({
   expect(bar.x).toBeGreaterThanOrEqual(preview!.x + preview!.width - 1)
 })
 
+/** Every visible control in the code panel's tab bar is inside the panel, on screen, and receives a click there. */
+async function tabBar(host: any) {
+  const editors = host.locator(':scope > .code-editors')
+  await expect(editors.locator('button[title="refresh"]')).toBeVisible()
+  const controls = await editors.evaluate((el: HTMLElement) => {
+    // Inside the code panel, not merely the viewport: the panel clips what overflows it.
+    const panel = el.getBoundingClientRect()
+    return [...el.querySelectorAll('[slot="after-tabs"] > button')]
+      .filter((b) => (b as HTMLElement).offsetParent !== null)
+      .map((b) => {
+        const r = b.getBoundingClientRect()
+        const hit = document.elementFromPoint(
+          r.left + r.width / 2,
+          r.top + r.height / 2
+        )
+        return {
+          title: (b as HTMLElement).title,
+          inViewport:
+            r.width > 0 &&
+            r.left >= Math.max(0, panel.left) &&
+            r.top >= Math.max(0, panel.top) &&
+            r.right <= Math.min(innerWidth, panel.right) &&
+            r.bottom <= Math.min(innerHeight, panel.bottom),
+          hit: !!hit && b.contains(hit),
+        }
+      })
+  })
+  for (const control of controls)
+    expect(control, control.title).toMatchObject({
+      inViewport: true,
+      hit: true,
+    })
+  return controls.map((c: { title: string }) => c.title)
+}
+
+const INLINE_CONTROLS = [
+  'toggle preview size',
+  'view/edit code in a new window',
+  'refresh',
+  'example menu — refresh, flip, undo, copy, save/revert edits',
+  'close code',
+]
+
 for (const view of ['code', 'console']) {
-  test(`view: ${view} — the toolbar stays reachable and off the panes`, async ({
+  test(`view: ${view} — no toolbar column; its controls are in the tab bar, and reachable`, async ({
     page,
   }) => {
     const host = byView(page, view)
@@ -125,18 +171,16 @@ for (const view of ['code', 'console']) {
       await expect(
         host.locator('[part="example"] > .example-console')
       ).toBeVisible()
-    const found = await toolbar(host)
-    expect(found.editors).not.toBeNull()
-    expect(overlaps(found.bar, found.editors)).toBe(false)
-    expect(overlaps(found.bar, found.preview)).toBe(false)
-    if (view === 'console') {
-      expect(found.console).not.toBeNull()
-      expect(overlaps(found.bar, found.console)).toBe(false)
-    }
+    await expect(
+      host
+        .locator(':scope > [part="example"] > [part="exampleWidgets"] > button')
+        .first()
+    ).toBeHidden()
+    expect(await tabBar(host)).toEqual(INLINE_CONTROLS)
   })
 }
 
-test('view: code in a narrow column — the toolbar is reachable on a phone', async ({
+test('view: code in a narrow column — the tab bar controls are reachable on a phone', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 })
@@ -145,8 +189,7 @@ test('view: code in a narrow column — the toolbar is reachable on a phone', as
   await host.scrollIntoViewIfNeeded()
   await expect(host.locator('.code-editors')).toBeVisible()
   await expect(host).toHaveClass(/-vertical/)
-  const found = await toolbar(host)
-  expect(overlaps(found.bar, found.editors)).toBe(false)
+  expect(await tabBar(host)).toEqual(INLINE_CONTROLS)
 })
 
 test('maximized: the toolbar moves inside along the bottom, and back', async ({
