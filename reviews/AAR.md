@@ -1102,3 +1102,19 @@ gap, recorded rather than hidden.
   class and opening search in other orders never showed it.
 - **Publish:** approval came after the stage job finished, so `verify` was skipped in the
   publish run; the `verify_only` re-run (42698511152) went green. Dist identical to the repo.
+
+## 1.17.4 (2026-11-10) — inline live-example views (#252); tabs scroll
+
+- **Asked by a consumer, built to its evidence:** tjs-lang's book puts `{"view": "code"}` on
+  nearly every fence; #252 named three changes in order of reader value, and all three shipped
+  as asked. The maintainer ruled the toolbar move a patch (recorded in CLAUDE.md).
+- **A test passed against a visible defect:** the tab-bar test checked controls were in the
+  viewport; the × was inside the viewport but half outside the clipped code panel. Tightened to
+  the panel's box, it failed, then passed once the tab names could shrink.
+- **Fixed at the right level on the second pass:** the first fix was a live-example-only style;
+  the maintainer asked for the behaviour itself, so `<tosi-tabs>` now scrolls its tab names and
+  keeps `after-tabs` controls, for every consumer.
+- **A transition masqueraded as a bug:** the tabs test read the underline mid-slide. It now
+  reads the target position, and the underline moves without the slide while scrolling.
+- **Publish:** approval landed within the stage job's wait, so `verify` ran in the main run.
+  Dist identical to the tag.
