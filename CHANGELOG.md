@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.17.5
+
+> Doc-site fixes: the code font loads at all, the web fonts no longer block first render in
+> series, a relative `logo` works on nested pages, and the 404 page is the home page with a
+> note. Nothing to change on upgrade. `dist/iife.js` is unchanged in size (508.6 kB gzip).
+
+### Fixed
+
+- The code font, Spline Sans Mono, never loaded on any doc site: the font URL read
+  `&famiSpline+Sans+Mono` (a missing `family=`), so code fell back to the browser's monospace.
+  Code blocks now render in the intended font, which is a visible change.
+- The doc site's web fonts were an `@import` inside the burned-in stylesheet, which cannot start
+  until that stylesheet has arrived: two render-blocking requests in series. Each page now links
+  them in `<head>`, beside the stylesheet, so they load in parallel. `display=swap` still paints
+  the fallback font until they arrive. Drop-in `<tosi-doc-system>` use (no generated page) still
+  imports them. #3631
+- `logo: 'favicon.svg'` (a relative image path) showed a broken image on every page but the
+  root: the header drew `<img src="favicon.svg">` on `/guide/`, and the browser fetched
+  `/guide/favicon.svg`. The build now makes a relative image path root-absolute, with
+  `basePath`; icon names, inline SVG, absolute paths, `data:` and full URLs are unchanged.
+  Reported from tosijs-native. #3926
+- A doc browser at a path that names no page showed whichever doc the corpus listed first; it
+  shows the doc at the site root (README, or the doc marked `home`).
+
+### Changed
+
+- The generated `404.html` is now the home page, site chrome and all, with a note at the top:
+  "404: there's nothing at /gide/. Did you mean /guide/? Here's the home page instead." It
+  hydrates, its nav lists every page, and the note goes with the first navigation. It replaces
+  1.17.3's standalone page (a heading, the suggestion and a list of links), and matches what
+  tosijs-platform's service-compris serves for a bad URL (#3913). A `<base>` at the site root
+  lets it resolve from any depth; it is `noindex` with no canonical link. A site's own
+  `404.html` still wins. #3631
+
 ## 1.17.4
 
 > Live examples' inline views keep their controls in the code panel's tab bar, and a site or
