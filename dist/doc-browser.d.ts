@@ -1,3 +1,4 @@
+import { XinStyleSheet } from 'tosijs';
 import { type AccessibilityMode } from './doc-system/render.js';
 import { TestResults } from './live-example/test-harness.js';
 import { type ExamplePolicy, type ExampleView } from './doc-system/example-policy.js';
@@ -32,6 +33,7 @@ declare global {
         __docTestResults?: Promise<DocTestResults>;
     }
 }
+export declare const testIndicatorStyleSpec: XinStyleSheet;
 export interface Doc {
     text: string;
     title: string;

@@ -1033,7 +1033,7 @@ test('a pass mutes the header test widget instead of blanking it', async ({
       widget.hidden = false
       widget.classList.remove('-running', '-failed')
       widget.classList.add('-passed')
-      // the filter partway through: it must turn grey BEFORE it fades (faded green on the
+      // the filter partway through: it turns grey and never fades (faded green on the
       // header's colour is what the user objected to)
       const midway: string[] = []
       for (const a of widget.getAnimations()) {
@@ -1061,17 +1061,13 @@ test('a pass mutes the header test widget instead of blanking it', async ({
   await page.goto('/documentation-system/')
   await page.waitForFunction(() => !!document.querySelector('.test-widget'))
   const header = await settled()
-  // all of it is a filter over the pass colour: grey, and translucent so the header shows through
+  // all of it is a filter over the pass colour: grey, and never translucent. Faded to 0.55 so
+  // the header showed through, its label failed contrast at 2.45-2.9:1 (#3642).
   expect(header.opacity).toBe(1)
-  expect(header.filter).toBe('grayscale(1) opacity(0.55)')
+  expect(header.filter).toBe('grayscale(1)')
   // no animation sampled would make the loop below vacuous
   expect(header.midway.length).toBeGreaterThan(0)
-  for (const filter of header.midway) {
-    const [, grey, opacity] = filter.match(
-      /grayscale\(([\d.]+)\) opacity\(([\d.]+)\)/
-    )!
-    if (Number(opacity) < 1) expect(Number(grey), filter).toBe(1)
-  }
+  for (const filter of header.midway) expect(filter).not.toContain('opacity')
   expect(header.clickable).toBe(true)
 
   await page.goto('/no-header-demo/')

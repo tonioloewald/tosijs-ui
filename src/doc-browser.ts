@@ -253,10 +253,18 @@ const testTextColor = {
 }
 
 // Test indicator styles - widget inherits button styles from base stylesheet
-const testIndicatorStyleSpec: XinStyleSheet = {
+/*
+Nothing here dims the badge: opacity blends its text into the header behind it, and axe measured
+the pulse and the settled pass at 2.45-2.9:1 (#3642). The pulse is a ring around the badge, and a
+settled pass is grey, not faded. Exported for the test that holds this.
+*/
+export const testIndicatorStyleSpec: XinStyleSheet = {
   '@keyframes test-pulse': {
-    '0%, 100%': { opacity: '1' },
-    '50%': { opacity: '0.7' },
+    '0%, 100%': { boxShadow: '0 0 0 0 transparent' },
+    // The failed nav dots pulse too, so the colour cannot come from the badge's scope.
+    '50%': {
+      boxShadow: `0 0 0 ${vars.spacing25} ${varDefault.testRingColor('#8888')}`,
+    },
   },
   '@keyframes test-appear': {
     from: { opacity: '0', transform: 'scale(0.8)' },
@@ -271,13 +279,12 @@ const testIndicatorStyleSpec: XinStyleSheet = {
   A pass in the header settles into a muted, monochrome badge rather than fading out. Faded,
   it left an empty rectangle in the bar (the widget keeps its box), and the result was gone
   for anyone who looked a moment late. Muted, it reads as "nothing to see" and stays a button.
-  All of it is a filter over the pass colour, never a new colour. Grey first, then faded: fading
-  while still green put a washed-out green on the header's colour.
+  All of it is a filter over the pass colour, never a new colour. Grey, not faded: faded to 0.55
+  its label failed contrast against the header (#3642); grey #008a00 under white text is 6:1.
   */
   '@keyframes test-settle': {
-    '0%, 40%': { filter: 'grayscale(0) opacity(1)' },
-    '55%': { filter: 'grayscale(1) opacity(1)' },
-    '100%': { filter: 'grayscale(1) opacity(0.55)' },
+    '0%, 40%': { filter: 'grayscale(0)' },
+    '100%': { filter: 'grayscale(1)' },
   },
 
   // Hide when tests disabled
@@ -347,7 +354,7 @@ const testIndicatorStyleSpec: XinStyleSheet = {
   '@media (prefers-reduced-motion: reduce)': {
     '.test-widget.-passed': {
       animation: 'none',
-      filter: 'grayscale(1) opacity(0.55)',
+      filter: 'grayscale(1)',
     },
     '.test-widget.-floating.-passed': { opacity: '0', pointerEvents: 'none' },
   },
