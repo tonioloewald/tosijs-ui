@@ -81,6 +81,12 @@ A `<tosi-tabs>` has `addTabBody(body: HTMLElement, select?: boolean)` and
 
 You can also just insert or remove tab bodies directly and call `setupTabs()`.
 
+## Controls beside the tabs
+
+Anything with `slot="after-tabs"` (the add button above) sits at the end of the tab row. When
+there are more tabs than fit, the tab names scroll (a swipe, a trackpad, or the mouse wheel over
+them) and the controls stay where they are. Selecting a tab scrolls it into view.
+
 ## Closeable Tabs
 
 Adding the `data-close` attribute to a tab will make it closeable.
@@ -242,10 +248,17 @@ export class TosiTabs extends withAttributes({
     ':host::part(tabrow)': {
       display: 'flex',
     },
+    // The tab names scroll when there are more than fit; the after-tabs controls stay put.
     ':host .tabs': {
       display: 'flex',
       userSelect: 'none',
       whiteSpace: 'nowrap',
+      minWidth: '0',
+      overflowX: 'auto',
+      scrollbarWidth: 'none',
+    },
+    ':host .tabs::-webkit-scrollbar': {
+      display: 'none',
     },
     ':host .tabs > div': {
       padding: `${vars.spacing50} ${vars.spacing}`,
@@ -416,6 +429,8 @@ export class TosiTabs extends withAttributes({
     const { tabs } = this.parts
     tabs.addEventListener('click', this.pickTab)
     tabs.addEventListener('keydown', this.keyTab)
+    tabs.addEventListener('scroll', this.stripScrolled, { passive: true })
+    tabs.addEventListener('wheel', this.wheelTabs, { passive: false })
     this.setupTabs()
     TosiLocalized.allInstances.add(this)
   }
@@ -444,11 +459,54 @@ export class TosiTabs extends withAttributes({
       if (isSelected) tab.setAttribute('aria-selected', 'true')
       else tab.removeAttribute('aria-selected')
       tabBody.toggleAttribute('hidden', !isSelected)
-      if (isSelected) {
-        selected.style!.marginLeft = `${tab.offsetLeft - tabs.offsetLeft}px`
-        selected.style!.width = `${tab.offsetWidth}px`
-      }
     }
+    // A newly selected tab that is scrolled out of the strip is brought into it.
+    const tab = tabs.children[this.value] as HTMLElement | undefined
+    if (tab && this.value !== this.revealed) {
+      this.revealed = this.value
+      const left = tab.offsetLeft - tabs.offsetLeft
+      if (left < tabs.scrollLeft) tabs.scrollLeft = left
+      else if (left + tab.offsetWidth > tabs.scrollLeft + tabs.clientWidth)
+        tabs.scrollLeft = left + tab.offsetWidth - tabs.clientWidth
+    }
+    // Changing tabs slides the underline; scrolling (stripScrolled) moves it with the names.
+    selected.style.transition = ''
+    this.placeUnderline()
+  }
+
+  private revealed = -1
+
+  stripScrolled = (): void => {
+    if (!this.hydrated) return
+    ;(this.parts as TabsParts).selected.style.transition = 'none'
+    this.placeUnderline()
+  }
+
+  /*
+  The underline follows the selected tab as the strip scrolls, and is clipped to the strip: a tab
+  scrolled half out shows half an underline, not one drawn under the after-tabs controls.
+  */
+  placeUnderline = (): void => {
+    if (!this.hydrated) return
+    const { tabs, selected } = this.parts as TabsParts
+    const tab = tabs.children[this.value] as HTMLElement | undefined
+    if (!tab) return
+    const start = tab.offsetLeft - tabs.offsetLeft - tabs.scrollLeft
+    // Clamped at both ends: a tab scrolled right out of view must not push a zero-width
+    // underline past the strip (it would make the tab panel scroll sideways).
+    const left = Math.min(tabs.clientWidth, Math.max(0, start))
+    const right = Math.min(tabs.clientWidth, start + tab.offsetWidth)
+    selected.style.marginLeft = `${left}px`
+    selected.style.width = `${Math.max(0, right - left)}px`
+  }
+
+  // A mouse wheel scrolls vertically; over a strip that overflows, it scrolls the tab names.
+  wheelTabs = (event: Event): void => {
+    const { deltaX, deltaY } = event as WheelEvent
+    const { tabs } = this.parts as TabsParts
+    if (tabs.scrollWidth <= tabs.clientWidth || deltaX !== 0) return
+    event.preventDefault()
+    tabs.scrollLeft += deltaY
   }
 }
 

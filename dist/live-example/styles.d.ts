@@ -53,11 +53,6 @@ export declare const liveExampleStyleSpec: {
     ':host:not(.-inline-code) > .code-editors .inline-only, :host.-maximize > .code-editors .inline-only': {
         display: string;
     };
-    ':host > .code-editors > [part="editors"]::part(tabs)': {
-        minWidth: string;
-        overflowX: string;
-        scrollbarWidth: string;
-    };
     ':host.-console-docked > [part="example"] > .example-console': {
         position: string;
         inset: string;

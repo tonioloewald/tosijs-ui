@@ -43,6 +43,12 @@ export declare class TosiTabs extends TosiTabs_base {
             display: string;
             userSelect: string;
             whiteSpace: string;
+            minWidth: string;
+            overflowX: string;
+            scrollbarWidth: string;
+        };
+        ':host .tabs::-webkit-scrollbar': {
+            display: string;
         };
         ':host .tabs > div': {
             padding: string;
@@ -102,6 +108,10 @@ export declare class TosiTabs extends TosiTabs_base {
     localeChanged: () => void;
     handleResize(): void;
     render(): void;
+    private revealed;
+    stripScrolled: () => void;
+    placeUnderline: () => void;
+    wheelTabs: (event: Event) => void;
 }
 /** @deprecated Use TosiTabs instead */
 export type TabSelector = TosiTabs;

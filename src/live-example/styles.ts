@@ -101,16 +101,6 @@ export const liveExampleStyleSpec = {
     {
       display: 'none',
     },
-  /*
-  The tab names give way to the controls, not the reverse: in a narrow column they scroll, and
-  the controls (close among them) stay inside the panel. The tab row would otherwise push them
-  past its clipped edge.
-  */
-  ':host > .code-editors > [part="editors"]::part(tabs)': {
-    minWidth: '0',
-    overflowX: 'auto',
-    scrollbarWidth: 'none',
-  },
 
   // `view: console`: the console sits where the preview would be, beside the code. Under the
   // toolbar (z-index 100), over the preview, which is still there for the code to write to.

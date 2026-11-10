@@ -80,6 +80,12 @@ A `<tosi-tabs>` has `addTabBody(body: HTMLElement, select?: boolean)` and
 
 You can also just insert or remove tab bodies directly and call `setupTabs()`.
 
+## Controls beside the tabs
+
+Anything with `slot="after-tabs"` (the add button above) sits at the end of the tab row. When
+there are more tabs than fit, the tab names scroll (a swipe, a trackpad, or the mouse wheel over
+them) and the controls stay where they are. Selecting a tab scrolls it into view.
+
 ## Closeable Tabs
 
 Adding the `data-close` attribute to a tab will make it closeable.
