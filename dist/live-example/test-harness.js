@@ -1,5 +1,22 @@
 import { rewriteContextImports, AsyncFunction, contextParamNames, } from './code-transform.js';
 import { firstUserStackFrame, authorLine, sourceLineAt, describeError, diagnoseConstruction, TEST_SOURCE_URL, } from './error-location.js';
+/*
+Results from an example running an edit saved in this browser are not results for the page's
+source, and a run that failed on one read like a library defect with nothing to say why (#3276).
+Each test's name says so, which reaches the page, the report and the terminal alike.
+*/
+export const EDITED_RESULT_NOTE = '(ran an edit saved in this browser, not the source)';
+export function labelEditedResults(results, edited) {
+    if (!edited)
+        return results;
+    return {
+        ...results,
+        tests: results.tests.map((t) => ({
+            ...t,
+            name: `${t.name} ${EDITED_RESULT_NOTE}`,
+        })),
+    };
+}
 class AssertionError extends Error {
     constructor(message) {
         super(message);

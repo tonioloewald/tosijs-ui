@@ -136,7 +136,7 @@ import {
   enableTests,
   disableTests,
 } from './live-example.js'
-import { TestResults } from './live-example/test-harness.js'
+import { TestResults, labelEditedResults } from './live-example/test-harness.js'
 import { highlightBlocks } from './doc-system/highlight.js'
 import { examplePolicy } from './live-example/insert-examples.js'
 import { collectCodeTokens } from './doc-system/code-fences.js'
@@ -842,7 +842,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     for (const element of liveResults.keys()) {
       if (!element.isConnected) liveResults.delete(element)
     }
-    liveResults.set(event.detail.element as Element, results)
+    const element = event.detail.element as Element
+    liveResults.set(
+      element,
+      labelEditedResults(results, element.classList.contains('-locally-edited'))
+    )
     pageTestResults[filename] = tallyExamples(liveResults.values())
 
     updateDocTestStatus(filename)

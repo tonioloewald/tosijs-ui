@@ -5,6 +5,8 @@ import {
   waitMs,
   TEST_TIMEOUT,
   TestResult,
+  labelEditedResults,
+  EDITED_RESULT_NOTE,
 } from './test-harness.js'
 
 describe('expect matchers', () => {
@@ -223,5 +225,28 @@ describe('float and bound matchers (#142)', () => {
     expect(fails(() => testExpect(5).not.toBeGreaterThanOrEqual(5))).not.toBe(
       null
     )
+  })
+})
+
+describe('labelEditedResults (#3276)', () => {
+  const results = {
+    passed: 1,
+    failed: 1,
+    tests: [
+      { name: 'renders', passed: true },
+      { name: 'counts', passed: false, error: 'x' },
+    ],
+  }
+  test('an edited example says so in every test name; counts are untouched', () => {
+    const labelled = labelEditedResults(results, true)
+    expect(labelled.tests.map((t) => t.name)).toEqual([
+      `renders ${EDITED_RESULT_NOTE}`,
+      `counts ${EDITED_RESULT_NOTE}`,
+    ])
+    expect([labelled.passed, labelled.failed]).toEqual([1, 1])
+    expect(labelled.tests[1].error).toBe('x')
+  })
+  test('an unedited one is passed through as is', () => {
+    expect(labelEditedResults(results, false)).toBe(results)
   })
 })

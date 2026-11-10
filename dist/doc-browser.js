@@ -107,6 +107,7 @@ import { renderDocMarkdown, } from './doc-system/render.js';
 import { pageTitle } from './doc-system/doc-title.js';
 import { unsettledExamples, tallyExamples, closePage, } from './doc-system/test-completion.js';
 import { LiveExample, testManager, pageTestCount, enableTests, disableTests, } from './live-example.js';
+import { labelEditedResults } from './live-example/test-harness.js';
 import { highlightBlocks } from './doc-system/highlight.js';
 import { examplePolicy } from './live-example/insert-examples.js';
 import { collectCodeTokens } from './doc-system/code-fences.js';
@@ -592,7 +593,8 @@ export function createDocBrowser(options) {
             if (!element.isConnected)
                 liveResults.delete(element);
         }
-        liveResults.set(event.detail.element, results);
+        const element = event.detail.element;
+        liveResults.set(element, labelEditedResults(results, element.classList.contains('-locally-edited')));
         pageTestResults[filename] = tallyExamples(liveResults.values());
         updateDocTestStatus(filename);
     };

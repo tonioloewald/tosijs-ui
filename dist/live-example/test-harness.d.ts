@@ -9,6 +9,8 @@ export interface TestResults {
     failed: number;
     tests: TestResult[];
 }
+export declare const EDITED_RESULT_NOTE = "(ran an edit saved in this browser, not the source)";
+export declare function labelEditedResults(results: TestResults, edited: boolean): TestResults;
 interface Matchers {
     toBe: (expected: unknown) => void;
     toEqual: (expected: unknown) => void;
