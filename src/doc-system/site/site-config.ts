@@ -62,7 +62,8 @@ export interface SiteConfig {
   /**
    * Brand mark shown left of the site title in the header. One of: the name of a
    * known icon (from `tosijs-ui`'s `icons`, e.g. `'tosiUi'`), an image URL / path
-   * / `data:` URI, or a raw inline `<svg …>…</svg>` string. Omit to fall back to
+   * / `data:` URI, or a raw inline `<svg …>…</svg>` string. A relative image path
+   * (`'favicon.svg'`) names a file at the site root and works on every page. Omit to fall back to
    * the tosijs-ui logo when `projectLinks.tosijs` is set, or to no mark otherwise.
    * Size/spacing are CSS-tunable via `--tosi-logo-mark-size` (default 32px) and
    * `--tosi-logo-mark-gap` (default 10px) on the `.logo-mark` element.

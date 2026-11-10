@@ -314,6 +314,9 @@ The header **brand mark** (left of the site title) resolves in this order: an
 explicit `logo` — the name of an icon (from `tosijs-ui`'s `icons`, e.g.
 `'tosiUi'`), an image URL / `data:` URI, or a raw inline `<svg>…</svg>` string —
 otherwise the tosijs-ui logo when `projectLinks.tosijs` is set, otherwise no mark.
+A relative image path (`logo: 'favicon.svg'`, `'img/mark.png'`) names a file at the site
+root, as one in `staticDirs` would be served: the build makes it root-absolute (with
+`basePath`), so the mark shows on `/guide/` as well as `/`.
 The same `logo` is accepted by `createDocBrowser({ logo })` and by an embedded
 `<tosi-doc-system config='{"logo":"…"}'>`. Its size and spacing are class-driven
 (`.logo-mark`), so retune them with one CSS variable each rather than editing the

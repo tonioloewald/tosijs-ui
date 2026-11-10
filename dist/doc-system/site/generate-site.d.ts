@@ -155,6 +155,15 @@ export declare function pageDepth(slug: string): number;
  * origin.) See issue #25; the runtime/SPA-navigation half is issue #16.
  */
 export declare function relativeUrl(depth: number, p: string): string;
+/**
+ * The header `logo` as every page can use it (#3926). A relative image path (`favicon.svg`,
+ * `img/mark.png`, `./mark.png`) names a file at the site root, but the header is drawn on pages
+ * at `/x/` and `/x/y/`, where the browser resolved it against the page and fetched `/x/favicon.svg`.
+ * It is made root-absolute here, with `basePath`, once for every page: the client navigates
+ * between pages without reloading, so a per-page relative path would go stale. Icon names,
+ * inline SVG, root-absolute paths, `data:` and full URLs pass through.
+ */
+export declare function siteLogo(logo: string | undefined, basePath?: string): string | undefined;
 export declare function withStamp(url: string, stamp?: string): string;
 /**
  * Rewrite the relative `href`/`src` references in rendered page HTML, written for a page at

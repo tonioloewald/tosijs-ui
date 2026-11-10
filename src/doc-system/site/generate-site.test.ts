@@ -4,6 +4,7 @@ import {
   relativeUrl,
   generateSite,
   rebaseRelativeRefs,
+  siteLogo,
 } from './generate-site.js'
 import { tmpdir } from 'os'
 
@@ -795,5 +796,55 @@ describe('#3562: share images', () => {
     const { own } = await build()
     expect(own.image).toBe('https://cdn.test/own.jpg')
     expect(own.width).toBeUndefined()
+  })
+})
+
+describe('#3926: a relative logo path', () => {
+  test('names a file at the site root, with basePath; everything else passes through', () => {
+    expect(siteLogo('favicon.svg')).toBe('/favicon.svg')
+    expect(siteLogo('img/mark.png?v=2')).toBe('/img/mark.png?v=2')
+    expect(siteLogo('./mark.png')).toBe('/mark.png')
+    expect(siteLogo('favicon.svg', '/repo')).toBe('/repo/favicon.svg')
+    for (const kept of [
+      undefined,
+      'tosiFavicon', // an icon name
+      '/mark.png',
+      '//cdn.test/mark.png',
+      'https://cdn.test/mark.png',
+      'data:image/svg+xml,<svg/>',
+      '<svg viewBox="0 0 1 1"></svg>',
+    ])
+      expect(siteLogo(kept)).toBe(kept)
+  })
+
+  test('every page, nested ones included, hands the client the root path', async () => {
+    const dir = `${tmpdir()}/tosi-logo-${Math.floor(performance.now() * 1000)}`
+    try {
+      await generateSite({
+        docs: [
+          {
+            filename: 'README.md',
+            title: 'Home',
+            path: 'README.md',
+            text: '# Home',
+          },
+          {
+            filename: 'guide.md',
+            title: 'Guide',
+            path: 'guide.md',
+            text: '# Guide',
+          },
+        ],
+        outputDir: dir,
+        projectName: 'T',
+        baseUrl: 'https://t.test',
+        hydrateUrl: '/hydrate-abc.js',
+        logo: 'favicon.svg',
+      } as any)
+      const html = await Bun.file(`${dir}/guide/index.html`).text()
+      expect(html).toContain('&quot;logo&quot;:&quot;/favicon.svg&quot;')
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
   })
 })

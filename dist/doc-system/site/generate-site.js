@@ -161,6 +161,29 @@ export function relativeUrl(depth, p) {
     const rel = '../'.repeat(depth) + p.slice(1);
     return rel === '' ? './' : rel;
 }
+/**
+ * The header `logo` as every page can use it (#3926). A relative image path (`favicon.svg`,
+ * `img/mark.png`, `./mark.png`) names a file at the site root, but the header is drawn on pages
+ * at `/x/` and `/x/y/`, where the browser resolved it against the page and fetched `/x/favicon.svg`.
+ * It is made root-absolute here, with `basePath`, once for every page: the client navigates
+ * between pages without reloading, so a per-page relative path would go stale. Icon names,
+ * inline SVG, root-absolute paths, `data:` and full URLs pass through.
+ */
+export function siteLogo(logo, basePath) {
+    if (!logo ||
+        logo.trimStart().startsWith('<') ||
+        logo.startsWith('/') ||
+        logo.startsWith('data:') ||
+        /^[a-z][a-z0-9+.-]*:/i.test(logo))
+        return logo;
+    const relative = logo.startsWith('./') ||
+        logo.startsWith('../') ||
+        /\.(png|jpe?g|gif|webp|avif|svg|ico)(\?.*)?$/i.test(logo);
+    if (!relative)
+        return logo; // an icon name
+    const { pathname, search } = new URL(logo, 'https://site.invalid/');
+    return withBase(basePath, pathname + search);
+}
 async function pageHtml(doc, config, slugMap, configAttr, wikilinks, 
 /** the slug this copy is written at: the doc's own, or an alias of it */
 at = slugMap[doc.filename] ?? '', 
@@ -485,7 +508,7 @@ export async function generateSite(config) {
         // The browser needs them too, or an alias page hydrates as whichever doc comes first.
         ...(Object.keys(aliases).length ? { aliases } : {}),
         projectLinks: config.projectLinks,
-        logo: config.logo,
+        logo: siteLogo(config.logo, config.basePath),
         bookVolumes: config.bookVolumes,
         ebooks: config.ebooks,
         searchPlaceholder: config.searchPlaceholder,
