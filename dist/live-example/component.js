@@ -750,7 +750,7 @@ import { popFloat } from '../pop-float.js';
 import { createExampleConsole, exampleConsoleEnabled, formatConsoleArgs, formatConsoleValue, } from './example-console.js';
 import { dialectDocs, dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
 import { loadTransform, loadTjsTestApi, rewriteImports, rewriteContextImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
-import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
+import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, randomId, } from './remote-sync.js';
 import { executeInline, executeInIframe } from './execution.js';
 import { insertExamples, examplePolicy, siteExampleTabs, siteExampleView, } from './insert-examples.js';
 import { exampleHooks, sanitizeExampleHtml } from './example-hooks.js';
@@ -939,7 +939,7 @@ export class LiveExample extends withAttributes({
     // The example's top-level locals from the latest run, captured in-run for tjs
     // runtime-value autocomplete (see `liveBindings`). Populated via `onScope`.
     capturedScope = {};
-    uuid = crypto.randomUUID();
+    uuid = randomId();
     remoteId = '';
     remoteSync;
     undoInterval;

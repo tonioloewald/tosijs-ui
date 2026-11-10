@@ -789,6 +789,7 @@ import {
   createRemoteKey,
   RemoteSyncManager,
   openEditorWindow,
+  randomId,
 } from './remote-sync.js'
 import { executeInline, executeInIframe } from './execution.js'
 import {
@@ -1038,7 +1039,7 @@ export class LiveExample extends withAttributes({
   // The example's top-level locals from the latest run, captured in-run for tjs
   // runtime-value autocomplete (see `liveBindings`). Populated via `onScope`.
   private capturedScope: Record<string, unknown> = {}
-  uuid: string = crypto.randomUUID()
+  uuid: string = randomId()
   remoteId = ''
 
   private remoteSync?: RemoteSyncManager

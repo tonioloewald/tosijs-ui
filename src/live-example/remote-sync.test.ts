@@ -5,6 +5,7 @@ import {
   sendPayload,
   parsePayload,
   RemoteSyncManager,
+  randomId,
 } from './remote-sync.js'
 
 describe('createRemoteKey', () => {
@@ -121,5 +122,23 @@ describe('RemoteSyncManager', () => {
 
     sender.stopListening()
     receiver.stopListening()
+  })
+})
+
+describe('randomId (#3764)', () => {
+  test('makes a v4 UUID without crypto.randomUUID, as over plain http', () => {
+    const original = crypto.randomUUID
+    try {
+      // Outside a secure context the method is simply absent.
+      ;(crypto as any).randomUUID = undefined
+      const ids = new Set(Array.from({ length: 50 }, () => randomId()))
+      expect(ids.size).toBe(50)
+      for (const id of ids)
+        expect(id).toMatch(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+        )
+    } finally {
+      ;(crypto as any).randomUUID = original
+    }
   })
 })

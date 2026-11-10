@@ -1,5 +1,12 @@
 import { RemotePayload } from './types.js';
 export declare const STORAGE_KEY = "live-example-payload";
+/**
+ * A random v4 UUID. `crypto.randomUUID` exists only in a secure context (https or
+ * localhost); over plain http it is missing, and calling it in a class field stopped every
+ * live example constructing, so the doc site never hydrated (#3764). `getRandomValues` is
+ * available everywhere.
+ */
+export declare function randomId(): string;
 export declare function createRemoteKey(prefix: string, uuid: string, remoteId: string): string;
 export declare function sendPayload(storageKey: string, payload: RemotePayload): void;
 export declare function parsePayload(data: string | null): RemotePayload | null;
