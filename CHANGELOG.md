@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.17.4
+
+> Live examples' inline views keep their controls in the code panel's tab bar, and a site or
+> page can set the view its examples open in. Nothing to change on upgrade. Asked by tjs-lang
+> for its learn-to-program book (#252). `dist/iife.js` grows 0.6 kB (508.7 kB gzip).
+
+### Added
+
+- `SiteConfig.exampleView` (`'preview'` | `'code'` | `'console'`) sets the view every live
+  example opens in, and `exampleView` in a page's metadata or frontmatter sets it for one page.
+  The nearest setting wins (fence, then page, then site), and `"preview"` opts out of a default
+  above it, so a big example on a code-first page takes `{"view": "preview"}`. A misspelt value
+  fails the build in the site config and is reported in page metadata. `setExampleView` (from
+  `tosijs-ui/live-example`) sets it from code.
+- A refresh button in the code panel's tab bar, beside ⋮, in every view. Editing does not re-run
+  an example, and ⌘S / ⌘R were undiscoverable.
+
+### Changed
+
+- In the inline views (`{"view": "code"}`, `{"view": "console"}`) the toolbar column beside the
+  preview is gone: it stood between the preview and its code. Maximize and the new-window editor
+  are in the code panel's tab bar. "view/edit code" (the code is already open) and the tests
+  check (inline tests always run) are not shown there. Maximized and plain examples are
+  unchanged.
+
+### Fixed
+
+- `<tosi-tabs>` with more tabs than fit pushed its `after-tabs` controls past its clipped edge:
+  at phone width a live example's close button was pushed past the panel's clipped edge. The tab names now
+  scroll (swipe, trackpad, or the mouse wheel over them) and the controls stay where they are.
+  Selecting a tab scrolls it into view, and the underline follows the scroll, clipped to the
+  strip.
+
 ## 1.17.3
 
 > A doc site answers `/slug` as well as `/slug/`, and a missing page gets a real 404 page.

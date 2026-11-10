@@ -1020,6 +1020,11 @@ off `strict` or `epub`.
 one that changes every doc site's accessible name. The search hint went from "Search documentation"
 to "Search", and `searchPlaceholder` restores the old wording.
 
+**Ruled for 1.17.4 (the maintainer's call, "I agree it's a patch"):** moving a live example's
+controls in the inline views (the toolbar column removed; maximize and the new-window editor in
+the code panel's tab bar) ships in a patch. Same ground as 1.16.4: a developer-facing component,
+no API removed.
+
 **Ruled 2026-10-13 (the maintainer's call):** `llms.txt` is about CONSUMING the library, never
 about building or developing it. The `haltijaDev` paragraph (`bun start`, the `hj` CLI) was
 removed on that ground after tosijs objected to carrying it (board #3248); it belongs in a
