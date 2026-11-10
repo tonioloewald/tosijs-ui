@@ -330,6 +330,45 @@ test('the sensitive list is short, named, and covers what bit us', () => {
   expect(SENSITIVE_PATHS.length).toBeLessThan(10)
 })
 
+describe('changelogSection for a prerelease (#2455)', () => {
+  const changelog = [
+    '# Changelog',
+    '',
+    '## 1.17.0-beta.2',
+    '',
+    'Second beta.',
+    '',
+    '## 1.17.0-beta.1',
+    '',
+    'First beta.',
+    '',
+    '## 1.16.41',
+    '',
+    'Last stable.',
+  ].join('\n')
+
+  test('a prerelease reads its whole release line, and nothing before it', () => {
+    const section = changelogSection(changelog, '1.17.0-beta.2')
+    expect(section).toContain('Second beta.')
+    expect(section).toContain('First beta.')
+    expect(section).not.toContain('Last stable.')
+  })
+
+  test('a final release still reads only its own section', () => {
+    expect(changelogSection(changelog, '1.17.0')).toBe('')
+    const final =
+      '## 1.17.0\n\nFinal.\n\n' + changelog.split('\n').slice(2).join('\n')
+    expect(changelogSection(final, '1.17.0')).toBe('## 1.17.0\n\nFinal.\n\n')
+  })
+
+  test('1.17.0-beta.1 does not reach 1.17.1 or 1.17.10', () => {
+    const other = '## 1.17.10\n\nTen.\n\n## 1.17.1\n\nOne.\n'
+    expect(changelogSection(other + changelog, '1.17.0-beta.1')).not.toMatch(
+      /Ten|One/
+    )
+  })
+})
+
 describe('changelogSection (1.16.0 review, B2)', () => {
   const changelog = [
     '# Changelog',

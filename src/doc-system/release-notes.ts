@@ -243,16 +243,31 @@ export function uncovered(
  * no entry at all, and the gate still said "all accounted for" (1.16.0 pre-release review, B2).
  */
 export function changelogSection(changelog: string, version: string): string {
-  const escaped = version
-    .replace(/^v/, '')
-    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const bare = version.replace(/^v/, '')
+  const escape = (v: string) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  /*
+  A prerelease reads its whole release line: `## 1.2.0-beta.2` together with `## 1.2.0-beta.1`
+  (and a `## 1.2.0` already drafted). The range starts at the last STABLE tag, so beta.2's
+  check sees beta.1's bullets too, and with only its own section they all looked unwritten
+  (#2455). A final release still reads only its own section.
+  */
+  const [base, prerelease] = bare.split(/-(.*)/)
+  const versionPattern = prerelease
+    ? `${escape(base)}(?:-[\\w.]+)?`
+    : escape(bare)
   // `## 1.2.3`, `## v1.2.3`, and Keep a Changelog's `## [1.2.3]` / `## [v1.2.3]`, any suffix.
-  const heading = new RegExp(`^## \\[?v?${escaped}(?![\\w.-])[^\\n]*$`, 'm')
-  const start = changelog.search(heading)
-  if (start < 0) return ''
-  const rest = changelog.slice(start)
-  const next = rest.slice(3).search(/^## /m)
-  return next < 0 ? rest : rest.slice(0, next + 3)
+  const heading = new RegExp(
+    `^## \\[?v?${versionPattern}(?![\\w.-])[^\\n]*$`,
+    'gm'
+  )
+  const sections: string[] = []
+  for (const match of changelog.matchAll(heading)) {
+    const rest = changelog.slice(match.index)
+    const next = rest.slice(3).search(/^## /m)
+    sections.push(next < 0 ? rest : rest.slice(0, next + 3))
+    if (!prerelease) break
+  }
+  return sections.join('')
 }
 
 /**
