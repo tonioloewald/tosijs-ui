@@ -227,3 +227,34 @@ describe('sanitized <tosi-md> cannot be escaped through a custom element (B1)', 
     expect(el.querySelector('tosi-tag')).not.toBeNull()
   })
 })
+
+describe('templates (#2457)', () => {
+  afterEach(() => {
+    document.body.textContent = ''
+  })
+
+  test('a nested template still expands', () => {
+    const el = render(
+      { context: { foo: { bar: 17 }, nested: '*work*: {{foo.bar}}' } },
+      'Oh, and nested templates {{nested}}.'
+    )
+    expect(el.textContent).toContain('Oh, and nested templates work: 17.')
+  })
+
+  test('a value that names itself, directly or in a loop, is left as written', () => {
+    const el = render(
+      { context: { me: 'x {{me}}', a: '{{b}}', b: 'b {{a}}' } },
+      '{{me}} / {{a}}'
+    )
+    // one expansion each, then the reference that would loop stays a reference
+    expect(el.textContent).toContain('x {{me}} / b {{a}}')
+  })
+
+  test('nesting stops at a depth cap', () => {
+    const context: Record<string, string> = {}
+    for (let i = 0; i < 20; i++) context[`v${i}`] = `${i} {{v${i + 1}}}`
+    const el = render({ context }, '{{v0}}')
+    expect(el.textContent).toContain('7 {{v8}}')
+    expect(el.textContent).not.toContain('8 ')
+  })
+})

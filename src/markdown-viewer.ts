@@ -134,7 +134,19 @@ Oh, and nested templates {{nested}}.
 
 /*{ "parent": "Components", "headTitle": "<tosi-md> markdown viewer — tosijs-ui", "description": "<tosi-md> renders markdown from a src URL or from its own text, sanitizing the HTML by default, so you can show markdown anywhere on a page." }*/
 
-function populate(basePath: string, source?: any): string {
+/*
+A substituted value is templated in turn: that is what makes `{"nested": "{{foo.bar}}"}` work
+(see the example above). It also made a value that names itself, directly or through others,
+recurse until the stack overflowed (#2457). A path already being expanded is left as written,
+and so is anything nested deeper than MAX_TEMPLATE_DEPTH.
+*/
+const MAX_TEMPLATE_DEPTH = 8
+
+function populate(
+  basePath: string,
+  source?: any,
+  expanding: ReadonlySet<string> = new Set()
+): string {
   if (source == null) {
     source = ''
   } else if (typeof source !== 'string') {
@@ -143,10 +155,13 @@ function populate(basePath: string, source?: any): string {
   return source.replace(
     /\{\{([^}]+)\}\}/g,
     (original: string, prop: string) => {
-      const value = (xin as any)[
-        `${basePath}${prop.startsWith('[') ? prop : '.' + prop}`
-      ]
-      return value === undefined ? original : populate(basePath, String(value))
+      const path = `${basePath}${prop.startsWith('[') ? prop : '.' + prop}`
+      if (expanding.has(path) || expanding.size >= MAX_TEMPLATE_DEPTH)
+        return original
+      const value = (xin as any)[path]
+      return value === undefined
+        ? original
+        : populate(basePath, String(value), new Set([...expanding, path]))
     }
   )
 }
