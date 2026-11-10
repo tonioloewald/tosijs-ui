@@ -113,9 +113,9 @@ export function docHeadings(text: string): DocHeading[] {
   const walk = (tokens: any[]) => {
     for (const token of tokens) {
       if (token.type === 'heading') {
-        const text = headingText(token).trim()
-        const id = ids.next(slugOfHeadingText(text))
-        if (text && id) found.push({ text, id, depth: token.depth })
+        const title = headingText(token).trim()
+        const id = ids.next(slugOfHeadingText(title))
+        if (title && id) found.push({ text: title, id, depth: token.depth })
       }
     }
   }

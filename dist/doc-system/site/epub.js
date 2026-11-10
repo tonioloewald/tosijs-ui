@@ -199,15 +199,15 @@ export function rewriteInBookLinks(html, bookFiles, slugMap, basePath) {
         if (href === '' || /^(?:[a-z][a-z0-9+.-]*:|#|\.)/i.test(href))
             return match;
         const hashIdx = href.indexOf('#');
-        const path = hashIdx === -1 ? href : href.slice(0, hashIdx);
+        const target = hashIdx === -1 ? href : href.slice(0, hashIdx);
         const hash = hashIdx === -1 ? '' : href.slice(hashIdx);
         let slug = null;
-        const legacy = path.match(/^\/?\?([^&=]+)$/); // legacy ?filename
+        const legacy = target.match(/^\/?\?([^&=]+)$/); // legacy ?filename
         if (legacy) {
             slug = slugMap[decodeURIComponent(legacy[1])] ?? null;
         }
-        else if (path.startsWith('/')) {
-            let p = path;
+        else if (target.startsWith('/')) {
+            let p = target;
             if (bp && (p === bp || p.startsWith(bp + '/')))
                 p = p.slice(bp.length) || '/';
             slug = slugForPath(p);

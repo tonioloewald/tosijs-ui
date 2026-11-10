@@ -1724,7 +1724,9 @@ export class TosiMenu extends withAttributes({
     if (!this.acceptsDrop) return false
     const accepted = stringToTypes(this.acceptsDrop)
     const dragTypes = [...(event.dataTransfer?.types || [])]
-    return dragTypes.some((t) => accepted.some((a) => isTypeAllowed([a], t)))
+    return dragTypes.some((t) =>
+      accepted.some((type) => isTypeAllowed([type], t))
+    )
   }
 
   showMenu = (event: Event) => {

@@ -468,8 +468,8 @@ export function resolveIcon(prop: string, parts: ElementPart[]): Element {
     const overlays = segments
       .slice(0, -1)
       .reverse()
-      .map((name) => {
-        const icon = resolveIcon(name, [])
+      .map((layer) => {
+        const icon = resolveIcon(layer, [])
         Object.assign((icon as HTMLElement).style, {
           position: 'absolute',
           inset: '0',

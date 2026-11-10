@@ -487,7 +487,7 @@ export class FilterBuilder extends WebComponent {
             this.reset();
             return;
         }
-        const filters = [...filterContainer.children].map((filterPart) => filterPart.filter);
+        const filters = [...filterContainer.children].map((part) => part.filter);
         const tests = filters.map((filter) => filter.test);
         this.description = filters.map((filter) => filter.description).join(', ');
         this.filter = (array) => array.filter((obj) => tests.find((f) => f(obj) === false) === undefined);

@@ -1509,7 +1509,7 @@ export class TosiMenu extends withAttributes({
             return false;
         const accepted = stringToTypes(this.acceptsDrop);
         const dragTypes = [...(event.dataTransfer?.types || [])];
-        return dragTypes.some((t) => accepted.some((a) => isTypeAllowed([a], t)));
+        return dragTypes.some((t) => accepted.some((type) => isTypeAllowed([type], t)));
     }
     showMenu = (event) => {
         if (event.type === 'click' || event.code === 'Space') {

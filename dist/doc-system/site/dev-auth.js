@@ -1272,8 +1272,13 @@ export function liveProbeOrigin(origin, host) {
 export function mayDriveWithAgent(opts) {
     // LAN trust (#227) is for reading and editing source, and is never passed here: driving a
     // page with an agent stays this machine and authorized tunnel sessions only.
-    const { viaTunnel, peer, hasValidSession, sessionMayWrite } = opts;
-    return mayWriteSource({ viaTunnel, peer, hasValidSession, sessionMayWrite });
+    const { viaTunnel, peer, hasValidSession } = opts;
+    return mayWriteSource({
+        viaTunnel,
+        peer,
+        hasValidSession,
+        sessionMayWrite: opts.sessionMayWrite,
+    });
 }
 /**
  * The whole haltija-bridge gate for one request, as the dev server applies it.

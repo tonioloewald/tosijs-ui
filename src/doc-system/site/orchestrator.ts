@@ -1739,7 +1739,7 @@ export async function buildSite(
       let importResolverHead = ''
       if (config.importResolver) {
         try {
-          const opts =
+          const resolver =
             config.importResolver === true ? {} : config.importResolver
           const worker = Bun.resolveSync(
             'tjs-lang/import-resolver/worker',
@@ -1749,15 +1749,15 @@ export async function buildSite(
           const bp = config.basePath
           const root = !bp || bp === '/' ? '' : bp.replace(/\/$/, '')
           const clientConfig: Record<string, unknown> = {
-            prefix: opts.prefix ?? '/lib/',
+            prefix: resolver.prefix ?? '/lib/',
             workerUrl: `${root}/import-resolver-worker.js`,
             // Don't reload a reader's page on first install — the SW takes control on the
             // next navigation, and nothing needs it before an example imports from /lib/.
             reloadOnFirstInstall: false,
           }
-          if (opts.defaultCdn) clientConfig.defaultCdn = opts.defaultCdn
-          if (opts.esmShPackages)
-            clientConfig.esmShPackages = opts.esmShPackages
+          if (resolver.defaultCdn) clientConfig.defaultCdn = resolver.defaultCdn
+          if (resolver.esmShPackages)
+            clientConfig.esmShPackages = resolver.esmShPackages
           importResolverHead = `<script>globalThis.__TOSI_IMPORT_RESOLVER=${JSON.stringify(
             clientConfig
           )}</script>`

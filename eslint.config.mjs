@@ -28,6 +28,30 @@ export default tseslint.config(
       ],
     },
   },
+  /*
+  No shadowing in shipped code (#2858). In 1.16.5 `positionFloat` destructured `position` from
+  getComputedStyle over its own `position` parameter, code added later read the wrong one, and
+  every visual-viewport re-fit blanked open floats.
+
+  `allow` lists element creators, which a component routinely shadows with a part of the same
+  name (`const { input } = this.parts`). Misusing one fails loudly: calling an element throws.
+  Tests are out of scope: a Playwright spec re-declares names inside `page.evaluate` on purpose,
+  because that callback runs in the browser and cannot close over the spec's own.
+  */
+  {
+    files: ['src/**/*.ts', 'bin/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      '@typescript-eslint/no-shadow': [
+        'error',
+        {
+          ignoreTypeValueShadow: true,
+          ignoreFunctionTypeParameterNameValueShadow: true,
+          allow: ['input', 'label', 'button', 'div', 'select', 'form'],
+        },
+      ],
+    },
+  },
   // Specs take `test` from tests/fixtures.ts, which keeps third-party servers out of the lane
   // (a hung README badge timed out `goto('/')` in the 1.16.24 release run).
   {

@@ -335,7 +335,6 @@ export async function registerCaddyFragment(opts: {
   /** what this fragment routes, for the success line */
   describe: string
 }): Promise<boolean> {
-  const { $ } = await import('bun')
   const { tmpdir } = await import('os')
   const sitesDir = `${opts.previewRoot}/_sites`
   const remote = `${sitesDir}/${opts.name}.caddy`

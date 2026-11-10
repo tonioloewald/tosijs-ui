@@ -71,10 +71,10 @@ export class TosiSizer extends XinComponent {
         target.style.bottom = '';
         target.style.right = '';
         const { minSize } = this;
-        trackDrag(event, (dx, dy, event) => {
+        trackDrag(event, (dx, dy, moveEvent) => {
             target.style.width = Math.max(minSize.width, w + dx) + 'px';
             target.style.height = Math.max(minSize.height, h + dy) + 'px';
-            if (event.type === 'mouseup') {
+            if (moveEvent.type === 'mouseup') {
                 return true;
             }
         }, 'nwse-resize');

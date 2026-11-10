@@ -599,7 +599,7 @@ export class FilterBuilder extends WebComponent<FilterBuilderParts> {
       return
     }
     const filters = ([...filterContainer.children] as FilterPart[]).map(
-      (filterPart) => filterPart.filter
+      (part) => part.filter
     ) as Filter[]
     const tests = filters.map((filter) => filter.test) as ObjectTest[]
     this.description = filters.map((filter) => filter.description).join(', ')

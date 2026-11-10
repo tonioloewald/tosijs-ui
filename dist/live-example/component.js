@@ -980,14 +980,14 @@ export class LiveExample extends withAttributes({
             this.pendingValues[which] = code;
             return;
         }
-        const codeEditor = this.parts[which];
-        codeEditor.value = code;
+        const editor = this.parts[which];
+        editor.value = code;
     }
     flushPendingValues() {
         for (const [which, code] of Object.entries(this.pendingValues)) {
-            const codeEditor = this.parts[which];
-            if (codeEditor)
-                codeEditor.value = code;
+            const editor = this.parts[which];
+            if (editor)
+                editor.value = code;
         }
         this.pendingValues = {};
         if (this.pendingShowDefaultTab) {
@@ -3346,8 +3346,8 @@ export class LiveExample extends withAttributes({
             },
         }));
     }
-    initFromElements(elements) {
-        for (const element of elements) {
+    initFromElements(blocks) {
+        for (const element of blocks) {
             element.hidden = true;
             const [mode, ...lines] = element.innerHTML.split('\n');
             if (['js', 'html', 'css', 'test'].includes(mode)) {

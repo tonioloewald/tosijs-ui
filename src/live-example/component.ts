@@ -1096,14 +1096,14 @@ export class LiveExample extends withAttributes({
       this.pendingValues[which] = code
       return
     }
-    const codeEditor = this.parts[which] as CodeEditor
-    codeEditor.value = code
+    const editor = this.parts[which] as CodeEditor
+    editor.value = code
   }
 
   private flushPendingValues(): void {
     for (const [which, code] of Object.entries(this.pendingValues)) {
-      const codeEditor = this.parts[which] as CodeEditor
-      if (codeEditor) codeEditor.value = code
+      const editor = this.parts[which] as CodeEditor
+      if (editor) editor.value = code
     }
     this.pendingValues = {}
 
@@ -3771,8 +3771,8 @@ export class LiveExample extends withAttributes({
     )
   }
 
-  initFromElements(elements: HTMLElement[]) {
-    for (const element of elements) {
+  initFromElements(blocks: HTMLElement[]) {
+    for (const element of blocks) {
       element.hidden = true
       const [mode, ...lines] = element.innerHTML.split('\n') as string[]
       if (['js', 'html', 'css', 'test'].includes(mode)) {

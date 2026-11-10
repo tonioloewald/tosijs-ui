@@ -812,11 +812,11 @@ export async function devServer(config, opts = {}) {
      * a false statement printed at the exact moment someone decides who to share a link with,
      * which is the worst possible place to be wrong about a credential.
      */
-    const printLink = (opts = {}) => {
-        if (opts.grant)
-            return printGrantLink(opts.grant).url;
+    const printLink = (link = {}) => {
+        if (link.grant)
+            return printGrantLink(link.grant).url;
         const settings = resolveLinkSettings(config.preview?.tunnel);
-        const policy = opts.share ? 'window' : settings.policy;
+        const policy = link.share ? 'window' : settings.policy;
         /*
         A SHARED link is read-only and long-lived; an edit link is write-capable and short. The two
         are one flag rather than two knobs on purpose — orthogonal `--ttl` and `--read-only` would
@@ -828,14 +828,14 @@ export async function devServer(config, opts = {}) {
         it. Spending it on first redemption is the behaviour that made an adopter build a permanent
         token instead.
         */
-        const ttlMs = opts.share
-            ? resolveShareTtlMs(config.preview?.tunnel, opts.ttlMinutes)
+        const ttlMs = link.share
+            ? resolveShareTtlMs(config.preview?.tunnel, link.ttlMinutes)
             : settings.ttlMs;
-        const token = issueLink(auth, Date.now(), ttlMs, { readOnly: opts.share });
+        const token = issueLink(auth, Date.now(), ttlMs, { readOnly: link.share });
         const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`;
         const url = `${base}/?${LINK_PARAM}=${token}`;
         const minutes = Math.round(ttlMs / 60000);
-        if (opts.share) {
+        if (link.share) {
             const hours = Math.round(ttlMs / 3600000);
             const span = hours >= 2 ? `${hours} hours` : `${minutes} min`;
             console.log(`\n🔗 Share link — READ ONLY, usable by anyone you send it to for ${span}:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n` +

@@ -570,8 +570,8 @@ export function initLocalization(localizedStrings) {
         i18n.locales.value = locales;
         i18n.languages.value = languages;
         i18n.emoji.value = emoji;
-        i18n.stringMap.value = strings.reduce((map, strings) => {
-            map[strings[0].toLocaleLowerCase()] = strings;
+        i18n.stringMap.value = strings.reduce((map, row) => {
+            map[row[0].toLocaleLowerCase()] = row;
             return map;
         }, {});
         i18n.localeOptions.value = locales

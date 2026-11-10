@@ -690,7 +690,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     updateSources: () => void;
     refresh: () => Promise<void>;
     private displayTestResults;
-    initFromElements(elements: HTMLElement[]): void;
+    initFromElements(blocks: HTMLElement[]): void;
     showDefaultTab(): void;
     render(): void;
 }

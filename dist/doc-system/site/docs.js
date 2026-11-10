@@ -345,7 +345,7 @@ walked) {
         }
         return n;
     }
-    function traverseDirectory(dir, ignore, isRoot = false) {
+    function traverseDirectory(dir, ignored, isRoot = false) {
         const files = fs.readdirSync(dir);
         const baseName = path.basename(dir);
         // Each ignore entry matches either by basename (node_modules, dist, build —
@@ -368,7 +368,7 @@ walked) {
         A path-exact ignore still applies at the root, because that names this exact directory
         rather than a name pattern.
         */
-        if (ignore.some((ig) => (!isRoot && ig === baseName) || path.resolve(ig) === resolved)) {
+        if (ignored.some((ig) => (!isRoot && ig === baseName) || path.resolve(ig) === resolved)) {
             /*
             Say what a DEFAULT exclusion withheld. An adopter with `docs/reviews/`, a reviews
             chapter or a `src/reviews/` module loses those pages from the site, sitemap, llms.txt
@@ -402,7 +402,7 @@ walked) {
                 return;
             }
             if (stats.isDirectory()) {
-                traverseDirectory(filePath, ignore);
+                traverseDirectory(filePath, ignored);
             }
             else if (path.extname(file) === '.md') {
                 const { data: fm, body: content } = parseFrontmatter(fs.readFileSync(filePath, 'utf8'));

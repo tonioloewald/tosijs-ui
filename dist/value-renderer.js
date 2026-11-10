@@ -186,11 +186,11 @@ export function valueRenderer(type) {
             return numeric((l) => new Intl.NumberFormat(l, { notation: 'engineering' }));
         case 'bytes': {
             const iec = (args[0] || '').toLowerCase() === 'iec';
-            const base = iec ? 1024 : 1000;
+            const step = iec ? 1024 : 1000;
             const units = iec ? BYTE_UNITS_IEC : BYTE_UNITS_SI;
             const scaled = byLocale((l) => new Intl.NumberFormat(l, { maximumFractionDigits: 1 }));
             const whole = byLocale((l) => new Intl.NumberFormat(l, { maximumFractionDigits: 0 }));
-            return numericRenderer((n) => formatBytes(n, base, units, scaled(), whole()));
+            return numericRenderer((n) => formatBytes(n, step, units, scaled(), whole()));
         }
         case 'boolean': {
             // boolean            → true: checkSquare, false: square

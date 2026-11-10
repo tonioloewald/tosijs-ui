@@ -146,10 +146,10 @@ export const trackDrag = (event, callback, cursor = 'move') => {
         TRACKER.style.cursor = cursor;
         bringToFront(TRACKER);
         document.body.append(TRACKER);
-        const wrappedCallback = (event) => {
-            const dx = event.clientX - origX;
-            const dy = event.clientY - origY;
-            if (callback(dx, dy, event) === true) {
+        const wrappedCallback = (moveEvent) => {
+            const dx = moveEvent.clientX - origX;
+            const dy = moveEvent.clientY - origY;
+            if (callback(dx, dy, moveEvent) === true) {
                 TRACKER.removeEventListener('mousemove', wrappedCallback);
                 TRACKER.removeEventListener('mouseup', wrappedCallback);
                 TRACKER.remove();
@@ -166,17 +166,17 @@ export const trackDrag = (event, callback, cursor = 'move') => {
         const target = event.target;
         let dx = 0;
         let dy = 0;
-        const wrappedCallback = (event) => {
-            const touch = [...event.touches].find((touch) => touch.identifier === touchId);
-            if (touch !== undefined) {
-                dx = touch.clientX - origX;
-                dy = touch.clientY - origY;
+        const wrappedCallback = (moveEvent) => {
+            const current = [...moveEvent.touches].find((t) => t.identifier === touchId);
+            if (current !== undefined) {
+                dx = current.clientX - origX;
+                dy = current.clientY - origY;
             }
-            if (event.type === 'touchmove') {
-                event.stopPropagation();
-                event.preventDefault();
+            if (moveEvent.type === 'touchmove') {
+                moveEvent.stopPropagation();
+                moveEvent.preventDefault();
             }
-            if (callback(dx, dy, event) === true || touch === undefined) {
+            if (callback(dx, dy, moveEvent) === true || current === undefined) {
                 target.removeEventListener('touchmove', wrappedCallback);
                 target.removeEventListener('touchend', wrappedCallback);
                 target.removeEventListener('touchcancel', wrappedCallback);

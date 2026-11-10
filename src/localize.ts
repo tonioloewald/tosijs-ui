@@ -587,8 +587,8 @@ export function initLocalization(localizedStrings: string) {
     i18n.languages.value = languages
     i18n.emoji.value = emoji
     i18n.stringMap.value = strings.reduce(
-      (map: TranslationMap, strings: string[]) => {
-        map[strings[0].toLocaleLowerCase()] = strings
+      (map: TranslationMap, row: string[]) => {
+        map[row[0].toLocaleLowerCase()] = row
         return map
       },
       {} as TranslationMap

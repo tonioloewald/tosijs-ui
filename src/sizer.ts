@@ -80,10 +80,10 @@ export class TosiSizer extends XinComponent {
 
     trackDrag(
       event as PointerEvent,
-      (dx: number, dy: number, event: any): true | undefined => {
+      (dx: number, dy: number, moveEvent: any): true | undefined => {
         target.style.width = Math.max(minSize.width, w + dx) + 'px'
         target.style.height = Math.max(minSize.height, h + dy) + 'px'
-        if (event.type === 'mouseup') {
+        if (moveEvent.type === 'mouseup') {
           return true
         }
       },

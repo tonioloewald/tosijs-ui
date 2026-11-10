@@ -3119,8 +3119,8 @@ export class TosiTable extends withAttributes({
             ariaExpanded: 'false',
             ...this.labelAttrs('Details', 'aria-label'),
             onClick: (event: Event) => {
-              const item = getListItem(event.target as Element)
-              if (item != null) this.toggleRowDetail(item)
+              const clicked = getListItem(event.target as Element)
+              if (clicked != null) this.toggleRowDetail(clicked)
             },
           },
           chevronRightIcon()
@@ -3461,10 +3461,10 @@ export class TosiTable extends withAttributes({
         : undefined
       trackDrag(
         event,
-        (dx, _dy, event: any) => {
+        (dx, _dy, moveEvent: any) => {
           const touch = isTouchEvent
-            ? [...event.touches].find(
-                (touch: any) => touch.identifier === touchIdentifier
+            ? [...moveEvent.touches].find(
+                (t: any) => t.identifier === touchIdentifier
               )
             : true
           if (touch === undefined) {
@@ -3474,7 +3474,7 @@ export class TosiTable extends withAttributes({
           if (!live) return true
           // A click on the edge changes nothing: pin the columns on the first movement.
           if (anchor === undefined && dx === 0) {
-            return event.type === 'mouseup' || undefined
+            return moveEvent.type === 'mouseup' || undefined
           }
           if (live !== anchor) {
             this.pinElasticThrough(live)
@@ -3486,7 +3486,7 @@ export class TosiTable extends withAttributes({
           const width = anchorWidth + (dx - anchorDx)
           live.width = width > this.minColumnWidth ? width : this.minColumnWidth
           this.setColumnWidths()
-          if (event.type === 'mouseup') {
+          if (moveEvent.type === 'mouseup') {
             return true
           }
         },

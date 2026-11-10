@@ -257,18 +257,18 @@ export class TosiMd extends withAttributes({
     if (this.elements) {
       const chunks = source
         .split('\n')
-        .reduce((chunks: string[], line: string) => {
-          if (line.startsWith('<') || chunks.length === 0) {
-            chunks.push(line)
+        .reduce((acc: string[], line: string) => {
+          if (line.startsWith('<') || acc.length === 0) {
+            acc.push(line)
           } else {
-            const lastChunk = chunks[chunks.length - 1]
+            const lastChunk = acc[acc.length - 1]
             if (!lastChunk.startsWith('<') || !lastChunk.endsWith('>')) {
-              chunks[chunks.length - 1] += '\n' + line
+              acc[acc.length - 1] += '\n' + line
             } else {
-              chunks.push(line)
+              acc.push(line)
             }
           }
-          return chunks
+          return acc
         }, [] as string[])
       this.#show(
         chunks

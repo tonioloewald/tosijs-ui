@@ -2826,9 +2826,9 @@ export class TosiTable extends withAttributes({
                 ariaExpanded: 'false',
                 ...this.labelAttrs('Details', 'aria-label'),
                 onClick: (event) => {
-                    const item = getListItem(event.target);
-                    if (item != null)
-                        this.toggleRowDetail(item);
+                    const clicked = getListItem(event.target);
+                    if (clicked != null)
+                        this.toggleRowDetail(clicked);
                 },
             }, chevronRightIcon()));
             return cell;
@@ -3104,9 +3104,9 @@ export class TosiTable extends withAttributes({
             const touchIdentifier = isTouchEvent
                 ? event.touches[0].identifier
                 : undefined;
-            trackDrag(event, (dx, _dy, event) => {
+            trackDrag(event, (dx, _dy, moveEvent) => {
                 const touch = isTouchEvent
-                    ? [...event.touches].find((touch) => touch.identifier === touchIdentifier)
+                    ? [...moveEvent.touches].find((t) => t.identifier === touchIdentifier)
                     : true;
                 if (touch === undefined) {
                     return true;
@@ -3116,7 +3116,7 @@ export class TosiTable extends withAttributes({
                     return true;
                 // A click on the edge changes nothing: pin the columns on the first movement.
                 if (anchor === undefined && dx === 0) {
-                    return event.type === 'mouseup' || undefined;
+                    return moveEvent.type === 'mouseup' || undefined;
                 }
                 if (live !== anchor) {
                     this.pinElasticThrough(live);
@@ -3128,7 +3128,7 @@ export class TosiTable extends withAttributes({
                 const width = anchorWidth + (dx - anchorDx);
                 live.width = width > this.minColumnWidth ? width : this.minColumnWidth;
                 this.setColumnWidths();
-                if (event.type === 'mouseup') {
+                if (moveEvent.type === 'mouseup') {
                     return true;
                 }
             }, 'col-resize');

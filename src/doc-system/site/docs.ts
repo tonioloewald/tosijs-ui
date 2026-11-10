@@ -458,7 +458,7 @@ function findMarkdownFiles(
     return n
   }
 
-  function traverseDirectory(dir: string, ignore: string[], isRoot = false) {
+  function traverseDirectory(dir: string, ignored: string[], isRoot = false) {
     const files = fs.readdirSync(dir)
     const baseName = path.basename(dir)
 
@@ -483,7 +483,7 @@ function findMarkdownFiles(
     rather than a name pattern.
     */
     if (
-      ignore.some(
+      ignored.some(
         (ig) => (!isRoot && ig === baseName) || path.resolve(ig) === resolved
       )
     ) {
@@ -519,7 +519,7 @@ function findMarkdownFiles(
       }
 
       if (stats.isDirectory()) {
-        traverseDirectory(filePath, ignore)
+        traverseDirectory(filePath, ignored)
       } else if (path.extname(file) === '.md') {
         const { data: fm, body: content } = parseFrontmatter(
           fs.readFileSync(filePath, 'utf8')
