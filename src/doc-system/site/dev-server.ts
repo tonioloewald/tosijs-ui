@@ -3154,7 +3154,11 @@ export async function devServer(
   */
   const haltijaSockets = new WeakMap<
     object,
-    { upstream: WebSocket; queue: (string | Uint8Array)[]; ready: boolean }
+    {
+      upstream: WebSocket
+      queue: (string | Uint8Array<ArrayBuffer>)[]
+      ready: boolean
+    }
   >()
 
   const haltijaWebSocketHandlers = {
@@ -3165,7 +3169,7 @@ export async function devServer(
       )
       const state = {
         upstream,
-        queue: [] as (string | Uint8Array)[],
+        queue: [] as (string | Uint8Array<ArrayBuffer>)[],
         ready: false,
       }
       haltijaSockets.set(ws, state)
@@ -3200,7 +3204,7 @@ export async function devServer(
         }
       }
     },
-    message(ws: any, message: string | Uint8Array) {
+    message(ws: any, message: string | Uint8Array<ArrayBuffer>) {
       const state = haltijaSockets.get(ws)
       if (!state) return
       if (state.ready) state.upstream.send(message)

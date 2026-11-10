@@ -34,7 +34,7 @@
         "globals": "^17.14.0",
         "happy-dom": "^21.0.4",
         "playwright": "^1.65.0",
-        "prettier": "^3",
+        "prettier": "^3.9.10",
         "prismjs": "^1.30.0",
         "tjs-lang": "0.14.0-rc.5",
         "tosijs": "1.10.10",

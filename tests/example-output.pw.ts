@@ -77,7 +77,7 @@ test('output steps aside the moment the example renders after all', async ({
   await expect(output).toBeVisible()
   await expect(output).toContainText('loading')
   const hiddenAfterRender = await output.evaluate(async (out: HTMLElement) => {
-    const seen: boolean[] = []
+    const seen: (typeof out.hidden)[] = []
     const watch = new MutationObserver(() => seen.push(out.hidden))
     watch.observe(out, { attributes: true, attributeFilter: ['hidden'] })
     ;(window as any).__renderLate()

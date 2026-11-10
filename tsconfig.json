@@ -5,8 +5,10 @@
     "target": "es2022",
     "moduleResolution": "bundler",
     "moduleDetection": "force",
+    // TypeScript 6 requires it once it emits. It was always src/ by inference, and must stay
+    // so: dist/*.d.ts sit at the paths the exports map names (see tsconfig.bin.json).
+    "rootDir": "./src",
     "strict": true,
-    "downlevelIteration": true,
     "skipLibCheck": true,
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,

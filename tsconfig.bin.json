@@ -18,7 +18,12 @@
   // that is actually packed rather than relying on Bun's extension probing. (Not for Node: it
   // refuses to strip types under node_modules at all, so installed bins are Bun-only either
   // way — measured on Node 22.) Legal here because this project is noEmit.
-  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true },
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    // the parent pins rootDir to src/ for the emit; this project reaches outside it
+    "rootDir": "."
+  },
   // The prismjs grammar modules have no types (`@types/prismjs` covers the main module
   // only), and `src/doc-system/highlight.ts` names 27 of them. bin code imports that module
   // transitively, so this project needs the ambient declaration too. Safe here in a way the
