@@ -208,12 +208,12 @@ that names its own host cannot be redirected, but silence would still be wrong.
 const hostSource = flag('host')
   ? '--host'
   : process.env.PREVIEW_HOST
-  ? 'PREVIEW_HOST'
-  : process.env.PREVIEW_SSH
-  ? 'PREVIEW_SSH (legacy)'
-  : preview?.host
-  ? 'site config'
-  : '~/local-secrets/tosijs-preview.env'
+    ? 'PREVIEW_HOST'
+    : process.env.PREVIEW_SSH
+      ? 'PREVIEW_SSH (legacy)'
+      : preview?.host
+        ? 'site config'
+        : '~/local-secrets/tosijs-preview.env'
 
 if (!host) {
   console.error(
@@ -370,8 +370,8 @@ if (has('link')) {
             share ? 'READ-ONLY ' : ''
           }link (that browser keeps every workspace for 30 days)`
         : share
-        ? 'Share link (READ ONLY)'
-        : 'Edit link'
+          ? 'Share link (READ ONLY)'
+          : 'Edit link'
     }:\n   ${url}\n` +
       (short ? `   ${short}   (the same link, shorter)\n` : '') +
       (code

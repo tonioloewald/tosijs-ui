@@ -169,7 +169,7 @@ export function resolveBooks<T extends BookTargetDoc>(
  * arrangement is untouched.
  */
 export function placeInBook<
-  T extends BookTargetDoc & { order?: number; pin?: 'top' | 'bottom' }
+  T extends BookTargetDoc & { order?: number; pin?: 'top' | 'bottom' },
 >(docs: T[], book: string): T[] {
   const key = placementKey(book)
   return docs.map((doc) => {

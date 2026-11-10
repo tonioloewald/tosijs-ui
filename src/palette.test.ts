@@ -43,7 +43,7 @@ test('shortcuts match the key and exactly its modifiers', () => {
       shiftKey: false,
       altKey: false,
       ...mods,
-    } as KeyboardEvent)
+    }) as KeyboardEvent
   expect(matchesShortcut(key('k', { ctrlKey: true }), 'ctrl+k')).toBe(true)
   expect(
     matchesShortcut(key('k', { ctrlKey: true, shiftKey: true }), 'ctrl+k')
@@ -250,7 +250,7 @@ test('a palette with a localizer shows its hint localized, and re-renders to fol
   let locale = 'fr'
   const strings: Record<string, string> = { Search: 'Rechercher' }
   const localizer = (text: string) =>
-    locale === 'fr' ? strings[text] ?? text : text
+    locale === 'fr' ? (strings[text] ?? text) : text
   const palette = tosiPalette({ placeholder: 'Search', localizer })
   const plain = tosiPalette({ placeholder: 'Search' })
   document.body.append(palette, plain)
@@ -311,7 +311,7 @@ test('the footer, the Search and Clear names and the empty caption are localized
     'No results': 'Ei tuloksia',
   }
   const localizer = (text: string) =>
-    locale === 'fi' ? strings[text] ?? text : text
+    locale === 'fi' ? (strings[text] ?? text) : text
   const palette = tosiPalette({ placeholder: 'Search', localizer })
   document.body.append(palette)
   const nextFrame = () =>

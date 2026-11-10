@@ -184,9 +184,8 @@ describe('live-example/code-transform', () => {
 
 describe('live-example/test-harness', () => {
   test('expect and matchers work', async () => {
-    const { expect: testExpect } = await import(
-      './live-example/test-harness.js'
-    )
+    const { expect: testExpect } =
+      await import('./live-example/test-harness.js')
     expect(() => testExpect(1).toBe(1)).not.toThrow()
     expect(() => testExpect(1).toBe(2)).toThrow()
     expect(() => testExpect('hello').toContain('ell')).not.toThrow()
@@ -203,9 +202,8 @@ describe('live-example/test-harness', () => {
   })
 
   test('expect.not negates matchers', async () => {
-    const { expect: testExpect } = await import(
-      './live-example/test-harness.js'
-    )
+    const { expect: testExpect } =
+      await import('./live-example/test-harness.js')
     expect(() => testExpect(1).not.toBe(2)).not.toThrow()
     expect(() => testExpect(1).not.toBe(1)).toThrow()
   })
@@ -294,9 +292,8 @@ describe('drag-and-drop', () => {
 
 describe('track-drag', () => {
   test('trackDrag is callable', async () => {
-    const { trackDrag, findHighestZ, bringToFront } = await import(
-      './track-drag.js'
-    )
+    const { trackDrag, findHighestZ, bringToFront } =
+      await import('./track-drag.js')
     expect(typeof trackDrag).toBe('function')
     expect(typeof findHighestZ).toBe('function')
     expect(typeof bringToFront).toBe('function')

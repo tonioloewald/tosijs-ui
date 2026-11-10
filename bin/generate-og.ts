@@ -92,8 +92,8 @@ function cardHtml(doc: DocLike, shot: string | null): string {
   <div class="card${shot ? ' has-shot' : ''}">
     <div class="watermark">${favicon}</div>
     <div class="brand">${favicon}<span class="name">${escapeHtml(
-    projectName
-  )}</span></div>
+      projectName
+    )}</span></div>
     <h1>${escapeHtml(doc.title)}</h1>
     <p>${escapeHtml(description)}</p>
     ${shot ? `<img class="shot" src="${shot}" />` : ''}

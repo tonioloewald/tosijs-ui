@@ -1952,7 +1952,7 @@ export class TosiTable extends withAttributes({
     if (this._rowId === fn) return
     this._rowId = fn
     // Ids assigned before there was a `rowId` (a creator sets props in key order) apply now.
-    this._expanded = new Set(fn ? this._pendingExpandedIds ?? [] : [])
+    this._expanded = new Set(fn ? (this._pendingExpandedIds ?? []) : [])
     this._pendingExpandedIds = null
     this._detailEls.clear()
     this.queueRender()
@@ -2121,9 +2121,8 @@ export class TosiTable extends withAttributes({
     if (toggle) {
       toggle.setAttribute('aria-expanded', String(detail != null))
       if (detail) toggle.setAttribute('aria-controls', detail.id)
-      else
-        toggle.removeAttribute('aria-controls')
-        // No toggle where pressing it would do nothing.
+      else toggle.removeAttribute('aria-controls')
+      // No toggle where pressing it would do nothing.
       ;(toggle as HTMLElement).hidden =
         this._rowDetail == null ||
         (this.rowHasDetail != null && !this.rowHasDetail(raw))
@@ -3058,8 +3057,8 @@ export class TosiTable extends withAttributes({
         type: isBool
           ? 'checkbox'
           : isNum
-          ? 'number'
-          : field?.inputType ?? 'text',
+            ? 'number'
+            : (field?.inputType ?? 'text'),
         ...(field?.kind === 'integer' ? { step: 1 } : {}),
         bind: displayBinding,
       } as any)
@@ -3307,8 +3306,8 @@ export class TosiTable extends withAttributes({
               typeof col.name === 'string'
                 ? col.name
                 : col.expander
-                ? ''
-                : col.prop
+                  ? ''
+                  : col.prop
             ),
             menuButton
           )
@@ -4253,8 +4252,8 @@ export class TosiTable extends withAttributes({
       options.pinned === 'left'
         ? 'pin'
         : options.pinned === 'right'
-        ? 'pin0f'
-        : 'pin50o'
+          ? 'pin0f'
+          : 'pin50o'
     menu.push({
       caption: this.localized ? localize('Pin#fasten') : 'Pin',
       icon: pinIcon,

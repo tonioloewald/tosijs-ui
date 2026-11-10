@@ -379,8 +379,8 @@ export function columnsFromSchema(schema: JSONSchema): ColumnOptions[] {
         field?.kind === 'boolean'
           ? 80
           : field?.kind === 'integer' || field?.kind === 'number'
-          ? 100
-          : 180,
+            ? 100
+            : 180,
     }
     if (field?.kind === 'boolean') column.type = 'boolean(check,x)' as any
     return column
@@ -653,10 +653,10 @@ export class TosiCrud extends withAttributes({
           typeof value === 'number'
             ? 0
             : typeof value === 'boolean'
-            ? false
-            : typeof value === 'string'
-            ? ''
-            : null
+              ? false
+              : typeof value === 'string'
+                ? ''
+                : null
       }
     }
     return blank
@@ -1001,8 +1001,8 @@ export class TosiCrud extends withAttributes({
     this.parts.status.textContent = this._error
       ? this._error
       : this._pending > 0
-      ? localize('loading…')
-      : localize('{count} records', { count: this._rows.length })
+        ? localize('loading…')
+        : localize('{count} records', { count: this._rows.length })
   }
 }
 

@@ -36,7 +36,7 @@ function bakedModuleForBlock(block) {
     const n = block.nextElementSibling;
     return n?.tagName === 'SCRIPT' &&
         n.getAttribute('type') === 'application/tosi-transpiled'
-        ? n.getAttribute('data-module') ?? undefined
+        ? (n.getAttribute('data-module') ?? undefined)
         : undefined;
 }
 /*

@@ -214,7 +214,7 @@ function scrollMovesAnchor(
     return true
   if (!(scrolled instanceof Node)) return true
   const visited = new Set<Node>() // floats anchored inside each other must not loop
-  for (let node: Node | null = anchor; node && !visited.has(node); ) {
+  for (let node: Node | null = anchor; node && !visited.has(node);) {
     visited.add(node)
     if (node === scrolled) return true
     /*

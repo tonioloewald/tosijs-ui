@@ -12,10 +12,10 @@ const fakeGit =
     args[0] === 'rev-parse'
       ? '/repo\n'
       : args[0] === 'log'
-      ? log
-      : args[0] === 'status'
-      ? status
-      : ''
+        ? log
+        : args[0] === 'status'
+          ? status
+          : ''
 
 const log = [
   '\x002026-03-01T00:00:00Z',

@@ -50,9 +50,9 @@ test('Print as PDF opens with the cover the build wrote', async ({
   })
   // The manifest lists the cover it names only because the build wrote that file.
   const listed = await page.evaluate(async () =>
-    (
-      await (await fetch('/epub-volumes.json')).json()
-    ).find((v: { book: string }) => v.book === '')
+    (await (await fetch('/epub-volumes.json')).json()).find(
+      (v: { book: string }) => v.book === ''
+    )
   )
   expect(cover.src).toBe(listed.coverUrl)
   expect(cover.width, 'the cover image must load, not 404').toBeGreaterThan(0)
@@ -66,9 +66,9 @@ test('Download ePub goes to the volume the build made (#218)', async ({
   await page.goto('/')
   await page.waitForFunction(() => !!(window as any).__docTestResults)
   const listed = await page.evaluate(async () =>
-    (
-      await (await fetch('/epub-volumes.json')).json()
-    ).find((v: { book: string }) => v.book === '')
+    (await (await fetch('/epub-volumes.json')).json()).find(
+      (v: { book: string }) => v.book === ''
+    )
   )
   await page.evaluate(() => {
     const header = [...document.querySelectorAll('button')].filter((b) => {

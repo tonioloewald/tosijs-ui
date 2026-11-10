@@ -166,10 +166,10 @@ try {
                 now - last >= 500 && !busy
                   ? 'settled'
                   : !busy && now - start >= quietCap
-                  ? 'changing'
-                  : now - start >= busyCap
-                  ? 'busy'
-                  : ''
+                    ? 'changing'
+                    : now - start >= busyCap
+                      ? 'busy'
+                      : ''
               if (!outcome) return void setTimeout(tick, 100)
               observer.disconnect()
               resolve(outcome)

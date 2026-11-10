@@ -83,8 +83,8 @@ export function curatedField(
   return entry === true
     ? {}
     : typeof entry === 'string'
-    ? { caption: entry }
-    : entry
+      ? { caption: entry }
+      : entry
 }
 
 /**

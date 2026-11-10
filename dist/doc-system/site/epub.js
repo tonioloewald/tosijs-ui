@@ -255,7 +255,7 @@ function decodeAttr(value) {
         ? String.fromCodePoint(Number(dec))
         : hex
             ? String.fromCodePoint(parseInt(hex, 16))
-            : { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[name.toLowerCase()] ?? match);
+            : ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[name.toLowerCase()] ?? match));
 }
 // An `<img>` tag, with `>` allowed inside quoted attribute values (`alt="a > b"`).
 const IMG_TAG = /<img\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
@@ -862,7 +862,7 @@ export async function buildEpub(config, opts = {}) {
     const volumeLabel = opts.bookTarget;
     const baseTitle = opts.title ?? config.name;
     const volumeTitle = volumeLabel
-        ? opts.volumeTitles?.[volumeLabel] ?? `${baseTitle} — ${volumeLabel}`
+        ? (opts.volumeTitles?.[volumeLabel] ?? `${baseTitle} — ${volumeLabel}`)
         : baseTitle;
     const baseIdentifier = config.baseUrl || `urn:tosijs-book:${slugify(baseTitle)}`;
     const meta = {

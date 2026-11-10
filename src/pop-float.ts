@@ -491,13 +491,13 @@ export function roomOnScreen(
     height: top
       ? area.bottom - px(top)
       : bottom
-      ? h - px(bottom) - area.top
-      : area.bottom - area.top,
+        ? h - px(bottom) - area.top
+        : area.bottom - area.top,
     width: left
       ? area.right - px(left)
       : right
-      ? w - px(right) - area.left
-      : area.right - area.left,
+        ? w - px(right) - area.left
+        : area.right - area.left,
   })
   /*
   The visible room, unless there is none: zoomed in on a desktop (or with the anchor scrolled

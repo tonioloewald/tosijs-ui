@@ -339,7 +339,7 @@ function noteStripExports(candidate) {
 let stripExportsOverride;
 const currentStripExports = () => stripExportsOverride === undefined
     ? loadedStripExports
-    : stripExportsOverride ?? undefined;
+    : (stripExportsOverride ?? undefined);
 /**
  * @internal For TESTS only: a function stands in for tjs-lang's `stripExports`, `null` acts
  * as a tjs-lang that has none, and `undefined` goes back to whatever was loaded.

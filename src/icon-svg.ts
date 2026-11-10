@@ -135,8 +135,8 @@ function transformed(asked: string, svg: string, tokens: string[]): string {
     token.endsWith('r')
       ? `rotate(${suffixNumber(token)})`
       : token === '0f'
-      ? 'scale(-1 1)'
-      : 'scale(1 -1)'
+        ? 'scale(-1 1)'
+        : 'scale(1 -1)'
   )
   const transform = `translate(${cx} ${cy}) ${ops.join(
     ' '

@@ -656,8 +656,7 @@ export class TosiDocSystem extends withAttributes({
     // stops the browser's own write-back to `route` from re-navigating.
     if (this.browser !== undefined) {
       const navigate = (this.browser as any).navigate as
-        | ((slug: string) => void)
-        | undefined
+        ((slug: string) => void) | undefined
       if (navigate && this.route && this.route !== this.appliedRoute) {
         this.appliedRoute = this.route
         navigate(this.route)

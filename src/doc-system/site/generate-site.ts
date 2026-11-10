@@ -906,7 +906,7 @@ export async function generateSite(
       ([alias, target]) =>
         [alias, docs.find((d) => slugMap[d.filename] === target)!] as [
           string,
-          Doc
+          Doc,
         ]
     ),
   ]

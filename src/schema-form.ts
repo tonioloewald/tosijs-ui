@@ -2384,10 +2384,10 @@ export class TosiSchemaForm extends withAttributes({
       i === from
         ? to
         : from < to && i > from && i <= to
-        ? i - 1
-        : to < from && i >= to && i < from
-        ? i + 1
-        : i
+          ? i - 1
+          : to < from && i >= to && i < from
+            ? i + 1
+            : i
     )
     // Follow the item: you moved row 3 down, so the button you want next is on row 4.
     this.afterArrayEdit(node, { role, index: to })
@@ -2555,19 +2555,19 @@ export class TosiSchemaForm extends withAttributes({
             )
           )
         : field.kind === 'boolean'
-        ? // `onInput` from `shared` already covers a checkbox — a click fires both, so wiring
-          // `onChange` too dispatched the model write twice.
-          input({ ...shared, type: 'checkbox' })
-        : input({
-            ...shared,
-            type:
-              field.kind === 'number' || field.kind === 'integer'
-                ? 'number'
-                : field.inputType ?? 'text',
-            ...(field.kind === 'integer' ? { step: 1 } : {}),
-            ...(field.required ? { required: true } : {}),
-            ...(field.kind === 'const' ? { readonly: true } : {}),
-          })
+          ? // `onInput` from `shared` already covers a checkbox — a click fires both, so wiring
+            // `onChange` too dispatched the model write twice.
+            input({ ...shared, type: 'checkbox' })
+          : input({
+              ...shared,
+              type:
+                field.kind === 'number' || field.kind === 'integer'
+                  ? 'number'
+                  : (field.inputType ?? 'text'),
+              ...(field.kind === 'integer' ? { step: 1 } : {}),
+              ...(field.required ? { required: true } : {}),
+              ...(field.kind === 'const' ? { readonly: true } : {}),
+            })
     /*
     The control's native `change` stops at the control.
 
@@ -2603,9 +2603,7 @@ export class TosiSchemaForm extends withAttributes({
   private syncValues(): void {
     for (const field of this._fields) {
       const el = this._index.get(field.path)?.control as
-        | HTMLInputElement
-        | HTMLSelectElement
-        | undefined
+        HTMLInputElement | HTMLSelectElement | undefined
       if (!el || el === document.activeElement) continue
       const current = getByPath(this._value, field.path)
       if (field.kind === 'boolean') {
@@ -2949,10 +2947,10 @@ export class TosiSchemaForm extends withAttributes({
                   this._schema?.properties
                     ? localize('This schema describes no properties.')
                     : schemaValidationAvailable()
-                    ? localize('No schema, and nothing to infer one from.')
-                    : localize(
-                        'No schema — register a validator with inferSchema, or set one.'
-                      )
+                      ? localize('No schema, and nothing to infer one from.')
+                      : localize(
+                          'No schema — register a validator with inferSchema, or set one.'
+                        )
                 ),
               ]
             : [

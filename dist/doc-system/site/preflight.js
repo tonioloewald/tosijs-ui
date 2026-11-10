@@ -405,7 +405,7 @@ async function descendantsOf(pid) {
  */
 const hardFailAppropriate = () => !process.env.CI && !process.env.GITHUB_ACTIONS;
 export async function preflight(opts = {}) {
-    const configured = opts.mode === false ? 'off' : opts.mode ?? 'fail';
+    const configured = opts.mode === false ? 'off' : (opts.mode ?? 'fail');
     const mode = process.env.DEV_SKIP_PREFLIGHT === '1' ? 'off' : configured;
     if (mode === 'off' || process.platform === 'win32')
         return true;

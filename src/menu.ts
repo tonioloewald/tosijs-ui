@@ -1569,8 +1569,10 @@ export interface PopMenuOptions {
   disclosureDelay?: number
 }
 
-export interface PopDropMenuOptions
-  extends Omit<PopMenuOptions, '_dropMode' | '_dataTypes'> {
+export interface PopDropMenuOptions extends Omit<
+  PopMenuOptions,
+  '_dropMode' | '_dataTypes'
+> {
   dataTypes: readonly string[]
 }
 

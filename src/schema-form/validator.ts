@@ -41,8 +41,7 @@ export interface SchemaValidator {
     value: unknown,
     schema: JSONSchema,
     onError?:
-      | SchemaErrorCallback
-      | { onError?: SchemaErrorCallback; strict?: boolean }
+      SchemaErrorCallback | { onError?: SchemaErrorCallback; strict?: boolean }
   ) => boolean
   /** Derive a schema from a sample. Optional — without it, a form with no schema stays empty. */
   inferSchema?: (sample: unknown) => JSONSchema

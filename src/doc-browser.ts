@@ -664,8 +664,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return routing === 'path'
       ? filenameForPath(document.location.pathname, slugMap, aliases)
       : document.location.search !== ''
-      ? document.location.search.substring(1).split('&')[0]
-      : ''
+        ? document.location.search.substring(1).split('&')[0]
+        : ''
   }
 
   // Resolve a content-link anchor to one of our docs' filenames, in either the
@@ -963,10 +963,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   let searchIndex: ReturnType<typeof buildDocIndex> | null = null
   const crumbsFor = (doc: any): string => {
     const parent = doc.parent
-      ? docs.find(
+      ? (docs.find(
           (d: any) =>
             d.filename === doc.parent || slugFor(d.filename) === doc.parent
-        ) ?? { title: doc.parent }
+        ) ?? { title: doc.parent })
       : null
     return parent ? `${parent.title} › ${doc.title}` : String(doc.title)
   }
@@ -1033,8 +1033,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     searchBox.trigger = searchHeaderless
       ? 'none'
       : headerBar?.classList.contains('-links-collapsed')
-      ? 'icon'
-      : 'field'
+        ? 'icon'
+        : 'field'
   }
   // In the header bar (see headerContent); the nav no longer holds a search field.
   const searchBox = tosiPalette({
@@ -1572,10 +1572,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     p.endsWith('.md')
       ? 'markdown'
       : p.endsWith('.css')
-      ? 'css'
-      : p.endsWith('.ts') || p.endsWith('.tjs')
-      ? 'typescript'
-      : 'javascript'
+        ? 'css'
+        : p.endsWith('.ts') || p.endsWith('.tjs')
+          ? 'typescript'
+          : 'javascript'
 
   // Pure mirror of docs.ts extraction: a .md *is* the markdown; a source file is
   // the concatenation of its doc-comment blocks. Lets us preview an edit in the
@@ -2224,8 +2224,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   in a normal session.
   */
   const devStatus = (globalThis as any).__tosiDevStatus as
-    | { ok: boolean; label?: string; detail?: string }
-    | undefined
+    { ok: boolean; label?: string; detail?: string } | undefined
   let devStatusShown = false
   if (devStatus && devStatus.ok === false) {
     devStatusShown = true
@@ -2558,8 +2557,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     belongs to the Playwright lane, which can set it per context.
     */
     const vp = (globalThis as any).__tosiTestViewport as
-      | { width?: number; height?: number }
-      | undefined
+      { width?: number; height?: number } | undefined
     const vpWidth = Number(vp?.width) > 0 ? Number(vp?.width) : 800
     const vpHeight = Number(vp?.height) > 0 ? Number(vp?.height) : 600
     const testFrame = document.createElement('iframe')

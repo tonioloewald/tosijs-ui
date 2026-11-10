@@ -1792,7 +1792,7 @@ export class TosiTable extends withAttributes({
             return;
         this._rowId = fn;
         // Ids assigned before there was a `rowId` (a creator sets props in key order) apply now.
-        this._expanded = new Set(fn ? this._pendingExpandedIds ?? [] : []);
+        this._expanded = new Set(fn ? (this._pendingExpandedIds ?? []) : []);
         this._pendingExpandedIds = null;
         this._detailEls.clear();
         this.queueRender();
@@ -2775,7 +2775,7 @@ export class TosiTable extends withAttributes({
                     ? 'checkbox'
                     : isNum
                         ? 'number'
-                        : field?.inputType ?? 'text',
+                        : (field?.inputType ?? 'text'),
                 ...(field?.kind === 'integer' ? { step: 1 } : {}),
                 bind: displayBinding,
             });

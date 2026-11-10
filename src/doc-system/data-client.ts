@@ -46,7 +46,10 @@ latest 100 versions.
 const ENDPOINT = '/__docstore/data'
 
 export class DataStoreError extends Error {
-  constructor(message: string, public status: number) {
+  constructor(
+    message: string,
+    public status: number
+  ) {
     super(message)
     this.name = 'DataStoreError'
   }

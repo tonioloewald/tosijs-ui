@@ -2309,7 +2309,7 @@ export class TosiSchemaForm extends withAttributes({
                     ...shared,
                     type: field.kind === 'number' || field.kind === 'integer'
                         ? 'number'
-                        : field.inputType ?? 'text',
+                        : (field.inputType ?? 'text'),
                     ...(field.kind === 'integer' ? { step: 1 } : {}),
                     ...(field.required ? { required: true } : {}),
                     ...(field.kind === 'const' ? { readonly: true } : {}),

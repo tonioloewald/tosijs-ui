@@ -41,8 +41,7 @@ export function sinkPathFor(
 }
 
 export type SinkResult =
-  | { ok: true }
-  | { ok: false; status: 413 | 507; reason: string }
+  { ok: true } | { ok: false; status: 413 | 507; reason: string }
 
 /**
  * Append one line, or explain why not.

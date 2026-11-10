@@ -7,7 +7,7 @@ import {
 } from './plugins'
 
 const stub = (tag: string) => ({
-  render: () => ({ tag } as any),
+  render: () => ({ tag }) as any,
   sync: () => {},
 })
 

@@ -295,7 +295,7 @@ try {
   const SAFE_TO_RUN = new Set(['tosijs-tunnel', 'tosijs-deploy'])
   for (const [name, rel] of Object.entries(pkg.bin ?? {}) as [
     string,
-    string
+    string,
   ][]) {
     const shim = path.join(proj, 'node_modules', '.bin', name)
     if (!existsSync(shim)) {

@@ -451,7 +451,7 @@ let stripExportsOverride: StripExports | null | undefined
 const currentStripExports = (): StripExports | undefined =>
   stripExportsOverride === undefined
     ? loadedStripExports
-    : stripExportsOverride ?? undefined
+    : (stripExportsOverride ?? undefined)
 
 /**
  * @internal For TESTS only: a function stands in for tjs-lang's `stripExports`, `null` acts

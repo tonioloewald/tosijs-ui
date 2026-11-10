@@ -92,8 +92,8 @@ const fit = (list: string[], token: string): 0 | 1 | 2 =>
   list.some((w) => same(w, token))
     ? 2
     : list.some((w) => w.startsWith(token))
-    ? 1
-    : 0
+      ? 1
+      : 0
 
 /** The first paragraph that is prose: not a heading, a fence, a list or a metadata block. */
 function leadOf(text: string): string {

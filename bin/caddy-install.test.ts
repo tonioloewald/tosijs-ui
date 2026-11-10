@@ -599,9 +599,8 @@ test('the edit key has no URL form: only a single-use link sets its cookie', () 
 test("Caddy's view cookie is the one a workspace's single-use link sets", async () => {
   // Two writers of one cookie: `?t=<key>` here, and a redeemed granting link in the dev
   // server. If they drift, a browser holds two cookies with one name and different scopes.
-  const { globalKeyCookie } = await import(
-    '../dist/doc-system/site/dev-auth.js'
-  )
+  const { globalKeyCookie } =
+    await import('../dist/doc-system/site/dev-auth.js')
   const shipped = readFileSync(join(REPO, 'deploy/Caddyfile'), 'utf8')
   const fromCaddy = (name: string, placeholder: string) =>
     shipped

@@ -566,7 +566,7 @@ export async function preflight(
     vm?: VmPressure | null
   } = {}
 ): Promise<boolean> {
-  const configured = opts.mode === false ? 'off' : opts.mode ?? 'fail'
+  const configured = opts.mode === false ? 'off' : (opts.mode ?? 'fail')
   const mode: PreflightMode =
     process.env.DEV_SKIP_PREFLIGHT === '1' ? 'off' : configured
   if (mode === 'off' || process.platform === 'win32') return true

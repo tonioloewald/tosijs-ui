@@ -11,7 +11,7 @@ afterEach(() => setSchemaValidator(previous))
 
 test('a form that inferred nothing from {} infers again once it has a value with fields', () => {
   setSchemaValidator({
-    validate: () => ({ valid: true, errors: [] } as any),
+    validate: () => ({ valid: true, errors: [] }) as any,
     inferSchema: (value: any) => ({
       type: 'object',
       properties: Object.fromEntries(

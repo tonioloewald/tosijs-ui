@@ -72,7 +72,7 @@ export function epubVolumeIdentity(config, bookTarget) {
     const epub = typeof config.epub === 'object' ? config.epub : {};
     const baseTitle = epub.title ?? config.name ?? 'book';
     const title = bookTarget
-        ? epub.volumeTitles?.[bookTarget] ?? `${baseTitle} — ${bookTarget}`
+        ? (epub.volumeTitles?.[bookTarget] ?? `${baseTitle} — ${bookTarget}`)
         : baseTitle;
     const filename = bookTarget
         ? `${slugify(baseTitle)}-${slugify(bookTarget)}.epub`

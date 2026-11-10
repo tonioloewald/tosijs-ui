@@ -1007,9 +1007,9 @@ export async function buildSite(
       // self-contained-examples-plan.md.
       // If the import-resolver is on, the example check accepts non-context imports.
       const resolverPrefix = config.importResolver
-        ? (config.importResolver === true
+        ? ((config.importResolver === true
             ? undefined
-            : config.importResolver.prefix) ?? '/lib/'
+            : config.importResolver.prefix) ?? '/lib/')
         : undefined
       let exampleBakes: Map<string, ExampleBakes> | undefined
       if (config.exampleModules && config.checkExamples === false)
@@ -1024,7 +1024,7 @@ export async function buildSite(
           DOCS_JSON,
           resolverPrefix,
           typeof config.checkExamples === 'object'
-            ? config.checkExamples.contextKeys ?? []
+            ? (config.checkExamples.contextKeys ?? [])
             : [],
           config.liveExamples ?? 'auto',
           normalizeDialectNames(config.dialects).filter((name) =>
@@ -1856,9 +1856,10 @@ export async function buildSite(
       // reaches non-`.ts` sources (e.g. `.tjs`), `--preload` a module that registers the
       // Bun loader plugin so those modules evaluate. (See BUILD-TJS-HOOK.md.)
       const themeArg = JSON.stringify(config.theme || {})
-      await (config.generateCssPreload
-        ? $`bun --preload ${config.generateCssPreload} ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
-        : $`bun ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
+      await (
+        config.generateCssPreload
+          ? $`bun --preload ${config.generateCssPreload} ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
+          : $`bun ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
       ).text()
 
       /*

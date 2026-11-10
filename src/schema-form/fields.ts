@@ -21,13 +21,7 @@ import { unenforcedKeywords } from './unenforced.js'
 
 /** What kind of control a field wants. The component maps this to elements. */
 export type FieldKind =
-  | 'string'
-  | 'number'
-  | 'integer'
-  | 'boolean'
-  | 'enum'
-  | 'const'
-  | 'unsupported'
+  'string' | 'number' | 'integer' | 'boolean' | 'enum' | 'const' | 'unsupported'
 
 /** A nested object: its own label, and the fields inside it. */
 export interface FieldGroup {
@@ -281,10 +275,10 @@ function resolveUnion(
     b.const !== undefined
       ? 'const'
       : b.properties
-      ? 'object'
-      : Array.isArray(b.type)
-      ? b.type.join('|')
-      : b.type ?? 'unknown'
+        ? 'object'
+        : Array.isArray(b.type)
+          ? b.type.join('|')
+          : (b.type ?? 'unknown')
   const shapes = [...new Set(branches.map(describe))].join(' | ')
   return {
     kind: 'unsupported',

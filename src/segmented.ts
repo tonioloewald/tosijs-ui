@@ -436,8 +436,8 @@ export class TosiSegmented extends withAttributes({
   get isOtherValue(): boolean {
     return Boolean(
       this.value === '' ||
-        (this.value &&
-          !this._choicesWithOther.find((choice) => choice.value === this.value))
+      (this.value &&
+        !this._choicesWithOther.find((choice) => choice.value === this.value))
     )
   }
 

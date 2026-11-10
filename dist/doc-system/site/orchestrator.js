@@ -815,9 +815,9 @@ export async function buildSite(config, opts = {}) {
             // self-contained-examples-plan.md.
             // If the import-resolver is on, the example check accepts non-context imports.
             const resolverPrefix = config.importResolver
-                ? (config.importResolver === true
+                ? ((config.importResolver === true
                     ? undefined
-                    : config.importResolver.prefix) ?? '/lib/'
+                    : config.importResolver.prefix) ?? '/lib/')
                 : undefined;
             let exampleBakes;
             if (config.exampleModules && config.checkExamples === false)
@@ -826,7 +826,7 @@ export async function buildSite(config, opts = {}) {
                     'compiles in the browser, which the CSP this option exists for will refuse.');
             if (config.checkExamples !== false) {
                 const { problems, warnings, bakes } = await checkExamplesInChild(DOCS_JSON, resolverPrefix, typeof config.checkExamples === 'object'
-                    ? config.checkExamples.contextKeys ?? []
+                    ? (config.checkExamples.contextKeys ?? [])
                     : [], config.liveExamples ?? 'auto', normalizeDialectNames(config.dialects).filter((name) => BUILT_IN_DIALECTS.has(name)), !!config.exampleModules);
                 exampleBakes = bakes;
                 if (config.exampleModules) {

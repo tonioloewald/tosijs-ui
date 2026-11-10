@@ -3497,17 +3497,17 @@ export class LiveExample extends withAttributes({
       module && this.compiledJsSource === this.js
         ? this.compiledJs
         : !runner &&
-          isBuiltInDialect(this.dialect) &&
-          this.dialect !== 'js' &&
-          !testManager.enabled.value &&
-          // An inline view shows its inline tjs tests' result, and running them needs the
-          // transpiler: such an example takes the full path on every site. Only when its source
-          // could hold a test, though (the word is in it): one that cannot keeps the fast path.
-          !(this.teaches && /\btest\b/.test(this.js)) &&
-          this.compiledJs !== undefined &&
-          this.compiledJsSource === this.js
-        ? this.compiledJs
-        : undefined
+            isBuiltInDialect(this.dialect) &&
+            this.dialect !== 'js' &&
+            !testManager.enabled.value &&
+            // An inline view shows its inline tjs tests' result, and running them needs the
+            // transpiler: such an example takes the full path on every site. Only when its source
+            // could hold a test, though (the word is in it): one that cannot keeps the fast path.
+            !(this.teaches && /\btest\b/.test(this.js)) &&
+            this.compiledJs !== undefined &&
+            this.compiledJsSource === this.js
+          ? this.compiledJs
+          : undefined
     const transform =
       bake === undefined && !runner && !module
         ? await dialectTransform(this.dialect, this.options)

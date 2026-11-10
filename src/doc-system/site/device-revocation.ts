@@ -111,8 +111,8 @@ export function revocationList(opts: {
         response.status === 404
           ? new Set<string>()
           : response.status === 200
-          ? parseRevoked(await response.text())
-          : null
+            ? parseRevoked(await response.text())
+            : null
       if (ids) {
         cache.set(domain, { ids, at: now() })
         failedAt.delete(domain)

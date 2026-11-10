@@ -150,18 +150,7 @@ import { Component, ElementCreator, elements, PartsMap } from 'tosijs'
 const { slot } = elements
 
 export type AffixPosition =
-  | 'n'
-  | 's'
-  | 'e'
-  | 'w'
-  | 'ne'
-  | 'nw'
-  | 'se'
-  | 'sw'
-  | 'en'
-  | 'wn'
-  | 'es'
-  | 'ws'
+  'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | 'en' | 'wn' | 'es' | 'ws'
 
 export interface AffixPlacement {
   position: AffixPosition
@@ -227,8 +216,8 @@ export function affixCell({ position, inside }: AffixPlacement) {
     position.length === 1
       ? 'center'
       : position[1] === 'n' || position[1] === 'w'
-      ? 'start'
-      : 'end'
+        ? 'start'
+        : 'end'
   const toward: Align = edge === 'n' || edge === 'w' ? 'start' : 'end'
   // outside, it faces the content: on the north edge it sits at the END of its cell
   const across: Align = inside ? toward : toward === 'start' ? 'end' : 'start'

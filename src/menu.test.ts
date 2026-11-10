@@ -792,7 +792,7 @@ describe('menu', () => {
         altKey: false,
         shiftKey: false,
         ...mods,
-      } as KeyboardEvent)
+      }) as KeyboardEvent
 
     test('finds matching shortcut', () => {
       const items: MenuItem[] = [

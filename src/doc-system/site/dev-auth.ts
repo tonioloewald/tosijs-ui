@@ -1555,7 +1555,7 @@ interface KeyOpts {
 const widest = (
   a: 'edit' | 'view' | null,
   b: 'edit' | 'view' | null
-): 'edit' | 'view' | null => (a === 'edit' || b === 'edit' ? 'edit' : a ?? b)
+): 'edit' | 'view' | null => (a === 'edit' || b === 'edit' ? 'edit' : (a ?? b))
 
 /**
  * How long a session minted for `grant` lives: a day when a global key grants it, and no longer

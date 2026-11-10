@@ -1165,7 +1165,7 @@ export function isNavigation(request) {
     return (request.headers.get('accept') ?? '').includes('text/html');
 }
 /** Edit wins over view, view over nothing. */
-const widest = (a, b) => (a === 'edit' || b === 'edit' ? 'edit' : a ?? b);
+const widest = (a, b) => (a === 'edit' || b === 'edit' ? 'edit' : (a ?? b));
 /**
  * How long a session minted for `grant` lives: a day when a global key grants it, and no longer
  * than the link pass has left when only the pass does, so a pass never stretches its own day.

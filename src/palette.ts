@@ -290,8 +290,8 @@ export function highlight(text: string, query: string): Node[] {
       part === ''
         ? null
         : i % 2 === 1
-        ? mark(part)
-        : document.createTextNode(part)
+          ? mark(part)
+          : document.createTextNode(part)
     )
     .filter((node) => node !== null) as Node[]
 }

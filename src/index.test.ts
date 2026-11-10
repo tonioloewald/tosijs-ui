@@ -157,9 +157,8 @@ test('#133: the barrel pulls NO prism at all, and the subpath keeps it lazy', as
   So: the barrel must contain no prism (it is excluded), and importing the component BY
   SUBPATH must still keep prism out of the entry (lazy chunks, not inlined).
   */
-  const { mkdtemp, writeFile, readFile, rm, readdir } = await import(
-    'fs/promises'
-  )
+  const { mkdtemp, writeFile, readFile, rm, readdir } =
+    await import('fs/promises')
   const { tmpdir } = await import('os')
   const { join } = await import('path')
 

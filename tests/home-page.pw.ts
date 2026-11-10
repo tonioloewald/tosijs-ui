@@ -55,12 +55,12 @@ test.beforeEach(async ({ page }) => {
     const type = file.endsWith('.html')
       ? 'text/html'
       : file.endsWith('.js')
-      ? 'text/javascript'
-      : file.endsWith('.json')
-      ? 'application/json'
-      : file.endsWith('.css')
-      ? 'text/css'
-      : 'application/octet-stream'
+        ? 'text/javascript'
+        : file.endsWith('.json')
+          ? 'application/json'
+          : file.endsWith('.css')
+            ? 'text/css'
+            : 'application/octet-stream'
     return route.fulfill({ body: readFileSync(file), contentType: type })
   })
 })

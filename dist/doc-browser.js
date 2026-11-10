@@ -699,7 +699,7 @@ export function createDocBrowser(options) {
     let searchIndex = null;
     const crumbsFor = (doc) => {
         const parent = doc.parent
-            ? docs.find((d) => d.filename === doc.parent || slugFor(d.filename) === doc.parent) ?? { title: doc.parent }
+            ? (docs.find((d) => d.filename === doc.parent || slugFor(d.filename) === doc.parent) ?? { title: doc.parent })
             : null;
         return parent ? `${parent.title} › ${doc.title}` : String(doc.title);
     };

@@ -40,7 +40,7 @@ beforeEach(() => {
 afterEach(() => rmSync(dir, { recursive: true, force: true }))
 
 const config = (extra = {}) =>
-  ({ name: 't', outputDir: out, docsJson, ...extra } as any)
+  ({ name: 't', outputDir: out, docsJson, ...extra }) as any
 
 test('a replaced bundle changes the stamp in every page that carries one', async () => {
   const built = await builtSite(REGISTERS)

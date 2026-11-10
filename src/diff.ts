@@ -670,8 +670,7 @@ export class TosiDiff extends withAttributes({
     `document.getSelection()` reports collapsed for a selection made inside a shadow tree.
     */
     const root = this.shadowRoot as
-      | (ShadowRoot & { getSelection?: () => Selection | null })
-      | null
+      (ShadowRoot & { getSelection?: () => Selection | null }) | null
     const selection = root?.getSelection?.() ?? document.getSelection()
     if (
       selection &&

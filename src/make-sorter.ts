@@ -136,8 +136,8 @@ export function makeSorter<T>(
             ? 1
             : -1
           : pSort[i] > qSort[i]
-          ? -1
-          : 1
+            ? -1
+            : 1
       }
     }
     return 0

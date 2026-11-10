@@ -252,7 +252,7 @@ export function resolveHaltijaChannel(cwd = process.cwd(), env = process.env) {
  */
 export function resolveIdleMs(configHours, envHours) {
     const env = envHours?.trim();
-    const raw = env ? Number(env) : configHours ?? DEFAULT_IDLE_HOURS;
+    const raw = env ? Number(env) : (configHours ?? DEFAULT_IDLE_HOURS);
     const hours = Number.isFinite(raw) ? raw : DEFAULT_IDLE_HOURS;
     return hours > 0 ? hours * 3600_000 : 0;
 }
@@ -275,7 +275,7 @@ const DEFAULT_LIMIT_MB = 4096;
  */
 export function resolveLimitMb(configMb, envMb) {
     const env = envMb?.trim();
-    const raw = env ? Number(env) : configMb ?? DEFAULT_LIMIT_MB;
+    const raw = env ? Number(env) : (configMb ?? DEFAULT_LIMIT_MB);
     const mb = Number.isFinite(raw) ? raw : DEFAULT_LIMIT_MB;
     return mb > 0 ? mb : 0;
 }

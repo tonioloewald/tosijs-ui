@@ -685,8 +685,8 @@ export class TosiSearchField extends withAttributes({
             return result == null
               ? []
               : Array.isArray(result)
-              ? result
-              : [result]
+                ? result
+                : [result]
           })
     this.active = -1
     this.hintList.replaceChildren(

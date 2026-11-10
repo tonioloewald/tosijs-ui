@@ -95,7 +95,7 @@ export function schemaUsesFormat(
     Array.isArray(value)
       ? value.some((entry) => schemaUsesFormat(entry as JSONSchema, format))
       : value && typeof value === 'object'
-      ? schemaUsesFormat(value as JSONSchema, format)
-      : false
+        ? schemaUsesFormat(value as JSONSchema, format)
+        : false
   )
 }

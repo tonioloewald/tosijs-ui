@@ -80,9 +80,9 @@ export function classifyRisk(raw) {
     // other shape is unknown rather than assumed benign.
     const v = vec.__version;
     const isV4 = v.startsWith('4');
-    const conf = isV4 ? vec.VC ?? vec.SC : vec.C;
-    const integ = isV4 ? vec.VI ?? vec.SI : vec.I;
-    const avail = isV4 ? vec.VA ?? vec.SA : vec.A;
+    const conf = isV4 ? (vec.VC ?? vec.SC) : vec.C;
+    const integ = isV4 ? (vec.VI ?? vec.SI) : vec.I;
+    const avail = isV4 ? (vec.VA ?? vec.SA) : vec.A;
     if (conf === undefined || integ === undefined || avail === undefined) {
         return {
             nature: 'unknown',

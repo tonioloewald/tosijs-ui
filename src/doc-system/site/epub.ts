@@ -393,10 +393,10 @@ function decodeAttr(value: string): string {
       dec
         ? String.fromCodePoint(Number(dec))
         : hex
-        ? String.fromCodePoint(parseInt(hex, 16))
-        : ({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" } as any)[
-            name!.toLowerCase()
-          ] ?? match
+          ? String.fromCodePoint(parseInt(hex, 16))
+          : (({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" } as any)[
+              name!.toLowerCase()
+            ] ?? match)
   )
 }
 
@@ -1169,7 +1169,7 @@ export async function buildEpub(
   const volumeLabel = opts.bookTarget
   const baseTitle = opts.title ?? config.name
   const volumeTitle = volumeLabel
-    ? opts.volumeTitles?.[volumeLabel] ?? `${baseTitle} — ${volumeLabel}`
+    ? (opts.volumeTitles?.[volumeLabel] ?? `${baseTitle} — ${volumeLabel}`)
     : baseTitle
   const baseIdentifier =
     config.baseUrl || `urn:tosijs-book:${slugify(baseTitle)}`

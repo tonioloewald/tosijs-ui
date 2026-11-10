@@ -360,7 +360,7 @@ export function resolveIdleMs(
   envHours: string | undefined
 ): number {
   const env = envHours?.trim()
-  const raw = env ? Number(env) : configHours ?? DEFAULT_IDLE_HOURS
+  const raw = env ? Number(env) : (configHours ?? DEFAULT_IDLE_HOURS)
   const hours = Number.isFinite(raw) ? raw : DEFAULT_IDLE_HOURS
   return hours > 0 ? hours * 3600_000 : 0
 }
@@ -388,7 +388,7 @@ export function resolveLimitMb(
   envMb: string | undefined
 ): number {
   const env = envMb?.trim()
-  const raw = env ? Number(env) : configMb ?? DEFAULT_LIMIT_MB
+  const raw = env ? Number(env) : (configMb ?? DEFAULT_LIMIT_MB)
   const mb = Number.isFinite(raw) ? raw : DEFAULT_LIMIT_MB
   return mb > 0 ? mb : 0
 }
@@ -989,8 +989,7 @@ export async function devServer(
   watch mode is correct: with no watcher there is no server to delegate to.
   */
   let requestBuild:
-    | (() => Promise<{ ok: boolean; detail?: string }>)
-    | undefined
+    (() => Promise<{ ok: boolean; detail?: string }>) | undefined
 
   let buildStatus: {
     ok: boolean
@@ -1428,8 +1427,8 @@ export async function devServer(
       admission === 'loopback'
         ? 'this machine'
         : admission === 'lan'
-        ? `${peer ?? 'a LAN device'} (trustLan)`
-        : 'an edit session (tunnel)'
+          ? `${peer ?? 'a LAN device'} (trustLan)`
+          : 'an edit session (tunnel)'
     let saved: { commit?: string | null; commitError?: string }
     try {
       saved = await saveDataFile(
@@ -1463,8 +1462,7 @@ export async function devServer(
     request: Request,
     endpoint: string,
     srv:
-      | { requestIP?: (r: Request) => { address?: string } | null }
-      | undefined,
+      { requestIP?: (r: Request) => { address?: string } | null } | undefined,
     viaTunnel: boolean
   ):
     | { admission: 'loopback' | 'lan' | 'session'; peer: string | undefined }
@@ -1705,10 +1703,10 @@ export async function devServer(
     const haltijaExtra = !haltijaDev
       ? ''
       : viaTunnel
-      ? haltijaTunnel && haltijaBridgeAllowed(request, undefined, viaTunnel)
-        ? HALTIJA_TUNNEL_SNIPPET
-        : ''
-      : HALTIJA_SNIPPET
+        ? haltijaTunnel && haltijaBridgeAllowed(request, undefined, viaTunnel)
+          ? HALTIJA_TUNNEL_SNIPPET
+          : ''
+        : HALTIJA_SNIPPET
     const extras =
       haltijaExtra +
       (testMode ? '' : statusSnippet(request, viaTunnel)) +
@@ -1786,7 +1784,7 @@ export async function devServer(
         )
         for (const [pageName, pageResults] of Object.entries(results.pages) as [
           string,
-          any
+          any,
         ][]) {
           if (!pageResults.passed) {
             console.error(`\n  ${pageName}:`)
@@ -3036,21 +3034,21 @@ export async function devServer(
         const problem = !key
           ? `global must be edit or view`
           : outstandingGrants(auth, Date.now()) >= MAX_OUTSTANDING_GRANTS
-          ? `${MAX_OUTSTANDING_GRANTS} single-use global links are already outstanding; use one, or wait for them to expire`
-          : !domain
-          ? `${params.get('domain')} is not a domain ${
-              workspaceHost || 'this workspace'
-            } is under`
-          : !globalKeyCookie(
-              {
-                key,
-                domain,
-                device: key === 'edit' ? mintDeviceId() : undefined,
-              },
-              globalKeys.keys
-            )
-          ? `this server does not accept the global ${key} key (see its launch warnings, or tunnel.globalKeys)`
-          : null
+            ? `${MAX_OUTSTANDING_GRANTS} single-use global links are already outstanding; use one, or wait for them to expire`
+            : !domain
+              ? `${params.get('domain')} is not a domain ${
+                  workspaceHost || 'this workspace'
+                } is under`
+              : !globalKeyCookie(
+                    {
+                      key,
+                      domain,
+                      device: key === 'edit' ? mintDeviceId() : undefined,
+                    },
+                    globalKeys.keys
+                  )
+                ? `this server does not accept the global ${key} key (see its launch warnings, or tunnel.globalKeys)`
+                : null
         if (problem) {
           return new Response(JSON.stringify({ error: problem }), {
             status: 400,

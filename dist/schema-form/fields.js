@@ -181,7 +181,7 @@ function resolveUnion(schema) {
             ? 'object'
             : Array.isArray(b.type)
                 ? b.type.join('|')
-                : b.type ?? 'unknown';
+                : (b.type ?? 'unknown');
     const shapes = [...new Set(branches.map(describe))].join(' | ');
     return {
         kind: 'unsupported',
