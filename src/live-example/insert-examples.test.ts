@@ -192,3 +192,20 @@ describe('#140: example policy', () => {
     expect(run(pre('js', 'A', 'static')).length).toBe(0)
   })
 })
+
+describe('#3820: only a fence is a source block', () => {
+  test("Prism's nested `token language-css` spans in a markup sample make no examples", () => {
+    // What Prism leaves in a static ```xml fence holding a <style> body and a style="…"
+    const markup =
+      '<pre><code class="language-xml">' +
+      '<span class="token tag">&lt;style&gt;</span>' +
+      '<span class="token style"><span class="token language-css">p { color: red }</span></span>' +
+      '<span class="token tag">&lt;p <span class="token special-attr"><span class="token value css language-css">color: blue</span></span>&gt;</span>' +
+      '</code></pre>'
+    expect(run(markup)).toHaveLength(0)
+    // and a real css fence beside it still runs
+    const created = run(markup + '<p>prose</p>' + pre('css', 'p {}'))
+    expect(created).toHaveLength(1)
+    expect(created[0].css).toBe('p {}')
+  })
+})

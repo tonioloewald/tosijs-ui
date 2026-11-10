@@ -245,8 +245,11 @@ export function insertExamples(
     naming the six built-in languages — a copy of the rule that the dialect registry (#184)
     would have made wrong the moment a site registered a seventh. The language is read with
     `languageOfClass`, THE class grammar, case preserved: see its note on ```` ```JS ````.
+    Only a fence's own `<code>`: Prism marks CSS embedded in markup (a `<style>` body, a
+    `style="…"`) with nested `token language-css` spans, and those became empty editors
+    chopping up a static sample (#3820). highlight.ts selects the same way.
     */
-    ...element.querySelectorAll('[class*="language-"]'),
+    ...element.querySelectorAll('pre > code[class*="language-"]'),
   ]
     .filter((el) => !el.closest(liveExampleTagName))
     .map((code) => ({
