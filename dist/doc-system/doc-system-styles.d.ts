@@ -35,5 +35,13 @@ export declare function contrastRatio(a: Color, b: Color): number;
 export declare function readableOn(color: Color, bg: Color, min?: number): Color;
 /** Compute the full set of `:root` color variables from a few base colors. */
 export declare function docSystemColors(theme?: DocSystemTheme): XinStyleRule;
-/** Build the full doc-system stylesheet for a given base theme. */
-export declare function docSystemStyleSpec(theme?: DocSystemTheme): XinStyleSheet;
+/**
+ * Build the full doc-system stylesheet for a given base theme.
+ *
+ * `fontImport: false` leaves out the web fonts' `@import`. The static site does that and links
+ * the fonts from `<head>` instead: an `@import` cannot start until the stylesheet holding it
+ * has arrived, so it chained a second blocking request behind the first (#3631).
+ */
+export declare function docSystemStyleSpec(theme?: DocSystemTheme, { fontImport }?: {
+    fontImport?: boolean;
+}): XinStyleSheet;

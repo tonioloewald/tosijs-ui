@@ -21,6 +21,7 @@ import {
   invertLuminance,
 } from 'tosijs'
 import { icons, svg2DataUrl } from '../icons.js'
+import { DOC_SYSTEM_FONTS_URL } from './doc-fonts.js'
 
 // The sidebar's geometry, shared by the hydrated layout and the pre-hydration one.
 // These mirror what <tosi-sidenav> is given by doc-browser (navSize / minSize): the
@@ -146,13 +147,21 @@ export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
   }
 }
 
-/** Build the full doc-system stylesheet for a given base theme. */
-export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
+/**
+ * Build the full doc-system stylesheet for a given base theme.
+ *
+ * `fontImport: false` leaves out the web fonts' `@import`. The static site does that and links
+ * the fonts from `<head>` instead: an `@import` cannot start until the stylesheet holding it
+ * has arrived, so it chained a second blocking request behind the first (#3631).
+ */
+export function docSystemStyleSpec(
+  theme: DocSystemTheme = {},
+  { fontImport = true }: { fontImport?: boolean } = {}
+): XinStyleSheet {
   const colors = docSystemColors(theme)
   const brandColor = Color.fromCss(theme.accent ?? '#d92270')
   return {
-    '@import':
-      'https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&famiSpline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap',
+    ...(fontImport ? { '@import': DOC_SYSTEM_FONTS_URL } : {}),
     ':root': {
       _fontFamily: "'Aleo', sans-serif",
       _codeFontFamily: "'Spline Sans Mono', monospace",

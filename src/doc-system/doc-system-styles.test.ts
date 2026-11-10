@@ -270,3 +270,13 @@ test('contrastRatio refuses a translucent color rather than ignoring its alpha',
     contrastRatio(Color.fromCss('#d9227066'), Color.fromCss('#fdfdfd'))
   ).toThrow()
 })
+
+describe('#3631: the font @import', () => {
+  test('the drop-in stylesheet imports the fonts; the static site leaves it out', () => {
+    // Drop-in use (no burned-in <link>) has no <head> of its own to link them from.
+    expect(docSystemStyleSpec()['@import']).toContain('family=Spline+Sans+Mono')
+    expect('@import' in docSystemStyleSpec({}, { fontImport: false })).toBe(
+      false
+    )
+  })
+})

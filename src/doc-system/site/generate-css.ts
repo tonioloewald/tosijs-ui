@@ -23,7 +23,11 @@ export async function generateCss(
   outputPath = 'docs/doc-system.css',
   theme: DocSystemTheme = {}
 ): Promise<void> {
-  await Bun.write(outputPath, css(docSystemStyleSpec(theme)))
+  // No @import: each page links the fonts itself, in parallel (generate-site.ts, #3631).
+  await Bun.write(
+    outputPath,
+    css(docSystemStyleSpec(theme, { fontImport: false }))
+  )
 }
 
 if (import.meta.main) {

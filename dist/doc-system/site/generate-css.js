@@ -14,7 +14,8 @@ import './build-dom-shim.js'; // must precede any tosijs import (build has no DO
 import { css } from 'tosijs';
 import { docSystemStyleSpec } from '../doc-system-styles.js';
 export async function generateCss(outputPath = 'docs/doc-system.css', theme = {}) {
-    await Bun.write(outputPath, css(docSystemStyleSpec(theme)));
+    // No @import: each page links the fonts itself, in parallel (generate-site.ts, #3631).
+    await Bun.write(outputPath, css(docSystemStyleSpec(theme, { fontImport: false })));
 }
 if (import.meta.main) {
     // theme is passed as a JSON arg by the orchestrator (the shipped module must

@@ -877,3 +877,41 @@ describe('#3926: a relative logo path', () => {
     }
   })
 })
+
+describe('#3631: web fonts are linked, not imported', () => {
+  test('each page links the fonts beside its stylesheet, and the URL loads both families', async () => {
+    /*
+    The burned-in stylesheet used to @import them, which cannot start until that stylesheet has
+    arrived: two blocking requests in series. The URL also read `&famiSpline+Sans+Mono`, a
+    missing `ly=`, so the code font never loaded on any site.
+    */
+    const dir = `${tmpdir()}/tosi-fonts-${Math.floor(performance.now() * 1000)}`
+    try {
+      await generateSite({
+        docs: [
+          {
+            filename: 'README.md',
+            title: 'Home',
+            path: 'README.md',
+            text: '# Home',
+          },
+        ],
+        outputDir: dir,
+        projectName: 'T',
+        hydrateUrl: '/hydrate-abc.js',
+      } as any)
+      const html = await Bun.file(`${dir}/index.html`).text()
+      const fonts = html.match(
+        /<link rel="stylesheet" href="(https:\/\/fonts\.googleapis\.com[^"]+)"/
+      )
+      expect(fonts).not.toBeNull()
+      const url = new URL(fonts![1].replaceAll('&amp;', '&'))
+      expect(
+        url.searchParams.getAll('family').map((f) => f.split(':')[0])
+      ).toEqual(['Aleo', 'Spline Sans Mono'])
+      expect(url.searchParams.get('display')).toBe('swap')
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  })
+})

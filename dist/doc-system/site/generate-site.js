@@ -12,6 +12,7 @@ component (src/doc-system/*) so static and hydrated output agree.
 */
 import { pageTitle, withoutProjectSuffix } from '../doc-title.js';
 import { highlightHtml } from '../highlight.js';
+import { DOC_SYSTEM_FONTS_URL } from '../doc-fonts.js';
 import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { renderDocMarkdown, } from '../render.js';
@@ -315,11 +316,14 @@ depth = pageDepth(at)) {
                 : '')
         : '';
     const head = [
-        // Render-blocking @import of web fonts lives in the stylesheet; warm the connection.
+        // The web fonts are linked here, not @imported by the stylesheet: an @import waits for
+        // the stylesheet holding it, so it was a second blocking request in series (#3631).
+        // display=swap paints the fallback font until they arrive.
         '  <link rel="preconnect" href="https://fonts.googleapis.com" />',
         '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
         // Burned-in theme: styles the page with no JS and with zero flash on hydration.
         `  <link rel="stylesheet" href="${escapeAttr(withStamp(relativeUrl(depth, stylesUrl), assetStamp))}" data-tosi-doc-system />`,
+        `  <link rel="stylesheet" href="${escapeAttr(DOC_SYSTEM_FONTS_URL)}" />`,
         `  <title>${escapeText(title)}</title>`,
         description
             ? `  <meta name="description" content="${escapeAttr(description)}" />`
