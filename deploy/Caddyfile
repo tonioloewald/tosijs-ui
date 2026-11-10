@@ -122,8 +122,10 @@
 	@version path /version.json
 	header @version Cache-Control "no-store"
 
-	# Hashed filenames are content-addressed, so they can be cached forever.
-	@hashed path_regexp \-[a-z0-9]{8}\.(js|css|map)$
+	# Hashed filenames are content-addressed, so they can be cached forever. A map is
+	# `<name>-<hash>.js.map`, so `.map` follows the extension. bin/caddyfile-hashed.test.ts
+	# checks this against the files the build emits (#2446).
+	@hashed path_regexp \-[a-z0-9]{8}\.(js|css)(\.map)?$
 	header @hashed Cache-Control "public, max-age=31536000, immutable"
 
 	# Everything else: revalidate, so a deploy is visible on reload.
@@ -135,7 +137,7 @@
 	# clobber their immutable header. Verified with curl against the live host.
 	@rest {
 		not path /version.json
-		not path_regexp \-[a-z0-9]{8}\.(js|css|map)$
+		not path_regexp \-[a-z0-9]{8}\.(js|css)(\.map)?$
 	}
 	header @rest Cache-Control "no-cache"
 
