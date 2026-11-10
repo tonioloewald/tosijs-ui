@@ -818,6 +818,7 @@ import {
   loadExampleEdit,
   clearExampleEdit,
   hasExampleEdit,
+  sourceFingerprint,
   ExampleEdit,
 } from './example-store.js'
 import { liveExampleStyleSpec } from './styles.js'
@@ -3059,6 +3060,9 @@ export class LiveExample extends withAttributes({
         this.dialect !== 'js' && this.compiledJsSource === this.js
           ? this.compiledJs
           : undefined,
+      base: this.originalCode
+        ? sourceFingerprint(this.originalCode)
+        : undefined,
     })
     this.updateEditedIndicator()
     // A local save is a per-browser scratchpad, not a file write — say so, or it
@@ -3097,11 +3101,26 @@ export class LiveExample extends withAttributes({
     const key = this.localEditKey()
     if (!key || !hasExampleEdit(key)) return
     const edit = loadExampleEdit(key)
-    if (edit) {
-      this.applyEdit(edit)
-      this.updateEditedIndicator()
-      this.refresh()
+    if (!edit) return
+    const where = key.slice(key.indexOf(':') + 1)
+    /*
+    Made against a source that has since changed: run the source, and keep the edit where it
+    is (the next save replaces it) rather than discard someone's work unasked (#3276).
+    */
+    if (edit.base && edit.base !== sourceFingerprint(this.originalCode)) {
+      console.warn(
+        `live example ${where}: an edit saved in this browser was made against an older version of this example, so the example runs its source. The edit is kept in localStorage under "${key}".`
+      )
+      return
     }
+    this.applyEdit(edit)
+    this.updateEditedIndicator()
+    // Say so: nothing on the page distinguishes a saved edit from the source it replaced.
+    if (this.hasLocalEdits())
+      console.warn(
+        `live example ${where} is running an edit saved in this browser, not the page's source. Revert it from the example's ⋮ menu.`
+      )
+    this.refresh()
   }
 
   // Toggle a per-tab diff (current vs original source) across the example's

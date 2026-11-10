@@ -19,6 +19,28 @@ export interface ExampleEdit {
   // without reloading the transpiler — see self-contained-examples-plan.md slice 4.
   // Absent for `js`-dialect examples (they need no transpiler) and older saves.
   compiledJs?: string
+  // A fingerprint of the SOURCE the edit was made against (sourceFingerprint). When the page's
+  // source has changed since, the edit is set aside and the source runs (#3276). Absent in
+  // saves made before it existed.
+  base?: string
+}
+
+/*
+A saved edit outlives the source it was made from. One kept running a long-gone version of an
+example in one browser profile: the page looked like the source, the error read like a library
+defect, and every other browser was clean (#3276). The fingerprint is what tells the two apart.
+Trailing whitespace is ignored, as hasLocalEdits ignores it.
+*/
+export function sourceFingerprint(code: ExampleEdit): string {
+  const t = (s?: string) => (s ?? '').replace(/\s+$/, '')
+  const text = [code.js, code.html, code.css, code.test].map(t).join('\u0000')
+  // FNV-1a, 32 bits: telling versions of one example apart, not security.
+  let hash = 0x811c9dc5
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
 /** Stable key for an example, from its source↔doc map attributes. */

@@ -4,7 +4,9 @@ export interface ExampleEdit {
     css?: string;
     test?: string;
     compiledJs?: string;
+    base?: string;
 }
+export declare function sourceFingerprint(code: ExampleEdit): string;
 /** Stable key for an example, from its source↔doc map attributes. */
 export declare function exampleEditKey(sourceFile: string, ordinal: string | number): string;
 export declare function saveExampleEdit(key: string, edit: ExampleEdit): void;

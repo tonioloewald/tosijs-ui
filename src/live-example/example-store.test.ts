@@ -5,6 +5,7 @@ import {
   loadExampleEdit,
   clearExampleEdit,
   hasExampleEdit,
+  sourceFingerprint,
 } from './example-store.js'
 
 describe('example-store', () => {
@@ -47,5 +48,16 @@ describe('example-store', () => {
     const key = exampleEditKey('a.md', 3)
     localStorage.setItem(key, '{not json')
     expect(loadExampleEdit(key)).toBeNull()
+  })
+})
+
+describe('sourceFingerprint (#3276)', () => {
+  test('changes with the source, and ignores trailing whitespace', () => {
+    const a = sourceFingerprint({ js: 'go()', html: '<p></p>' })
+    expect(a).toMatch(/^[0-9a-f]{8}$/)
+    expect(sourceFingerprint({ js: 'go()  \n', html: '<p></p>\n' })).toBe(a)
+    expect(sourceFingerprint({ js: 'go(1)', html: '<p></p>' })).not.toBe(a)
+    // the same text in a different block is a different example
+    expect(sourceFingerprint({ html: 'go()', js: '<p></p>' })).not.toBe(a)
   })
 })
