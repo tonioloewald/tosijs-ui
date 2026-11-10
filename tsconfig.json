@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "es2022",
     "target": "es2022",
     "moduleResolution": "bundler",
@@ -13,8 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "types": [
-      "bun-types", // add Bun global
-      "@types/jsdom"
+      "bun-types" // add Bun global
     ]
   },
   "allowJs": true,
