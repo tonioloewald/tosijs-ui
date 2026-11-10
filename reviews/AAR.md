@@ -1151,3 +1151,13 @@ gap, recorded rather than hidden.
   rather than decided silently.
 - **Mistaken commit hashes on the board:** two comments cited guessed hashes; corrected with the
   real ones. Look hashes up, don't recall them.
+
+## 1.17.7 (2026-11-10) — the dev server refuses a port it does not own
+
+- **Found by the previous release's own run:** 1.17.6's first Playwright pass failed 338 tests
+  because tjs-lang held 8797 and our server started beside it. The one true line was a warning
+  in the WebServer log, followed by "Listening". The fix makes that warning the exit (#4000).
+- **Cut at the maintainer's call as a patch;** Prettier 3 rides along (dev-only, no behaviour
+  change in dist).
+- **An overclaim corrected:** the Prettier 3 commit said dist was byte-identical; only the iife
+  and index are. 14 ESM files gained redundant parentheses. Corrected on #1608.

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.17.7
+
+> One dev-server fix: it no longer starts on a port another project already holds. Nothing to
+> change on upgrade, and nothing an adopter's site ships is affected.
+
+### Fixed
+
+- The dev server started, and said "Listening", on a port another project's server (or a
+  process that is not a dev server) already held on `127.0.0.1`: macOS lets a wildcard bind sit
+  beside it without an error, so `https://localhost:PORT` reached the other server. It now
+  exits 1 naming the holder ("Not starting: port 8797 is held by pid … working in …"), and
+  still leaves that process alone. A stale server of its own project is still stopped as
+  before. #4000
+
 ## 1.17.6
 
 > Fixes for live examples and the doc browser: a doc site served over plain http hydrates, an
