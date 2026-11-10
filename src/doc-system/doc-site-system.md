@@ -831,6 +831,13 @@ refused, and a stale lock still names its holder.
 so a test run no longer reclaims 8787 by killing the dev server you are looking at. An explicit
 `PORT` or `config.port` still wins.
 
+**A port held by something else stops the server starting.** The dev server stops a stale
+server of its own project on its port and leaves anything else alone. Since 1.17.7, "anything
+else" (another project's dev server, or a process that is not a dev server) means it exits 1 and
+names the holder, instead of starting beside it. On macOS a server listening on `127.0.0.1` does
+not stop a second one binding the same port, so the second said "Listening" while
+`https://localhost:PORT` reached the first. Stop the holder, or set `PORT`.
+
 #### `haltijaDev` — Claude eyes on your running dev page
 
 Set `haltijaDev: true` (or run with `HALTIJA_DEV=1`) and `bun start` gives a coding

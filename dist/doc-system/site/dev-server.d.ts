@@ -173,6 +173,27 @@ export type Upgrader = {
  */
 export declare function upgraderSettingCookie(srv: Upgrader, setCookie: string): Upgrader;
 export declare const HALTIJA_BRIDGE_COMPONENT = "/__haltija/component.js";
+/**
+ * Reclaim the port we are about to bind, from the process LISTENING on it.
+ *
+ * That sentence is the predicate, and the old code did not implement it. It ran
+ * `lsof -ti:${port} | xargs kill -9`, and **`lsof -i:PORT` matches sockets whose
+ * LOCAL *or REMOTE* port is PORT** — so it returned every process merely *connected*
+ * to that port and SIGKILLed them all. Not theoretical: on this machine
+ * `lsof -ti:443` returns GitHub Desktop, Proton Bridge and two `claude` processes,
+ * none of which listen on 443. Aimed at our own dev port it would take out the
+ * browser reading the page, Playwright's browsers, the haltija Electron — anything
+ * with an open connection.
+ *
+ * We shipped that reasoning in this very file for `pkill -f haltija` ("a test lane
+ * that reaches outside the repo and kills the developer's tools presents as 'my tools
+ * got weird', never as a red test") and then failed to apply it here.
+ *
+ * So: listeners only; confirm each pid is actually a JS runtime before signalling
+ * (if something else owns our port, that is the user's business — say so, don't shoot
+ * it); SIGTERM first and give it a moment; SIGKILL only what refuses to die.
+ */
+export declare function killStrayServer(port: number, cwd?: string): Promise<string | null>;
 /** br if the client takes it, else gzip, else nothing. */
 export declare function negotiateEncoding(accept: string | null): 'br' | 'gzip' | null;
 /** Is this worth compressing? Already-compressed formats only get bigger. */

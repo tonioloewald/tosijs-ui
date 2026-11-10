@@ -9,6 +9,7 @@ import {
   resolveLimitMb,
   nextBuildStep,
   rootRelativeUrls,
+  killStrayServer,
 } from './dev-server.js'
 
 const HOUR = 3600_000
@@ -217,7 +218,7 @@ test('unrecognised JSON is not drivable', () => {
 // ── which haltija do we spawn? ───────────────────────────────────────────────
 
 import { resolveHaltijaChannel } from './dev-server'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, realpathSync } from 'fs'
 import { tmpdir as osTmpdir } from 'os'
 import * as nodePath from 'path'
 
@@ -636,4 +637,43 @@ test('the bundleEntry FILE is watched, so editing it rebuilds the bundle (#3772)
   expect(watched).toContain('demo/site.ts')
   // Never its folder: a bundleEntry at the root would watch the output tree.
   expect(resolveWatchPaths({ bundleEntry: 'site.ts' })).not.toContain('.')
+})
+
+/*
+#4000: another project's server on 127.0.0.1:PORT. Bun.serve's wildcard bind succeeds beside it
+on macOS, so the only thing that stops our server starting deaf is this answer.
+*/
+test('a port another project listens on is a refusal, and its holder is left running', async () => {
+  const elsewhere = realpathSync(
+    mkdtempSync(nodePath.join(osTmpdir(), 'foreign-'))
+  )
+  const holder = Bun.spawn(
+    [
+      process.execPath,
+      '-e',
+      "const s = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: () => new Response('') }); console.log(s.port)",
+    ],
+    { cwd: elsewhere, stdout: 'pipe' }
+  )
+  try {
+    const reader = holder.stdout.getReader()
+    const port = Number(
+      new TextDecoder().decode((await reader.read()).value).trim()
+    )
+    expect(port).toBeGreaterThan(0)
+    const refusal = await killStrayServer(port, process.cwd())
+    expect(refusal).toContain('not this project')
+    expect(refusal).toContain(elsewhere)
+    expect(holder.exitCode).toBe(null)
+    expect(holder.killed).toBe(false)
+  } finally {
+    holder.kill()
+  }
+})
+
+test('a free port is no refusal', async () => {
+  const probe = Bun.serve({ port: 0, fetch: () => new Response('') })
+  const port = probe.port
+  probe.stop(true)
+  expect(await killStrayServer(port)).toBe(null)
 })

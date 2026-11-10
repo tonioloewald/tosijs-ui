@@ -556,10 +556,20 @@ export const HALTIJA_BRIDGE_COMPONENT = '/__haltija/component.js'
  * (if something else owns our port, that is the user's business — say so, don't shoot
  * it); SIGTERM first and give it a moment; SIGKILL only what refuses to die.
  */
-async function killStrayServer(port: number) {
+export async function killStrayServer(
+  port: number,
+  cwd = process.cwd()
+): Promise<string | null> {
   // Number('') is 0, and `lsof -ti:0` matches sockets with an UNBOUND port — on this
   // machine, system daemons. Never let a bad port become a kill list.
-  if (!Number.isInteger(port) || port <= 0 || port > 65535) return
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) return null
+  /*
+  A listener we leave alone is a reason NOT TO START, not a warning (#4000). Bun.serve binds
+  the wildcard address, and macOS lets that sit beside another process's 127.0.0.1 bind
+  without EADDRINUSE, so the server came up "Listening" while every request to 127.0.0.1
+  reached the other one: tjs-lang's server on 8797 turned a release run into 338 red tests.
+  */
+  let refusal: string | null = null
 
   const pids = await $`lsof -ti:${port} -sTCP:LISTEN`
     .quiet()
@@ -581,12 +591,11 @@ async function killStrayServer(port: number) {
       .then((s) => s.trim())
       .catch(() => '')
     if (!/\b(bun|node|deno)\b/.test(comm)) {
-      console.warn(
-        `⚠️  port ${port} is held by pid ${pid} (${
+      refusal =
+        `port ${port} is held by pid ${pid} (${
           comm || 'unknown'
         }), which is not a\n` +
-          `    dev server — leaving it alone. Free the port, or set PORT to another one.`
-      )
+        `    dev server — leaving it alone. Free the port, or set PORT to another one.`
       continue
     }
     /*
@@ -611,14 +620,13 @@ async function killStrayServer(port: number) {
           .trim()
       )
       .catch(() => undefined)
-    if (theirCwd !== process.cwd()) {
-      console.warn(
-        `⚠️  port ${port} is held by pid ${pid} (${comm}) working in\n` +
-          `    ${
-            theirCwd ?? 'an unreadable directory'
-          } — not this project, so leaving it\n` +
-          `    alone. Stop it yourself, or set PORT to another one.`
-      )
+    if (theirCwd !== cwd) {
+      refusal =
+        `port ${port} is held by pid ${pid} (${comm}) working in\n` +
+        `    ${
+          theirCwd ?? 'an unreadable directory'
+        } — not this project, so leaving it\n` +
+        `    alone. Stop it yourself, or set PORT to another one.`
       continue
     }
     try {
@@ -649,6 +657,7 @@ async function killStrayServer(port: number) {
       }
     }
   }
+  return refusal
 }
 
 /**
@@ -1491,7 +1500,11 @@ export async function devServer(
     })
   }
 
-  await killStrayServer(PORT)
+  const portRefusal = await killStrayServer(PORT)
+  if (portRefusal) {
+    console.error(`\n❌ Not starting: ${portRefusal}\n`)
+    process.exit(1)
+  }
 
   function resolveUnder(directory: string, reqPath: string): string | null {
     const basePath = path.join(directory, reqPath)
