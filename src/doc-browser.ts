@@ -154,7 +154,10 @@ import { tosiLocalized, localize, i18n } from './localize.js'
 import { popMenu } from './menu.js'
 import { codeEditor, CodeEditor } from './code-editor.js'
 import { tosiDiff } from './diff.js'
-import { LAN_REFUSAL_ADVICE } from './live-example/source-access.js'
+import {
+  LAN_REFUSAL_ADVICE,
+  hasSourceEndpoint,
+} from './live-example/source-access.js'
 import { servedForDevelopment } from './live-example/dev-served.js'
 
 /*
@@ -1601,6 +1604,14 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   */
   let sourceUnauthorized = false
 
+  /*
+  Whether a page's source can be read at all: from a dev server's source endpoint (which says
+  so in the page it serves) or from GitHub raw (`projectLinks.github`). A deployed site with
+  neither offered Edit, which only alerted, and Download, which did nothing (#3272).
+  */
+  const canLoadSource = (p: string): boolean =>
+    hasSourceEndpoint() || githubRawUrl(p) !== null
+
   const loadSource = async (p: string): Promise<string | null> => {
     sourceUnauthorized = false
     try {
@@ -1874,11 +1885,15 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           { caption: 'Close editor', icon: 'x', action: exitEditSource },
         ]
       : [
-          {
-            caption: 'Edit page source',
-            icon: 'edit',
-            action: () => void enterEditSource(doc),
-          },
+          ...(canLoadSource(doc.path)
+            ? [
+                {
+                  caption: 'Edit page source',
+                  icon: 'edit',
+                  action: () => void enterEditSource(doc),
+                },
+              ]
+            : []),
           ...(projectLinks.github && doc.path && doc.path !== 'README.md'
             ? [
                 {
@@ -1893,14 +1908,18 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
                 },
               ]
             : []),
-          {
-            caption: 'Download source',
-            icon: 'download',
-            action: () =>
-              void loadSource(doc.path).then((c) => {
-                if (c !== null) downloadText(fileName(doc.path), c)
-              }),
-          },
+          ...(canLoadSource(doc.path)
+            ? [
+                {
+                  caption: 'Download source',
+                  icon: 'download',
+                  action: () =>
+                    void loadSource(doc.path).then((c) => {
+                      if (c !== null) downloadText(fileName(doc.path), c)
+                    }),
+                },
+              ]
+            : []),
         ]
 
     return menuItems
