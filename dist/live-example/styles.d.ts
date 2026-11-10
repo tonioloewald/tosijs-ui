@@ -21,6 +21,10 @@ export declare const liveExampleStyleSpec: {
         outline: string;
         outlineOffset: string;
     };
+    ':host.-locally-edited.-inline-code:not(.-maximize) > .code-editors': {
+        outline: string;
+        outlineOffset: string;
+    };
     ':host.-maximize': {
         position: string;
         left: string;

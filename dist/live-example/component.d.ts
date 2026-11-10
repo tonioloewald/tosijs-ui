@@ -55,6 +55,10 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
             outline: string;
             outlineOffset: string;
         };
+        ':host.-locally-edited.-inline-code:not(.-maximize) > .code-editors': {
+            outline: string;
+            outlineOffset: string;
+        };
         ':host.-maximize': {
             position: string;
             left: string;

@@ -66,3 +66,28 @@ test('a saved edit runs only against the source it was made from, and says so', 
   )
   await page.evaluate((k) => localStorage.removeItem(k), key)
 })
+
+test('in the inline views, an edited example is marked on its code panel', async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+  await page.goto('/rating/')
+  const first = page.locator('.doc-content tosi-example').first()
+  await expect(first).toBeAttached()
+  // The toolbar that carries the mark elsewhere is hidden in the inline views.
+  const outline = await first.evaluate(async (el: any) => {
+    await el.whenHydrated
+    el.classList.add('-inline-code')
+    const panel = el.querySelector(':scope > .code-editors') as HTMLElement
+    const before = getComputedStyle(panel).outline
+    el.classList.add('-locally-edited')
+    const after = getComputedStyle(panel).outline
+    el.classList.remove('-inline-code', '-locally-edited')
+    return { before, after }
+  })
+  // The panel always has a faint outline; edited, it takes the brand colour.
+  expect(outline.after).not.toBe(outline.before)
+  expect(outline.after).toContain('solid')
+})

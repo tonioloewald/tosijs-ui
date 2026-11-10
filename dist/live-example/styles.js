@@ -38,6 +38,11 @@ export const liveExampleStyleSpec = {
         outline: '2px solid var(--brand-color, #da1167)',
         outlineOffset: '1px',
     },
+    // The inline views hide that toolbar, so the code panel carries the mark instead (#3276).
+    ':host.-locally-edited.-inline-code:not(.-maximize) > .code-editors': {
+        outline: '2px solid var(--brand-color, #da1167)',
+        outlineOffset: '-2px',
+    },
     ':host.-maximize': {
         position: 'fixed',
         left: '0',
