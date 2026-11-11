@@ -1,4 +1,5 @@
 import { XinStyleRule, XinStyleSheet } from 'tosijs';
+export { FONT_ORIGINS, allowedFontUrl, fontFamilies, parseFontImport, } from './theme-fonts.js';
 /** The kinds of value a theme variable can hold; each gets its own control in the editor. */
 export type ThemeKind = 'color' | 'length' | 'number' | 'font-family' | 'image' | 'enum' | 'text';
 export interface ThemeVariable {
@@ -24,6 +25,8 @@ export interface ThemeData {
     dark?: ThemeValues;
     highContrast?: ThemeValues;
     darkHighContrast?: ThemeValues;
+    /** web-font stylesheets the theme uses (Google Fonts or Bunny Fonts URLs) */
+    fonts?: string[];
 }
 export interface ThemeGenerator {
     /** the base values it reads, as colour variables named by their key in `base` */
@@ -56,3 +59,5 @@ export declare function applyThemeData(data: ThemeData, generator: ThemeGenerato
 }): Record<ThemeMode, ThemeValues>;
 /** The tosijs-ui component theme (`createTheme`), driven by accent, background and text. */
 export declare const componentThemeGenerator: ThemeGenerator;
+/** Link the theme's font stylesheets, and unlink ones it no longer uses. */
+export declare function applyThemeFonts(urls?: string[]): void;

@@ -970,3 +970,35 @@ describe('#255: the Continue link', () => {
     }
   })
 })
+
+describe('#3914: a saved theme', () => {
+  test('its web fonts are linked from every page, and only from font hosts', async () => {
+    const dir = `${tmpdir()}/tosi-theme-fonts-${Math.floor(performance.now() * 1000)}`
+    const lora = 'https://fonts.googleapis.com/css2?family=Lora&display=swap'
+    try {
+      await generateSite({
+        docs: [
+          {
+            filename: 'README.md',
+            title: 'Home',
+            path: 'README.md',
+            text: '# Home',
+          },
+        ],
+        outputDir: dir,
+        projectName: 'T',
+        themeFile: 'theme.json',
+        themeFonts: [lora, 'https://evil.example/x.css?family=Nope'],
+      } as any)
+      const html = await Bun.file(`${dir}/index.html`).text()
+      expect(html).toContain(
+        `<link rel="stylesheet" href="${lora.replace(/&/g, '&amp;')}" data-tosi-theme-font />`
+      )
+      expect(html).not.toContain('evil.example')
+      // The browser learns where the theme lives, for the editor.
+      expect(html).toContain('&quot;themeFile&quot;:&quot;theme.json&quot;')
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  })
+})

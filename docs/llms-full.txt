@@ -11936,6 +11936,14 @@ Each mode is written under its own selector (`THEME_MODE_SELECTORS`): `:root`, `
 what differs from light, so a font or a size you set once applies in every mode unless a mode
 tunes it.
 
+## Web fonts
+
+`fonts` lists stylesheets to link, such as a Google Fonts URL; `applyThemeData` links them
+(and unlinks ones the theme no longer names), and the doc site's build links them from each
+page's `<head>`. Only `fonts.googleapis.com` and `fonts.bunny.net` are accepted, since linking a
+stylesheet injects CSS. `parseFontImport` takes whatever Google Fonts offers you to copy (a
+`<link>`, an `@import` line, or the URL) and returns the URL and its families.
+
 ## Generators
 
 A generator says which base values there are, and turns them into each mode's variables:

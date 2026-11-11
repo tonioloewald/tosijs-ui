@@ -1,9 +1,11 @@
 import { test, expect } from 'bun:test'
 import { Color } from 'tosijs'
 import {
+  applyThemeFonts,
   componentThemeGenerator,
   highContrastBase,
   invertedColors,
+  parseFontImport,
   resolveTheme,
   ruleValues,
   themeStyleSheet,
@@ -105,4 +107,38 @@ test('themeStyleSheet writes each mode under its selector, and skips empty modes
     ':root': { _tosiAccent: '#123456' },
     'body.night': { _tosiBg: '#000000' },
   })
+})
+
+test('parseFontImport takes what Google Fonts offers to copy, and refuses other hosts', () => {
+  const url =
+    'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans&display=swap'
+  for (const pasted of [
+    url,
+    `<link href="${url.replace(/&/g, '&amp;')}" rel="stylesheet">`,
+    `@import url('${url}');`,
+  ]) {
+    const parsed = parseFontImport(pasted)
+    expect(parsed).toEqual({ url, families: ['Roboto', 'Open Sans'] })
+  }
+  expect(
+    'error' in parseFontImport('https://evil.example/x.css?family=A')
+  ).toBe(true)
+  expect('error' in parseFontImport('https://fonts.googleapis.com/css2')).toBe(
+    true
+  )
+  expect('error' in parseFontImport('not a url')).toBe(true)
+})
+
+test('applyThemeFonts links the theme fonts and unlinks the ones it drops', () => {
+  const a = 'https://fonts.googleapis.com/css2?family=Roboto'
+  const b = 'https://fonts.bunny.net/css?family=lora'
+  applyThemeFonts([a, b, 'https://evil.example/x.css?family=A'])
+  const hrefs = () =>
+    [...document.querySelectorAll('link[data-tosi-theme-font]')].map(
+      (l) => (l as HTMLLinkElement).href
+    )
+  expect(hrefs()).toEqual([a, b])
+  applyThemeFonts([b])
+  expect(hrefs()).toEqual([b])
+  applyThemeFonts([])
 })

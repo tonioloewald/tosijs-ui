@@ -15,6 +15,8 @@ export interface GenerateSiteConfig {
     themeFile?: string;
     /** `SiteConfig.theme`: the theme editor's starting base colours */
     theme?: DocSystemTheme;
+    /** web fonts the saved theme (`themeFile`) uses; each must pass `allowedFontUrl` */
+    themeFonts?: string[];
     /** `SiteConfig.searchPlaceholder` */
     searchPlaceholder?: string;
     /** `SiteConfig.accessibility` (#3521) */

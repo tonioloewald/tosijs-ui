@@ -8,11 +8,13 @@ a tunnel edit session). A deployed site has neither, so the item never appears t
 
 Saving writes the file through the same endpoint as save-to-source; the watcher rebuilds, and
 the build writes the theme into the site's stylesheet, so the next load paints it first time.
-Closing without saving takes the preview away and leaves the page on the saved theme.
+Closing without saving takes the preview away and leaves the page on the saved theme, fonts
+included.
 */
 import { StyleSheet, elements } from 'tosijs';
 import { tosiFloat } from '../float.js';
 import { tosiThemeEditor } from '../theme-editor.js';
+import { applyThemeFonts } from '../theme-data.js';
 import { DOC_SYSTEM_THEME_VARIABLES, docSystemThemeGenerator, } from './doc-system-styles.js';
 import { hasSourceEndpoint, sourceAccess, } from '../live-example/source-access.js';
 const { div, span, button } = elements;
@@ -130,6 +132,8 @@ export async function openThemeEditor(site) {
     let saved = JSON.stringify(value);
     const close = () => {
         document.getElementById(THEME_PREVIEW_STYLE_ID)?.remove();
+        // Back to the saved theme's fonts, which the page's own links were.
+        applyThemeFonts(JSON.parse(saved).fonts);
         panel.remove();
         open = null;
     };

@@ -119,8 +119,8 @@ unreadable.
 */
 /*{ "parent": "Helper Libraries", "description": "<tosi-theme-editor> edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON." }*/
 import { Color, elements, withAttributes, } from 'tosijs';
-import { THEME_MODES, applyThemeData, componentThemeGenerator, resolveTheme, } from './theme-data.js';
-const { div, h3, label, input, select, option, button, datalist } = elements;
+import { THEME_MODES, applyThemeData, componentThemeGenerator, fontFamilies, parseFontImport, resolveTheme, } from './theme-data.js';
+const { div, h3, label, input, select, option, button, datalist, span } = elements;
 export const THEME_MODE_LABELS = {
     light: 'Light',
     dark: 'Dark',
@@ -141,6 +141,22 @@ const wellValue = (value) => {
         return '#000000';
     }
 };
+/** The units a length field offers. */
+export const LENGTH_UNITS = ['px', 'rem', 'em', '%', 'vw', 'vh', 'ch', 'pt'];
+/** `16px` → `{ amount: 16, unit: 'px' }`; null for anything else (`calc(…)`, a `var()`). */
+export function splitLength(value) {
+    const match = /^(-?\d*\.?\d+)([a-z%]*)$/i.exec(value.trim());
+    if (!match)
+        return null;
+    const unit = match[2].toLowerCase() || (Number(match[1]) === 0 ? 'px' : '');
+    return LENGTH_UNITS.includes(unit) ? { amount: Number(match[1]), unit } : null;
+}
+/** How far one click of the arrows moves a length in `unit`. */
+const lengthStep = (unit) => unit === 'rem' || unit === 'em'
+    ? 0.125
+    : unit === 'px' || unit === 'pt' || unit === '%'
+        ? 1
+        : 0.5;
 export class TosiThemeEditor extends withAttributes({
     /** the mode being edited */
     mode: 'light',
@@ -270,6 +286,32 @@ export class TosiThemeEditor extends withAttributes({
             background: '#fff',
             cursor: 'pointer',
         },
+        ':host [hidden]': { display: 'none !important' },
+        ':host .font-add, :host .font': {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            minHeight: '30px',
+        },
+        ':host .font span': {
+            flex: '1',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+        },
+        ':host .font-add input': { flex: '1' },
+        ':host .font-add button, :host .font button': {
+            padding: '3px 8px',
+            border: '1px solid #bbb',
+            borderRadius: '4px',
+            background: '#f5f5f5',
+            color: '#222',
+            font: 'inherit',
+            cursor: 'pointer',
+        },
+        ':host .font-error': { color: '#b00020' },
+        ':host .font-error:empty': { display: 'none' },
+        ':host .length-unit': { flex: '0 0 64px' },
         ':host .reset': {
             flex: '0 0 24px',
             width: '24px',
@@ -328,6 +370,17 @@ export class TosiThemeEditor extends withAttributes({
             const text = field.querySelector('input[type="text"]');
             text.value = target.value;
         }
+        if (target.classList.contains('length-amount') ||
+            target.classList.contains('length-unit')) {
+            const amount = field.querySelector('.length-amount');
+            const unit = field.querySelector('.length-unit');
+            // An emptied number is a half-typed value, not a request to reset.
+            if (amount.value === '')
+                return;
+            amount.step = String(lengthStep(unit.value));
+            this.set(scope, name, amount.value + unit.value);
+            return;
+        }
         this.set(scope, name, target.value);
     };
     handleClick = (event) => {
@@ -338,11 +391,49 @@ export class TosiThemeEditor extends withAttributes({
             this.mode = modeButton.dataset.mode;
             return;
         }
+        if (target.closest('[part="fontAdd"]')) {
+            this.addFont();
+            return;
+        }
+        const remove = target.closest('[data-font]');
+        if (remove) {
+            this.setFonts((this.value.fonts ?? []).filter((url) => url !== remove.dataset.font));
+            return;
+        }
         const reset = target.closest('.reset');
         if (reset) {
             const field = reset.closest('.field');
             const { name, scope } = field.dataset;
             this.set(scope, name, null);
+        }
+    };
+    setFonts(fonts) {
+        const theme = { ...this.value, fonts };
+        if (!fonts.length)
+            delete theme.fonts;
+        this._value = theme;
+        this.update();
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    /** Add the font pasted into the font field, or say why it was refused. */
+    addFont = () => {
+        const fontInput = this.parts.fontInput;
+        const { fontError } = this.parts;
+        const parsed = parseFontImport(fontInput.value);
+        if ('error' in parsed) {
+            fontError.textContent = parsed.error;
+            return;
+        }
+        fontError.textContent = '';
+        fontInput.value = '';
+        const fonts = this.value.fonts ?? [];
+        if (!fonts.includes(parsed.url))
+            this.setFonts([...fonts, parsed.url]);
+    };
+    handleFontKey = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            this.addFont();
         }
     };
     /** Put every mode and every value back to what the base colours generate. */
@@ -351,13 +442,23 @@ export class TosiThemeEditor extends withAttributes({
         this.update();
         this.dispatchEvent(new Event('change', { bubbles: true }));
     };
-    // A colour well reports while it is dragged; follow it, without waiting for `change`.
-    handleColorWell = (event) => {
-        if (event.target.type === 'color')
+    /*
+    Follow a colour well while it is dragged, and a length while its arrows are clicked or its
+    arrow keys held, without waiting for `change` (which comes on blur).
+    */
+    handleLiveInput = (event) => {
+        const target = event.target;
+        if (target.type === 'color' || target.classList.contains('length-amount'))
             this.handleInput(event);
     };
     content = () => [
-        div({ part: 'fields', class: 'fields' }, div({ part: 'modes', class: 'modes', role: 'group', ariaLabel: 'Mode' }), div({ part: 'base' }), div({ part: 'variables' })),
+        div({ part: 'fields', class: 'fields' }, div({ part: 'modes', class: 'modes', role: 'group', ariaLabel: 'Mode' }), div({ part: 'base' }), div({ part: 'fontsSection', hidden: true }, h3('Web fonts'), div({ part: 'fontList' }), div({ class: 'font-add' }, input({
+            part: 'fontInput',
+            type: 'text',
+            placeholder: 'Paste a Google Fonts link',
+            ariaLabel: 'Font link, @import line or URL',
+            spellcheck: false,
+        }), button({ part: 'fontAdd' }, 'Add')), div({ part: 'fontError', class: 'font-error', role: 'status' })), div({ part: 'variables' })),
         datalist({ part: 'fonts', id: 'theme-editor-fonts' }),
         div({ class: 'actions' }, button({ part: 'reset' }, 'Reset all')),
     ];
@@ -374,6 +475,23 @@ export class TosiThemeEditor extends withAttributes({
                 break;
             case 'number':
                 controls = [input({ type: 'number', id, step: 0.05 })];
+                break;
+            /*
+            A number with arrows and a unit menu, so a size can be nudged rather than retyped. A
+            value that is not a plain length (`calc(…)`, a `var()`) shows as text instead.
+            */
+            case 'length':
+                controls = [
+                    input({ type: 'number', id, class: 'length-amount' }),
+                    select({ class: 'length-unit', ariaLabel: `${caption} unit` }, ...LENGTH_UNITS.map((unit) => option({ value: unit }, unit))),
+                    input({
+                        type: 'text',
+                        class: 'length-text',
+                        ariaLabel: caption,
+                        spellcheck: false,
+                        hidden: true,
+                    }),
+                ];
                 break;
             case 'enum':
                 controls = [
@@ -393,6 +511,7 @@ export class TosiThemeEditor extends withAttributes({
         }
         return div({
             class: 'field',
+            dataKind: variable.kind,
             dataName: variable.name,
             dataScope: scope,
             title: variable.name,
@@ -411,6 +530,10 @@ export class TosiThemeEditor extends withAttributes({
                 if (value)
                     families.add(value);
             }
+        }
+        for (const url of this.value.fonts ?? []) {
+            for (const family of fontFamilies(url))
+                families.add(`'${family}', sans-serif`);
         }
         for (const generic of [
             'system-ui, sans-serif',
@@ -477,13 +600,40 @@ export class TosiThemeEditor extends withAttributes({
                 ? (base[name] ?? '')
                 : effective(resolved, scope, name);
             field.classList.toggle('-tuned', name in tunedIn);
+            if (field.dataset.kind === 'length') {
+                this.showLength(field, value, focused);
+                continue;
+            }
             for (const control of field.querySelectorAll('input, select')) {
                 if (control === focused)
                     continue;
                 control.value = control.type === 'color' ? wellValue(value) : value;
             }
         }
+        ;
+        this.parts.fontsSection.hidden = !this.variables.some((variable) => variable.kind === 'font-family');
+        this.parts.fontList.replaceChildren(...(this.value.fonts ?? []).map((url) => div({ class: 'font' }, span({ title: url }, fontFamilies(url).join(', ')), button({
+            dataFont: url,
+            ariaLabel: `Remove ${fontFamilies(url).join(', ')}`,
+        }, 'Remove'))));
         this.parts.fonts.replaceChildren(...this.fontSuggestions(resolved).map((family) => option({ value: family })));
+    }
+    showLength(field, value, focused) {
+        const amount = field.querySelector('.length-amount');
+        const unit = field.querySelector('.length-unit');
+        const text = field.querySelector('.length-text');
+        const length = splitLength(value);
+        amount.hidden = unit.hidden = !length;
+        text.hidden = !!length;
+        if (length) {
+            if (amount !== focused)
+                amount.value = String(length.amount);
+            unit.value = length.unit;
+            amount.step = String(lengthStep(length.unit));
+        }
+        else if (text !== focused) {
+            text.value = value;
+        }
     }
     listening = false;
     /*
@@ -496,9 +646,10 @@ export class TosiThemeEditor extends withAttributes({
         this.listening = true;
         const { fields } = this.parts;
         fields.addEventListener('change', this.handleInput);
-        fields.addEventListener('input', this.handleColorWell);
+        fields.addEventListener('input', this.handleLiveInput);
         fields.addEventListener('click', this.handleClick);
         this.parts.reset.addEventListener('click', this.resetAll);
+        this.parts.fontInput.addEventListener('keydown', this.handleFontKey);
     }
     /** Apply the theme and show it in the fields. */
     update() {

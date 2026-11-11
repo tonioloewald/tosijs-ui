@@ -1,6 +1,13 @@
 import { ElementCreator, XinStyleSheet } from 'tosijs';
 import { ThemeData, ThemeGenerator, ThemeMode, ThemeVariable } from './theme-data.js';
 export declare const THEME_MODE_LABELS: Record<ThemeMode, string>;
+/** The units a length field offers. */
+export declare const LENGTH_UNITS: string[];
+/** `16px` → `{ amount: 16, unit: 'px' }`; null for anything else (`calc(…)`, a `var()`). */
+export declare function splitLength(value: string): {
+    amount: number;
+    unit: string;
+} | null;
 declare const TosiThemeEditor_base: import("tosijs").WithAttributes<{
     /** the mode being edited */
     mode: ThemeMode;
@@ -32,9 +39,13 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private set;
     private handleInput;
     private handleClick;
+    private setFonts;
+    /** Add the font pasted into the font field, or say why it was refused. */
+    addFont: () => void;
+    private handleFontKey;
     /** Put every mode and every value back to what the base colours generate. */
     resetAll: () => void;
-    private handleColorWell;
+    private handleLiveInput;
     content: () => (HTMLDivElement | HTMLDataListElement)[];
     private field;
     /** Families the page already uses, as suggestions. */
@@ -47,6 +58,7 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private build;
     /** Show each field's current value, and whether it is tuned. */
     private refresh;
+    private showLength;
     private listening;
     private listen;
     /** Apply the theme and show it in the fields. */

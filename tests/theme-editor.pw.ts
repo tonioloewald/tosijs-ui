@@ -28,11 +28,18 @@ test('typing a value applies it, and a mode button previews that mode', async ({
   await expect(button).toHaveCSS('background-color', 'rgb(0, 100, 210)')
   await expect(editor.locator('[data-name="accent"]')).toHaveClass(/-tuned/)
 
-  const corners = editor.locator(
-    '[data-name="tosi-border-radius"] input[type="text"]'
-  )
-  await corners.fill('12px')
-  await corners.press('Enter')
+  // A length is a number with arrows and a unit menu.
+  const corners = editor.locator('[data-name="tosi-border-radius"]')
+  const amount = corners.locator('.length-amount')
+  await expect(amount).toHaveValue('4')
+  await amount.focus()
+  await amount.press('ArrowUp')
+  await amount.press('ArrowUp')
+  await expect(button).toHaveCSS('border-radius', '6px')
+  await corners.locator('.length-unit').selectOption('rem')
+  await expect(button).toHaveCSS('border-radius', '96px')
+  await amount.fill('12')
+  await corners.locator('.length-unit').selectOption('px')
   await expect(button).toHaveCSS('border-radius', '12px')
 
   // Mounting changed nothing; picking a mode previews it.
@@ -111,4 +118,43 @@ test('the settings menu opens the theme editor above Color Theme, and Save posts
       )
     )
     .not.toBe(colour)
+})
+
+test('a pasted Google Fonts link is linked, and its families are offered for font fields', async ({
+  page,
+}) => {
+  const asked = page.waitForResponse(
+    (response) =>
+      response.url().includes('/__docstore/source') &&
+      response.request().method() === 'HEAD'
+  )
+  await page.goto('/splitter/')
+  await asked
+  await page.waitForSelector('tosi-doc-system header')
+  await page.locator('header button:has(svg)').last().click()
+  await page.getByText('Theme Editor…').click()
+  const panel = page.locator('.theme-editor-panel')
+  const pasteField = panel.locator('[part="fontInput"]')
+
+  await pasteField.fill('https://evil.example/x.css?family=Nope')
+  await pasteField.press('Enter')
+  await expect(panel.locator('[part="fontError"]')).toContainText(
+    'fonts.googleapis.com'
+  )
+
+  const url =
+    'https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap'
+  await pasteField.fill(`<link href="${url}" rel="stylesheet">`)
+  await pasteField.press('Enter')
+  await expect(panel.locator('.font span')).toHaveText('Lora')
+  await expect(
+    page.locator(`link[data-tosi-theme-font][href="${url}"]`)
+  ).toHaveCount(1)
+  await expect(
+    panel.locator('datalist option[value="\'Lora\', sans-serif"]')
+  ).toHaveCount(1)
+
+  // Closing without saving unlinks it again.
+  await panel.getByRole('button', { name: 'Close the theme editor' }).click()
+  await expect(page.locator('link[data-tosi-theme-font]')).toHaveCount(0)
 })

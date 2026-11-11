@@ -71,6 +71,14 @@ Each mode is written under its own selector (`THEME_MODE_SELECTORS`): `:root`, `
 what differs from light, so a font or a size you set once applies in every mode unless a mode
 tunes it.
 
+## Web fonts
+
+`fonts` lists stylesheets to link, such as a Google Fonts URL; `applyThemeData` links them
+(and unlinks ones the theme no longer names), and the doc site's build links them from each
+page's `<head>`. Only `fonts.googleapis.com` and `fonts.bunny.net` are accepted, since linking a
+stylesheet injects CSS. `parseFontImport` takes whatever Google Fonts offers you to copy (a
+`<link>`, an `@import` line, or the URL) and returns the URL and its families.
+
 ## Generators
 
 A generator says which base values there are, and turns them into each mode's variables:
@@ -85,6 +93,8 @@ Variable names are CSS custom properties without the leading dashes: `tosi-accen
 /*{ "parent": "Helper Libraries", "description": "A theme as plain JSON data: base colours generate light, dark and high-contrast modes, values tuned by hand win, and one stylesheet applies it." }*/
 import { Color, invertLuminance } from 'tosijs';
 import { createTheme, readableOn, replaceStyleSheet } from './theme.js';
+import { allowedFontUrl } from './theme-fonts.js';
+export { FONT_ORIGINS, allowedFontUrl, fontFamilies, parseFontImport, } from './theme-fonts.js';
 export const THEME_MODES = [
     'light',
     'dark',
@@ -194,6 +204,7 @@ export function themeStyleSheet(resolved, selectors = {}) {
 export function applyThemeData(data, generator, { id = 'tosi-theme-data', selectors = {}, } = {}) {
     const resolved = resolveTheme(data, generator);
     replaceStyleSheet(id, themeStyleSheet(resolved, selectors));
+    applyThemeFonts(data.fonts);
     return resolved;
 }
 /** The tosijs-ui component theme (`createTheme`), driven by accent, background and text. */
@@ -211,3 +222,20 @@ export const componentThemeGenerator = {
     })[':root']),
     dark: (_base, light) => invertedColors(light),
 };
+/** Link the theme's font stylesheets, and unlink ones it no longer uses. */
+export function applyThemeFonts(urls = []) {
+    const wanted = new Set(urls.map(allowedFontUrl).filter((url) => url !== null));
+    for (const link of document.querySelectorAll('link[data-tosi-theme-font]')) {
+        if (wanted.has(link.href))
+            wanted.delete(link.href);
+        else
+            link.remove();
+    }
+    for (const href of wanted) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.setAttribute('data-tosi-theme-font', '');
+        document.head.append(link);
+    }
+}

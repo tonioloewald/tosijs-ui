@@ -636,6 +636,18 @@ forty lines after every keystroke would bury whatever else the build has to say.
 */
 let lastMetadataReport = ''
 
+/** The web fonts a saved theme names (`themeFile`); none when it is absent or has none. */
+async function readThemeFonts(themeFile?: string): Promise<string[]> {
+  if (!themeFile) return []
+  const file = Bun.file(themeFile)
+  if (!(await file.exists())) return []
+  // A file that does not parse fails the build in generate-css, which says so; not here too.
+  const data = await file.json().catch(() => null)
+  return Array.isArray(data?.fonts)
+    ? data.fonts.filter((url: unknown) => typeof url === 'string')
+    : []
+}
+
 export async function buildSite(
   config: SiteConfig,
   opts: { skipAudit?: boolean; lock?: boolean } = {}
@@ -1990,6 +2002,7 @@ export async function buildSite(
         aliases: config.aliases,
         themeFile: config.themeFile,
         theme: config.theme,
+        themeFonts: await readThemeFonts(config.themeFile),
         searchPlaceholder: config.searchPlaceholder,
         accessibility: config.accessibility,
         outputDir: PUBLIC,

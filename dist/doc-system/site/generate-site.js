@@ -13,6 +13,7 @@ component (src/doc-system/*) so static and hydrated output agree.
 import { pageTitle, withoutProjectSuffix } from '../doc-title.js';
 import { highlightHtml } from '../highlight.js';
 import { DOC_SYSTEM_FONTS_URL } from '../doc-fonts.js';
+import { allowedFontUrl } from '../../theme-fonts.js';
 import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { continueLinkHtml, continueTarget } from '../continue-link.js';
@@ -330,6 +331,11 @@ depth = pageDepth(at)) {
         // Burned-in theme: styles the page with no JS and with zero flash on hydration.
         `  <link rel="stylesheet" href="${escapeAttr(withStamp(relativeUrl(depth, stylesUrl), assetStamp))}" data-tosi-doc-system />`,
         `  <link rel="stylesheet" href="${escapeAttr(DOC_SYSTEM_FONTS_URL)}" />`,
+        // The saved theme's web fonts, marked so the theme editor can swap them live.
+        ...(config.themeFonts ?? [])
+            .map(allowedFontUrl)
+            .filter((url) => url !== null)
+            .map((url) => `  <link rel="stylesheet" href="${escapeAttr(url)}" data-tosi-theme-font />`),
         `  <title>${escapeText(title)}</title>`,
         description
             ? `  <meta name="description" content="${escapeAttr(description)}" />`

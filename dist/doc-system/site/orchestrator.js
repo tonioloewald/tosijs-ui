@@ -481,6 +481,19 @@ The metadata lint's last report. A watch rebuild repeats it only when it changed
 forty lines after every keystroke would bury whatever else the build has to say.
 */
 let lastMetadataReport = '';
+/** The web fonts a saved theme names (`themeFile`); none when it is absent or has none. */
+async function readThemeFonts(themeFile) {
+    if (!themeFile)
+        return [];
+    const file = Bun.file(themeFile);
+    if (!(await file.exists()))
+        return [];
+    // A file that does not parse fails the build in generate-css, which says so; not here too.
+    const data = await file.json().catch(() => null);
+    return Array.isArray(data?.fonts)
+        ? data.fonts.filter((url) => typeof url === 'string')
+        : [];
+}
 export async function buildSite(config, opts = {}) {
     // Look at the machine before adding load to it. Runs on every build, including each
     // watch rebuild, because the danger is not present at launch and then absent — it
@@ -1658,6 +1671,7 @@ export async function buildSite(config, opts = {}) {
                 aliases: config.aliases,
                 themeFile: config.themeFile,
                 theme: config.theme,
+                themeFonts: await readThemeFonts(config.themeFile),
                 searchPlaceholder: config.searchPlaceholder,
                 accessibility: config.accessibility,
                 outputDir: PUBLIC,

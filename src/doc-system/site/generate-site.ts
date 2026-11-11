@@ -21,6 +21,7 @@ import type { Doc } from './docs.js'
 import { pageTitle, withoutProjectSuffix } from '../doc-title.js'
 import { highlightHtml } from '../highlight.js'
 import { DOC_SYSTEM_FONTS_URL } from '../doc-fonts.js'
+import { allowedFontUrl } from '../../theme-fonts.js'
 import type { ProjectLinks, LinkItem } from '../../doc-browser.js'
 import {
   aliasProblems,
@@ -63,6 +64,8 @@ export interface GenerateSiteConfig {
   themeFile?: string
   /** `SiteConfig.theme`: the theme editor's starting base colours */
   theme?: DocSystemTheme
+  /** web fonts the saved theme (`themeFile`) uses; each must pass `allowedFontUrl` */
+  themeFonts?: string[]
   /** `SiteConfig.searchPlaceholder` */
   searchPlaceholder?: string
   /** `SiteConfig.accessibility` (#3521) */
@@ -578,6 +581,14 @@ async function pageHtml(
       withStamp(relativeUrl(depth, stylesUrl), assetStamp)
     )}" data-tosi-doc-system />`,
     `  <link rel="stylesheet" href="${escapeAttr(DOC_SYSTEM_FONTS_URL)}" />`,
+    // The saved theme's web fonts, marked so the theme editor can swap them live.
+    ...(config.themeFonts ?? [])
+      .map(allowedFontUrl)
+      .filter((url): url is string => url !== null)
+      .map(
+        (url) =>
+          `  <link rel="stylesheet" href="${escapeAttr(url)}" data-tosi-theme-font />`
+      ),
     `  <title>${escapeText(title)}</title>`,
     description
       ? `  <meta name="description" content="${escapeAttr(description)}" />`

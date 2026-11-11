@@ -1,4 +1,4 @@
-import type { ThemeData } from '../theme-data.js';
+import { type ThemeData } from '../theme-data.js';
 /** The id of the stylesheet the panel previews the theme through. */
 export declare const THEME_PREVIEW_STYLE_ID = "tosi-theme-preview";
 export interface ThemeEditorSite {
