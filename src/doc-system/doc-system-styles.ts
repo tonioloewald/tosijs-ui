@@ -480,6 +480,13 @@ export function docSystemStyleSpec(
     'input[type=search]': {
       borderRadius: 99,
     },
+    // The link to the next page of a section read in order (continue-link.ts, #255).
+    '.doc-continue': {
+      marginTop: vars.spacing200,
+      paddingTop: vars.spacing,
+      boxShadow: `inset 0 1px 0 ${vars.shadowColor}`,
+      fontWeight: '700',
+    },
     blockquote: {
       position: 'relative',
       background: vars.insetBg,

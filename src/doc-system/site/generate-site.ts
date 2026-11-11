@@ -30,6 +30,7 @@ import {
   wikilinkTargets,
 } from '../routing.js'
 import { buildNavTree, navOpenPath, NavNode } from '../nav-tree.js'
+import { continueLinkHtml, continueTarget } from '../continue-link.js'
 import {
   renderDocMarkdown,
   type AccessibilityMode,
@@ -475,6 +476,14 @@ async function pageHtml(
 
   // Reading order and the page's place in the nav, for breadcrumbs and prev/next.
   const roots = buildNavTree(config.docs, slugMap)
+  // Appended after the rebase: the href is already relative to the depth it is served at.
+  const continueTo = continueTarget(roots, doc.filename)
+  const article = continueTo
+    ? `${body}\n${continueLinkHtml(
+        relativeUrl(depth, pathForSlug(continueTo.slug)),
+        continueTo.doc.title
+      )}`
+    : body
   const trail = navTrail(roots, doc.filename)
   const order = flattenNav(roots)
   const position = order.findIndex((n) => n.doc.filename === doc.filename)
@@ -691,7 +700,7 @@ ${head}
     withStamp(relativeUrl(depth, docsUrl), docsStamp ?? assetStamp)
   )}" config="${configAttr}"${localizedAttr}${layoutAttr}>
   <article class="doc-content" data-doc="${escapeAttr(doc.filename)}">
-${body}
+${article}
   </article>
 ${nav}
 ${navbar}

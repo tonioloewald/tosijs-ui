@@ -6,6 +6,8 @@ export interface NavDoc {
     order?: number;
     /** parent doc name or slug; resolved via resolveParent */
     parent?: string;
+    /** this section is read in order: each page ends with a link to the next (continue-link.ts) */
+    continue?: boolean;
 }
 export interface NavNode<T extends NavDoc = NavDoc> {
     doc: T;

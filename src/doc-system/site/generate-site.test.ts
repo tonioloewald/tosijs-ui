@@ -915,3 +915,58 @@ describe('#3631: web fonts are linked, not imported', () => {
     }
   })
 })
+
+/*
+#255: a page in a section read in order ends its article with a link to the next page, in the
+static HTML, so a reader without JavaScript has it too.
+*/
+describe('#255: the Continue link', () => {
+  const docs = [
+    { filename: 'README.md', title: 'Home', path: 'README.md', text: '# Home' },
+    {
+      filename: 'learn.md',
+      title: 'Learn',
+      path: 'learn.md',
+      continue: true,
+      text: '# Learn',
+    },
+    {
+      filename: 'one.md',
+      title: 'One',
+      path: 'one.md',
+      parent: 'Learn',
+      order: 1,
+      text: '# One',
+    },
+    {
+      filename: 'two.md',
+      title: 'Two',
+      path: 'two.md',
+      parent: 'Learn',
+      order: 2,
+      text: '# Two',
+    },
+  ]
+
+  test('each page links the next, inside the article; the last and the rest get none', async () => {
+    const dir = `${tmpdir()}/tosi-continue-${Math.floor(performance.now() * 1000)}`
+    try {
+      await generateSite({ docs, outputDir: dir, projectName: 'T' } as any)
+      const article = async (f: string) =>
+        (await Bun.file(`${dir}/${f}`).text()).match(
+          /<article class="doc-content"[^>]*>([\s\S]*?)<\/article>/
+        )![1]
+      expect(await article('learn/index.html')).toContain(
+        '<p class="doc-continue"><a href="../one/" rel="next">' +
+          '<tosi-localized>Continue</tosi-localized>: One'
+      )
+      expect(await article('one/index.html')).toContain(
+        'href="../two/" rel="next"'
+      )
+      expect(await article('two/index.html')).not.toContain('doc-continue')
+      expect(await article('index.html')).not.toContain('doc-continue')
+    } finally {
+      await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    }
+  })
+})

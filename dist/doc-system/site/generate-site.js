@@ -15,6 +15,7 @@ import { highlightHtml } from '../highlight.js';
 import { DOC_SYSTEM_FONTS_URL } from '../doc-fonts.js';
 import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
+import { continueLinkHtml, continueTarget } from '../continue-link.js';
 import { renderDocMarkdown, } from '../render.js';
 import { accessibilityFindings, findingLine } from './a11y-report.js';
 import { pageDescription } from './page-metadata.js';
@@ -245,6 +246,11 @@ depth = pageDepth(at)) {
     const navbar = linkListHtml('doc-navbar', config.navbarLinks);
     // Reading order and the page's place in the nav, for breadcrumbs and prev/next.
     const roots = buildNavTree(config.docs, slugMap);
+    // Appended after the rebase: the href is already relative to the depth it is served at.
+    const continueTo = continueTarget(roots, doc.filename);
+    const article = continueTo
+        ? `${body}\n${continueLinkHtml(relativeUrl(depth, pathForSlug(continueTo.slug)), continueTo.doc.title)}`
+        : body;
     const trail = navTrail(roots, doc.filename);
     const order = flattenNav(roots);
     const position = order.findIndex((n) => n.doc.filename === doc.filename);
@@ -437,7 +443,7 @@ ${head}
     // cache entry. The dev server already sends `no-store`; this is the built site.
     withStamp(relativeUrl(depth, docsUrl), docsStamp ?? assetStamp))}" config="${configAttr}"${localizedAttr}${layoutAttr}>
   <article class="doc-content" data-doc="${escapeAttr(doc.filename)}">
-${body}
+${article}
   </article>
 ${nav}
 ${navbar}

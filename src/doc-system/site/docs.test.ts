@@ -24,6 +24,15 @@ describe('parseFrontmatter', () => {
     ).toBeUndefined()
   })
 
+  test('#255: continue: true is read, anything else ignored', () => {
+    expect(
+      parseFrontmatter('---\ncontinue: true\n---\n# A').data.continue
+    ).toBe(true)
+    expect(
+      parseFrontmatter('---\ncontinue: no\n---\n# A').data.continue
+    ).toBeUndefined()
+  })
+
   test('#252: exampleView is read; a misspelt one is named, not ignored', () => {
     expect(
       parseFrontmatter('---\nexampleView: code\n---\n# A').data.exampleView

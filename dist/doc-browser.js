@@ -102,6 +102,7 @@ or embeds more than one browser, passes `searchShortcut: ''` (or another key in
 import { elements, vars, varDefault, bindings, getListItem, tosi, StyleSheet, } from 'tosijs';
 import { buildSlugMap, pathForSlug, filenameForPath, homeDoc, wikilinkTargets, } from './doc-system/routing.js';
 import { buildNavTree } from './doc-system/nav-tree.js';
+import { continueLinkHtml, continueTarget } from './doc-system/continue-link.js';
 import { navSectionStyleSpec } from './doc-system/nav-styles.js';
 import { renderDocMarkdown, } from './doc-system/render.js';
 import { pageTitle } from './doc-system/doc-title.js';
@@ -709,7 +710,7 @@ export function createDocBrowser(options) {
         if (!go(filename) || !anchor)
             return;
         if (!memoryRouting) {
-            window.history.replaceState({ href: hrefFor(filename) }, '', `${hrefFor(filename)}#${anchor}`);
+            window.history.replaceState({ ...window.history.state, href: hrefFor(filename) }, '', `${hrefFor(filename)}#${anchor}`);
         }
         requestAnimationFrame(() => {
             docContent
@@ -778,10 +779,38 @@ export function createDocBrowser(options) {
     });
     // The hint follows the reader's language, like the rest of the doc system's own text.
     i18n.locale.observe(() => searchBox.queueRender());
+    /*
+    Scroll position per history entry (#256). The page never scrolls: the content pane does, so
+    the browser's own scroll restoration has nothing to restore, and the pane used to keep
+    whatever position the previous page left it at, in both directions.
+  
+    Each entry carries a `key` in its state. Leaving an entry by a link writes its position into
+    the state as well, which survives a reload; leaving one by Back or Forward cannot (the URL has
+    already moved by the time `popstate` fires), so positions are also kept here by key, and that
+    is what lets Forward return to where the reader was.
+    */
+    const scrollPositions = new Map();
+    let entryKey = '';
+    const newEntryKey = () => Math.random().toString(36).slice(2);
+    const stampEntry = () => {
+        entryKey = window.history.state?.key || newEntryKey();
+        if (window.history.state?.key !== entryKey) {
+            window.history.replaceState({ ...window.history.state, key: entryKey }, '');
+        }
+    };
+    const restoreScroll = (top) => {
+        contentPane.scrollTop = top;
+        // Again once late content (examples, images) has had a frame to take its height, and
+        // after showDoc's own `#hash` scroll, which a remembered position overrides.
+        requestAnimationFrame(() => {
+            contentPane.scrollTop = top;
+        });
+    };
     // Memory routing is decoupled from the page URL, so it ignores browser
     // back/forward (the host owns history, if any).
     if (!memoryRouting) {
-        window.addEventListener('popstate', () => {
+        stampEntry();
+        window.addEventListener('popstate', (event) => {
             // Back/forward while the source editor is open with unsaved changes: the
             // URL already moved, so on "keep editing" we push it back to match the
             // still-open editor; on discard we close the editor and navigate.
@@ -789,11 +818,14 @@ export function createDocBrowser(options) {
                 if (editorHasUnsavedChanges() &&
                     !window.confirm('Discard unsaved changes to the source?')) {
                     const href = hrefFor(String(editUI.doc.filename));
-                    window.history.pushState({ href }, '', href);
+                    window.history.pushState({ href, key: entryKey }, '', href);
                     return;
                 }
                 closeEditor();
             }
+            scrollPositions.set(entryKey, contentPane.scrollTop);
+            stampEntry();
+            const saved = scrollPositions.get(entryKey) ?? event.state?.scrollTop;
             /*
             Only re-render when the DOCUMENT changed (#152).
       
@@ -809,11 +841,17 @@ export function createDocBrowser(options) {
             const next = filenameFromLocation();
             // `app.currentDoc.filename` is a BoxedScalar — coerce, or `===` compares a proxy to
             // a string and is never equal, which would make this guard silently do nothing.
-            if (next === String(app.currentDoc.filename)) {
+            const sameDoc = next === String(app.currentDoc.filename);
+            if (!sameDoc)
+                navigateTo(next);
+            else if (saved === undefined)
                 scrollToHashExample();
-                return;
-            }
-            navigateTo(next);
+            // The position the reader left this entry at; failing that, its #hash (showDoc's
+            // business), and failing both, the top of a different page.
+            if (saved !== undefined)
+                restoreScroll(saved);
+            else if (!sameDoc && !location.hash)
+                contentPane.scrollTop = 0;
         });
         // Reload / tab-close / external navigation: native "leave site?" prompt when
         // there are unsaved source edits (the only guard the browser allows here).
@@ -1102,6 +1140,11 @@ export function createDocBrowser(options) {
                 accessible: !!accessibility,
                 title: doc.title,
             });
+            // The same link the static page ends with (continue-link.ts, #255).
+            const continueTo = continueTarget(buildNavTree(docs, slugMap), doc.filename);
+            if (continueTo) {
+                docContent.insertAdjacentHTML('beforeend', continueLinkHtml(hrefFor(continueTo.doc.filename), String(continueTo.doc.title)));
+            }
         }
         /*
         Keep the page's layout in step with the doc on SPA navigation.
@@ -1235,9 +1278,22 @@ export function createDocBrowser(options) {
             const same = filename === String(app.currentDoc.filename) &&
                 document.location.hash === '' &&
                 hash === '';
-            window.history[same ? 'replaceState' : 'pushState']({ href }, '', href);
+            if (same) {
+                window.history.replaceState({ ...window.history.state, href }, '', href);
+            }
+            else {
+                // Remember where the reader left this page, for Back (#256).
+                scrollPositions.set(entryKey, contentPane.scrollTop);
+                window.history.replaceState({ ...window.history.state, scrollTop: contentPane.scrollTop }, '');
+                entryKey = newEntryKey();
+                window.history.pushState({ href, key: entryKey }, '', href);
+            }
         }
         navigateTo(filename);
+        // A page opens at its top; a `#heading` link scrolls to the heading instead (showDoc in
+        // path and query routing, scrollToTarget here in memory routing).
+        if (!hash)
+            contentPane.scrollTop = 0;
         if (memoryRouting)
             scrollToTarget(hash);
         return true;
@@ -1737,6 +1793,23 @@ export function createDocBrowser(options) {
                 event.preventDefault();
             },
         }, tosiLocalized({ bindText: '^.title' }))));
+    /*
+    The page's main landmark, and focusable: a page of plain prose has nothing else to tab
+    to, so a keyboard user could not scroll it at all (WCAG 2.1.1; axe
+    scrollable-region-focusable, #3575). A role, not a <main>, so styles written against the
+    div still apply. An embedded browser (`memory` routing) is part of someone else's page,
+    so it does not claim that page's main landmark. It is what scrolls, not the page, so it is
+    what navigation resets and history restores (#256).
+    */
+    const contentPane = div({
+        ...(routing === 'memory' ? {} : { role: 'main' }),
+        tabindex: 0,
+        style: {
+            position: 'relative',
+            overflowY: 'scroll',
+            height: '100%',
+        },
+    }, docContent);
     const container = div({
         style: {
             display: 'flex',
@@ -1763,23 +1836,7 @@ export function createDocBrowser(options) {
             // The sidenav has just introduced itself; give it the layout the doc asked for.
             applyFullScreen();
         },
-    }, navContent, 
-    /*
-    The page's main landmark, and focusable: a page of plain prose has nothing else to tab
-    to, so a keyboard user could not scroll it at all (WCAG 2.1.1; axe
-    scrollable-region-focusable, #3575). A role, not a <main>, so styles written against the
-    div still apply. An embedded browser (`memory` routing) is part of someone else's page,
-    so it does not claim that page's main landmark.
-    */
-    div({
-        ...(routing === 'memory' ? {} : { role: 'main' }),
-        tabindex: 0,
-        style: {
-            position: 'relative',
-            overflowY: 'scroll',
-            height: '100%',
-        },
-    }, docContent)));
+    }, navContent, contentPane));
     // Test status widget
     const testWidget = button({
         class: 'test-widget',
@@ -2269,7 +2326,10 @@ export function createDocBrowser(options) {
     // read the current slug back, so the browser can live in a floating panel etc.
     if (memoryRouting) {
         ;
-        container.navigate = (slug) => navigateTo(filenameForSlug(slug) || slug);
+        container.navigate = (slug) => {
+            navigateTo(filenameForSlug(slug) || slug);
+            contentPane.scrollTop = 0;
+        };
         Object.defineProperty(container, 'currentSlug', {
             get: () => slugFor(String(app.currentDoc.filename)),
         });

@@ -250,6 +250,13 @@ input[type=search] {
   border-radius: 99px;
 }
 
+.doc-continue {
+  margin-top: calc(var(--spacing) * 2);
+  padding-top: var(--spacing);
+  box-shadow: inset 0 1px 0 var(--shadow-color);
+  font-weight: 700;
+}
+
 blockquote {
   position: relative;
   background: var(--inset-bg);

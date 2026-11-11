@@ -35,6 +35,13 @@ export interface Doc {
      */
     header?: boolean;
     /**
+     * `true` on a section page: the section is read in order, so it and every page under it end
+     * with a "Continue" link to the next page in nav order (#255). The last page gets none, and
+     * nothing outside the section gets one. In a nested sequence the outermost opt-in decides,
+     * so a book's chapters read straight through.
+     */
+    continue?: boolean;
+    /**
      * Which book(s) this doc binds into. A name, a list of names, or `'none'` to keep it
      * on the site and out of every book. Unset means the default book; `'default'` names
      * the default book so a list can include it — `["default", "appendices"]` binds the

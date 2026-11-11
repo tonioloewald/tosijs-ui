@@ -175,6 +175,10 @@ export function parseFrontmatter(content) {
             if (/^(true|yes|1)$/i.test(val))
                 data.home = true;
         }
+        else if (key === 'continue') {
+            if (/^(true|yes|1)$/i.test(val))
+                data.continue = true;
+        }
     }
     if (!matched)
         return { data: {}, body: content }; // a bare `---`, not frontmatter

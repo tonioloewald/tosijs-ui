@@ -984,6 +984,19 @@ header, so such a page links back to the docs its own way. See [the demo page](/
 to `/readme/`, so **README's URL and canonical link change**: inbound links to `/` now reach
 the new home page, and anything that linked to README by its root URL needs `/readme/` (#225).
 
+`"continue": true` on a section page says the section is read in order, like a book's chapters.
+The section page and every page under it, in nav order, then end with a link to the next one:
+**Continue: Functions →**. The last page gets none, and pages outside the section get nothing,
+so a reference page never grows a link into an unrelated section. When a page inside the
+sequence is itself a section, its pages are part of the same sequence, and its last page
+continues to the next chapter. The link is in the static HTML, so it works without JavaScript,
+and the ePub has none, because a book turns its own pages (#255).
+
+A page opens at its top, and a link to `/page/#heading` opens at that heading. Back and Forward
+return each page to where the reader left it. The doc browser keeps that position per history
+entry itself, because the content pane scrolls rather than the page, so the browser's own scroll
+restoration has nothing to restore (#256).
+
 #### Serving a page at a second path
 
 To serve a page at another path as well as its own, name the path in `aliases`. An app at the
@@ -2135,9 +2148,10 @@ case is fully covered.
 - **Metadata** via a JSON block — `<!--{ "pin": "top" }-->` (html) or
   `/*{ "pin": "bottom" }*/` (ts/js/css) — controls nav ordering, plus per-page
   SEO overrides (`description`, `keywords`, `image`, `noindex`, `headTitle`), the
-  section `parent`, the page's shape (`layout`, `header`, `home`), and the view its live
-  examples open in (`exampleView`), all in the same block. YAML frontmatter can set `title`,
-  `order`, `author`, `date`, `draft`, `layout`, `header`, `home` and `exampleView`.
+  section `parent`, the page's shape (`layout`, `header`, `home`), a section read in order
+  (`continue`), and the view its live examples open in (`exampleView`), all in the same block.
+  YAML frontmatter can set `title`, `order`, `author`, `date`, `draft`, `layout`, `header`,
+  `home`, `continue` and `exampleView`.
 - **Nav order** is: pin bucket (`top` → none → `bottom`), then `order`, then
   title, then filename. Use **`order`** (a number, **lower first**; default 500)
   to rank items _within_ the same `pin` — e.g. two `"pin": "top"` docs with
