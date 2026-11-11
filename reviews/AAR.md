@@ -1161,3 +1161,18 @@ gap, recorded rather than hidden.
   change in dist).
 - **An overclaim corrected:** the Prettier 3 commit said dist was byte-identical; only the iife
   and index are. 14 ESM files gained redundant parentheses. Corrected on #1608.
+
+## 1.17.8 (2026-11-11) — the splitter, Continue links, scroll per history entry
+
+- **The maintainer's report did the testing a lane could not:** on the tunnel preview they saw
+  the vertical splitter's line draw as a double strip. A 1px line centred with
+  `translate(-50%)` lands on a half pixel, and engines antialias that differently. Every
+  geometry assertion was green; only eyes on a real screen caught it.
+- **The gate caught one of mine:** the first full Playwright run failed the #252 assertion that
+  the preview touches the code, which the new splitter now sits between by design.
+- **A false red from our own tooling:** a run failed because the 8787 dev server was rebuilding
+  while the lane's server delegated its build to it. Stop the dev server before a lane, every
+  time.
+- **The approval wait expired** (60 minutes) with the version staged and unverified; the
+  verify-only run after approval was green. Expect this when a release is cut while the
+  maintainer is remote.
