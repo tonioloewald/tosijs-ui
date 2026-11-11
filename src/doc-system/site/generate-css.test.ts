@@ -9,5 +9,5 @@ test('a saved theme becomes CSS after the stock sheet, starting from the site th
   expect(output).toContain('--brand-color: #0b7a5c')
   expect(output).toContain('--background: #ffffee')
   expect(output).toContain('--spacing: 12px')
-  expect(output).toContain('.darkmode {')
+  expect(output).toContain('.darkmode:not(#tosi-theme-outrank) {')
 })

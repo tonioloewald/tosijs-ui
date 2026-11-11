@@ -25,12 +25,28 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     /** the theme being edited */
     get value(): ThemeData;
     set value(theme: ThemeData);
-    /** turns the base values into each mode's variables */
-    get generator(): ThemeGenerator;
-    set generator(generator: ThemeGenerator);
-    /** the variables offered beyond the base colours */
-    get variables(): ThemeVariable[];
-    set variables(variables: ThemeVariable[]);
+    /**
+     * turns base values into each mode's variables; null when the page's CSS derives them (the
+     * default for a pattern), `componentThemeGenerator` by default for a list
+     */
+    get generator(): ThemeGenerator | null;
+    set generator(generator: ThemeGenerator | null);
+    /**
+     * what to edit: a list of variables, or a pattern (`'sf-*'`, a RegExp) matched against the
+     * custom properties the page's stylesheets declare
+     */
+    get variables(): ThemeVariable[] | string | RegExp;
+    set variables(variables: ThemeVariable[] | string | RegExp);
+    private discovered;
+    private labels;
+    private discoveredFor;
+    /** Look for the pattern's variables again (after the page's stylesheets change). */
+    rediscover: () => void;
+    private modeSelectors;
+    /** The element values resolve in: the light-mode selector's, or the root. */
+    private scopeElement;
+    /** The variables being edited: the list, or what the pattern found, labelled and grouped. */
+    private editable;
     /** per-mode selectors for the applied stylesheet */
     get selectors(): Partial<Record<ThemeMode, string>>;
     set selectors(selectors: Partial<Record<ThemeMode, string>>);
@@ -58,6 +74,8 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private build;
     /** Show each field's current value, and whether it is tuned. */
     private refresh;
+    /** What the page's CSS declares for a variable in a mode (darker modes fall back). */
+    private declared;
     private showLength;
     private listening;
     private listen;

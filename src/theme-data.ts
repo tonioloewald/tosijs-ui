@@ -106,7 +106,14 @@ export {
 
 /** The kinds of value a theme variable can hold; each gets its own control in the editor. */
 export type ThemeKind =
-  'color' | 'length' | 'number' | 'font-family' | 'image' | 'enum' | 'text'
+  | 'color'
+  | 'length'
+  | 'number'
+  | 'font-family'
+  | 'image'
+  | 'enum'
+  | 'shadow'
+  | 'text'
 
 export interface ThemeVariable {
   /** the CSS custom property without its leading dashes, e.g. `tosi-accent` */
@@ -133,8 +140,8 @@ export const THEME_MODES: ThemeMode[] = [
 export type ThemeValues = Record<string, string>
 
 export interface ThemeData {
-  /** the generator's inputs, e.g. `{ accent: '#d92270' }` */
-  base: Record<string, string>
+  /** the generator's inputs, e.g. `{ accent: '#d92270' }`; a theme with no generator has none */
+  base?: Record<string, string>
   /** values tuned by hand, per mode; these win over the generated ones */
   light?: ThemeValues
   dark?: ThemeValues
@@ -226,11 +233,23 @@ const differences = (values: ThemeValues, from: ThemeValues): ThemeValues =>
     Object.entries(values).filter(([name, value]) => from[name] !== value)
   )
 
-/** Every mode's variables: generated, then the hand-tuned values on top. */
+/**
+ * Every mode's variables: generated, then the hand-tuned values on top. With no generator the
+ * page's own CSS does the deriving (its variables refer to each other), and a theme is only
+ * the values it overrides.
+ */
 export function resolveTheme(
   data: ThemeData,
-  generator: ThemeGenerator
+  generator: ThemeGenerator | null
 ): Record<ThemeMode, ThemeValues> {
+  if (!generator) {
+    return {
+      light: { ...data.light },
+      dark: { ...data.dark },
+      highContrast: { ...data.highContrast },
+      darkHighContrast: { ...data.darkHighContrast },
+    }
+  }
   const base = { ...generator.defaults, ...data.base }
   const generatedLight = generator.light(base)
   const light = { ...generatedLight, ...data.light }
@@ -255,6 +274,18 @@ export function resolveTheme(
   return { light, dark, highContrast, darkHighContrast }
 }
 
+/*
+A theme's rules carry an id's weight (`:not(#…)` matches every element but raises specificity),
+so they win over the page's own declarations of the same variables wherever those appear: a
+stylesheet later in the document (a live example's) would otherwise win on order alone.
+*/
+const OUTRANK = ':not(#tosi-theme-outrank)'
+const outranking = (selector: string): string =>
+  selector
+    .split(',')
+    .map((part) => `${part.trim()}${OUTRANK}`)
+    .join(', ')
+
 /** The stylesheet for a theme: each mode's variables under its selector. */
 export function themeStyleSheet(
   resolved: Record<ThemeMode, ThemeValues>,
@@ -267,7 +298,7 @@ export function themeStyleSheet(
     for (const [name, value] of Object.entries(resolved[mode])) {
       rule[ruleKey(name)] = value
     }
-    if (Object.keys(rule).length) sheet[selector] = rule
+    if (Object.keys(rule).length) sheet[outranking(selector)] = rule
   }
   return sheet
 }
@@ -278,7 +309,7 @@ export function themeStyleSheet(
  */
 export function applyThemeData(
   data: ThemeData,
-  generator: ThemeGenerator,
+  generator: ThemeGenerator | null,
   {
     id = 'tosi-theme-data',
     selectors = {},

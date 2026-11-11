@@ -119,7 +119,8 @@ unreadable.
 */
 /*{ "parent": "Helper Libraries", "description": "<tosi-theme-editor> edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON." }*/
 import { Color, elements, withAttributes, } from 'tosijs';
-import { THEME_MODES, applyThemeData, componentThemeGenerator, fontFamilies, parseFontImport, resolveTheme, } from './theme-data.js';
+import { THEME_MODES, applyThemeData, componentThemeGenerator, fontFamilies, parseFontImport, resolveTheme, THEME_MODE_SELECTORS, } from './theme-data.js';
+import { discoverThemeVariables, groupVariables, isDerived, resolveColor, resolveLength, } from './theme-discovery.js';
 const { div, h3, label, input, select, option, button, datalist, span } = elements;
 export const THEME_MODE_LABELS = {
     light: 'Light',
@@ -167,7 +168,8 @@ export class TosiThemeEditor extends withAttributes({
     /** show the page in the mode being edited (a property: a boolean attribute cannot default to true) */
     previewModes = true;
     _value = { base: {} };
-    _generator = componentThemeGenerator;
+    // undefined: not chosen, so the component theme for a list and none for a pattern
+    _generator = undefined;
     _variables = [];
     _selectors = {};
     /** the theme being edited */
@@ -179,21 +181,74 @@ export class TosiThemeEditor extends withAttributes({
         this._value.base ??= {};
         this.queueRender();
     }
-    /** turns the base values into each mode's variables */
+    /**
+     * turns base values into each mode's variables; null when the page's CSS derives them (the
+     * default for a pattern), `componentThemeGenerator` by default for a list
+     */
     get generator() {
-        return this._generator;
+        if (this._generator !== undefined)
+            return this._generator;
+        return Array.isArray(this._variables) ? componentThemeGenerator : null;
     }
     set generator(generator) {
-        this._generator = generator ?? componentThemeGenerator;
+        this._generator = generator;
         this.queueRender();
     }
-    /** the variables offered beyond the base colours */
+    /**
+     * what to edit: a list of variables, or a pattern (`'sf-*'`, a RegExp) matched against the
+     * custom properties the page's stylesheets declare
+     */
     get variables() {
         return this._variables;
     }
     set variables(variables) {
         this._variables = variables ?? [];
+        this.discoveredFor = '';
         this.queueRender();
+    }
+    discovered = new Map();
+    // Short names for the chain hints (`← primary`, not `← md-sys-color-primary`).
+    labels = new Map();
+    discoveredFor = '';
+    /** Look for the pattern's variables again (after the page's stylesheets change). */
+    rediscover = () => {
+        this.discoveredFor = '';
+        this.update();
+    };
+    modeSelectors() {
+        return { ...THEME_MODE_SELECTORS, ...this.selectors };
+    }
+    /** The element values resolve in: the light-mode selector's, or the root. */
+    scopeElement() {
+        const light = this.modeSelectors().light;
+        try {
+            return document.querySelector(light) ?? document.documentElement;
+        }
+        catch {
+            return document.documentElement;
+        }
+    }
+    /** The variables being edited: the list, or what the pattern found, labelled and grouped. */
+    editable() {
+        const variables = this._variables;
+        if (Array.isArray(variables))
+            return variables;
+        const key = `${String(variables)}|${JSON.stringify(this.modeSelectors())}`;
+        if (key !== this.discoveredFor) {
+            this.discoveredFor = key;
+            const found = discoverThemeVariables(variables, {
+                selectors: this.modeSelectors(),
+                scope: this.scopeElement(),
+                exclude: this.applyId ? document.getElementById(this.applyId) : null,
+            });
+            this.discovered = new Map(found.map((v) => [v.name, v]));
+        }
+        const groups = groupVariables([...this.discovered.keys()]);
+        this.labels = new Map([...groups].map(([name, { label }]) => [name, label]));
+        return [...this.discovered.values()].map((variable) => ({
+            ...variable,
+            ...groups.get(variable.name),
+        }));
     }
     /** per-mode selectors for the applied stylesheet */
     get selectors() {
@@ -262,6 +317,16 @@ export class TosiThemeEditor extends withAttributes({
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
         },
+        ':host .chain': {
+            display: 'block',
+            fontSize: '11px',
+            color: '#666',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+        },
+        ':host .chain:empty, :host .field.-tuned .chain': { display: 'none' },
+        ':host .field.-derived input:not([type="color"]), :host .field.-derived select': { color: '#6a6a6a', fontStyle: 'italic' },
+        ':host .field[data-kind="shadow"] input, :host .field[data-kind="image"] input': { flex: '0 1 9.5em', width: '9.5em' },
         ':host .field.-tuned label::after': {
             content: '" •"',
             color: '#b0005a',
@@ -375,7 +440,12 @@ export class TosiThemeEditor extends withAttributes({
         const { name, scope } = field.dataset;
         if (target.type === 'color') {
             const text = field.querySelector('input[type="text"]');
-            text.value = target.value;
+            // A colour well knows nothing of alpha; keep the translucency the value had.
+            const current = resolveColor(this.scopeElement(), text.value) ?? '';
+            const alpha = current.length === 9 ? current.slice(7) : '';
+            text.value = target.value + alpha;
+            this.set(scope, name, text.value);
+            return;
         }
         if (target.classList.contains('length-amount') ||
             target.classList.contains('length-unit')) {
@@ -522,16 +592,20 @@ export class TosiThemeEditor extends withAttributes({
             dataName: variable.name,
             dataScope: scope,
             title: variable.name,
-        }, label({ htmlFor: id }, caption), ...controls, button({
+        }, label({ htmlFor: id }, caption, 
+        // Where its value comes from, until an override cuts the link.
+        span({ class: 'chain' }, (variable.parents ?? [])
+            .map((parent) => `← ${this.labels.get(parent) ?? parent}`)
+            .join(' '))), ...controls, button({
             class: 'reset',
-            title: 'Back to the generated value',
+            title: 'Remove the override',
             ariaLabel: `Reset ${caption}`,
         }, '↺'));
     }
     /** Families the page already uses, as suggestions. */
     fontSuggestions(resolved) {
         const families = new Set();
-        for (const variable of this.variables) {
+        for (const variable of this.editable()) {
             if (variable.kind === 'font-family') {
                 const value = resolved.light[variable.name];
                 if (value)
@@ -583,9 +657,15 @@ export class TosiThemeEditor extends withAttributes({
     build() {
         const mode = this.mode;
         this.parts.modes.replaceChildren(...THEME_MODES.map((each) => button({ dataMode: each, ariaPressed: String(each === mode) }, THEME_MODE_LABELS[each])));
-        this.parts.base.replaceChildren(h3('Base colours'), ...this.generator.base.map((variable) => this.field(variable, 'base')));
+        const generator = this.generator;
+        this.parts.base.replaceChildren(...(generator
+            ? [
+                h3('Base colours'),
+                ...generator.base.map((variable) => this.field(variable, 'base')),
+            ]
+            : []));
         const groups = new Map();
-        for (const variable of this.variables) {
+        for (const variable of this.editable()) {
             const group = variable.group ?? THEME_MODE_LABELS[mode];
             groups.set(group, [...(groups.get(group) ?? []), variable]);
         }
@@ -596,34 +676,67 @@ export class TosiThemeEditor extends withAttributes({
     }
     /** Show each field's current value, and whether it is tuned. */
     refresh(resolved) {
-        const base = { ...this.generator.defaults, ...this.value.base };
+        const base = { ...this.generator?.defaults, ...this.value.base };
         const focused = this.shadowRoot.activeElement;
+        const scopeElement = this.scopeElement();
+        const page = getComputedStyle(scopeElement);
         for (const field of this.shadowRoot.querySelectorAll('.field')) {
             const { name, scope } = field.dataset;
-            const tunedIn = scope === 'base'
-                ? this.value.base
-                : (this.value[scope] ?? {});
+            const tunedIn = (scope === 'base' ? this.value.base : this.value[scope]) ??
+                {};
             const value = scope === 'base'
                 ? (base[name] ?? '')
-                : effective(resolved, scope, name);
+                : effective(resolved, scope, name) ||
+                    this.declared(name, scope) ||
+                    page.getPropertyValue(`--${name}`).trim();
             field.classList.toggle('-tuned', name in tunedIn);
-            if (field.dataset.kind === 'length') {
-                this.showLength(field, value, focused);
+            /*
+            A derived value (one that refers to other variables) shows what it comes to, muted, with
+            its expression as the tooltip: `color-mix(in oklab, var(--md-sys-color-primary) 18%,
+            white)` does not fit a field, and editing it is what cuts the link anyway.
+            */
+            const derived = !(name in tunedIn) && isDerived(value);
+            field.classList.toggle('-derived', derived);
+            field.title = derived ? `${name}: ${value}` : name;
+            const kind = field.dataset.kind;
+            const shown = !derived
+                ? value
+                : kind === 'color'
+                    ? (resolveColor(scopeElement, value) ?? value)
+                    : kind === 'length'
+                        ? (resolveLength(scopeElement, value) ?? value)
+                        : page.getPropertyValue(`--${name}`).trim() || value;
+            if (kind === 'length') {
+                this.showLength(field, shown, focused);
                 continue;
             }
             for (const control of field.querySelectorAll('input, select')) {
                 if (control === focused)
                     continue;
-                control.value = control.type === 'color' ? wellValue(value) : value;
+                control.value =
+                    control.type === 'color'
+                        ? (resolveColor(scopeElement, shown)?.slice(0, 7) ??
+                            wellValue(shown))
+                        : shown;
             }
         }
         ;
-        this.parts.fontsSection.hidden = !this.variables.some((variable) => variable.kind === 'font-family');
+        this.parts.fontsSection.hidden = !this.editable().some((variable) => variable.kind === 'font-family');
         this.parts.fontList.replaceChildren(...(this.value.fonts ?? []).map((url) => div({ class: 'font' }, span({ title: url }, fontFamilies(url).join(', ')), button({
             dataFont: url,
             ariaLabel: `Remove ${fontFamilies(url).join(', ')}`,
         }, 'Remove'))));
         this.parts.fonts.replaceChildren(...this.fontSuggestions(resolved).map((family) => option({ value: family })));
+    }
+    /** What the page's CSS declares for a variable in a mode (darker modes fall back). */
+    declared(name, mode) {
+        const declared = this.discovered.get(name)?.declared;
+        if (!declared)
+            return '';
+        return (declared[mode] ??
+            (mode === 'darkHighContrast' ? declared.dark : undefined) ??
+            declared.light ??
+            '');
     }
     showLength(field, value, focused) {
         const amount = field.querySelector('.length-amount');
@@ -671,8 +784,10 @@ export class TosiThemeEditor extends withAttributes({
             : resolveTheme(this.value, this.generator);
         const structure = [
             this.mode,
-            this.generator.base.map((v) => v.name).join(),
-            this.variables.map((v) => `${v.name}:${v.kind}`).join(),
+            this.generator?.base.map((v) => v.name).join() ?? '',
+            this.editable()
+                .map((v) => `${v.name}:${v.kind}`)
+                .join(),
         ].join('|');
         if (structure !== this.builtFor) {
             this.builtFor = structure;

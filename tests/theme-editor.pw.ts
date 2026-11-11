@@ -158,3 +158,72 @@ test('a pasted Google Fonts link is linked, and its families are offered for fon
   await panel.getByRole('button', { name: 'Close the theme editor' }).click()
   await expect(page.locator('link[data-tosi-theme-font]')).toHaveCount(0)
 })
+
+test('given a pattern, the editor finds Material tokens; an edit flows down the chain, an override cuts it', async ({
+  page,
+}) => {
+  await page.goto('/theme-stress-tests/')
+  const editor = page
+    .locator('tosi-example')
+    .first()
+    .locator('tosi-theme-editor')
+  const tonal = page.locator('.md-demo .md-tonal')
+  const text = (name: string) =>
+    editor.locator(`[data-name="${name}"] input[type="text"]`)
+  const container = editor.locator(
+    '[data-name="md-sys-color-primary-container"]'
+  )
+  await expect(container).toHaveClass(/-derived/)
+
+  // A root edit flows to what is mixed from it.
+  const before = await tonal.evaluate(
+    (el) => getComputedStyle(el).backgroundColor
+  )
+  await text('md-sys-color-primary').fill('#006400')
+  await text('md-sys-color-primary').press('Enter')
+  await expect
+    .poll(() => tonal.evaluate((el) => getComputedStyle(el).backgroundColor))
+    .not.toBe(before)
+
+  // Overriding a link cuts it from its parent…
+  await text('md-sys-color-primary-container').fill('#ffcc00')
+  await text('md-sys-color-primary-container').press('Enter')
+  await expect(tonal).toHaveCSS('background-color', 'rgb(255, 204, 0)')
+  await expect(container).toHaveClass(/-tuned/)
+  await expect(container.locator('.chain')).toBeHidden()
+  await text('md-sys-color-primary').fill('#000080')
+  await text('md-sys-color-primary').press('Enter')
+  await expect(tonal).toHaveCSS('background-color', 'rgb(255, 204, 0)')
+
+  // …and reset joins it again.
+  await container.locator('.reset').click()
+  await expect(tonal).not.toHaveCSS('background-color', 'rgb(255, 204, 0)')
+  await expect(container).toHaveClass(/-derived/)
+})
+
+test('a translucent link keeps its alpha when its colour well changes it', async ({
+  page,
+}) => {
+  await page.goto('/theme-stress-tests/')
+  const editor = page
+    .locator('tosi-example')
+    .nth(1)
+    .locator('tosi-theme-editor')
+  const surface = editor.locator('[data-name="glass-surface"]')
+  await expect(surface).toHaveClass(/-derived/)
+  // A colour well cannot be driven through its native picker; set it as the picker would.
+  await surface
+    .locator('input[type="color"]')
+    .evaluate((well: HTMLInputElement) => {
+      well.value = '#ff0000'
+      well.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+  const value = await surface.locator('input[type="text"]').inputValue()
+  expect(value.slice(0, 7)).toBe('#ff0000')
+  // 20% white over nothing: the alpha byte is 0x33.
+  expect(value.slice(7)).toBe('33')
+  await expect(page.locator('.glass-demo .glass-panel')).toHaveCSS(
+    'background-color',
+    'rgba(255, 0, 0, 0.2)'
+  )
+})

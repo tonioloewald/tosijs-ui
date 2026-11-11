@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    document.documentElement.classList.add('tosi-js')
+    document.addEventListener('click', function (e) {
+      if (customElements.get('tosi-doc-system')) return
+      var b = e.target.closest && e.target.closest('.doc-nav .nav-toggle')
+      if (!b) return
+      var open = b.closest('.nav-branch').classList.toggle('-open')
+      b.setAttribute('aria-expanded', String(open))
+    })
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="doc-system.css?v=5a500b1bb2e7" data-tosi-doc-system />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
+  <title>Theme stress tests — tosijs-ui</title>
+  <meta name="description" content="Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern." />
+  <link rel="canonical" href="https://ui.tosijs.net/theme-stress-tests/" />
+  <link rel="alternate" type="text/markdown" href="index.md" title="Theme stress tests — tosijs-ui (markdown)" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="Theme stress tests — tosijs-ui" />
+  <meta property="og:description" content="Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern." />
+  <meta property="og:url" content="https://ui.tosijs.net/theme-stress-tests/" />
+  <meta property="og:image" content="https://ui.tosijs.net/og/index.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Theme stress tests — tosijs-ui" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
+  <meta name="twitter:image:alt" content="Theme stress tests — tosijs-ui" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Theme stress tests","description":"Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern.","url":"https://ui.tosijs.net/theme-stress-tests/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"Theme stress tests","item":"https://ui.tosijs.net/theme-stress-tests/"}]}</script>
+  <link rel="icon" href="favicon.svg" />
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
+</head>
+<body>
+  <tosi-doc-system docs="docs.json?v=b7b52c8bdedc" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <article class="doc-content" data-doc="theme-stress-tests.md">
+<h1 id="theme-stress-tests">Theme stress tests</h1>
+<!--{ "parent": "Helper Libraries", "description": "Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern." }-->
+
+<p><code>&lt;tosi-theme-editor&gt;</code> is not tied to tosijs-ui&#39;s own variables. Given a pattern, it finds the
+matching custom properties in the page&#39;s stylesheets, reads which variables each one is
+derived from, and offers the right control for each. These two themes are its stress tests:
+neither was written for it.</p>
+<p>Each theme builds out from one colour, and every link of the chain can be overridden. Change
+the root colour and everything derived from it follows; override a link and what hangs from
+it follows the override instead.</p>
+<h2 id="material-3-tokens">Material 3 tokens</h2>
+<p>Material&#39;s own token names (<code>--md-sys-color-primary</code>, <code>--md-sys-shape-corner-*</code>,
+<code>--md-sys-elevation-level*</code>, the type scale), with the containers and surfaces mixed from the
+primary colour.</p>
+<pre><code class="language-css">.md-demo {
+  --md-sys-color-primary: #6750a4;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: color-mix(in oklab, var(--md-sys-color-primary) 18%, white);
+  --md-sys-color-on-primary-container: color-mix(in oklab, var(--md-sys-color-primary) 55%, black);
+  --md-sys-color-surface: #fef7ff;
+  --md-sys-color-surface-container: color-mix(in oklab, var(--md-sys-color-primary) 7%, var(--md-sys-color-surface));
+  --md-sys-color-on-surface: #1d1b20;
+  --md-sys-color-outline: color-mix(in oklab, var(--md-sys-color-on-surface) 45%, var(--md-sys-color-surface));
+  --md-sys-color-shadow: #000000;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-full: 999px;
+  --md-sys-elevation-level1: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 30%, transparent), 0 1px 3px 1px color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent);
+  --md-sys-state-hover-opacity: 0.08;
+  --md-sys-typescale-body-size: 14px;
+  --md-sys-typescale-label-weight: 500;
+  --md-ref-typeface-plain: Roboto, system-ui, sans-serif;
+
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-ref-typeface-plain);
+  font-size: var(--md-sys-typescale-body-size);
+}
+.darkmode .md-demo {
+  --md-sys-color-primary: #d0bcff;
+  --md-sys-color-on-primary: #381e72;
+  --md-sys-color-primary-container: color-mix(in oklab, var(--md-sys-color-primary) 30%, black);
+  --md-sys-color-on-primary-container: color-mix(in oklab, var(--md-sys-color-primary) 40%, white);
+  --md-sys-color-surface: #141218;
+  --md-sys-color-on-surface: #e6e0e9;
+}
+.md-demo .md-card {
+  padding: 16px;
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container);
+  box-shadow: var(--md-sys-elevation-level1);
+}
+.md-demo .md-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.md-demo button {
+  border: none;
+  padding: 0 20px;
+  height: 36px;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: inherit;
+  font-weight: var(--md-sys-typescale-label-weight);
+  cursor: pointer;
+}
+.md-demo .md-filled { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+.md-demo .md-filled:hover {
+  background: color-mix(in srgb, var(--md-sys-color-on-primary) calc(var(--md-sys-state-hover-opacity) * 100%), var(--md-sys-color-primary));
+}
+.md-demo .md-tonal { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.md-demo .md-outlined {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline);
+}
+.md-demo input {
+  padding: 8px 12px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.md-demo input::placeholder { color: var(--md-sys-color-outline); }
+</code></pre>
+<pre><code class="language-html">&lt;div class=&quot;md-stage&quot; style=&quot;display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start&quot;&gt;
+  &lt;div class=&quot;md-demo&quot;&gt;
+    &lt;div class=&quot;md-card&quot;&gt;
+      &lt;strong&gt;Material card&lt;/strong&gt;
+      &lt;div class=&quot;md-row&quot;&gt;
+        &lt;button class=&quot;md-filled&quot;&gt;Filled&lt;/button&gt;
+        &lt;button class=&quot;md-tonal&quot;&gt;Tonal&lt;/button&gt;
+        &lt;button class=&quot;md-outlined&quot;&gt;Outlined&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;input placeholder=&quot;Outlined field&quot; /&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<pre><code class="language-js">import { tosiThemeEditor } from &#39;tosijs-ui&#39;
+
+preview.querySelector(&#39;.md-stage&#39;).prepend(
+  tosiThemeEditor({
+    variables: &#39;md-*&#39;,
+    selectors: { light: &#39;.md-demo&#39;, dark: &#39;.darkmode .md-demo&#39; },
+    applyId: &#39;md-demo-theme&#39;,
+  })
+)
+</code></pre>
+<pre><code class="language-test">test(&#39;the Material tokens are found, with their kinds and their chain&#39;, async () =&gt; {
+  const editor = preview.querySelector(&#39;tosi-theme-editor&#39;)
+  while (!editor.shadowRoot?.querySelector(&#39;[data-name=&quot;md-sys-color-primary&quot;]&#39;)) {
+    await new Promise((resolve) =&gt; requestAnimationFrame(resolve))
+  }
+  const field = (name) =&gt; editor.shadowRoot.querySelector(`[data-name=&quot;${name}&quot;]`)
+  expect(field(&#39;md-sys-color-primary&#39;).dataset.kind).toBe(&#39;color&#39;)
+  expect(field(&#39;md-sys-shape-corner-large&#39;).dataset.kind).toBe(&#39;length&#39;)
+  expect(field(&#39;md-sys-elevation-level1&#39;).dataset.kind).toBe(&#39;shadow&#39;)
+  expect(field(&#39;md-sys-state-hover-opacity&#39;).dataset.kind).toBe(&#39;number&#39;)
+  expect(field(&#39;md-ref-typeface-plain&#39;).dataset.kind).toBe(&#39;font-family&#39;)
+  expect(field(&#39;md-sys-color-primary-container&#39;).querySelector(&#39;.chain&#39;).textContent).toBe(
+    &#39;← primary&#39;
+  )
+})
+</code></pre>
+<h2 id="faux-glass">Faux glass</h2>
+<p>The look of the <a href="https://react.tosijs.net">react-tosijs</a> and ngx-tosijs demos: translucent
+surfaces over a backdrop, blurred and saturated, with a light rim and pill-shaped controls.
+The surfaces are the tint at an opacity, so a translucent colour must survive editing.</p>
+<pre><code class="language-css">.glass-demo {
+  --glass-accent: #3355dd;
+  --glass-tint: #ffffff;
+  --glass-surface: color-mix(in srgb, var(--glass-tint) 20%, transparent);
+  --glass-field: color-mix(in srgb, var(--glass-tint) 40%, transparent);
+  --glass-rim: color-mix(in srgb, var(--glass-tint) 80%, transparent);
+  --glass-shadow-color: #00000040;
+  --glass-shadow: 0 4px 8px var(--glass-shadow-color);
+  --glass-blur: 8px;
+  --glass-saturation: 1.4;
+  --glass-radius: 16px;
+  --glass-control-height: 32px;
+  --glass-control-radius: calc(var(--glass-control-height) / 2);
+  --glass-backdrop: linear-gradient(160deg, #6087ba, #b7cdea);
+
+  flex: 1 1 220px;
+  padding: 24px;
+  background: var(--glass-backdrop);
+  color: #1d1d1f;
+  font-family: system-ui, sans-serif;
+}
+.glass-demo .glass-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--glass-radius);
+  background: var(--glass-surface);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  box-shadow: inset 0 0 4px 1px var(--glass-rim), var(--glass-shadow);
+}
+.glass-demo .glass-row { display: flex; gap: 8px; }
+.glass-demo button {
+  height: var(--glass-control-height);
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--glass-control-radius);
+  background: transparent;
+  backdrop-filter: brightness(90%) blur(2px);
+  color: inherit;
+  box-shadow: inset 1px 1.5px 1px 0 var(--glass-rim), inset -1px -1.5px 1px 0 var(--glass-rim), var(--glass-shadow);
+  font: inherit;
+  cursor: pointer;
+}
+.glass-demo button:hover { box-shadow: inset 0 0 0 2px var(--glass-accent), var(--glass-shadow); }
+.glass-demo input {
+  height: var(--glass-control-height);
+  padding: 0 12px;
+  border: none;
+  border-radius: calc(var(--glass-radius) / 4);
+  background: var(--glass-field);
+  color: inherit;
+  font: inherit;
+}
+.glass-demo input::placeholder { color: color-mix(in srgb, currentColor 60%, transparent); }
+</code></pre>
+<pre><code class="language-html">&lt;div class=&quot;glass-stage&quot; style=&quot;display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start&quot;&gt;
+  &lt;div class=&quot;glass-demo&quot;&gt;
+    &lt;div class=&quot;glass-panel&quot;&gt;
+      &lt;strong&gt;Glass panel&lt;/strong&gt;
+      &lt;input placeholder=&quot;Glass field&quot; /&gt;
+      &lt;div class=&quot;glass-row&quot;&gt;
+        &lt;button&gt;Cancel&lt;/button&gt;
+        &lt;button&gt;Save&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<pre><code class="language-js">import { tosiThemeEditor } from &#39;tosijs-ui&#39;
+
+preview.querySelector(&#39;.glass-stage&#39;).prepend(
+  tosiThemeEditor({
+    variables: &#39;glass-*&#39;,
+    selectors: { light: &#39;.glass-demo&#39; },
+    applyId: &#39;glass-demo-theme&#39;,
+  })
+)
+</code></pre>
+<pre><code class="language-test">test(&#39;the glass variables are found; a translucent link keeps its alpha&#39;, async () =&gt; {
+  const editor = preview.querySelector(&#39;tosi-theme-editor&#39;)
+  while (!editor.shadowRoot?.querySelector(&#39;[data-name=&quot;glass-accent&quot;]&#39;)) {
+    await new Promise((resolve) =&gt; requestAnimationFrame(resolve))
+  }
+  const field = (name) =&gt; editor.shadowRoot.querySelector(`[data-name=&quot;${name}&quot;]`)
+  expect(field(&#39;glass-surface&#39;).dataset.kind).toBe(&#39;color&#39;)
+  expect(field(&#39;glass-blur&#39;).dataset.kind).toBe(&#39;length&#39;)
+  expect(field(&#39;glass-saturation&#39;).dataset.kind).toBe(&#39;number&#39;)
+  expect(field(&#39;glass-shadow&#39;).dataset.kind).toBe(&#39;shadow&#39;)
+  expect(field(&#39;glass-backdrop&#39;).dataset.kind).toBe(&#39;image&#39;)
+  expect(field(&#39;glass-control-radius&#39;).querySelector(&#39;.chain&#39;).textContent).toBe(
+    &#39;← height&#39;
+  )
+})
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a class="doc-link" href="./">tosijs-ui</a></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-components" aria-label="Components"></button><a class="doc-link" href="components/">Components</a></div>
+    <ul id="tosi-nav-components">
+      <li><a class="doc-link" href="babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="affix/">affix</a></li>
+      <li><a class="doc-link" href="carousel/">carousel</a></li>
+      <li><a class="doc-link" href="code-editor/">code</a></li>
+      <li><a class="doc-link" href="crud/">crud</a></li>
+      <li><a class="doc-link" href="dialog/">dialog</a></li>
+      <li><a class="doc-link" href="diff/">diff</a></li>
+      <li><a class="doc-link" href="editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="component/">example</a></li>
+      <li><a class="doc-link" href="float/">float</a></li>
+      <li><a class="doc-link" href="gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="header/">header</a></li>
+      <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-icons" aria-label="icons"></button><a class="doc-link" href="icons/">icons</a></div>
+      <ul id="tosi-nav-icons">
+        <li><a class="doc-link" href="icon-composition/">Icon Composition</a></li>
+        <li><a class="doc-link" href="icon-svg/">iconSvg — icon markup without a DOM</a></li>
+        <li><a class="doc-link" href="make-icon-data/">make-icon-data</a></li>
+      </ul></li>
+      <li><a class="doc-link" href="layout/">layout</a></li>
+      <li><a class="doc-link" href="bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="mapbox/">map</a></li>
+      <li><a class="doc-link" href="markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="menu/">menu</a></li>
+      <li><a class="doc-link" href="notifications/">notifications</a></li>
+      <li><a class="doc-link" href="palette/">palette</a></li>
+      <li><a class="doc-link" href="pocket-bar/">pocket bar</a></li>
+      <li><a class="doc-link" href="pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="schema-form/">schema-form</a></li>
+      <li><a class="doc-link" href="side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="size-break/">size-break</a></li>
+      <li><a class="doc-link" href="sizer/">sizer</a></li>
+      <li><a class="doc-link" href="splitter/">splitter</a></li>
+      <li><a class="doc-link" href="data-table/">table</a></li>
+      <li><a class="doc-link" href="tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="tooltip/">tooltip</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-form-components" aria-label="Form Components"></button><a class="doc-link" href="form-components/">Form Components</a></div>
+    <ul id="tosi-nav-form-components">
+      <li><a class="doc-link" href="color-input/">color input field</a></li>
+      <li><a class="doc-link" href="filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="form/">forms</a></li>
+      <li><a class="doc-link" href="month/">month</a></li>
+      <li><a class="doc-link" href="password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="rating/">rating</a></li>
+      <li><a class="doc-link" href="rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="search-field/">search-field</a></li>
+      <li><a class="doc-link" href="segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="select/">select</a></li>
+      <li><a class="doc-link" href="tag-list/">tag-list</a></li>
+    </ul></li>
+    <li class="nav-branch -open"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="true" aria-controls="tosi-nav-helper-libraries" aria-label="Helper Libraries"></button><a class="doc-link" href="helper-libraries/">Helper Libraries</a></div>
+    <ul id="tosi-nav-helper-libraries">
+      <li><a class="doc-link" href="ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="hash-state/">hash-state</a></li>
+      <li><a class="doc-link" href="live-theme/">live-theme</a></li>
+      <li><a class="doc-link" href="localize/">localize</a></li>
+      <li><a class="doc-link" href="make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="natural-compare/">naturalCompare</a></li>
+      <li><a class="doc-link" href="router/">router</a></li>
+      <li><a class="doc-link" href="via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="theme/">theme</a></li>
+      <li><a class="doc-link" href="theme-data/">theme data</a></li>
+      <li><a class="doc-link" href="theme-editor/">theme editor</a></li>
+      <li><a class="doc-link current" href="theme-stress-tests/" aria-current="page">Theme stress tests</a></li>
+      <li><a class="doc-link" href="track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="value-renderer/">valueRenderer</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-documentation-system" aria-label="Documentation System"></button><a class="doc-link" href="documentation-system/">Documentation System</a></div>
+    <ul id="tosi-nav-documentation-system">
+      <li><a class="doc-link" href="adopting-the-doc-system/">Adopting the doc system</a></li>
+      <li><a class="doc-link" href="one-source-every-artifact/">One Source</a></li>
+      <li><a class="doc-link" href="doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="docs/">docs</a></li>
+      <li><a class="doc-link" href="highlight-block/">highlight-block</a></li>
+      <li><a class="doc-link" href="highlight-styles/">highlight-styles</a></li>
+      <li><a class="doc-link" href="data-client/">data client</a></li>
+      <li><a class="doc-link" href="full-screen-demo/">Full-screen layout</a></li>
+      <li><a class="doc-link" href="no-header-demo/">Page without the header</a></li>
+      <li><a class="doc-link" href="kitchen-sink/">kitchen sink</a></li>
+    </ul></li>
+    <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-appendices" aria-label="Appendices"></button><a class="doc-link" href="appendices/">Appendices</a></div>
+    <ul id="tosi-nav-appendices">
+      <li><a class="doc-link" href="release-notes/">release-notes</a></li>
+      <li><a class="doc-link" href="migrating/">Migrating from older versions</a></li>
+    </ul></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script type="module" src="hydrate-62yj8ar9.js"></script>
+</body>
+</html>

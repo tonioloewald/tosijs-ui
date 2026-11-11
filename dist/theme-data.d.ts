@@ -1,7 +1,7 @@
 import { XinStyleRule, XinStyleSheet } from 'tosijs';
 export { FONT_ORIGINS, allowedFontUrl, fontFamilies, parseFontImport, } from './theme-fonts.js';
 /** The kinds of value a theme variable can hold; each gets its own control in the editor. */
-export type ThemeKind = 'color' | 'length' | 'number' | 'font-family' | 'image' | 'enum' | 'text';
+export type ThemeKind = 'color' | 'length' | 'number' | 'font-family' | 'image' | 'enum' | 'shadow' | 'text';
 export interface ThemeVariable {
     /** the CSS custom property without its leading dashes, e.g. `tosi-accent` */
     name: string;
@@ -18,8 +18,8 @@ export declare const THEME_MODES: ThemeMode[];
 /** Variable name → CSS value. */
 export type ThemeValues = Record<string, string>;
 export interface ThemeData {
-    /** the generator's inputs, e.g. `{ accent: '#d92270' }` */
-    base: Record<string, string>;
+    /** the generator's inputs, e.g. `{ accent: '#d92270' }`; a theme with no generator has none */
+    base?: Record<string, string>;
     /** values tuned by hand, per mode; these win over the generated ones */
     light?: ThemeValues;
     dark?: ThemeValues;
@@ -45,15 +45,19 @@ export declare function ruleValues(rule: XinStyleRule | undefined): ThemeValues;
 export declare function invertedColors(values: ThemeValues): ThemeValues;
 /** White background, black text, and the accent darkened to 7:1 against it. */
 export declare function highContrastBase(base: Record<string, string>): Record<string, string>;
-/** Every mode's variables: generated, then the hand-tuned values on top. */
-export declare function resolveTheme(data: ThemeData, generator: ThemeGenerator): Record<ThemeMode, ThemeValues>;
+/**
+ * Every mode's variables: generated, then the hand-tuned values on top. With no generator the
+ * page's own CSS does the deriving (its variables refer to each other), and a theme is only
+ * the values it overrides.
+ */
+export declare function resolveTheme(data: ThemeData, generator: ThemeGenerator | null): Record<ThemeMode, ThemeValues>;
 /** The stylesheet for a theme: each mode's variables under its selector. */
 export declare function themeStyleSheet(resolved: Record<ThemeMode, ThemeValues>, selectors?: Partial<Record<ThemeMode, string>>): XinStyleSheet;
 /**
  * Apply a theme to the page, as one stylesheet (`id`, updated in place on every call), and return
  * what it resolved to.
  */
-export declare function applyThemeData(data: ThemeData, generator: ThemeGenerator, { id, selectors, }?: {
+export declare function applyThemeData(data: ThemeData, generator: ThemeGenerator | null, { id, selectors, }?: {
     id?: string;
     selectors?: Partial<Record<ThemeMode, string>>;
 }): Record<ThemeMode, ThemeValues>;

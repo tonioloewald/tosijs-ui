@@ -159,8 +159,20 @@ export function highContrastBase(base) {
     return out;
 }
 const differences = (values, from) => Object.fromEntries(Object.entries(values).filter(([name, value]) => from[name] !== value));
-/** Every mode's variables: generated, then the hand-tuned values on top. */
+/**
+ * Every mode's variables: generated, then the hand-tuned values on top. With no generator the
+ * page's own CSS does the deriving (its variables refer to each other), and a theme is only
+ * the values it overrides.
+ */
 export function resolveTheme(data, generator) {
+    if (!generator) {
+        return {
+            light: { ...data.light },
+            dark: { ...data.dark },
+            highContrast: { ...data.highContrast },
+            darkHighContrast: { ...data.darkHighContrast },
+        };
+    }
     const base = { ...generator.defaults, ...data.base };
     const generatedLight = generator.light(base);
     const light = { ...generatedLight, ...data.light };
@@ -183,6 +195,16 @@ export function resolveTheme(data, generator) {
     };
     return { light, dark, highContrast, darkHighContrast };
 }
+/*
+A theme's rules carry an id's weight (`:not(#…)` matches every element but raises specificity),
+so they win over the page's own declarations of the same variables wherever those appear: a
+stylesheet later in the document (a live example's) would otherwise win on order alone.
+*/
+const OUTRANK = ':not(#tosi-theme-outrank)';
+const outranking = (selector) => selector
+    .split(',')
+    .map((part) => `${part.trim()}${OUTRANK}`)
+    .join(', ');
 /** The stylesheet for a theme: each mode's variables under its selector. */
 export function themeStyleSheet(resolved, selectors = {}) {
     const sheet = {};
@@ -193,7 +215,7 @@ export function themeStyleSheet(resolved, selectors = {}) {
             rule[ruleKey(name)] = value;
         }
         if (Object.keys(rule).length)
-            sheet[selector] = rule;
+            sheet[outranking(selector)] = rule;
     }
     return sheet;
 }

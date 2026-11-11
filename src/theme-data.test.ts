@@ -103,9 +103,10 @@ test('themeStyleSheet writes each mode under its selector, and skips empty modes
     },
     { dark: 'body.night' }
   )
+  // An id's weight, so the theme beats the page's own declarations wherever they sit.
   expect(sheet).toEqual({
-    ':root': { _tosiAccent: '#123456' },
-    'body.night': { _tosiBg: '#000000' },
+    ':root:not(#tosi-theme-outrank)': { _tosiAccent: '#123456' },
+    'body.night:not(#tosi-theme-outrank)': { _tosiBg: '#000000' },
   })
 })
 
