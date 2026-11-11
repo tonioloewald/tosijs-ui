@@ -142,6 +142,39 @@ export const baseVariables = {
     _tosiTransition: '0.15s ease-out',
 };
 // ============================================================================
+// Contrast
+// ============================================================================
+/**
+ * WCAG 2 contrast ratio between two opaque colors. Throws on a translucent one: its real
+ * contrast depends on what is behind it, and ignoring alpha measured the old 40%-opacity
+ * placeholder at 4.74:1 where axe, compositing it, measured 1.88:1.
+ */
+export function contrastRatio(a, b) {
+    if (a.RGBA[3] < 1 || b.RGBA[3] < 1)
+        throw new Error('contrastRatio: composite a translucent color first');
+    const lum = (c) => {
+        const [r, g, bl] = c.RGBA.map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+    };
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+}
+/**
+ * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach
+ * `min` contrast against `bg`, so it keeps as much of its hue as AA allows.
+ */
+export function readableOn(color, bg, min = 4.5) {
+    const darkBg = contrastRatio(bg, Color.black) < contrastRatio(bg, Color.white);
+    // Measured on the hex the stylesheet will actually carry: rounding to 8-bit channels
+    // can drop a ratio just over `min` to just under it.
+    const shipped = (c) => Color.fromCss(c.html);
+    let c = shipped(color.opaque);
+    for (let step = 0; step < 20 && contrastRatio(c, bg) < min; step++) {
+        c = shipped(darkBg ? c.brighten(0.1) : c.darken(0.1));
+    }
+    return contrastRatio(c, bg) < min ? bg.contrasting() : c;
+}
+// ============================================================================
 // Theme Creation Functions
 // ============================================================================
 /**

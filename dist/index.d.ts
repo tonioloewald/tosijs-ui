@@ -49,6 +49,7 @@ export { trackDrag, bringToFront, findHighestZ } from './track-drag.js';
 export { version } from './version.js';
 export { scriptTag, styleSheet } from './via-tag.js';
 export * from './theme.js';
+export * from './theme-data.js';
 export * from './tooltip.js';
 export * from './value-renderer.js';
 export * as tosijs from 'tosijs';

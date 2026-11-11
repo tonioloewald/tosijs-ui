@@ -87,6 +87,7 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
 - [Client-side router for single-page apps](https://ui.tosijs.net/router/index.md): A lightweight client-side router for single-page apps, with named parameters, hash routing, and several named views per route.
 - [scriptTag & styleSheet](https://ui.tosijs.net/via-tag/index.md): scriptTag() and styleSheet() load a classic script or stylesheet from a CDN and return a promise, much like import() for older libraries.
 - [Theme, CSS variables and dark mode](https://ui.tosijs.net/theme/index.md): The tosijs-ui theme: CSS variables for spacing, colour and type shared by every component, with dark mode computed from your colours.
+- [theme data](https://ui.tosijs.net/theme-data/index.md): A theme as plain JSON data: base colours generate light, dark and high-contrast modes, values tuned by hand win, and one stylesheet applies it.
 - [trackDrag](https://ui.tosijs.net/track-drag/index.md): trackDrag() follows a mouse or touch drag with one callback that reports the offset, for resize handles, sliders and draggable parts.
 - [valueRenderer](https://ui.tosijs.net/value-renderer/index.md): valueRenderer() turns a short type string into a formatter for numbers, currency, bytes or booleans, each with a default alignment.
 

@@ -52,39 +52,16 @@ export interface DocSystemTheme {
   codeBg?: string
 }
 
-/**
- * WCAG 2 contrast ratio between two opaque colors. Throws on a translucent one: its real
- * contrast depends on what is behind it, and ignoring alpha measured the old 40%-opacity
- * placeholder at 4.74:1 where axe, compositing it, measured 1.88:1.
- */
-export function contrastRatio(a: Color, b: Color): number {
-  if (a.RGBA[3] < 1 || b.RGBA[3] < 1)
-    throw new Error('contrastRatio: composite a translucent color first')
-  const lum = (c: Color) => {
-    const [r, g, bl] = c.RGBA.map((v) =>
-      v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
-    )
-    return 0.2126 * r + 0.7152 * g + 0.0722 * bl
-  }
-  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x)
-  return (hi + 0.05) / (lo + 0.05)
-}
-
-/**
- * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach
- * `min` contrast against `bg`, so it keeps as much of its hue as AA allows.
- */
-export function readableOn(color: Color, bg: Color, min = 4.5): Color {
-  const darkBg = contrastRatio(bg, Color.black) < contrastRatio(bg, Color.white)
-  // Measured on the hex the stylesheet will actually carry: rounding to 8-bit channels
-  // can drop a ratio just over `min` to just under it.
-  const shipped = (c: Color) => Color.fromCss(c.html)
-  let c = shipped(color.opaque)
-  for (let step = 0; step < 20 && contrastRatio(c, bg) < min; step++) {
-    c = shipped(darkBg ? c.brighten(0.1) : c.darken(0.1))
-  }
-  return contrastRatio(c, bg) < min ? bg.contrasting() : c
-}
+// The contrast helpers live with the theme, which generates high-contrast modes from them.
+export { contrastRatio, readableOn } from '../theme.js'
+import { readableOn } from '../theme.js'
+import {
+  invertedColors,
+  ruleValues,
+  type ThemeGenerator,
+  type ThemeValues,
+  type ThemeVariable,
+} from '../theme-data.js'
 
 /** Compute the full set of `:root` color variables from a few base colors. */
 export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
@@ -745,3 +722,101 @@ export function docSystemStyleSpec(
     },
   }
 }
+
+/*
+The doc site's theme as theme data (`theme-data.ts`): the generator reads the same
+`docSystemStyleSpec` the site is styled with, so an edited theme and the stock one cannot
+disagree about what a base colour produces.
+*/
+const DOC_THEME_DEFAULTS = {
+  accent: '#d92270',
+  background: '#fafafa',
+  text: '#222222',
+  codeBg: '#fdfdfd',
+  inputBg: '#fdfdfd',
+  buttonBg: '#fdfdfd',
+}
+
+const docThemeVariables = (rule: unknown): ThemeValues =>
+  ruleValues(rule as XinStyleRule)
+
+export const docSystemThemeGenerator: ThemeGenerator = {
+  base: [
+    { name: 'accent', kind: 'color', label: 'Accent' },
+    { name: 'background', kind: 'color', label: 'Background' },
+    { name: 'text', kind: 'color', label: 'Text' },
+    { name: 'codeBg', kind: 'color', label: 'Code background' },
+    { name: 'inputBg', kind: 'color', label: 'Input background' },
+    { name: 'buttonBg', kind: 'color', label: 'Button background' },
+  ],
+  defaults: DOC_THEME_DEFAULTS,
+  light: (base) =>
+    docThemeVariables(docSystemStyleSpec(base, { fontImport: false })[':root']),
+  dark: (base, light) => {
+    const spec = docSystemStyleSpec(base, { fontImport: false })
+    const generated = docThemeVariables(spec[':root'])
+    // Colours tuned by hand in light carry into dark, inverted like the generated ones.
+    const tuned = Object.fromEntries(
+      Object.entries(light).filter(([name, value]) => generated[name] !== value)
+    )
+    return {
+      ...docThemeVariables(spec['.darkmode']),
+      ...invertedColors(tuned),
+    }
+  },
+}
+
+/** The doc site's variables a theme editor offers, beyond the base colours. */
+export const DOC_SYSTEM_THEME_VARIABLES: ThemeVariable[] = [
+  { name: 'brand-color', kind: 'color', label: 'Brand', group: 'Colours' },
+  { name: 'background', kind: 'color', label: 'Background', group: 'Colours' },
+  { name: 'text-color', kind: 'color', label: 'Text', group: 'Colours' },
+  { name: 'link-color', kind: 'color', label: 'Links', group: 'Colours' },
+  { name: 'nav-bg', kind: 'color', label: 'Navigation', group: 'Colours' },
+  {
+    name: 'inset-bg',
+    kind: 'color',
+    label: 'Inset (quotes)',
+    group: 'Colours',
+  },
+  {
+    name: 'code-bg',
+    kind: 'color',
+    label: 'Code background',
+    group: 'Colours',
+  },
+  { name: 'code-color', kind: 'color', label: 'Inline code', group: 'Colours' },
+  { name: 'input-bg', kind: 'color', label: 'Inputs', group: 'Colours' },
+  { name: 'button-bg', kind: 'color', label: 'Buttons', group: 'Colours' },
+  { name: 'menu-bg', kind: 'color', label: 'Menus', group: 'Colours' },
+  {
+    name: 'font-family',
+    kind: 'font-family',
+    label: 'Text font',
+    group: 'Type',
+  },
+  {
+    name: 'code-font-family',
+    kind: 'font-family',
+    label: 'Code font',
+    group: 'Type',
+  },
+  { name: 'font-size', kind: 'length', label: 'Text size', group: 'Type' },
+  { name: 'code-font-size', kind: 'length', label: 'Code size', group: 'Type' },
+  { name: 'h1-scale', kind: 'number', label: 'Heading 1 scale', group: 'Type' },
+  { name: 'h2-scale', kind: 'number', label: 'Heading 2 scale', group: 'Type' },
+  { name: 'h3-scale', kind: 'number', label: 'Heading 3 scale', group: 'Type' },
+  { name: 'spacing', kind: 'length', label: 'Spacing', group: 'Layout' },
+  {
+    name: 'touch-size',
+    kind: 'length',
+    label: 'Touch target',
+    group: 'Layout',
+  },
+  {
+    name: 'doc-content-max-width',
+    kind: 'length',
+    label: 'Text column',
+    group: 'Layout',
+  },
+]

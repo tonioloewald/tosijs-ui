@@ -1,4 +1,4 @@
-import { XinStyleSheet, XinStyleRule, Color } from 'tosijs';
+import { XinStyleSheet, XinStyleRule } from 'tosijs';
 export declare const SIDEBAR_WIDTH = 200;
 export declare const SIDEBAR_BREAKPOINT = 600;
 export interface DocSystemTheme {
@@ -22,17 +22,8 @@ export interface DocSystemTheme {
      */
     codeBg?: string;
 }
-/**
- * WCAG 2 contrast ratio between two opaque colors. Throws on a translucent one: its real
- * contrast depends on what is behind it, and ignoring alpha measured the old 40%-opacity
- * placeholder at 4.74:1 where axe, compositing it, measured 1.88:1.
- */
-export declare function contrastRatio(a: Color, b: Color): number;
-/**
- * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach
- * `min` contrast against `bg`, so it keeps as much of its hue as AA allows.
- */
-export declare function readableOn(color: Color, bg: Color, min?: number): Color;
+export { contrastRatio, readableOn } from '../theme.js';
+import { type ThemeGenerator, type ThemeVariable } from '../theme-data.js';
 /** Compute the full set of `:root` color variables from a few base colors. */
 export declare function docSystemColors(theme?: DocSystemTheme): XinStyleRule;
 /**
@@ -45,3 +36,6 @@ export declare function docSystemColors(theme?: DocSystemTheme): XinStyleRule;
 export declare function docSystemStyleSpec(theme?: DocSystemTheme, { fontImport }?: {
     fontImport?: boolean;
 }): XinStyleSheet;
+export declare const docSystemThemeGenerator: ThemeGenerator;
+/** The doc site's variables a theme editor offers, beyond the base colours. */
+export declare const DOC_SYSTEM_THEME_VARIABLES: ThemeVariable[];

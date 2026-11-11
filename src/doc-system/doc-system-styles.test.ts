@@ -3,8 +3,10 @@ import { Color } from 'tosijs'
 import {
   contrastRatio,
   docSystemStyleSpec,
+  docSystemThemeGenerator,
   readableOn,
 } from './doc-system-styles.js'
+import { resolveTheme } from '../theme-data.js'
 
 describe('#150: no rule POISONS a global palette token', () => {
   test('`--text-color` is redefined only by rules that own a background', () => {
@@ -279,4 +281,20 @@ describe('#3631: the font @import', () => {
       false
     )
   })
+})
+
+test('the doc theme generator reproduces the stock stylesheet, and inverts tuned colours in dark', () => {
+  const stock: any = docSystemStyleSpec({}, { fontImport: false })
+  const resolved = resolveTheme({ base: {} }, docSystemThemeGenerator)
+  expect(resolved.light['brand-color']).toBe(String(stock[':root']._brandColor))
+  expect(resolved.light['font-family']).toBe("'Aleo', sans-serif")
+  expect(resolved.dark['brand-color']).toBe(
+    String(stock['.darkmode']._brandColor)
+  )
+
+  const tuned = resolveTheme(
+    { base: {}, light: { 'nav-bg': '#ffffff' } },
+    docSystemThemeGenerator
+  )
+  expect(tuned.dark['nav-bg']).not.toBe(resolved.dark['nav-bg'])
 })

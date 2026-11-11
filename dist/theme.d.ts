@@ -12,6 +12,17 @@ export interface ThemeColors {
 export declare const defaultColors: ThemeColors;
 export declare const baseVariables: XinStyleRule;
 /**
+ * WCAG 2 contrast ratio between two opaque colors. Throws on a translucent one: its real
+ * contrast depends on what is behind it, and ignoring alpha measured the old 40%-opacity
+ * placeholder at 4.74:1 where axe, compositing it, measured 1.88:1.
+ */
+export declare function contrastRatio(a: Color, b: Color): number;
+/**
+ * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach
+ * `min` contrast against `bg`, so it keeps as much of its hue as AA allows.
+ */
+export declare function readableOn(color: Color, bg: Color, min?: number): Color;
+/**
  * Creates color variables from ThemeColors
  */
 export declare function createColorVariables(colors: ThemeColors): XinStyleRule;
