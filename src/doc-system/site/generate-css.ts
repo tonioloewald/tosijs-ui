@@ -52,7 +52,8 @@ export async function generateCss(
         data = JSON.parse(await file.text())
       } catch (e) {
         throw new Error(
-          `themeFile ${themeFile} is not valid JSON: ${(e as Error).message}`
+          `themeFile ${themeFile} is not valid JSON: ${(e as Error).message}`,
+          { cause: e }
         )
       }
       output += '\n' + themeFileCss(data, theme)

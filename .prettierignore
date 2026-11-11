@@ -62,3 +62,5 @@ demo/xinjs-icon-font/
 # from a drawing tool: its whitespace and attribute order are the tool's, and reflowing it
 # churns the diff against the next export. bin/make-icon-data.js reads icons/ as-is.
 *.svg
+# The dev server's copy of the last good build (gitignored).
+*.last-good/

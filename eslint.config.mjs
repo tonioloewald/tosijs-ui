@@ -74,6 +74,8 @@ export default tseslint.config(
     ignores: [
       '**/dist/',
       'docs/',
+      // The dev server's copy of the last good build (gitignored), there only while one runs.
+      '*.last-good/',
       'node_modules/',
       'www/',
       'cdn/',

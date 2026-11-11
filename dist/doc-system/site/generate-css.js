@@ -37,7 +37,7 @@ export async function generateCss(outputPath = 'docs/doc-system.css', theme = {}
                 data = JSON.parse(await file.text());
             }
             catch (e) {
-                throw new Error(`themeFile ${themeFile} is not valid JSON: ${e.message}`);
+                throw new Error(`themeFile ${themeFile} is not valid JSON: ${e.message}`, { cause: e });
             }
             output += '\n' + themeFileCss(data, theme);
         }

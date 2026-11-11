@@ -123,7 +123,6 @@ unreadable.
 import {
   Color,
   ElementCreator,
-  PartsMap,
   XinStyleSheet,
   elements,
   withAttributes,
@@ -167,15 +166,6 @@ const wellValue = (value: string): string => {
   } catch {
     return '#000000'
   }
-}
-
-interface ThemeEditorParts extends PartsMap {
-  fields: HTMLDivElement
-  modes: HTMLDivElement
-  base: HTMLDivElement
-  variables: HTMLDivElement
-  fonts: HTMLDataListElement
-  reset: HTMLButtonElement
 }
 
 export class TosiThemeEditor extends withAttributes({
