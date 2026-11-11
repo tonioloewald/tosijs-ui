@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=5a500b1bb2e7" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=cef87fafc4d4" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Theme stress tests — tosijs-ui</title>
   <meta name="description" content="Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern." />
@@ -40,13 +40,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Theme stress tests — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Theme stress tests","description":"Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern.","url":"https://ui.tosijs.net/theme-stress-tests/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Theme stress tests","description":"Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern.","url":"https://ui.tosijs.net/theme-stress-tests/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-11T17:13:30.456Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"Theme stress tests","item":"https://ui.tosijs.net/theme-stress-tests/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=b7b52c8bdedc" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=ec7d4b6d2546" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;test-results/e2e-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="theme-stress-tests.md">
 <h1 id="theme-stress-tests">Theme stress tests</h1>
 <!--{ "parent": "Helper Libraries", "description": "Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern." }-->
@@ -179,6 +179,9 @@ preview.querySelector(&#39;.md-stage&#39;).prepend(
 <p>The look of the <a href="https://react.tosijs.net">react-tosijs</a> and ngx-tosijs demos: translucent
 surfaces over a backdrop, blurred and saturated, with a light rim and pill-shaped controls.
 The surfaces are the tint at an opacity, so a translucent colour must survive editing.</p>
+<p>It also declares modes of its own beyond light and dark: <strong>tinted</strong> (every colour toward the
+accent&#39;s hue) and <strong>monochrome</strong>. Each is derived from the few root colours; the surfaces, rim
+and field follow in the browser because they are mixed from the tint.</p>
 <pre><code class="language-css">.glass-demo {
   --glass-accent: #3355dd;
   --glass-tint: #ffffff;
@@ -193,11 +196,12 @@ The surfaces are the tint at an opacity, so a translucent colour must survive ed
   --glass-control-height: 32px;
   --glass-control-radius: calc(var(--glass-control-height) / 2);
   --glass-backdrop: linear-gradient(160deg, #6087ba, #b7cdea);
+  --glass-text: #1d1d1f;
 
   flex: 1 1 220px;
   padding: 24px;
   background: var(--glass-backdrop);
-  color: #1d1d1f;
+  color: var(--glass-text);
   font-family: system-ui, sans-serif;
 }
 .glass-demo .glass-panel {
@@ -253,7 +257,30 @@ The surfaces are the tint at an opacity, so a translucent colour must survive ed
 preview.querySelector(&#39;.glass-stage&#39;).prepend(
   tosiThemeEditor({
     variables: &#39;glass-*&#39;,
-    selectors: { light: &#39;.glass-demo&#39; },
+    modes: [
+      { name: &#39;light&#39;, label: &#39;Light&#39;, selector: &#39;.glass-demo&#39; },
+      {
+        name: &#39;dark&#39;,
+        label: &#39;Dark&#39;,
+        selector: &#39;.darkmode .glass-demo&#39;,
+        classes: [&#39;darkmode&#39;],
+        derive: [&#39;invert&#39;],
+      },
+      {
+        name: &#39;tinted&#39;,
+        label: &#39;Tinted&#39;,
+        selector: &#39;.glass-tinted .glass-demo&#39;,
+        classes: [&#39;glass-tinted&#39;],
+        derive: [{ tint: &#39;#3355dd&#39;, amount: 0.6 }],
+      },
+      {
+        name: &#39;mono&#39;,
+        label: &#39;Monochrome&#39;,
+        selector: &#39;.glass-mono .glass-demo&#39;,
+        classes: [&#39;glass-mono&#39;],
+        derive: [&#39;monochrome&#39;],
+      },
+    ],
     applyId: &#39;glass-demo-theme&#39;,
   })
 )
@@ -272,6 +299,30 @@ preview.querySelector(&#39;.glass-stage&#39;).prepend(
   expect(field(&#39;glass-control-radius&#39;).querySelector(&#39;.chain&#39;).textContent).toBe(
     &#39;← height&#39;
   )
+})
+test(&#39;a declared mode derives the roots, and the mixes follow&#39;, async () =&gt; {
+  const editor = preview.querySelector(&#39;tosi-theme-editor&#39;)
+  while (!editor.shadowRoot?.querySelector(&#39;[data-mode=&quot;mono&quot;]&#39;)) {
+    await new Promise((resolve) =&gt; requestAnimationFrame(resolve))
+  }
+  const demo = preview.querySelector(&#39;.glass-demo&#39;)
+  const variable = (name) =&gt; getComputedStyle(demo).getPropertyValue(`--${name}`).trim()
+  const frame = () =&gt; new Promise((resolve) =&gt; requestAnimationFrame(resolve))
+  const pick = async (mode) =&gt; {
+    editor.shadowRoot.querySelector(`[data-mode=&quot;${mode}&quot;]`).click()
+    while (!document.body.classList.contains(`glass-${mode}`) &amp;&amp; mode !== &#39;light&#39;) await frame()
+    await frame()
+  }
+  expect(variable(&#39;glass-accent&#39;)).toBe(&#39;#3355dd&#39;)
+  await pick(&#39;mono&#39;)
+  const grey = variable(&#39;glass-accent&#39;).slice(1)
+  expect(grey.slice(0, 2) === grey.slice(2, 4) &amp;&amp; grey.slice(2, 4) === grey.slice(4, 6)).toBe(true)
+  expect(variable(&#39;glass-backdrop&#39;)).not.toContain(&#39;#6087ba&#39;)
+  // Not rewritten: the browser mixes it from the (monochrome) tint, as in every mode.
+  expect(variable(&#39;glass-surface&#39;)).toContain(`${variable(&#39;glass-tint&#39;)} 20%`)
+  await pick(&#39;light&#39;)
+  expect(document.body.classList.contains(&#39;glass-mono&#39;)).toBe(false)
+  expect(variable(&#39;glass-accent&#39;)).toBe(&#39;#3355dd&#39;)
 })
 </code></pre>
 
@@ -379,6 +430,6 @@ preview.querySelector(&#39;.glass-stage&#39;).prepend(
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-62yj8ar9.js"></script>
+  <script type="module" src="hydrate-7mma3ypv.js"></script>
 </body>
 </html>

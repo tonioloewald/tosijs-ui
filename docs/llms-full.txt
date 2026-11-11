@@ -11877,10 +11877,7 @@ import { applyThemeData, componentThemeGenerator } from 'tosijs-ui'
 
 const theme = {
   base: { accent: '#0b7a5c', background: '#fbfaf7', text: '#1d1d1b' },
-  light: { 'tosi-border-radius': '12px' },
-  dark: {},
-  highContrast: {},
-  darkHighContrast: {},
+  modes: { light: { 'tosi-border-radius': '12px' } },
 }
 // Scoped to the demo; a page's own theme would leave out `selectors`.
 const resolved = applyThemeData(theme, componentThemeGenerator, {
@@ -11919,23 +11916,55 @@ test('base values generate the palette, and a hand-tuned value wins', () => {
 
 ## Modes
 
-There are four: `light`, `dark`, `highContrast` and `darkHighContrast`. Every mode but light is
-**generated**:
+A theme's modes are a list (`ThemeModeSpec[]`), and `THEME_MODE_SPECS` is the one used unless
+you pass `modes`: `light`, `dark`, `highContrast` and `darkHighContrast`. Each mode names the
+selector its values are written under, the classes that put a page in it (for the editor's
+preview), the mode it is made `from` (light unless it says otherwise) and how it is made from
+it (`derive`):
 
-- **dark** from the light values, with their luminance inverted (a value you tuned in light is
-  carried over, inverted), then the generator's own dark adjustments;
-- **high contrast** from the base, with the background pushed to white, the text to black and
-  the accent darkened until it reaches 7:1, the WCAG AAA ratio, against that background;
-- **dark high contrast** the same way, inverted.
+- `'invert'` inverts luminance; with a generator, its own dark adjustments follow. Dark is
+  light inverted, and a value you tuned in light is carried over, inverted.
+- `'contrast'` pushes values apart; with a generator, the base background goes to white, the
+  text to black, and the accent darkens until it reaches 7:1 (WCAG AAA) against it. Dark high
+  contrast is high contrast, inverted.
+- `'monochrome'` takes the colour out, and `{ tint: '#3355dd', amount }` takes it out and
+  tints toward a hue.
+- A function of the values does anything else.
 
-A value tuned by hand in a mode wins over the generated one, and survives regeneration: change
-the accent, and every generated value follows while your tuned ones stay put.
+Only colour **literals** are transformed. A value derived from others (`color-mix(in oklab,
+var(--accent) 20%, white)`) is left as written, and the browser derives it again from the
+transformed roots. So a mode needs to change only the few colours everything else hangs from.
 
-Each mode is written under its own selector (`THEME_MODE_SELECTORS`): `:root`, `.darkmode`,
-`.high-contrast:not(.darkmode)` and `.darkmode.high-contrast`, which are the classes the doc system puts on
-`<html>` and `<body>`. Pass `selectors` to use your own. A mode other than light only writes
-what differs from light, so a font or a size you set once applies in every mode unless a mode
-tunes it.
+A theme declares modes of its own by passing a list, such as a tinted mode under `.tinted`:
+
+```typescript
+const modes = [
+  ...THEME_MODE_SPECS,
+  {
+    name: 'tinted',
+    label: 'Tinted',
+    selector: '.tinted',
+    classes: ['tinted'],
+    derive: [{ tint: '#3355dd' }],
+  },
+]
+applyThemeData(theme, null, { modes, page })
+```
+
+A value tuned by hand in a mode (`theme.modes.dark`) wins over the derived one, and survives
+regeneration: change the accent, and every generated value follows while your tuned ones stay
+put.
+
+A mode other than the first writes only what differs from what the page would show anyway (so
+a font or a size you set once applies in every mode unless a mode tunes it), plus whatever
+another mode writes, since mode selectors can match together. Pass `selectors` to write a mode
+somewhere else, such as a scoped part of the page.
+
+**No generator.** A design system whose CSS derives its own variables (most do) needs no
+generator: pass `null`, and pass `page`, what its CSS declares in each mode
+(`discoverThemeVariables` finds it), so a derived mode has roots to transform. A mode with no
+`derive`, or one the page's CSS declares itself, is then just what the page declares, plus
+what you tune: the page's own dark mode is not second-guessed.
 
 ## Web fonts
 
@@ -12032,22 +12061,25 @@ test('editing a base colour or a variable applies it, and a tuned value can be r
   const radius = () => getComputedStyle(sample).getPropertyValue('--tosi-border-radius')
   edit('tosi-border-radius', '12px')
   expect(radius()).toBe('12px')
-  expect(editor.value.light['tosi-border-radius']).toBe('12px')
+  expect(editor.value.modes.light['tosi-border-radius']).toBe('12px')
   editor.shadowRoot.querySelector('[data-name="tosi-border-radius"] .reset').click()
-  expect(editor.value.light['tosi-border-radius']).toBe(undefined)
+  expect(editor.value.modes.light['tosi-border-radius']).toBe(undefined)
   expect(radius()).toBe('4px')
 })
 ```
 
 ## Modes
 
-The mode buttons choose which mode you are editing: light, dark, high contrast, or dark high
-contrast. Every mode but light starts out generated; a value you change there is tuned for that
+The mode buttons choose which mode you are editing: by default light, dark, high contrast, and
+dark high contrast. Pass `modes` (a `ThemeModeSpec[]`, see [theme data](/theme-data/)) for a
+theme's own, such as a tinted or monochrome mode; with only `selectors`, the editor offers the
+modes those name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
 mode only, marked with a dot, and stays put when the base colours change. The ↺ button puts it
 back to the generated value.
 
 Editing a mode previews it: the editor shows the page in that mode while you work, by setting
-the doc system's `darkmode` and `high-contrast` classes, and puts them back when it is removed.
+the mode's `classes` on `<html>` and `<body>` (the doc system's `darkmode` and `high-contrast`
+for the default modes), and puts them back when it is removed.
 Set `previewModes` to `false` to leave the page alone.
 
 ## Declaring variables
@@ -12073,6 +12105,7 @@ its control:
 - `applyId`: the id of the stylesheet it applies the theme through (`tosi-live-theme`); empty
   to apply nothing.
 - `selectors`: per-mode selectors for that stylesheet (see theme data).
+- `modes`: the theme's modes (`THEME_MODE_SPECS` by default).
 - A `change` event fires on every edit.
 
 The editor is styled with fixed colours in its shadow DOM, so no theme you make can make it
@@ -12223,6 +12256,10 @@ The look of the [react-tosijs](https://react.tosijs.net) and ngx-tosijs demos: t
 surfaces over a backdrop, blurred and saturated, with a light rim and pill-shaped controls.
 The surfaces are the tint at an opacity, so a translucent colour must survive editing.
 
+It also declares modes of its own beyond light and dark: **tinted** (every colour toward the
+accent's hue) and **monochrome**. Each is derived from the few root colours; the surfaces, rim
+and field follow in the browser because they are mixed from the tint.
+
 ```css
 .glass-demo {
   --glass-accent: #3355dd;
@@ -12238,11 +12275,12 @@ The surfaces are the tint at an opacity, so a translucent colour must survive ed
   --glass-control-height: 32px;
   --glass-control-radius: calc(var(--glass-control-height) / 2);
   --glass-backdrop: linear-gradient(160deg, #6087ba, #b7cdea);
+  --glass-text: #1d1d1f;
 
   flex: 1 1 220px;
   padding: 24px;
   background: var(--glass-backdrop);
-  color: #1d1d1f;
+  color: var(--glass-text);
   font-family: system-ui, sans-serif;
 }
 .glass-demo .glass-panel {
@@ -12300,7 +12338,30 @@ import { tosiThemeEditor } from 'tosijs-ui'
 preview.querySelector('.glass-stage').prepend(
   tosiThemeEditor({
     variables: 'glass-*',
-    selectors: { light: '.glass-demo' },
+    modes: [
+      { name: 'light', label: 'Light', selector: '.glass-demo' },
+      {
+        name: 'dark',
+        label: 'Dark',
+        selector: '.darkmode .glass-demo',
+        classes: ['darkmode'],
+        derive: ['invert'],
+      },
+      {
+        name: 'tinted',
+        label: 'Tinted',
+        selector: '.glass-tinted .glass-demo',
+        classes: ['glass-tinted'],
+        derive: [{ tint: '#3355dd', amount: 0.6 }],
+      },
+      {
+        name: 'mono',
+        label: 'Monochrome',
+        selector: '.glass-mono .glass-demo',
+        classes: ['glass-mono'],
+        derive: ['monochrome'],
+      },
+    ],
     applyId: 'glass-demo-theme',
   })
 )
@@ -12320,6 +12381,30 @@ test('the glass variables are found; a translucent link keeps its alpha', async 
   expect(field('glass-control-radius').querySelector('.chain').textContent).toBe(
     '← height'
   )
+})
+test('a declared mode derives the roots, and the mixes follow', async () => {
+  const editor = preview.querySelector('tosi-theme-editor')
+  while (!editor.shadowRoot?.querySelector('[data-mode="mono"]')) {
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+  }
+  const demo = preview.querySelector('.glass-demo')
+  const variable = (name) => getComputedStyle(demo).getPropertyValue(`--${name}`).trim()
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
+  const pick = async (mode) => {
+    editor.shadowRoot.querySelector(`[data-mode="${mode}"]`).click()
+    while (!document.body.classList.contains(`glass-${mode}`) && mode !== 'light') await frame()
+    await frame()
+  }
+  expect(variable('glass-accent')).toBe('#3355dd')
+  await pick('mono')
+  const grey = variable('glass-accent').slice(1)
+  expect(grey.slice(0, 2) === grey.slice(2, 4) && grey.slice(2, 4) === grey.slice(4, 6)).toBe(true)
+  expect(variable('glass-backdrop')).not.toContain('#6087ba')
+  // Not rewritten: the browser mixes it from the (monochrome) tint, as in every mode.
+  expect(variable('glass-surface')).toContain(`${variable('glass-tint')} 20%`)
+  await pick('light')
+  expect(document.body.classList.contains('glass-mono')).toBe(false)
+  expect(variable('glass-accent')).toBe('#3355dd')
 })
 ```
 

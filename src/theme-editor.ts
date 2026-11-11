@@ -71,22 +71,25 @@ test('editing a base colour or a variable applies it, and a tuned value can be r
   const radius = () => getComputedStyle(sample).getPropertyValue('--tosi-border-radius')
   edit('tosi-border-radius', '12px')
   expect(radius()).toBe('12px')
-  expect(editor.value.light['tosi-border-radius']).toBe('12px')
+  expect(editor.value.modes.light['tosi-border-radius']).toBe('12px')
   editor.shadowRoot.querySelector('[data-name="tosi-border-radius"] .reset').click()
-  expect(editor.value.light['tosi-border-radius']).toBe(undefined)
+  expect(editor.value.modes.light['tosi-border-radius']).toBe(undefined)
   expect(radius()).toBe('4px')
 })
 ```
 
 ## Modes
 
-The mode buttons choose which mode you are editing: light, dark, high contrast, or dark high
-contrast. Every mode but light starts out generated; a value you change there is tuned for that
+The mode buttons choose which mode you are editing: by default light, dark, high contrast, and
+dark high contrast. Pass `modes` (a `ThemeModeSpec[]`, see [theme data](/theme-data/)) for a
+theme's own, such as a tinted or monochrome mode; with only `selectors`, the editor offers the
+modes those name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
 mode only, marked with a dot, and stays put when the base colours change. The ↺ button puts it
 back to the generated value.
 
 Editing a mode previews it: the editor shows the page in that mode while you work, by setting
-the doc system's `darkmode` and `high-contrast` classes, and puts them back when it is removed.
+the mode's `classes` on `<html>` and `<body>` (the doc system's `darkmode` and `high-contrast`
+for the default modes), and puts them back when it is removed.
 Set `previewModes` to `false` to leave the page alone.
 
 ## Declaring variables
@@ -112,6 +115,7 @@ its control:
 - `applyId`: the id of the stylesheet it applies the theme through (`tosi-live-theme`); empty
   to apply nothing.
 - `selectors`: per-mode selectors for that stylesheet (see theme data).
+- `modes`: the theme's modes (`THEME_MODE_SPECS` by default).
 - A `change` event fires on every edit.
 
 The editor is styled with fixed colours in its shadow DOM, so no theme you make can make it
@@ -128,21 +132,22 @@ import {
   withAttributes,
 } from 'tosijs'
 import {
-  THEME_MODES,
+  THEME_MODE_SPECS,
   ThemeData,
   ThemeGenerator,
   ThemeMode,
+  ThemeModeSpec,
   ThemeValues,
   ThemeVariable,
   applyThemeData,
   componentThemeGenerator,
+  deriveTheme,
   fontFamilies,
   parseFontImport,
-  resolveTheme,
-  THEME_MODE_SELECTORS,
 } from './theme-data.js'
 import {
   DiscoveredVariable,
+  declaredValues,
   discoverThemeVariables,
   groupVariables,
   isDerived,
@@ -152,24 +157,6 @@ import {
 
 const { div, h3, label, input, select, option, button, datalist, span } =
   elements
-
-export const THEME_MODE_LABELS: Record<ThemeMode, string> = {
-  light: 'Light',
-  dark: 'Dark',
-  highContrast: 'High contrast',
-  darkHighContrast: 'Dark high contrast',
-}
-
-/** The mode's resolved value of a variable, falling back to light, whose values cascade. */
-const effective = (
-  resolved: Record<ThemeMode, ThemeValues>,
-  mode: ThemeMode,
-  name: string
-): string =>
-  resolved[mode][name] ??
-  (mode === 'darkHighContrast' ? resolved.dark[name] : undefined) ??
-  resolved.light[name] ??
-  ''
 
 /** `#rrggbb` for a colour well, which takes nothing else. */
 const wellValue = (value: string): string => {
@@ -217,6 +204,7 @@ export class TosiThemeEditor extends withAttributes({
   private _generator: ThemeGenerator | null | undefined = undefined
   private _variables: ThemeVariable[] | string | RegExp = []
   private _selectors: Partial<Record<ThemeMode, string>> = {}
+  private _modes: ThemeModeSpec[] | null = null
 
   /** the theme being edited */
   get value(): ThemeData {
@@ -265,15 +253,44 @@ export class TosiThemeEditor extends withAttributes({
     this.update()
   }
 
-  private modeSelectors(): Record<ThemeMode, string> {
-    return { ...THEME_MODE_SELECTORS, ...this.selectors }
+  /**
+   * the theme's modes, the first being what the rest are made from: `THEME_MODE_SPECS` unless
+   * set, narrowed to the modes `selectors` names when it names any
+   */
+  get modes(): ThemeModeSpec[] {
+    if (this._modes) return this._modes
+    const named = Object.keys(this.selectors)
+    return named.length
+      ? THEME_MODE_SPECS.filter((spec) => named.includes(spec.name))
+      : THEME_MODE_SPECS
+  }
+  set modes(modes: ThemeModeSpec[] | null) {
+    this._modes = modes?.length ? modes : null
+    this.discoveredFor = ''
+    this.queueRender()
   }
 
-  /** The element values resolve in: the light-mode selector's, or the root. */
+  /** Each mode's selector: the one in `selectors`, or the mode's own. */
+  private modeSelectors(): Record<ThemeMode, string> {
+    return Object.fromEntries(
+      this.modes.map((spec) => [
+        spec.name,
+        this.selectors[spec.name] ?? spec.selector,
+      ])
+    )
+  }
+
+  /** The mode being edited, or the first when `mode` names none of the theme's. */
+  private currentMode(): ThemeModeSpec {
+    const modes = this.modes
+    return modes.find((spec) => spec.name === this.mode) ?? modes[0]
+  }
+
+  /** The element values resolve in: the first mode's selector's, or the root. */
   private scopeElement(): Element {
-    const light = this.modeSelectors().light
+    const first = this.modeSelectors()[this.modes[0].name]
     try {
-      return document.querySelector(light) ?? document.documentElement
+      return document.querySelector(first) ?? document.documentElement
     } catch {
       return document.documentElement
     }
@@ -307,6 +324,7 @@ export class TosiThemeEditor extends withAttributes({
   }
   set selectors(selectors: Partial<Record<ThemeMode, string>>) {
     this._selectors = selectors ?? {}
+    this.discoveredFor = ''
     this.queueRender()
   }
 
@@ -478,10 +496,13 @@ export class TosiThemeEditor extends withAttributes({
   private set(scope: 'base' | ThemeMode, name: string, raw: string | null) {
     const value = raw?.trim() ?? ''
     const theme: ThemeData = { ...this.value, base: { ...this.value.base } }
-    const values: Record<string, string> = { ...(theme[scope] ?? {}) }
+    const values: ThemeValues = {
+      ...(scope === 'base' ? theme.base : theme.modes?.[scope]),
+    }
     if (value) values[name] = value
     else delete values[name]
-    ;(theme as any)[scope] = values
+    if (scope === 'base') theme.base = values
+    else theme.modes = { ...theme.modes, [scope]: values }
     this._value = theme
     this.update()
     this.dispatchEvent(new Event('change', { bubbles: true }))
@@ -521,7 +542,7 @@ export class TosiThemeEditor extends withAttributes({
     const modeButton = target.closest('[data-mode]') as HTMLElement | null
     if (modeButton) {
       this.previewing = true
-      this.mode = modeButton.dataset.mode as ThemeMode
+      this.mode = modeButton.dataset.mode!
       return
     }
     if (target.closest('[part="fontAdd"]')) {
@@ -708,11 +729,12 @@ export class TosiThemeEditor extends withAttributes({
   }
 
   /** Families the page already uses, as suggestions. */
-  private fontSuggestions(resolved: Record<ThemeMode, ThemeValues>): string[] {
+  private fontSuggestions(full: Record<ThemeMode, ThemeValues>): string[] {
     const families = new Set<string>()
+    const first = full[this.modes[0].name] ?? {}
     for (const variable of this.editable()) {
       if (variable.kind === 'font-family') {
-        const value = resolved.light[variable.name]
+        const value = first[variable.name]
         if (value) families.add(value)
       }
     }
@@ -732,25 +754,30 @@ export class TosiThemeEditor extends withAttributes({
 
   // Set when the reader picks a mode, so mounting an editor never changes the page's mode.
   private previewing = false
-  private savedClasses?: { dark: boolean; contrast: boolean }
+  // The mode classes the page had before a preview, per element.
+  private savedClasses?: Map<Element, string[]>
+
+  /** Every class some mode sets: previewing a mode clears the others' first. */
+  private modeClasses(): string[] {
+    return [...new Set(this.modes.flatMap((spec) => spec.classes ?? []))]
+  }
 
   private previewMode(): void {
     if (!this.previewModes || !this.previewing) return
-    const dark = this.mode === 'dark' || this.mode === 'darkHighContrast'
-    const contrast =
-      this.mode === 'highContrast' || this.mode === 'darkHighContrast'
+    const wanted = this.currentMode().classes ?? []
     for (const element of [document.documentElement, document.body]) {
-      element.classList.toggle('darkmode', dark)
-      element.classList.toggle('high-contrast', contrast)
+      for (const name of this.modeClasses()) {
+        element.classList.toggle(name, wanted.includes(name))
+      }
     }
   }
 
   private restoreMode(): void {
     if (!this.previewing || !this.savedClasses) return
-    const { dark, contrast } = this.savedClasses
-    for (const element of [document.documentElement, document.body]) {
-      element.classList.toggle('darkmode', dark)
-      element.classList.toggle('high-contrast', contrast)
+    for (const [element, had] of this.savedClasses) {
+      for (const name of this.modeClasses()) {
+        element.classList.toggle(name, had.includes(name))
+      }
     }
     this.previewing = false
   }
@@ -763,12 +790,16 @@ export class TosiThemeEditor extends withAttributes({
   is being dragged, and take focus from the field being typed in.
   */
   private build(): void {
-    const mode = this.mode
+    const current = this.currentMode()
+    const mode = current.name
+    const modes = this.modes
+    // One mode is nothing to choose between.
+    ;(this.parts.modes as HTMLElement).hidden = modes.length < 2
     this.parts.modes.replaceChildren(
-      ...THEME_MODES.map((each) =>
+      ...modes.map((each) =>
         button(
-          { dataMode: each, ariaPressed: String(each === mode) },
-          THEME_MODE_LABELS[each]
+          { dataMode: each.name, ariaPressed: String(each.name === mode) },
+          each.label ?? each.name
         )
       )
     )
@@ -783,7 +814,7 @@ export class TosiThemeEditor extends withAttributes({
     )
     const groups = new Map<string, ThemeVariable[]>()
     for (const variable of this.editable()) {
-      const group = variable.group ?? THEME_MODE_LABELS[mode]
+      const group = variable.group ?? current.label ?? mode
       groups.set(group, [...(groups.get(group) ?? []), variable])
     }
     this.parts.variables.replaceChildren(
@@ -795,7 +826,7 @@ export class TosiThemeEditor extends withAttributes({
   }
 
   /** Show each field's current value, and whether it is tuned. */
-  private refresh(resolved: Record<ThemeMode, ThemeValues>): void {
+  private refresh(full: Record<ThemeMode, ThemeValues>): void {
     const base = { ...this.generator?.defaults, ...this.value.base }
     const focused = this.shadowRoot!.activeElement
     const scopeElement = this.scopeElement()
@@ -805,14 +836,11 @@ export class TosiThemeEditor extends withAttributes({
     )) {
       const { name, scope } = field.dataset as { name: string; scope: string }
       const tunedIn =
-        (scope === 'base' ? this.value.base : this.value[scope as ThemeMode]) ??
-        {}
+        (scope === 'base' ? this.value.base : this.value.modes?.[scope]) ?? {}
       const value =
         scope === 'base'
           ? (base[name] ?? '')
-          : effective(resolved, scope as ThemeMode, name) ||
-            this.declared(name, scope as ThemeMode) ||
-            page.getPropertyValue(`--${name}`).trim()
+          : full[scope]?.[name] || page.getPropertyValue(`--${name}`).trim()
       field.classList.toggle('-tuned', name in tunedIn)
       /*
       A derived value (one that refers to other variables) shows what it comes to, muted, with
@@ -864,21 +892,7 @@ export class TosiThemeEditor extends withAttributes({
       )
     )
     this.parts.fonts.replaceChildren(
-      ...this.fontSuggestions(resolved).map((family) =>
-        option({ value: family })
-      )
-    )
-  }
-
-  /** What the page's CSS declares for a variable in a mode (darker modes fall back). */
-  private declared(name: string, mode: ThemeMode): string {
-    const declared = this.discovered.get(name)?.declared
-    if (!declared) return ''
-    return (
-      declared[mode] ??
-      (mode === 'darkHighContrast' ? declared.dark : undefined) ??
-      declared.light ??
-      ''
+      ...this.fontSuggestions(full).map((family) => option({ value: family }))
     )
   }
 
@@ -926,33 +940,42 @@ export class TosiThemeEditor extends withAttributes({
   update(): void {
     if (!this.hydrated) return
     this.listen()
-    const resolved = this.applyId
-      ? applyThemeData(this.value, this.generator, {
-          id: this.applyId,
-          selectors: this.selectors,
-        })
-      : resolveTheme(this.value, this.generator)
+    const variables = this.editable()
+    const options = {
+      modes: this.modes,
+      // What the page's CSS declares: the roots a derived mode is made from, with no generator.
+      page: this.generator ? {} : declaredValues([...this.discovered.values()]),
+    }
+    if (this.applyId) {
+      applyThemeData(this.value, this.generator, {
+        ...options,
+        id: this.applyId,
+        selectors: this.modeSelectors(),
+      })
+    }
+    const full = deriveTheme(this.value, this.generator, options)
     const structure = [
-      this.mode,
+      this.modes.map((spec) => spec.name).join(),
+      this.currentMode().name,
       this.generator?.base.map((v) => v.name).join() ?? '',
-      this.editable()
-        .map((v) => `${v.name}:${v.kind}`)
-        .join(),
+      variables.map((v) => `${v.name}:${v.kind}`).join(),
     ].join('|')
     if (structure !== this.builtFor) {
       this.builtFor = structure
       this.build()
     }
-    this.refresh(resolved)
+    this.refresh(full)
     this.previewMode()
   }
 
   connectedCallback(): void {
     super.connectedCallback()
-    this.savedClasses = {
-      dark: document.body.classList.contains('darkmode'),
-      contrast: document.body.classList.contains('high-contrast'),
-    }
+    this.savedClasses = new Map(
+      [document.documentElement, document.body].map((element) => [
+        element,
+        this.modeClasses().filter((name) => element.classList.contains(name)),
+      ])
+    )
   }
 
   disconnectedCallback(): void {

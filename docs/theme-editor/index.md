@@ -70,22 +70,25 @@ test('editing a base colour or a variable applies it, and a tuned value can be r
   const radius = () => getComputedStyle(sample).getPropertyValue('--tosi-border-radius')
   edit('tosi-border-radius', '12px')
   expect(radius()).toBe('12px')
-  expect(editor.value.light['tosi-border-radius']).toBe('12px')
+  expect(editor.value.modes.light['tosi-border-radius']).toBe('12px')
   editor.shadowRoot.querySelector('[data-name="tosi-border-radius"] .reset').click()
-  expect(editor.value.light['tosi-border-radius']).toBe(undefined)
+  expect(editor.value.modes.light['tosi-border-radius']).toBe(undefined)
   expect(radius()).toBe('4px')
 })
 ```
 
 ## Modes
 
-The mode buttons choose which mode you are editing: light, dark, high contrast, or dark high
-contrast. Every mode but light starts out generated; a value you change there is tuned for that
+The mode buttons choose which mode you are editing: by default light, dark, high contrast, and
+dark high contrast. Pass `modes` (a `ThemeModeSpec[]`, see [theme data](/theme-data/)) for a
+theme's own, such as a tinted or monochrome mode; with only `selectors`, the editor offers the
+modes those name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
 mode only, marked with a dot, and stays put when the base colours change. The ↺ button puts it
 back to the generated value.
 
 Editing a mode previews it: the editor shows the page in that mode while you work, by setting
-the doc system's `darkmode` and `high-contrast` classes, and puts them back when it is removed.
+the mode's `classes` on `<html>` and `<body>` (the doc system's `darkmode` and `high-contrast`
+for the default modes), and puts them back when it is removed.
 Set `previewModes` to `false` to leave the page alone.
 
 ## Declaring variables
@@ -111,6 +114,7 @@ its control:
 - `applyId`: the id of the stylesheet it applies the theme through (`tosi-live-theme`); empty
   to apply nothing.
 - `selectors`: per-mode selectors for that stylesheet (see theme data).
+- `modes`: the theme's modes (`THEME_MODE_SPECS` by default).
 - A `change` event fires on every edit.
 
 The editor is styled with fixed colours in its shadow DOM, so no theme you make can make it

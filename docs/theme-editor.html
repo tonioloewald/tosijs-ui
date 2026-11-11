@@ -22,7 +22,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=5a500b1bb2e7" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=cef87fafc4d4" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>theme editor — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-theme-editor&gt; edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON." />
@@ -40,13 +40,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="theme editor — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme editor","description":"\u003ctosi-theme-editor> edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON.","url":"https://ui.tosijs.net/theme-editor/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-11T14:07:44.705Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme editor","description":"\u003ctosi-theme-editor> edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON.","url":"https://ui.tosijs.net/theme-editor/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-11T17:11:12.415Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"theme editor","item":"https://ui.tosijs.net/theme-editor/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=b7b52c8bdedc" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=ec7d4b6d2546" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;test-results/e2e-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="theme-editor.ts">
 <h1 id="theme-editor">theme editor</h1>
 <p><code>&lt;tosi-theme-editor&gt;</code> edits a theme as data (see <a href="/theme-data/">theme data</a>): the base colours
@@ -115,19 +115,22 @@ preview.append(editor, sample)
   const radius = () =&gt; getComputedStyle(sample).getPropertyValue(&#39;--tosi-border-radius&#39;)
   edit(&#39;tosi-border-radius&#39;, &#39;12px&#39;)
   expect(radius()).toBe(&#39;12px&#39;)
-  expect(editor.value.light[&#39;tosi-border-radius&#39;]).toBe(&#39;12px&#39;)
+  expect(editor.value.modes.light[&#39;tosi-border-radius&#39;]).toBe(&#39;12px&#39;)
   editor.shadowRoot.querySelector(&#39;[data-name=&quot;tosi-border-radius&quot;] .reset&#39;).click()
-  expect(editor.value.light[&#39;tosi-border-radius&#39;]).toBe(undefined)
+  expect(editor.value.modes.light[&#39;tosi-border-radius&#39;]).toBe(undefined)
   expect(radius()).toBe(&#39;4px&#39;)
 })
 </code></pre>
 <h2 id="modes">Modes</h2>
-<p>The mode buttons choose which mode you are editing: light, dark, high contrast, or dark high
-contrast. Every mode but light starts out generated; a value you change there is tuned for that
+<p>The mode buttons choose which mode you are editing: by default light, dark, high contrast, and
+dark high contrast. Pass <code>modes</code> (a <code>ThemeModeSpec[]</code>, see <a href="/theme-data/">theme data</a>) for a
+theme&#39;s own, such as a tinted or monochrome mode; with only <code>selectors</code>, the editor offers the
+modes those name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
 mode only, marked with a dot, and stays put when the base colours change. The ↺ button puts it
 back to the generated value.</p>
 <p>Editing a mode previews it: the editor shows the page in that mode while you work, by setting
-the doc system&#39;s <code>darkmode</code> and <code>high-contrast</code> classes, and puts them back when it is removed.
+the mode&#39;s <code>classes</code> on <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> (the doc system&#39;s <code>darkmode</code> and <code>high-contrast</code>
+for the default modes), and puts them back when it is removed.
 Set <code>previewModes</code> to <code>false</code> to leave the page alone.</p>
 <h2 id="declaring-variables">Declaring variables</h2>
 <p><code>variables</code> lists what may be edited, beyond the base colours, each with a <code>kind</code> that picks
@@ -169,6 +172,7 @@ its control:</p>
 <li><code>applyId</code>: the id of the stylesheet it applies the theme through (<code>tosi-live-theme</code>); empty
 to apply nothing.</li>
 <li><code>selectors</code>: per-mode selectors for that stylesheet (see theme data).</li>
+<li><code>modes</code>: the theme&#39;s modes (<code>THEME_MODE_SPECS</code> by default).</li>
 <li>A <code>change</code> event fires on every edit.</li>
 </ul>
 <p>The editor is styled with fixed colours in its shadow DOM, so no theme you make can make it
@@ -278,6 +282,6 @@ unreadable.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-62yj8ar9.js"></script>
+  <script type="module" src="hydrate-7mma3ypv.js"></script>
 </body>
 </html>

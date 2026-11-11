@@ -1,6 +1,5 @@
 import { ElementCreator, XinStyleSheet } from 'tosijs';
-import { ThemeData, ThemeGenerator, ThemeMode, ThemeVariable } from './theme-data.js';
-export declare const THEME_MODE_LABELS: Record<ThemeMode, string>;
+import { ThemeData, ThemeGenerator, ThemeMode, ThemeModeSpec, ThemeVariable } from './theme-data.js';
 /** The units a length field offers. */
 export declare const LENGTH_UNITS: string[];
 /** `16px` → `{ amount: 16, unit: 'px' }`; null for anything else (`calc(…)`, a `var()`). */
@@ -22,6 +21,7 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private _generator;
     private _variables;
     private _selectors;
+    private _modes;
     /** the theme being edited */
     get value(): ThemeData;
     set value(theme: ThemeData);
@@ -42,8 +42,17 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private discoveredFor;
     /** Look for the pattern's variables again (after the page's stylesheets change). */
     rediscover: () => void;
+    /**
+     * the theme's modes, the first being what the rest are made from: `THEME_MODE_SPECS` unless
+     * set, narrowed to the modes `selectors` names when it names any
+     */
+    get modes(): ThemeModeSpec[];
+    set modes(modes: ThemeModeSpec[] | null);
+    /** Each mode's selector: the one in `selectors`, or the mode's own. */
     private modeSelectors;
-    /** The element values resolve in: the light-mode selector's, or the root. */
+    /** The mode being edited, or the first when `mode` names none of the theme's. */
+    private currentMode;
+    /** The element values resolve in: the first mode's selector's, or the root. */
     private scopeElement;
     /** The variables being edited: the list, or what the pattern found, labelled and grouped. */
     private editable;
@@ -68,14 +77,14 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private fontSuggestions;
     private previewing;
     private savedClasses?;
+    /** Every class some mode sets: previewing a mode clears the others' first. */
+    private modeClasses;
     private previewMode;
     private restoreMode;
     private builtFor;
     private build;
     /** Show each field's current value, and whether it is tuned. */
     private refresh;
-    /** What the page's CSS declares for a variable in a mode (darker modes fall back). */
-    private declared;
     private showLength;
     private listening;
     private listen;

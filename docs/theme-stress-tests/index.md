@@ -141,6 +141,10 @@ The look of the [react-tosijs](https://react.tosijs.net) and ngx-tosijs demos: t
 surfaces over a backdrop, blurred and saturated, with a light rim and pill-shaped controls.
 The surfaces are the tint at an opacity, so a translucent colour must survive editing.
 
+It also declares modes of its own beyond light and dark: **tinted** (every colour toward the
+accent's hue) and **monochrome**. Each is derived from the few root colours; the surfaces, rim
+and field follow in the browser because they are mixed from the tint.
+
 ```css
 .glass-demo {
   --glass-accent: #3355dd;
@@ -156,11 +160,12 @@ The surfaces are the tint at an opacity, so a translucent colour must survive ed
   --glass-control-height: 32px;
   --glass-control-radius: calc(var(--glass-control-height) / 2);
   --glass-backdrop: linear-gradient(160deg, #6087ba, #b7cdea);
+  --glass-text: #1d1d1f;
 
   flex: 1 1 220px;
   padding: 24px;
   background: var(--glass-backdrop);
-  color: #1d1d1f;
+  color: var(--glass-text);
   font-family: system-ui, sans-serif;
 }
 .glass-demo .glass-panel {
@@ -218,7 +223,30 @@ import { tosiThemeEditor } from 'tosijs-ui'
 preview.querySelector('.glass-stage').prepend(
   tosiThemeEditor({
     variables: 'glass-*',
-    selectors: { light: '.glass-demo' },
+    modes: [
+      { name: 'light', label: 'Light', selector: '.glass-demo' },
+      {
+        name: 'dark',
+        label: 'Dark',
+        selector: '.darkmode .glass-demo',
+        classes: ['darkmode'],
+        derive: ['invert'],
+      },
+      {
+        name: 'tinted',
+        label: 'Tinted',
+        selector: '.glass-tinted .glass-demo',
+        classes: ['glass-tinted'],
+        derive: [{ tint: '#3355dd', amount: 0.6 }],
+      },
+      {
+        name: 'mono',
+        label: 'Monochrome',
+        selector: '.glass-mono .glass-demo',
+        classes: ['glass-mono'],
+        derive: ['monochrome'],
+      },
+    ],
     applyId: 'glass-demo-theme',
   })
 )
@@ -238,5 +266,29 @@ test('the glass variables are found; a translucent link keeps its alpha', async 
   expect(field('glass-control-radius').querySelector('.chain').textContent).toBe(
     '← height'
   )
+})
+test('a declared mode derives the roots, and the mixes follow', async () => {
+  const editor = preview.querySelector('tosi-theme-editor')
+  while (!editor.shadowRoot?.querySelector('[data-mode="mono"]')) {
+    await new Promise((resolve) => requestAnimationFrame(resolve))
+  }
+  const demo = preview.querySelector('.glass-demo')
+  const variable = (name) => getComputedStyle(demo).getPropertyValue(`--${name}`).trim()
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
+  const pick = async (mode) => {
+    editor.shadowRoot.querySelector(`[data-mode="${mode}"]`).click()
+    while (!document.body.classList.contains(`glass-${mode}`) && mode !== 'light') await frame()
+    await frame()
+  }
+  expect(variable('glass-accent')).toBe('#3355dd')
+  await pick('mono')
+  const grey = variable('glass-accent').slice(1)
+  expect(grey.slice(0, 2) === grey.slice(2, 4) && grey.slice(2, 4) === grey.slice(4, 6)).toBe(true)
+  expect(variable('glass-backdrop')).not.toContain('#6087ba')
+  // Not rewritten: the browser mixes it from the (monochrome) tint, as in every mode.
+  expect(variable('glass-surface')).toContain(`${variable('glass-tint')} 20%`)
+  await pick('light')
+  expect(document.body.classList.contains('glass-mono')).toBe(false)
+  expect(variable('glass-accent')).toBe('#3355dd')
 })
 ```

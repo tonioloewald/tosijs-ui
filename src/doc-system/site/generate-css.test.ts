@@ -3,7 +3,7 @@ import { themeFileCss } from './generate-css.js'
 
 test('a saved theme becomes CSS after the stock sheet, starting from the site theme', () => {
   const output = themeFileCss(
-    { base: { accent: '#0b7a5c' }, light: { spacing: '12px' } },
+    { base: { accent: '#0b7a5c' }, modes: { light: { spacing: '12px' } } },
     { background: '#ffffee' }
   )
   expect(output).toContain('--brand-color: #0b7a5c')

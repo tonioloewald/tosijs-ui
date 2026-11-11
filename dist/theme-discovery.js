@@ -109,7 +109,9 @@ export function discoverThemeVariables(pattern, { selectors, scope, exclude, roo
             }
         }
     }
-    const element = scope ?? root.querySelector(selectors.light) ?? root.documentElement;
+    const element = scope ??
+        root.querySelector(Object.values(selectors)[0] ?? ':root') ??
+        root.documentElement;
     const computed = getComputedStyle(element);
     for (const variable of found.values()) {
         const resolved = computed.getPropertyValue(`--${variable.name}`).trim() ||
@@ -119,6 +121,17 @@ export function discoverThemeVariables(pattern, { selectors, scope, exclude, roo
         variable.kind = inferKind(variable.name, resolved);
     }
     return [...found.values()];
+}
+/** What the page declares in each mode, by mode: the `page` a theme with no generator needs. */
+export function declaredValues(variables) {
+    const page = {};
+    for (const { name, declared } of variables) {
+        for (const [mode, value] of Object.entries(declared)) {
+            ;
+            (page[mode] ??= {})[name] = value;
+        }
+    }
+    return page;
 }
 let canvas;
 /**

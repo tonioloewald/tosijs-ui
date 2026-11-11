@@ -10,10 +10,7 @@ import { applyThemeData, componentThemeGenerator } from 'tosijs-ui'
 
 const theme = {
   base: { accent: '#0b7a5c', background: '#fbfaf7', text: '#1d1d1b' },
-  light: { 'tosi-border-radius': '12px' },
-  dark: {},
-  highContrast: {},
-  darkHighContrast: {},
+  modes: { light: { 'tosi-border-radius': '12px' } },
 }
 // Scoped to the demo; a page's own theme would leave out `selectors`.
 const resolved = applyThemeData(theme, componentThemeGenerator, {
@@ -52,23 +49,55 @@ test('base values generate the palette, and a hand-tuned value wins', () => {
 
 ## Modes
 
-There are four: `light`, `dark`, `highContrast` and `darkHighContrast`. Every mode but light is
-**generated**:
+A theme's modes are a list (`ThemeModeSpec[]`), and `THEME_MODE_SPECS` is the one used unless
+you pass `modes`: `light`, `dark`, `highContrast` and `darkHighContrast`. Each mode names the
+selector its values are written under, the classes that put a page in it (for the editor's
+preview), the mode it is made `from` (light unless it says otherwise) and how it is made from
+it (`derive`):
 
-- **dark** from the light values, with their luminance inverted (a value you tuned in light is
-  carried over, inverted), then the generator's own dark adjustments;
-- **high contrast** from the base, with the background pushed to white, the text to black and
-  the accent darkened until it reaches 7:1, the WCAG AAA ratio, against that background;
-- **dark high contrast** the same way, inverted.
+- `'invert'` inverts luminance; with a generator, its own dark adjustments follow. Dark is
+  light inverted, and a value you tuned in light is carried over, inverted.
+- `'contrast'` pushes values apart; with a generator, the base background goes to white, the
+  text to black, and the accent darkens until it reaches 7:1 (WCAG AAA) against it. Dark high
+  contrast is high contrast, inverted.
+- `'monochrome'` takes the colour out, and `{ tint: '#3355dd', amount }` takes it out and
+  tints toward a hue.
+- A function of the values does anything else.
 
-A value tuned by hand in a mode wins over the generated one, and survives regeneration: change
-the accent, and every generated value follows while your tuned ones stay put.
+Only colour **literals** are transformed. A value derived from others (`color-mix(in oklab,
+var(--accent) 20%, white)`) is left as written, and the browser derives it again from the
+transformed roots. So a mode needs to change only the few colours everything else hangs from.
 
-Each mode is written under its own selector (`THEME_MODE_SELECTORS`): `:root`, `.darkmode`,
-`.high-contrast:not(.darkmode)` and `.darkmode.high-contrast`, which are the classes the doc system puts on
-`<html>` and `<body>`. Pass `selectors` to use your own. A mode other than light only writes
-what differs from light, so a font or a size you set once applies in every mode unless a mode
-tunes it.
+A theme declares modes of its own by passing a list, such as a tinted mode under `.tinted`:
+
+```typescript
+const modes = [
+  ...THEME_MODE_SPECS,
+  {
+    name: 'tinted',
+    label: 'Tinted',
+    selector: '.tinted',
+    classes: ['tinted'],
+    derive: [{ tint: '#3355dd' }],
+  },
+]
+applyThemeData(theme, null, { modes, page })
+```
+
+A value tuned by hand in a mode (`theme.modes.dark`) wins over the derived one, and survives
+regeneration: change the accent, and every generated value follows while your tuned ones stay
+put.
+
+A mode other than the first writes only what differs from what the page would show anyway (so
+a font or a size you set once applies in every mode unless a mode tunes it), plus whatever
+another mode writes, since mode selectors can match together. Pass `selectors` to write a mode
+somewhere else, such as a scoped part of the page.
+
+**No generator.** A design system whose CSS derives its own variables (most do) needs no
+generator: pass `null`, and pass `page`, what its CSS declares in each mode
+(`discoverThemeVariables` finds it), so a derived mode has roots to transform. A mode with no
+`derive`, or one the page's CSS declares itself, is then just what the page declares, plus
+what you tune: the page's own dark mode is not second-guessed.
 
 ## Web fonts
 

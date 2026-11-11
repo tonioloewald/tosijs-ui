@@ -1,7 +1,7 @@
-import type { ThemeKind, ThemeMode, ThemeVariable } from './theme-data.js';
+import type { ThemeKind, ThemeMode, ThemeValues, ThemeVariable } from './theme-data.js';
 export interface DiscoveredVariable extends ThemeVariable {
     /** the declared value per mode, as written (`color-mix(in oklab, var(--x) 20%, white)`) */
-    declared: Partial<Record<ThemeMode, string>>;
+    declared: Record<ThemeMode, string>;
     /** the variables its value refers to, in any mode */
     parents: string[];
 }
@@ -26,6 +26,8 @@ export interface DiscoverOptions {
 }
 /** The custom properties matching `pattern`, with their declarations, parents and kinds. */
 export declare function discoverThemeVariables(pattern: string | RegExp, { selectors, scope, exclude, root }: DiscoverOptions): DiscoveredVariable[];
+/** What the page declares in each mode, by mode: the `page` a theme with no generator needs. */
+export declare function declaredValues(variables: DiscoveredVariable[]): Record<ThemeMode, ThemeValues>;
 /**
  * What a colour value comes to inside `scope`, as `#rrggbb` (or `#rrggbbaa` when translucent):
  * variables substituted, `color-mix()` mixed, any colour space converted. Null where the

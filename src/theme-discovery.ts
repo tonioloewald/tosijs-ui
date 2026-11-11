@@ -16,11 +16,16 @@ What it cannot see: a stylesheet from another origin (the browser refuses to let
 its rules) and styles inside a shadow root. Hand the editor a list for those.
 */
 
-import type { ThemeKind, ThemeMode, ThemeVariable } from './theme-data.js'
+import type {
+  ThemeKind,
+  ThemeMode,
+  ThemeValues,
+  ThemeVariable,
+} from './theme-data.js'
 
 export interface DiscoveredVariable extends ThemeVariable {
   /** the declared value per mode, as written (`color-mix(in oklab, var(--x) 20%, white)`) */
-  declared: Partial<Record<ThemeMode, string>>
+  declared: Record<ThemeMode, string>
   /** the variables its value refers to, in any mode */
   parents: string[]
 }
@@ -136,7 +141,9 @@ export function discoverThemeVariables(
     }
   }
   const element =
-    scope ?? root.querySelector(selectors.light) ?? root.documentElement
+    scope ??
+    root.querySelector(Object.values(selectors)[0] ?? ':root') ??
+    root.documentElement
   const computed = getComputedStyle(element)
   for (const variable of found.values()) {
     const resolved =
@@ -147,6 +154,19 @@ export function discoverThemeVariables(
     variable.kind = inferKind(variable.name, resolved)
   }
   return [...found.values()]
+}
+
+/** What the page declares in each mode, by mode: the `page` a theme with no generator needs. */
+export function declaredValues(
+  variables: DiscoveredVariable[]
+): Record<ThemeMode, ThemeValues> {
+  const page: Record<ThemeMode, ThemeValues> = {}
+  for (const { name, declared } of variables) {
+    for (const [mode, value] of Object.entries(declared)) {
+      ;(page[mode] ??= {})[name] = value
+    }
+  }
+  return page
 }
 
 let canvas: CanvasRenderingContext2D | null | undefined

@@ -22,16 +22,16 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=5a500b1bb2e7" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=cef87fafc4d4" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>theme data — tosijs-ui</title>
-  <meta name="description" content="A theme as plain JSON data: base colours generate light, dark and high-contrast modes, values tuned by hand win, and one stylesheet applies it." />
+  <meta name="description" content="A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it." />
   <link rel="canonical" href="https://ui.tosijs.net/theme-data/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="theme data — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="theme data — tosijs-ui" />
-  <meta property="og:description" content="A theme as plain JSON data: base colours generate light, dark and high-contrast modes, values tuned by hand win, and one stylesheet applies it." />
+  <meta property="og:description" content="A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it." />
   <meta property="og:url" content="https://ui.tosijs.net/theme-data/" />
   <meta property="og:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta property="og:image:width" content="1200" />
@@ -40,13 +40,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="theme data — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme data","description":"A theme as plain JSON data: base colours generate light, dark and high-contrast modes, values tuned by hand win, and one stylesheet applies it.","url":"https://ui.tosijs.net/theme-data/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-11T13:58:50.299Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme data","description":"A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it.","url":"https://ui.tosijs.net/theme-data/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-11T17:11:12.393Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"theme data","item":"https://ui.tosijs.net/theme-data/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b7b52c8bdedc" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ec7d4b6d2546" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;test-results/e2e-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="theme-data.ts">
 <h1 id="theme-data">theme data</h1>
 <p>A theme as plain data: a few <strong>base</strong> values (the brand colours) that a generator turns into
@@ -57,10 +57,7 @@ stylesheet: no editor code, which lives apart on <code>tosijs-ui/theme-editor</c
 
 const theme = {
   base: { accent: &#39;#0b7a5c&#39;, background: &#39;#fbfaf7&#39;, text: &#39;#1d1d1b&#39; },
-  light: { &#39;tosi-border-radius&#39;: &#39;12px&#39; },
-  dark: {},
-  highContrast: {},
-  darkHighContrast: {},
+  modes: { light: { &#39;tosi-border-radius&#39;: &#39;12px&#39; } },
 }
 // Scoped to the demo; a page&#39;s own theme would leave out `selectors`.
 const resolved = applyThemeData(theme, componentThemeGenerator, {
@@ -95,22 +92,48 @@ preview.append(
 })
 </code></pre>
 <h2 id="modes">Modes</h2>
-<p>There are four: <code>light</code>, <code>dark</code>, <code>highContrast</code> and <code>darkHighContrast</code>. Every mode but light is
-<strong>generated</strong>:</p>
+<p>A theme&#39;s modes are a list (<code>ThemeModeSpec[]</code>), and <code>THEME_MODE_SPECS</code> is the one used unless
+you pass <code>modes</code>: <code>light</code>, <code>dark</code>, <code>highContrast</code> and <code>darkHighContrast</code>. Each mode names the
+selector its values are written under, the classes that put a page in it (for the editor&#39;s
+preview), the mode it is made <code>from</code> (light unless it says otherwise) and how it is made from
+it (<code>derive</code>):</p>
 <ul>
-<li><strong>dark</strong> from the light values, with their luminance inverted (a value you tuned in light is
-carried over, inverted), then the generator&#39;s own dark adjustments;</li>
-<li><strong>high contrast</strong> from the base, with the background pushed to white, the text to black and
-the accent darkened until it reaches 7:1, the WCAG AAA ratio, against that background;</li>
-<li><strong>dark high contrast</strong> the same way, inverted.</li>
+<li><code>&#39;invert&#39;</code> inverts luminance; with a generator, its own dark adjustments follow. Dark is
+light inverted, and a value you tuned in light is carried over, inverted.</li>
+<li><code>&#39;contrast&#39;</code> pushes values apart; with a generator, the base background goes to white, the
+text to black, and the accent darkens until it reaches 7:1 (WCAG AAA) against it. Dark high
+contrast is high contrast, inverted.</li>
+<li><code>&#39;monochrome&#39;</code> takes the colour out, and <code>{ tint: &#39;#3355dd&#39;, amount }</code> takes it out and
+tints toward a hue.</li>
+<li>A function of the values does anything else.</li>
 </ul>
-<p>A value tuned by hand in a mode wins over the generated one, and survives regeneration: change
-the accent, and every generated value follows while your tuned ones stay put.</p>
-<p>Each mode is written under its own selector (<code>THEME_MODE_SELECTORS</code>): <code>:root</code>, <code>.darkmode</code>,
-<code>.high-contrast:not(.darkmode)</code> and <code>.darkmode.high-contrast</code>, which are the classes the doc system puts on
-<code>&lt;html&gt;</code> and <code>&lt;body&gt;</code>. Pass <code>selectors</code> to use your own. A mode other than light only writes
-what differs from light, so a font or a size you set once applies in every mode unless a mode
-tunes it.</p>
+<p>Only colour <strong>literals</strong> are transformed. A value derived from others (<code>color-mix(in oklab, var(--accent) 20%, white)</code>) is left as written, and the browser derives it again from the
+transformed roots. So a mode needs to change only the few colours everything else hangs from.</p>
+<p>A theme declares modes of its own by passing a list, such as a tinted mode under <code>.tinted</code>:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">const</span> modes <span class="token operator">=</span> <span class="token punctuation">[</span>
+  <span class="token operator">...</span><span class="token constant">THEME_MODE_SPECS</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    name<span class="token operator">:</span> <span class="token string">'tinted'</span><span class="token punctuation">,</span>
+    label<span class="token operator">:</span> <span class="token string">'Tinted'</span><span class="token punctuation">,</span>
+    selector<span class="token operator">:</span> <span class="token string">'.tinted'</span><span class="token punctuation">,</span>
+    classes<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">'tinted'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    derive<span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span> tint<span class="token operator">:</span> <span class="token string">'#3355dd'</span> <span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+<span class="token function">applyThemeData</span><span class="token punctuation">(</span>theme<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> modes<span class="token punctuation">,</span> page <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>A value tuned by hand in a mode (<code>theme.modes.dark</code>) wins over the derived one, and survives
+regeneration: change the accent, and every generated value follows while your tuned ones stay
+put.</p>
+<p>A mode other than the first writes only what differs from what the page would show anyway (so
+a font or a size you set once applies in every mode unless a mode tunes it), plus whatever
+another mode writes, since mode selectors can match together. Pass <code>selectors</code> to write a mode
+somewhere else, such as a scoped part of the page.</p>
+<p><strong>No generator.</strong> A design system whose CSS derives its own variables (most do) needs no
+generator: pass <code>null</code>, and pass <code>page</code>, what its CSS declares in each mode
+(<code>discoverThemeVariables</code> finds it), so a derived mode has roots to transform. A mode with no
+<code>derive</code>, or one the page&#39;s CSS declares itself, is then just what the page declares, plus
+what you tune: the page&#39;s own dark mode is not second-guessed.</p>
 <h2 id="web-fonts">Web fonts</h2>
 <p><code>fonts</code> lists stylesheets to link, such as a Google Fonts URL; <code>applyThemeData</code> links them
 (and unlinks ones the theme no longer names), and the doc site&#39;s build links them from each
@@ -231,6 +254,6 @@ stylesheet injects CSS. <code>parseFontImport</code> takes whatever Google Fonts
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-62yj8ar9.js"></script>
+  <script type="module" src="../hydrate-7mma3ypv.js"></script>
 </body>
 </html>

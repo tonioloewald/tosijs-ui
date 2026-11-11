@@ -293,7 +293,7 @@ test('the doc theme generator reproduces the stock stylesheet, and inverts tuned
   )
 
   const tuned = resolveTheme(
-    { base: {}, light: { 'nav-bg': '#ffffff' } },
+    { base: {}, modes: { light: { 'nav-bg': '#ffffff' } } },
     docSystemThemeGenerator
   )
   expect(tuned.dark['nav-bg']).not.toBe(resolved.dark['nav-bg'])
