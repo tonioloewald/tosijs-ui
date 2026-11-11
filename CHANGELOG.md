@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.17.8
+
+> A new `<tosi-splitter>`, which the live example's code view now uses, Continue links for
+> sections meant to be read in order, and doc pages that open at the top. Nothing to change on
+> upgrade.
+
+### Added
+
+- `<tosi-splitter>` divides the space between two adjacent flex items, in a row or a column.
+  It reads which from the container and shows the matching cursor.
+  - **Moving it:** drag it, or focus it and use the arrow keys (`step`, 16px; Shift for four
+    times that), Home and End. Double-click restores the items' own sizes.
+  - **Limits:** neither side goes below `min-size` (44px) or its own `min-width` /
+    `min-height`, or above its max.
+  - **Resizing:** the split is a flex-grow ratio, so it holds when the container resizes or
+    turns from row to column. When the container shrinks, the split gives way to keep both
+    neighbours at their minimums, then goes back to where you put it as the container grows
+    again. A container too small for both minimums is left alone.
+  - **API:** `value` is the first side's share (0–1), and `change` fires when a move ends.
+  - **Accessibility:** it has `role="separator"`, with `aria-valuenow` as a percentage.
+  - **Rendering:** its line sits on whole pixels, so it looks the same in a row and a column.
+  - **More than two items:** put one splitter between each pair. Each moves space only
+    between its own two neighbours.
+- `"continue": true` on a section page (or `continue: true` in frontmatter) ends the section
+  page and each page under it, in nav order, with "Continue: <next page> →".
+  - The last page gets no link, and nothing outside the section gets one.
+  - A nested section reads straight through.
+  - The link is in the static HTML too, but not in the ePub. #255
+
+### Fixed
+
+- Opening a page in the doc browser kept the previous page's scroll position, and Back/Forward
+  did not restore positions. The content pane scrolls rather than the page, so the browser's
+  own scroll restoration had nothing to restore. A page now opens at its top, or at its
+  #heading, and Back/Forward return it to where the reader left it. #256
+
+### Changed
+
+- A live example's code view (inline and maximized) has a splitter between the preview and the
+  code, so readers can give either more room. It appears only while the code is showing.
+
 ## 1.17.7
 
 > One dev-server fix: it no longer starts on a port another project already holds. Nothing to
