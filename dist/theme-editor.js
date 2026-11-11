@@ -215,7 +215,7 @@ export class TosiThemeEditor extends withAttributes({
             padding: '12px',
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-            width: '360px',
+            width: '300px',
             maxWidth: '100%',
             boxSizing: 'border-box',
             colorScheme: 'light',
@@ -256,7 +256,7 @@ export class TosiThemeEditor extends withAttributes({
             minHeight: '30px',
         },
         ':host .field label': {
-            flex: '1 1 40%',
+            flex: '1 1 auto',
             minWidth: '0',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -266,8 +266,13 @@ export class TosiThemeEditor extends withAttributes({
             content: '" •"',
             color: '#b0005a',
         },
+        /*
+        Each control is as wide as what it holds (a hex colour, a short number, a unit), and the
+        label takes the rest; only free text (a font stack, a calc()) gets more room.
+        */
         ':host input[type="text"], :host input[type="number"], :host select': {
-            flex: '1 1 50%',
+            flex: '0 0 auto',
+            width: '6em',
             minWidth: '0',
             padding: '3px 6px',
             border: '1px solid #bbb',
@@ -311,7 +316,9 @@ export class TosiThemeEditor extends withAttributes({
         },
         ':host .font-error': { color: '#b00020' },
         ':host .font-error:empty': { display: 'none' },
-        ':host .length-unit': { flex: '0 0 64px' },
+        ':host input[type="number"]': { width: '4.5em' },
+        ':host .length-unit': { width: '4.25em', padding: '3px 2px' },
+        ':host .field[data-kind="font-family"] input, :host .field[data-kind="text"] input, :host .length-text': { flex: '0 1 9.5em', width: '9.5em' },
         ':host .reset': {
             flex: '0 0 24px',
             width: '24px',

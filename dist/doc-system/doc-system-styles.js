@@ -119,6 +119,19 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             // doc-browser (doc-browser.ts) and the pre-hydration `:not(:defined)` layout
             // below — if these two ever disagree, the page jumps on hydration.
             _docContentMaxWidth: '44em',
+            /*
+            Corner radii, as variables so a theme can change them, and plain lengths so the theme
+            editor offers them as a number and a unit. These are what the rules computed before
+            (halves and quarters of the default 10px spacing), so a site that sets none looks the
+            same; they no longer follow a changed `--spacing`.
+            */
+            _buttonRadius: '5px',
+            _inputRadius: '5px',
+            _quoteRadius: '10px',
+            _codeRadius: '2.5px',
+            // The components' own radii (theme.ts defaults), here so a doc theme can edit them.
+            _tosiBorderRadius: '4px',
+            _tosiBorderRadiusLg: '8px',
         },
         /*
         Per-page layout, driven by `layout:` in a doc's metadata (see `Doc.layout`).
@@ -407,7 +420,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             position: 'relative',
             background: vars.insetBg,
             margin: '0 48px 56px 0',
-            borderRadius: vars.spacing,
+            borderRadius: vars.quoteRadius,
             padding: 'var(--spacing) calc(var(--spacing) * 2)',
             filter: `drop-shadow(0px 1px 1px ${vars.shadowColor})`,
         },
@@ -472,7 +485,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             background: vars.buttonBg,
             padding: '0 calc(var(--spacing) * 1.25)',
             border: 'none',
-            borderRadius: 'calc(var(--spacing) * 0.5)',
+            borderRadius: vars.buttonRadius,
         },
         'button, select, .clickable, input': {
             lineHeight: 'calc(var(--line-height) + var(--spacing))',
@@ -480,7 +493,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
         'input, textarea': {
             border: 'none',
             outline: 'none',
-            borderRadius: 'calc(var(--spacing) * 0.5)',
+            borderRadius: vars.inputRadius,
             boxShadow: vars.inputBorderShadow,
         },
         input: {
@@ -527,7 +540,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
         pre: {
             background: vars.codeBg,
             padding: vars.spacing,
-            borderRadius: 'calc(var(--spacing) * 0.25)',
+            borderRadius: vars.codeRadius,
             overflow: 'auto',
             fontSize: vars.codeFontSize,
             lineHeight: 'calc(var(--font-size) * 1.2)',
@@ -738,6 +751,42 @@ export const DOC_SYSTEM_THEME_VARIABLES = [
     { name: 'h2-scale', kind: 'number', label: 'Heading 2 scale', group: 'Type' },
     { name: 'h3-scale', kind: 'number', label: 'Heading 3 scale', group: 'Type' },
     { name: 'spacing', kind: 'length', label: 'Spacing', group: 'Layout' },
+    {
+        name: 'button-radius',
+        kind: 'length',
+        label: 'Button corners',
+        group: 'Corners',
+    },
+    {
+        name: 'input-radius',
+        kind: 'length',
+        label: 'Input corners',
+        group: 'Corners',
+    },
+    {
+        name: 'quote-radius',
+        kind: 'length',
+        label: 'Quote corners',
+        group: 'Corners',
+    },
+    {
+        name: 'code-radius',
+        kind: 'length',
+        label: 'Code corners',
+        group: 'Corners',
+    },
+    {
+        name: 'tosi-border-radius',
+        kind: 'length',
+        label: 'Components',
+        group: 'Corners',
+    },
+    {
+        name: 'tosi-border-radius-lg',
+        kind: 'length',
+        label: 'Large components',
+        group: 'Corners',
+    },
     {
         name: 'touch-size',
         kind: 'length',
