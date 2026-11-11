@@ -42,6 +42,7 @@ export declare function resolveWatchPaths(config: {
     watchPaths?: string[];
     staticDirs?: string[];
     bundleEntry?: string;
+    themeFile?: string;
 }, root?: string): string[];
 declare global {
     var Bun: any;

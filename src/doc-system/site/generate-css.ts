@@ -13,21 +13,52 @@ Default output: docs/doc-system.css
 
 import './build-dom-shim.js' // must precede any tosijs import (build has no DOM)
 import { css } from 'tosijs'
-import { docSystemStyleSpec, DocSystemTheme } from '../doc-system-styles.js'
+import {
+  docSystemStyleSpec,
+  docSystemThemeGenerator,
+  DocSystemTheme,
+} from '../doc-system-styles.js'
+import { resolveTheme, themeStyleSheet, ThemeData } from '../../theme-data.js'
 
 declare global {
   var Bun: any
 }
 
+/**
+ * The CSS for a theme saved by the theme editor (`themeFile`), after the stock stylesheet so
+ * it wins. Its base colours start from the site's `theme`.
+ */
+export function themeFileCss(data: ThemeData, theme: DocSystemTheme): string {
+  const merged: ThemeData = {
+    ...data,
+    base: { ...(theme as Record<string, string>), ...(data.base ?? {}) },
+  }
+  return css(themeStyleSheet(resolveTheme(merged, docSystemThemeGenerator)))
+}
+
 export async function generateCss(
   outputPath = 'docs/doc-system.css',
-  theme: DocSystemTheme = {}
+  theme: DocSystemTheme = {},
+  themeFile?: string
 ): Promise<void> {
   // No @import: each page links the fonts itself, in parallel (generate-site.ts, #3631).
-  await Bun.write(
-    outputPath,
-    css(docSystemStyleSpec(theme, { fontImport: false }))
-  )
+  let output = css(docSystemStyleSpec(theme, { fontImport: false }))
+  if (themeFile) {
+    const file = Bun.file(themeFile)
+    // Not saved yet is fine; a file that does not parse fails the build, as a typo should.
+    if (await file.exists()) {
+      let data: ThemeData
+      try {
+        data = JSON.parse(await file.text())
+      } catch (e) {
+        throw new Error(
+          `themeFile ${themeFile} is not valid JSON: ${(e as Error).message}`
+        )
+      }
+      output += '\n' + themeFileCss(data, theme)
+    }
+  }
+  await Bun.write(outputPath, output)
 }
 
 if (import.meta.main) {
@@ -37,6 +68,6 @@ if (import.meta.main) {
   const theme: DocSystemTheme = process.argv[3]
     ? JSON.parse(process.argv[3])
     : {}
-  await generateCss(outputPath, theme)
+  await generateCss(outputPath, theme, process.argv[4] || undefined)
   console.log(`generated ${outputPath}`)
 }

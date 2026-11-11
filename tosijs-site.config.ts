@@ -64,6 +64,11 @@ export default defineSiteConfig({
   // "edit page source" (local dev only).
   editableSources: true,
 
+  // The settings menu's Theme Editor saves here (in an editing session), and the build
+  // writes it into the site's stylesheet. Absent until the first save. The Playwright lane
+  // points it at a scratch file, so a save no browser intercepts cannot touch the repo.
+  themeFile: process.env.TOSIJS_THEME_FILE || 'tosijs-theme.json',
+
   // On `bun start`, open (or bring to front) this project's browser tab once the
   // server is up — reusing the tab keyed on the dev origin, so restarts don't pile
   // up tabs. macOS reuse is via AppleScript (one-time automation prompt). Override

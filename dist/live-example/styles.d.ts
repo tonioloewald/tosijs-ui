@@ -425,9 +425,11 @@ export declare const liveExampleStyleSpec: {
     };
     ':host .test-pass': {
         color: string;
+        background: string;
     };
     ':host .test-fail': {
         color: string;
+        background: string;
     };
     ':host .example-docs': {
         padding: string;

@@ -47,7 +47,7 @@ export declare function resolveTheme(data: ThemeData, generator: ThemeGenerator)
 /** The stylesheet for a theme: each mode's variables under its selector. */
 export declare function themeStyleSheet(resolved: Record<ThemeMode, ThemeValues>, selectors?: Partial<Record<ThemeMode, string>>): XinStyleSheet;
 /**
- * Apply a theme to the page, as one stylesheet (`id`, replaced on every call), and return
+ * Apply a theme to the page, as one stylesheet (`id`, updated in place on every call), and return
  * what it resolved to.
  */
 export declare function applyThemeData(data: ThemeData, generator: ThemeGenerator, { id, selectors, }?: {

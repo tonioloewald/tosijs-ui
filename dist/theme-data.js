@@ -83,8 +83,8 @@ Variable names are CSS custom properties without the leading dashes: `tosi-accen
 `--tosi-accent` or `tosiAccent`.
 */
 /*{ "parent": "Helper Libraries", "description": "A theme as plain JSON data: base colours generate light, dark and high-contrast modes, values tuned by hand win, and one stylesheet applies it." }*/
-import { Color, StyleSheet, invertLuminance, } from 'tosijs';
-import { createTheme, readableOn } from './theme.js';
+import { Color, invertLuminance } from 'tosijs';
+import { createTheme, readableOn, replaceStyleSheet } from './theme.js';
 export const THEME_MODES = [
     'light',
     'dark',
@@ -188,12 +188,12 @@ export function themeStyleSheet(resolved, selectors = {}) {
     return sheet;
 }
 /**
- * Apply a theme to the page, as one stylesheet (`id`, replaced on every call), and return
+ * Apply a theme to the page, as one stylesheet (`id`, updated in place on every call), and return
  * what it resolved to.
  */
 export function applyThemeData(data, generator, { id = 'tosi-theme-data', selectors = {}, } = {}) {
     const resolved = resolveTheme(data, generator);
-    StyleSheet(id, themeStyleSheet(resolved, selectors));
+    replaceStyleSheet(id, themeStyleSheet(resolved, selectors));
     return resolved;
 }
 /** The tosijs-ui component theme (`createTheme`), driven by accent, background and text. */

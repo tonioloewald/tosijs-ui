@@ -40,6 +40,13 @@ export declare function createDarkTheme(colors: ThemeColors): XinStyleSheet;
  * @param id - Optional ID for the style element (default: 'tosi-theme')
  */
 export declare function applyTheme(theme: XinStyleSheet, id?: string): void;
+/**
+ * Put `sheet` in the `<style id={id}>` element, creating it the first time.
+ *
+ * tosijs's `StyleSheet()` appends a new element on every call, whatever the id, so applying a
+ * theme on every keystroke (or every frame of a colour-well drag) would pile up stylesheets.
+ */
+export declare function replaceStyleSheet(id: string, sheet: XinStyleSheet): HTMLStyleElement;
 export declare const baseTheme: import("tosijs").TosiStyleSheet;
 export declare const baseDarkTheme: import("tosijs").TosiStyleSheet;
 /**

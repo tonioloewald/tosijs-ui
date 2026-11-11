@@ -459,9 +459,11 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         };
         ':host .test-pass': {
             color: string;
+            background: string;
         };
         ':host .test-fail': {
             color: string;
+            background: string;
         };
         ':host .example-docs': {
             padding: string;

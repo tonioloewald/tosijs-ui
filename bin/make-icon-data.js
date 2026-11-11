@@ -501,7 +501,13 @@ try {
   // No prettier, or a version whose API differs — the emitted source is already clean.
 }
 
-fs.writeFileSync(outputFilePath, source, 'utf8')
+// Only when it changes, for the same reason as the icon index below (a watched path).
+if (
+  !fs.existsSync(outputFilePath) ||
+  fs.readFileSync(outputFilePath, 'utf8') !== source
+) {
+  fs.writeFileSync(outputFilePath, source, 'utf8')
+}
 
 /*
 One module per icon, so a component can import the handful it draws instead of all of them
@@ -565,19 +571,25 @@ if (typeof modulesDir === 'string' && modulesDir !== '') {
   a bundle that has both, not two.
   */
   const key = (n) => (/^[A-Za-z_$][\w$]*$/.test(n) ? n : quote(n))
-  fs.writeFileSync(
-    path.join(modulesDir, 'index' + ext),
+  // Written only when it changes, like every module above: this file is under the watched
+  // `src/`, so rewriting it unchanged on every build starts the next build (a rebuild loop).
+  const indexFile = path.join(modulesDir, 'index' + ext)
+  const indexText =
     names
       .map((n) => `import { ${exportName(n)} } from './${n}.js'\n`)
       .join('') +
-      `\nexport {\n${names.map((n) => `  ${exportName(n)},\n`).join('')}}\n` +
-      `\nexport default {\n${names
-        .map((n) =>
-          exportName(n) === n ? `  ${n},\n` : `  ${key(n)}: ${exportName(n)},\n`
-        )
-        .join('')}}\n`,
-    'utf8'
-  )
+    `\nexport {\n${names.map((n) => `  ${exportName(n)},\n`).join('')}}\n` +
+    `\nexport default {\n${names
+      .map((n) =>
+        exportName(n) === n ? `  ${n},\n` : `  ${key(n)}: ${exportName(n)},\n`
+      )
+      .join('')}}\n`
+  if (
+    !fs.existsSync(indexFile) ||
+    fs.readFileSync(indexFile, 'utf8') !== indexText
+  ) {
+    fs.writeFileSync(indexFile, indexText, 'utf8')
+  }
   if (typeof creatorsDir === 'string' && creatorsDir !== '') {
     writeCreators(creatorsDir, names, exportName, ext)
   }

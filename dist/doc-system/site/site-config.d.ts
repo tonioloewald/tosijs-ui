@@ -54,6 +54,13 @@ export interface SiteConfig {
     navbarLinks?: LinkItem[];
     /** base theme colors — most of the palette is derived from `accent` */
     theme?: DocSystemTheme;
+    /**
+     * A theme saved by the theme editor: a JSON file (e.g. `tosijs-theme.json`), relative to the
+     * project root. The build writes it into the site's stylesheet, so a page shows the theme on
+     * first paint, and in an editing session the settings menu offers "Theme Editor…", which
+     * saves back to this file. Its base colours start from `theme`. It need not exist yet.
+     */
+    themeFile?: string;
     /** translation table (TSV) powering the settings menu's language picker */
     localizedStrings?: string;
     /**

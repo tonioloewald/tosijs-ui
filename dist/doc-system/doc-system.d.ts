@@ -50,6 +50,8 @@ export declare class TosiDocSystem extends TosiDocSystem_base {
     private settingsButton;
     /** The site's `aliases`, which the build writes into the config attribute (board #3513). */
     private configAliases;
+    /** The site's `themeFile` and `theme`, which the build writes into the config attribute. */
+    private themeSite;
     private parseLinks;
     connectedCallback(): void;
     render(): void;

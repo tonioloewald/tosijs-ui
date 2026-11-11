@@ -683,7 +683,7 @@ StyleSheet('my-styles', myStyles)
 - Use scaled variants: `vars.spacing25`, `vars.spacing50`, `vars.spacing75`, `vars.spacing200`
 - Use `varDefault.foo('default')` for theme-customizable values
 - Underscore prefix (`_foo`) defines CSS variables (`--foo`)
-- `StyleSheet()` injects styles into `<head>` with deduplication by ID
+- `StyleSheet()` appends a `<style>` to `<head>` on EVERY call — it does **not** deduplicate by id. To restyle repeatedly (a theme applied as it is edited), use `replaceStyleSheet(id, sheet)` from `src/theme.ts`, which updates the element in place
 
 ### CSS Architecture Principles
 

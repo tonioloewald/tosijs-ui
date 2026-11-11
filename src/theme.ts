@@ -114,6 +114,7 @@ This allows fine-grained customization while maintaining consistency.
 
 import {
   Color,
+  css,
   invertLuminance,
   StyleSheet,
   vars,
@@ -300,7 +301,25 @@ export function createDarkTheme(colors: ThemeColors): XinStyleSheet {
  * @param id - Optional ID for the style element (default: 'tosi-theme')
  */
 export function applyTheme(theme: XinStyleSheet, id = 'tosi-theme'): void {
-  StyleSheet(id, theme)
+  replaceStyleSheet(id, theme)
+}
+
+/**
+ * Put `sheet` in the `<style id={id}>` element, creating it the first time.
+ *
+ * tosijs's `StyleSheet()` appends a new element on every call, whatever the id, so applying a
+ * theme on every keystroke (or every frame of a colour-well drag) would pile up stylesheets.
+ */
+export function replaceStyleSheet(
+  id: string,
+  sheet: XinStyleSheet
+): HTMLStyleElement {
+  const existing = document.getElementById(id)
+  if (existing?.tagName === 'STYLE') {
+    existing.textContent = css(sheet)
+    return existing as HTMLStyleElement
+  }
+  return StyleSheet(id, sheet)
 }
 
 // ============================================================================

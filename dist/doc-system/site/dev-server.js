@@ -93,6 +93,8 @@ export function resolveWatchPaths(config, root = '.') {
         // The FILE, not its folder: a bundleEntry at the project root would otherwise watch the
         // output tree and rebuild forever. What it imports from elsewhere goes in watchPaths (#3772).
         ...(config.bundleEntry ? [config.bundleEntry] : []),
+        // A saved theme is burned into the stylesheet, so saving it must rebuild.
+        ...(config.themeFile ? [config.themeFile] : []),
         ...(config.watchPaths ?? []),
     ]) {
         const key = path.resolve(root, p);
@@ -1044,8 +1046,16 @@ export async function devServer(config, opts = {}) {
             return new Response('not an editable doc source', { status: 403 });
         }
         const file = Bun.file(resolved);
-        if (!(await file.exists()))
+        if (!(await file.exists())) {
+            // A theme not saved yet is no theme, not a missing page: the editor starts from the base.
+            if (resolved === themeFilePath) {
+                return new Response(null, {
+                    status: 204,
+                    headers: { [SOURCE_ACCESS_HEADER]: 'editable' },
+                });
+            }
             return new Response('not found', { status: 404 });
+        }
         return new Response(await file.text(), {
             headers: {
                 'Content-Type': 'text/plain; charset=utf-8',
@@ -1065,8 +1075,27 @@ export async function devServer(config, opts = {}) {
         const corpus = await Bun.file(config.docsJson ?? 'demo/docs.json')
             .json()
             .catch(() => null);
-        return editableSourcePaths(corpus, PROJECT_ROOT);
+        const allowed = editableSourcePaths(corpus, PROJECT_ROOT);
+        if (themeFilePath)
+            allowed.add(themeFilePath);
+        return allowed;
     };
+    /*
+    The theme editor's file (`themeFile`): data, never executed, so it may be edited like a doc
+    source. Only a `.json` file inside the project counts, and a save must parse as an object.
+    */
+    const themeFilePath = (() => {
+        if (!config.themeFile)
+            return null;
+        const resolved = path.resolve(PROJECT_ROOT, config.themeFile);
+        return resolved.endsWith('.json') &&
+            resolved.startsWith(PROJECT_ROOT + path.sep)
+            ? resolved
+            : null;
+    })();
+    if (config.themeFile && !themeFilePath) {
+        console.warn(`⚠️  themeFile ${config.themeFile} is not a .json file inside the project: the theme editor cannot save it.`);
+    }
     async function handleWriteSource(request) {
         try {
             const { file, content } = (await request.json());
@@ -1087,6 +1116,18 @@ export async function devServer(config, opts = {}) {
                     status: 400,
                     headers: { 'Content-Type': 'application/json' },
                 });
+            }
+            if (resolved === themeFilePath) {
+                let theme;
+                try {
+                    theme = JSON.parse(content);
+                }
+                catch {
+                    theme = null;
+                }
+                if (!theme || typeof theme !== 'object' || Array.isArray(theme)) {
+                    return new Response(JSON.stringify({ error: 'a theme must be a JSON object' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+                }
             }
             await Bun.write(resolved, content);
             console.log('wrote', resolved);

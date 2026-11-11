@@ -1,3 +1,4 @@
+import type { DocSystemTheme } from '../doc-system-styles.js';
 import type { Doc } from './docs.js';
 import type { ProjectLinks, LinkItem } from '../../doc-browser.js';
 import { type AccessibilityMode, type ExampleBakes } from '../render.js';
@@ -10,6 +11,10 @@ export interface GenerateSiteConfig {
     llmsTxt?: boolean;
     /** `SiteConfig.aliases`: { alias path -> slug } (board #3513) */
     aliases?: Record<string, string>;
+    /** `SiteConfig.themeFile`, for the settings menu's theme editor */
+    themeFile?: string;
+    /** `SiteConfig.theme`: the theme editor's starting base colours */
+    theme?: DocSystemTheme;
     /** `SiteConfig.searchPlaceholder` */
     searchPlaceholder?: string;
     /** `SiteConfig.accessibility` (#3521) */

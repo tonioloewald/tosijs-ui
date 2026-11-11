@@ -569,12 +569,16 @@ export const liveExampleStyleSpec = {
     padding: '0',
   },
 
+  // Their own backgrounds, like the console's error lines, so they read in either theme:
+  // #0a0 on the page measured 2.98:1, and #f00 is no better (AA asks 4.5).
   ':host .test-pass': {
-    color: '#0a0',
+    color: '#05650f',
+    background: '#e6f4ea',
   },
 
   ':host .test-fail': {
-    color: '#f00',
+    color: '#b00020',
+    background: '#fdecea',
   },
 
   // Read-only "tjs tests" results tab (inline /*test*/ results).

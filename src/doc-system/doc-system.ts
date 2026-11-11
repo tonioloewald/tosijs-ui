@@ -86,6 +86,8 @@ import type { AccessibilityMode } from './render.js'
 // Side-effect: register <tosi-css-var-editor> so doc pages can drop the live CSS-var
 // tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
 import './css-var-editor.js'
+import { openThemeEditor, themeEditable } from './theme-editor-panel.js'
+import { sourceWritable } from '../live-example/source-access.js'
 
 const { button, div } = elements
 
@@ -534,6 +536,15 @@ export class TosiDocSystem extends withAttributes({
             menuItems.push(null)
           }
 
+          // Only where the dev server would accept the save (theme-editor-panel.ts).
+          const themeSite = this.themeSite()
+          if (themeSite && sourceWritable(themeSite.file)) {
+            menuItems.push({
+              caption: 'Theme Editor…',
+              icon: 'edit',
+              action: () => void openThemeEditor(themeSite),
+            })
+          }
           menuItems.push({
             caption: 'Color Theme',
             icon: 'rgb',
@@ -588,6 +599,18 @@ export class TosiDocSystem extends withAttributes({
     }
   }
 
+  /** The site's `themeFile` and `theme`, which the build writes into the config attribute. */
+  private themeSite(): { file: string; theme?: Record<string, string> } | null {
+    try {
+      const { themeFile, theme } = JSON.parse(this.config || '{}')
+      return typeof themeFile === 'string' && themeFile
+        ? { file: themeFile, theme }
+        : null
+    } catch {
+      return null
+    }
+  }
+
   private parseLinks(selector: string): LinkItem[] {
     const list = this.querySelector(selector)
     if (!list) return []
@@ -617,6 +640,9 @@ export class TosiDocSystem extends withAttributes({
     this.applyStyles()
     this.initPrefs()
     void this.initLocale()
+    // Ask now, so the settings menu knows whether to offer the theme editor when it opens.
+    const themeSite = this.themeSite()
+    if (themeSite) void themeEditable(themeSite.file)
     // Async data source: fetch once, then let the normal render pipeline mount.
     if (this.corpus === undefined) {
       const url = this.docs || '/docs.json'

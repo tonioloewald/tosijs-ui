@@ -1,6 +1,7 @@
 import { test, expect, describe } from 'bun:test'
 import { Color } from 'tosijs'
 import {
+  applyTheme,
   createTheme,
   createDarkTheme,
   createThemeWithLegacy,
@@ -121,4 +122,10 @@ describe('theme', () => {
       expect(root._tosiAccent).toBeDefined()
     })
   })
+})
+
+test('applyTheme reuses its style element instead of adding one per call', () => {
+  applyTheme(createTheme(defaultColors), 'theme-reuse-test')
+  applyTheme(createTheme(defaultColors), 'theme-reuse-test')
+  expect(document.querySelectorAll('#theme-reuse-test').length).toBe(1)
 })

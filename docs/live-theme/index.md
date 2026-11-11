@@ -1,18 +1,12 @@
 # live-theme
 
-> **Work in progress** — this component is under active development and its API may change.
+The `liveTheme` observable: three colours (accent, background, text) and a dark flag, applied
+to the page as they change.
 
-A live theme editor that lets you tweak theme colors in real time.
-Changes apply instantly to the page. The editor itself is immune to
-theme changes (it uses hardcoded styles in shadow DOM).
-
-## Theme Editor
-
-```js
-import { tosiThemeEditor, liveTheme } from 'tosijs-ui'
-
-preview.append(tosiThemeEditor())
-```
+The editor that used to live here is now [`<tosi-theme-editor>`](/theme-editor/), on
+`tosijs-ui/theme-editor`, and edits a whole theme as [data](/theme-data/). It no longer drives
+`liveTheme`. `tosiThemeEditor` and `TosiThemeEditor` are still exported from `tosijs-ui` for
+now, and are deprecated there: import them from `tosijs-ui/theme-editor`.
 
 ## Programmatic Control
 

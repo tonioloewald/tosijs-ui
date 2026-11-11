@@ -170,6 +170,11 @@
       "import": "./dist/theme.js",
       "default": "./dist/theme.js"
     },
+    "./theme-editor": {
+      "types": "./dist/theme-editor.d.ts",
+      "import": "./dist/theme-editor.js",
+      "default": "./dist/theme-editor.js"
+    },
     "./test-setup": {
       "types": "./dist/test-setup.d.ts",
       "import": "./dist/test-setup.js",

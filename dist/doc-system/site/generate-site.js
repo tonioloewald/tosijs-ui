@@ -517,6 +517,10 @@ export async function generateSite(config) {
         projectName: config.projectName,
         // The browser needs them too, or an alias page hydrates as whichever doc comes first.
         ...(Object.keys(aliases).length ? { aliases } : {}),
+        // Only the menu's theme editor reads these, and only in an editing session.
+        ...(config.themeFile
+            ? { themeFile: config.themeFile, theme: config.theme ?? {} }
+            : {}),
         projectLinks: config.projectLinks,
         logo: siteLogo(config.logo, config.basePath),
         bookVolumes: config.bookVolumes,

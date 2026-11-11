@@ -22,16 +22,16 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=452b41f9ede4" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=60b6de4301de" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>live-theme — tosijs-ui</title>
-  <meta name="description" content="A live theme editor: adjust tosijs-ui theme colours and watch every component update instantly, then read or set the values from code." />
+  <meta name="description" content="The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser." />
   <link rel="canonical" href="https://ui.tosijs.net/live-theme/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="live-theme — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="live-theme — tosijs-ui" />
-  <meta property="og:description" content="A live theme editor: adjust tosijs-ui theme colours and watch every component update instantly, then read or set the values from code." />
+  <meta property="og:description" content="The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser." />
   <meta property="og:url" content="https://ui.tosijs.net/live-theme/" />
   <meta property="og:image" content="https://ui.tosijs.net/og/live-theme.webp" />
   <meta property="og:image:width" content="1200" />
@@ -40,26 +40,21 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/live-theme.webp" />
   <meta name="twitter:image:alt" content="live-theme — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"live-theme","description":"A live theme editor: adjust tosijs-ui theme colours and watch every component update instantly, then read or set the values from code.","url":"https://ui.tosijs.net/live-theme/","inLanguage":"en","image":"https://ui.tosijs.net/og/live-theme.webp","dateModified":"2026-11-09T14:52:41+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"live-theme","description":"The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser.","url":"https://ui.tosijs.net/live-theme/","inLanguage":"en","image":"https://ui.tosijs.net/og/live-theme.webp","dateModified":"2026-11-11T12:11:29.323Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"live-theme","item":"https://ui.tosijs.net/live-theme/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=d1c8b5722603" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=3a7ca5f46e10" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;test-results/e2e-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="live-theme.ts">
 <h1 id="live-theme">live-theme</h1>
-<blockquote>
-<p><strong>Work in progress</strong> — this component is under active development and its API may change.</p>
-</blockquote>
-<p>A live theme editor that lets you tweak theme colors in real time.
-Changes apply instantly to the page. The editor itself is immune to
-theme changes (it uses hardcoded styles in shadow DOM).</p>
-<h2 id="theme-editor">Theme Editor</h2>
-<pre><code class="language-js">import { tosiThemeEditor, liveTheme } from &#39;tosijs-ui&#39;
-
-preview.append(tosiThemeEditor())
-</code></pre>
+<p>The <code>liveTheme</code> observable: three colours (accent, background, text) and a dark flag, applied
+to the page as they change.</p>
+<p>The editor that used to live here is now <a href="/theme-editor/"><code>&lt;tosi-theme-editor&gt;</code></a>, on
+<code>tosijs-ui/theme-editor</code>, and edits a whole theme as <a href="/theme-data/">data</a>. It no longer drives
+<code>liveTheme</code>. <code>tosiThemeEditor</code> and <code>TosiThemeEditor</code> are still exported from <code>tosijs-ui</code> for
+now, and are deprecated there: import them from <code>tosijs-ui/theme-editor</code>.</p>
 <h2 id="programmatic-control">Programmatic Control</h2>
 <p>The <code>liveTheme</code> observable lets you read and write theme values from code:</p>
 <pre data-example-mode="static"><code class="language-js" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> liveTheme <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
@@ -235,6 +230,7 @@ test(&#39;css canary: Color math (inverseLuminance) yields a distinct valid colo
       <li><a class="doc-link" href="../via-tag/">scriptTag &amp; styleSheet</a></li>
       <li><a class="doc-link" href="../theme/">theme</a></li>
       <li><a class="doc-link" href="../theme-data/">theme data</a></li>
+      <li><a class="doc-link" href="../theme-editor/">theme editor</a></li>
       <li><a class="doc-link" href="../track-drag/">trackDrag</a></li>
       <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
     </ul></li>
@@ -268,6 +264,6 @@ test(&#39;css canary: Color math (inverseLuminance) yields a distinct valid colo
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-2arbtayd.js"></script>
+  <script type="module" src="../hydrate-7ckq92xy.js"></script>
 </body>
 </html>

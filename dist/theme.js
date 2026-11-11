@@ -110,7 +110,7 @@ For example, tosi-select derives from base:
 This allows fine-grained customization while maintaining consistency.
 */
 /*{ "headTitle": "Theme, CSS variables and dark mode — tosijs-ui", "parent": "Helper Libraries", "description": "The tosijs-ui theme: CSS variables for spacing, colour and type shared by every component, with dark mode computed from your colours." }*/
-import { Color, invertLuminance, StyleSheet, vars, } from 'tosijs';
+import { Color, css, invertLuminance, StyleSheet, vars, } from 'tosijs';
 // ============================================================================
 // Default Colors
 // ============================================================================
@@ -250,7 +250,21 @@ export function createDarkTheme(colors) {
  * @param id - Optional ID for the style element (default: 'tosi-theme')
  */
 export function applyTheme(theme, id = 'tosi-theme') {
-    StyleSheet(id, theme);
+    replaceStyleSheet(id, theme);
+}
+/**
+ * Put `sheet` in the `<style id={id}>` element, creating it the first time.
+ *
+ * tosijs's `StyleSheet()` appends a new element on every call, whatever the id, so applying a
+ * theme on every keystroke (or every frame of a colour-well drag) would pile up stylesheets.
+ */
+export function replaceStyleSheet(id, sheet) {
+    const existing = document.getElementById(id);
+    if (existing?.tagName === 'STYLE') {
+        existing.textContent = css(sheet);
+        return existing;
+    }
+    return StyleSheet(id, sheet);
 }
 // ============================================================================
 // Pre-built Themes

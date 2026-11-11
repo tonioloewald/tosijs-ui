@@ -85,14 +85,8 @@ Variable names are CSS custom properties without the leading dashes: `tosi-accen
 
 /*{ "parent": "Helper Libraries", "description": "A theme as plain JSON data: base colours generate light, dark and high-contrast modes, values tuned by hand win, and one stylesheet applies it." }*/
 
-import {
-  Color,
-  StyleSheet,
-  XinStyleRule,
-  XinStyleSheet,
-  invertLuminance,
-} from 'tosijs'
-import { createTheme, readableOn } from './theme.js'
+import { Color, XinStyleRule, XinStyleSheet, invertLuminance } from 'tosijs'
+import { createTheme, readableOn, replaceStyleSheet } from './theme.js'
 
 /** The kinds of value a theme variable can hold; each gets its own control in the editor. */
 export type ThemeKind =
@@ -261,7 +255,7 @@ export function themeStyleSheet(
 }
 
 /**
- * Apply a theme to the page, as one stylesheet (`id`, replaced on every call), and return
+ * Apply a theme to the page, as one stylesheet (`id`, updated in place on every call), and return
  * what it resolved to.
  */
 export function applyThemeData(
@@ -273,7 +267,7 @@ export function applyThemeData(
   }: { id?: string; selectors?: Partial<Record<ThemeMode, string>> } = {}
 ): Record<ThemeMode, ThemeValues> {
   const resolved = resolveTheme(data, generator)
-  StyleSheet(id, themeStyleSheet(resolved, selectors))
+  replaceStyleSheet(id, themeStyleSheet(resolved, selectors))
   return resolved
 }
 
