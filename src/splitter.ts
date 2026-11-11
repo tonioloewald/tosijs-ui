@@ -69,7 +69,10 @@ test('the arrow keys move it, and it reports a value', () => {
   ratio, and a container that switches between row and column keeps it too.
 - **Neither side gets too small.** A neighbour never goes below `min-size` (44px by default, a
   comfortable touch target), or below its own `min-width` / `min-height` if that is larger, or
-  above its `max-width` / `max-height`.
+  above its `max-width` / `max-height`. That holds as the container resizes too: when it
+  shrinks, the split gives way to keep both neighbours at their minimums, and when it grows
+  again the split goes back to where you put it. (A container too small for both minimums
+  cannot be helped; the splitter leaves it alone.)
 - **Keyboard.** It is focusable (`role="separator"`, with `aria-valuenow` as the first
   neighbour's share in percent). The arrow keys move it by `step` pixels (16 by default; four
   times that with Shift), and Home and End move it as far as it goes each way. Up and Left move
@@ -285,14 +288,34 @@ export class TosiSplitter extends withAttributes({
     )
   }
 
-  private moveTo(a: number): boolean {
+  /*
+  The share the reader chose, kept apart from the share it has now: when the container shrinks
+  far enough that a neighbour would drop below its minimum, the split gives way, and when the
+  container grows again it goes back to what was chosen.
+  */
+  private chosen?: number
+
+  private moveTo(a: number, choose = true): boolean {
     const measured = this.measure()
     if (!measured) return false
     const { pair, limits } = measured
     const next = Math.min(limits.max, Math.max(limits.min, a))
+    if (choose) this.chosen = next / limits.total
     if (Math.abs(next - measured.a) < 0.5) return false
     this.apply(pair, next, limits.total)
     return true
+  }
+
+  /*
+  Re-fit the chosen share to the space there is now. When the two minimums no longer fit at all,
+  splitLimits pins the current size and nothing moves: the container is simply too small.
+  */
+  private refit = (): void => {
+    if (this.chosen !== undefined) {
+      const measured = this.measure()
+      if (measured) this.moveTo(this.chosen * measured.limits.total, false)
+    }
+    this.updateAria()
   }
 
   /** The first neighbour's share of the space the two share, from 0 to 1. */
@@ -312,6 +335,7 @@ export class TosiSplitter extends withAttributes({
     const pair = this.neighbours()
     if (!pair) return
     for (const element of pair) element.style.flex = ''
+    this.chosen = undefined
     this.updateAria()
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }
@@ -410,7 +434,7 @@ export class TosiSplitter extends withAttributes({
     this.addEventListener('keydown', this.handleKey)
     this.addEventListener('dblclick', this.reset)
     if (typeof ResizeObserver !== 'undefined') {
-      this.resizeObserver = new ResizeObserver(this.updateAria)
+      this.resizeObserver = new ResizeObserver(this.refit)
       this.resizeObserver.observe(this)
       if (this.parentElement) this.resizeObserver.observe(this.parentElement)
     }

@@ -68,7 +68,10 @@ test('the arrow keys move it, and it reports a value', () => {
   ratio, and a container that switches between row and column keeps it too.
 - **Neither side gets too small.** A neighbour never goes below `min-size` (44px by default, a
   comfortable touch target), or below its own `min-width` / `min-height` if that is larger, or
-  above its `max-width` / `max-height`.
+  above its `max-width` / `max-height`. That holds as the container resizes too: when it
+  shrinks, the split gives way to keep both neighbours at their minimums, and when it grows
+  again the split goes back to where you put it. (A container too small for both minimums
+  cannot be helped; the splitter leaves it alone.)
 - **Keyboard.** It is focusable (`role="separator"`, with `aria-valuenow` as the first
   neighbour's share in percent). The arrow keys move it by `step` pixels (16 by default; four
   times that with Shift), and Home and End move it as far as it goes each way. Up and Left move

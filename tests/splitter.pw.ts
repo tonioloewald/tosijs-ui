@@ -98,6 +98,33 @@ test('keys move it by step; Home and End stop at the minimums', async ({
   expect(Math.abs(l - r)).toBeLessThan(2)
 })
 
+test('the minimums hold as the container shrinks, and the split comes back as it grows', async ({
+  page,
+}) => {
+  const splitter = rowSplitter(page)
+  const row = page.locator('.split-row')
+  const right = '.split-row section:last-child'
+  await row.evaluate((el: HTMLElement) => (el.style.width = '600px'))
+  await splitter.evaluate((el: any) => (el.value = 0.8))
+  const chosen = await splitter.evaluate((el: any) => el.value)
+
+  // At 200px, 80% would leave the right side about 39px.
+  await row.evaluate((el: HTMLElement) => (el.style.width = '200px'))
+  await expect.poll(async () => Math.round(await width(page, right))).toBe(44)
+
+  await row.evaluate((el: HTMLElement) => (el.style.width = '600px'))
+  await expect
+    .poll(async () => splitter.evaluate((el: any) => el.value))
+    .toBeCloseTo(chosen, 2)
+
+  // Too small for both minimums: left alone, not thrashed.
+  await row.evaluate((el: HTMLElement) => (el.style.width = '60px'))
+  await page.waitForTimeout(100)
+  const pinned = await width(page, right)
+  await page.waitForTimeout(100)
+  expect(await width(page, right)).toBe(pinned)
+})
+
 test('a column splitter moves along the column', async ({ page }) => {
   const splitter = page.locator('.split-column tosi-splitter')
   const top = page.locator('.split-column section:first-child')

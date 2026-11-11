@@ -34,7 +34,9 @@ export declare class TosiSplitter extends TosiSplitter_base {
     private measure;
     private apply;
     private padding;
+    private chosen?;
     private moveTo;
+    private refit;
     /** The first neighbour's share of the space the two share, from 0 to 1. */
     get value(): number;
     set value(share: number);
