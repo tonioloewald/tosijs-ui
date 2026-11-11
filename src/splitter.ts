@@ -168,33 +168,29 @@ export class TosiSplitter extends withAttributes({
       cursor: 'row-resize',
     },
     // The line down the middle: drawn, not a border, so it never changes the handle's size.
+    // Centred without a transform, so it lands on whole pixels the same way in both orientations.
     ':host::after': {
       content: '""',
       position: 'absolute',
       background: varDefault.tosiSplitterColor('#8884'),
-      transition: 'background 0.15s, box-shadow 0.15s',
+      transition: 'background 0.15s',
     },
     ':host[aria-orientation="vertical"]::after': {
       top: 0,
       bottom: 0,
-      left: '50%',
-      width: 1,
-      transform: 'translateX(-50%)',
+      left: 'calc(50% - 1px)',
+      width: 2,
     },
     ':host[aria-orientation="horizontal"]::after': {
       left: 0,
       right: 0,
-      top: '50%',
-      height: 1,
-      transform: 'translateY(-50%)',
+      top: 'calc(50% - 1px)',
+      height: 2,
     },
     ':host:hover::after, :host:focus-visible::after, :host.-dragging::after': {
       background: varDefault.tosiSplitterActiveColor(
         varDefault.tosiAccent('#d92270')
       ),
-      boxShadow: `0 0 0 1px ${varDefault.tosiSplitterActiveColor(
-        varDefault.tosiAccent('#d92270')
-      )}`,
     },
     ':host:focus-visible': {
       boxShadow: varDefault.tosiFocusRing('0 0 0 2px #0064d2'),
