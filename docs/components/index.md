@@ -34,6 +34,7 @@ tables, menus, layout, media, and more.
 - [sidebar](/side-nav/)
 - [size-break](/size-break/)
 - [sizer](/sizer/)
+- [splitter](/splitter/)
 - [table](/data-table/)
 - [tabs](/tab-selector/)
 - [tooltip](/tooltip/)

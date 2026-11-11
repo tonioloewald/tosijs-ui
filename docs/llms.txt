@@ -54,6 +54,7 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
 - [<tosi-sidenav> responsive sidebar](https://ui.tosijs.net/side-nav/index.md): <tosi-sidenav> shows a sidebar beside the content when there is room and hides it behind a toggle on small screens, as iPad apps do.
 - [size-break](https://ui.tosijs.net/size-break/index.md): <tosi-sizebreak> swaps content by available size, such as a row of buttons that becomes a menu when space runs out.
 - [<tosi-sizer> resize handle](https://ui.tosijs.net/sizer/index.md): <tosi-sizer> adds a bottom-right resize handle to a fixed-size element, so readers can drag it to a new size.
+- [<tosi-splitter> resizable split](https://ui.tosijs.net/splitter/index.md): <tosi-splitter> divides the space between two flex items: drag it or use the keyboard, in a row or a column, respecting each side's minimum size.
 - [<tosi-table> virtual data table](https://ui.tosijs.net/data-table/index.md): A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail.
 - [<tosi-tabs> tab panel](https://ui.tosijs.net/tab-selector/index.md): <tosi-tabs> builds a tab panel from its children's name attributes, with closeable tabs and methods to add or remove tabs.
 - [Markdown tooltips](https://ui.tosijs.net/tooltip/index.md): Replace native title tooltips with styled ones that render markdown: call initTooltips() once, then use data-tooltip or title.

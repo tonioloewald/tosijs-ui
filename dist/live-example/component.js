@@ -743,6 +743,7 @@ import { codeEditor, CodeEditor } from '../code-editor.js';
 import { tosiTabs } from '../tab-selector.js';
 import { icons } from '../icons.js';
 import { tosiAffix } from '../affix.js';
+import { tosiSplitter } from '../splitter.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
 import { prefersReducedMotion } from '../reduced-motion.js';
@@ -2399,6 +2400,8 @@ export class LiveExample extends withAttributes({
             hidden: true,
             onClick: this.showTestsTab,
         })),
+        // Divides the example and the code; shown only while the code is (styles.ts).
+        tosiSplitter({ part: 'splitter', ariaLabel: 'Resize the preview' }),
         // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
         // who never opens a panel never constructs a <tosi-code> (and never pulls the
         // CodeMirror chunk). See ensureEditors().

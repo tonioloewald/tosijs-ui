@@ -84,6 +84,23 @@ export const liveExampleStyleSpec = {
   tabs AND the way out. So the code gets the larger share, and undo/redo (which are also in
   the example menu, and on the keyboard) give up their place to the menu and the close button.
   */
+  /*
+  The splitter between the preview and the code: there only while the code is. Child
+  combinators throughout, so a nested example's code panel never shows its container's
+  splitter (see the note on `-locally-edited` above).
+  */
+  ':host > tosi-splitter': {
+    display: 'none',
+  },
+  ':host:has(> .code-editors:not([hidden])) > tosi-splitter': {
+    display: 'block',
+  },
+  // A flex item's automatic minimum is its content's, which would stop the splitter short.
+  ':host > [part="example"], :host > .code-editors': {
+    minWidth: '0',
+    minHeight: '0',
+  },
+
   ':host.-inline-code:not(.-maximize):not(.-vertical) > .code-editors': {
     flex: '1 1 60%',
   },

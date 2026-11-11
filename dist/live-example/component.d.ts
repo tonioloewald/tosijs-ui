@@ -76,6 +76,16 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         ':host.-inline-code.-vertical:not(.-maximize)': {
             height: string;
         };
+        ':host > tosi-splitter': {
+            display: string;
+        };
+        ':host:has(> .code-editors:not([hidden])) > tosi-splitter': {
+            display: string;
+        };
+        ':host > [part="example"], :host > .code-editors': {
+            minWidth: string;
+            minHeight: string;
+        };
         ':host.-inline-code:not(.-maximize):not(.-vertical) > .code-editors': {
             flex: string;
         };

@@ -77,7 +77,12 @@ test('view: code keeps its controls in the tab bar, and the preview touches the 
           .shadowRoot!.querySelector('[part="content"]')!
           .getBoundingClientRect().right
     )
-  expect(code!.x - content).toBeLessThanOrEqual(1)
+  // Nothing between them but the splitter that divides them.
+  const splitter = (await host.locator('> tosi-splitter').boundingBox())!
+  expect(Math.abs(splitter.x - content)).toBeLessThanOrEqual(1)
+  expect(Math.abs(code!.x - (splitter.x + splitter.width))).toBeLessThanOrEqual(
+    1
+  )
 
   // Refresh re-runs the example: its click count starts again.
   const button = host.locator('.preview button')

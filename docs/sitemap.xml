@@ -5,11 +5,11 @@
   <url><loc>https://ui.tosijs.net/icon-composition/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/icon-svg/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/one-source-every-artifact/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/doc-site-system/</loc><lastmod>2026-11-11T07:23:02.918Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/doc-site-system/</loc><lastmod>2026-11-11T09:26:38+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/make-icon-data/</loc><lastmod>2026-11-06T21:16:00+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/doc-system/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/doc-browser/</loc><lastmod>2026-11-11T07:23:19.056Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/docs/</loc><lastmod>2026-11-11T07:20:19.890Z</lastmod></url>
+  <url><loc>https://ui.tosijs.net/doc-browser/</loc><lastmod>2026-11-11T09:26:38+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/docs/</loc><lastmod>2026-11-11T09:26:38+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/highlight-block/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/highlight-styles/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/data-client/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
@@ -24,7 +24,7 @@
   <url><loc>https://ui.tosijs.net/diff/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/drag-and-drop/</loc><lastmod>2026-10-29T17:19:06+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/editable-rect/</loc><lastmod>2026-11-06T21:16:00+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/component/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/component/</loc><lastmod>2026-11-11T08:19:23.344Z</lastmod></url>
   <url><loc>https://ui.tosijs.net/filter-builder/</loc><lastmod>2026-11-10T19:04:30+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/float/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/form/</loc><lastmod>2026-10-31T11:54:23+02:00</lastmod></url>
@@ -59,6 +59,7 @@
   <url><loc>https://ui.tosijs.net/side-nav/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/size-break/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/sizer/</loc><lastmod>2026-11-10T19:04:30+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/splitter/</loc></url>
   <url><loc>https://ui.tosijs.net/data-table/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/tab-selector/</loc><lastmod>2026-11-10T12:16:08+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/tag-list/</loc><lastmod>2026-11-06T21:16:00+02:00</lastmod></url>
