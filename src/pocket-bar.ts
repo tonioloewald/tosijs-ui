@@ -114,6 +114,7 @@ import {
   withAttributes,
 } from 'tosijs'
 import { svgIcon, SvgIcon } from './icon-core.js'
+import { chainTransition } from './theme-chain.js'
 // The default handle icons, drawn by name.
 import './icons/moreVertical.js'
 import './icons/moreHorizontal.js'
@@ -272,7 +273,7 @@ export class TosiPocketBar extends withAttributes({
       // open. The handle keeps a blurred glass chip even at rest (below), so it
       // stays legible over busy content instead of a bare, hard-to-see icon.
       opacity: varDefault.tosiPocketOpacity('0.75'),
-      transition: 'opacity 0.15s ease-out',
+      transition: chainTransition(['opacity'], 0.15),
     },
     ':host([open])': {
       opacity: '1',
@@ -312,7 +313,7 @@ export class TosiPocketBar extends withAttributes({
       */
       width: varDefault.tosiPocketHandleSize('auto'),
       height: varDefault.tosiPocketHandleSize('auto'),
-      transition: 'background 0.15s ease-out',
+      transition: chainTransition(['background'], 0.15),
     },
     ':host [part="bar"]': {
       position: 'fixed',
@@ -329,7 +330,7 @@ export class TosiPocketBar extends withAttributes({
       opacity: '0',
       pointerEvents: 'none',
       transform: 'scale(0.9)',
-      transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
+      transition: chainTransition(['opacity', 'transform'], 0.15),
     },
     ':host([open]) [part="bar"]': {
       opacity: '1',
@@ -354,7 +355,7 @@ export class TosiPocketBar extends withAttributes({
       font: 'inherit',
       cursor: 'pointer',
       borderRadius: vars.spacing25,
-      transition: 'background 0.15s ease-out, opacity 0.15s, filter 0.15s',
+      transition: chainTransition(['background', 'opacity', 'filter'], 0.15),
     },
     '::slotted(button:hover), ::slotted(label:hover)': {
       background: 'color-mix(in srgb, currentColor 15%, transparent)',

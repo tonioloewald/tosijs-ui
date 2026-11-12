@@ -145,6 +145,7 @@ import { icons } from './icon-core.js';
 import { search as searchIcon } from './icons/search.js';
 import { loader as loaderIcon } from './icons/loader.js';
 import { x as xIcon } from './icons/x.js';
+import { chainElevation, chainRadius, chainSurface, chainSurfaceFilter, } from './theme-chain.js';
 const { button, span, kbd, div, dialog, input, textarea, mark } = elements;
 const isMac = () => typeof navigator !== 'undefined' &&
     /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -303,7 +304,7 @@ export class TosiPalette extends withAttributes({
             color: varDefault.paletteTriggerColor('#0009'),
             background: varDefault.inputBg('#fff'),
             border: 'none',
-            borderRadius: varDefault.searchFieldRadius(vars.spacing50),
+            borderRadius: varDefault.searchFieldRadius(varDefault.inputRadius(vars.spacing50)),
             boxShadow: varDefault.inputBorderShadow('inset 0 0 2px #0006'),
             padding: `${vars.spacing25} ${vars.spacing50}`,
             cursor: 'pointer',
@@ -356,7 +357,7 @@ export class TosiPalette extends withAttributes({
             dialog is in that header's subtree, so `--text-color` gave white text on a light dialog.
             `--tosi-text` is set once at the root and resolved there, so it survives.
             */
-            _paletteBg: varDefault.tosiBg(varDefault.background('#fff')),
+            _paletteBg: chainSurface(varDefault.tosiBg(varDefault.background('#fff'))),
             _paletteColor: varDefault.tosiText(varDefault.textColor('#222')),
             _paletteAccent: varDefault.tosiAccent(varDefault.brandColor('#0064d2')),
             // A tint of the accent, so the active row follows the theme (pink on the doc site).
@@ -366,10 +367,11 @@ export class TosiPalette extends withAttributes({
             marginTop: '10vh',
             padding: 0,
             border: 'none',
-            borderRadius: vars.spacing,
+            borderRadius: chainRadius(2),
             background: vars.paletteBg,
+            backdropFilter: chainSurfaceFilter,
             color: vars.paletteColor,
-            boxShadow: '0 10px 40px #0005',
+            boxShadow: chainElevation.high('0 10px 40px #0005'),
             overflow: 'hidden',
             flexDirection: 'column',
             // Its own text metrics: a palette placed in a header inherits the header's (a line

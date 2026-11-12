@@ -137,6 +137,7 @@ The following CSS variables can be used to control customize the `<tosi-segmente
 /*{ "parent": "Form Components", "description": "<tosi-segmented> is a form-associated segmented control for choosing one value or several, with icons and labels." }*/
 import { elements, varDefault, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icon-core.js';
+import { chainRadius } from './theme-chain.js';
 import { tosiLocalized } from './localize.js';
 import { splitCaptionIcon } from './caption-icon.js';
 const { div, slot, label, span, input } = elements;
@@ -215,7 +216,7 @@ export class TosiSegmented extends withAttributes({
         ':host label:focus': {
             outline: 'none',
             boxShadow: varDefault.segmentedFocusShadow(`inset 0 0 0 2px ${varDefault.segmentedOptionCurrentBackground('#44a')}`),
-            borderRadius: varDefault.segmentedOptionsBorderRadius('8px'),
+            borderRadius: varDefault.segmentedOptionsBorderRadius(chainRadius(1.6)),
         },
         // Selection highlight is driven by an explicit `.current` class rather than
         // `label:has(:checked)`. Firefox does not reliably re-evaluate `:has(:checked)`
@@ -241,9 +242,9 @@ export class TosiSegmented extends withAttributes({
         },
         ':host::part(options)': {
             display: 'flex',
-            borderRadius: varDefault.segmentedOptionsBorderRadius('8px'),
-            background: varDefault.segmentedOptionsBackground('#fff'),
-            color: varDefault.segmentedOptionColor('#222'),
+            borderRadius: varDefault.segmentedOptionsBorderRadius(chainRadius(1.6)),
+            background: varDefault.segmentedOptionsBackground(varDefault.inputBg('#fff')),
+            color: varDefault.segmentedOptionColor(varDefault.textColor('#222')),
             overflow: 'hidden',
             alignItems: varDefault.segmentedOptionAlignItems('stretch'),
         },

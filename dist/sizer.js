@@ -26,6 +26,7 @@ from the bottom-right.
 /*{ "headTitle": "<tosi-sizer> resize handle — tosijs-ui", "parent": "Components", "description": "<tosi-sizer> adds a bottom-right resize handle to a fixed-size element, so readers can drag it to a new size." }*/
 import { Component as XinComponent, vars } from 'tosijs';
 import { resize as resizeIcon } from './icons/resize.js';
+import { chainTransition } from './theme-chain.js';
 import { trackDrag } from './track-drag.js';
 export class TosiSizer extends XinComponent {
     static preferredTagName = 'tosi-sizer';
@@ -41,7 +42,7 @@ export class TosiSizer extends XinComponent {
             width: 44,
             height: 44,
             opacity: 0.25,
-            transition: 'opacity 0.25s ease-out',
+            transition: chainTransition(['opacity'], 0.25),
         },
         ':host(:hover)': {
             opacity: 0.5,

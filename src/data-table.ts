@@ -1323,6 +1323,7 @@ import {
   withAttributes,
 } from 'tosijs'
 import { trackDrag } from './track-drag.js'
+import { chainTransition } from './theme-chain.js'
 import { SortCallback } from './make-sorter.js'
 import { naturalSorter } from './natural-compare.js'
 import {
@@ -1848,7 +1849,7 @@ export class TosiTable extends withAttributes({
       display: 'none',
     },
     ':host .row-expander > *': {
-      transition: 'transform 0.15s ease-out',
+      transition: chainTransition(['transform'], 0.15),
     },
     ':host .row-expander[aria-expanded="true"] > *': {
       transform: 'rotate(90deg)',

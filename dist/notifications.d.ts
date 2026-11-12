@@ -25,6 +25,7 @@ export declare class TosiNotification extends Component {
             _notificationMaxLines: string;
             _notificationBorderWidth: string;
             _notificationBorderRadius: string;
+            _notificationShadow: string;
             position: string;
             left: number;
             right: number;
@@ -46,6 +47,7 @@ export declare class TosiNotification extends Component {
             gap: string;
             alignItems: string;
             borderRadius: string;
+            backdropFilter: string;
             boxShadow: string;
             borderColor: string;
             borderWidth: string;
@@ -73,6 +75,7 @@ export declare class TosiNotification extends Component {
             border: string;
             borderRadius: number;
             padding: string;
+            backdropFilter: string;
             boxShadow: string;
             cursor: string;
         };

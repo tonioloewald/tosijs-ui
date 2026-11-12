@@ -53,15 +53,14 @@
   --tosi-backdrop: var(--background);
   --tosi-surface-filter: none;
   --tosi-rim: transparent;
-  --tosi-elevation1: inset 0 0 0 1px var(--tosi-rim), 0 1px 2px var(--tosi-shadow-color);
-  --tosi-elevation2: inset 0 0 0 1px var(--tosi-rim), 0 4px 8px var(--tosi-shadow-color);
-  --tosi-elevation3: inset 0 0 0 1px var(--tosi-rim), 0 5px 10px var(--tosi-shadow-color);
+  --tosi-elevation-low: inset 0 0 0 1px var(--tosi-rim), 0 1px 2px var(--tosi-shadow-color);
+  --tosi-elevation-mid: inset 0 0 0 1px var(--tosi-rim), 0 4px 8px var(--tosi-shadow-color);
   --tosi-duration: 0.2s;
   --tosi-easing: ease-out;
   --tosi-transition: var(--tosi-duration) var(--tosi-easing);
   --shadow-color: var(--tosi-shadow-color);
   --menu-bg: var(--tosi-surface);
-  --menu-shadow: calc(var(--tosi-elevation) * 0.02);
+  --menu-shadow: var(--tosi-elevation-mid);
   --header-bg: var(--brand-color);
   --button-shadow: none;
 }
@@ -120,7 +119,7 @@ tosi-doc-system[data-no-header]::before, tosi-doc-system[data-no-header] header 
   --menu-separator-color: #d6257080;
   --scroll-thumb-color: #ffffff66;
   --scroll-bar-color: #ffffff11;
-  --tosi-elevation2: 0 0 0 2px #d62570bf;
+  --tosi-elevation-mid: 0 0 0 2px #d62570bf;
 }
 
 .high-contrast {
@@ -732,17 +731,17 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --tosi-backdrop: linear-gradient(160deg, #6087ba, #b7cdea);
   --tosi-surface-filter: blur(16px) saturate(1.4);
   --tosi-rim: #ffffffcc;
-  --tosi-elevation1: inset 0 0 0 1px var(--tosi-rim), 0 1px 2px var(--tosi-shadow-color);
-  --tosi-elevation2: inset 0 0 0 1px var(--tosi-rim), 0 4px 8px var(--tosi-shadow-color);
-  --tosi-elevation3: inset 0 0 0 1px var(--tosi-rim), 0 5px 10px var(--tosi-shadow-color);
+  --tosi-elevation-low: inset 0 0 0 1px var(--tosi-rim), 0 1px 2px var(--tosi-shadow-color);
+  --tosi-elevation-mid: inset 0 0 0 1px var(--tosi-rim), 0 4px 8px var(--tosi-shadow-color);
   --tosi-duration: 0.2s;
   --tosi-easing: ease-out;
   --tosi-transition: var(--tosi-duration) var(--tosi-easing);
   --shadow-color: var(--tosi-shadow-color);
   --menu-bg: var(--tosi-surface);
-  --menu-shadow: calc(var(--tosi-elevation) * 0.02);
+  --menu-shadow: var(--tosi-elevation-mid);
   --header-bg: color-mix(in srgb, var(--brand-color) 72%, transparent);
   --button-shadow: inset 1px 1.5px 1px 0 #ffffffb3, inset -1px -1.5px 1px 0 #ffffff66, 0 2px 6px #0002;
+  --tosi-elevation-high: inset 0 0 0 1px var(--tosi-rim), 0 12px 32px var(--tosi-shadow-color);
 }
 
 .darkmode.tosi-style-glass:not(#tosi-theme-outrank) {
@@ -776,8 +775,9 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --input-border-shadow: inset 0 0 0 1px #ffffff26;
   --tosi-backdrop: linear-gradient(160deg, #10182c, #2b3a5a);
   --tosi-rim: #ffffff33;
-  --tosi-elevation2: inset 0 0 0 1px var(--tosi-rim), 0 8px 24px var(--tosi-shadow-color);
+  --tosi-elevation-mid: inset 0 0 0 1px var(--tosi-rim), 0 8px 24px var(--tosi-shadow-color);
   --button-shadow: inset 1px 1.5px 1px 0 #ffffff33, inset -1px -1.5px 1px 0 #ffffff1a, 0 2px 6px #0006;
+  --tosi-elevation-high: inset 0 0 0 1px var(--tosi-rim), 0 12px 32px var(--tosi-shadow-color);
 }
 
 .high-contrast:not(.darkmode).tosi-style-glass:not(#tosi-theme-outrank) {
@@ -811,8 +811,9 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --input-border-shadow: inset 0 0 0 1px #ffffff99;
   --tosi-backdrop: linear-gradient(160deg, #6087ba, #b7cdea);
   --tosi-rim: #ffffffcc;
-  --tosi-elevation2: inset 0 0 0 1px var(--tosi-rim), 0 4px 8px var(--tosi-shadow-color);
+  --tosi-elevation-mid: inset 0 0 0 1px var(--tosi-rim), 0 4px 8px var(--tosi-shadow-color);
   --button-shadow: inset 1px 1.5px 1px 0 #ffffffb3, inset -1px -1.5px 1px 0 #ffffff66, 0 2px 6px #0002;
+  --tosi-elevation-high: inset 0 0 0 1px var(--tosi-rim), 0 12px 32px var(--tosi-shadow-color);
 }
 
 .darkmode.high-contrast.tosi-style-glass:not(#tosi-theme-outrank) {
@@ -846,8 +847,9 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --input-border-shadow: inset 0 0 0 1px #ffffff99;
   --tosi-backdrop: linear-gradient(160deg, #6087ba, #b7cdea);
   --tosi-rim: #000000cc;
-  --tosi-elevation2: 0 0 0 2px #2a4acbbf;
+  --tosi-elevation-mid: 0 0 0 2px #2a4acbbf;
   --button-shadow: inset 1px 1.5px 1px 0 #ffffffb3, inset -1px -1.5px 1px 0 #ffffff66, 0 2px 6px #0002;
+  --tosi-elevation-high: inset 0 0 0 1px var(--tosi-rim), 0 12px 32px var(--tosi-shadow-color);
 }
 
 .tosi-style-material:not(#tosi-theme-outrank) {
@@ -905,17 +907,17 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --tosi-backdrop: var(--background);
   --tosi-surface-filter: none;
   --tosi-rim: transparent;
-  --tosi-elevation1: 0 1px 2px var(--tosi-shadow-color), 0 1px 3px 1px #00000026;
-  --tosi-elevation2: 0 1px 2px var(--tosi-shadow-color), 0 2px 6px 2px #00000026;
-  --tosi-elevation3: 0 4px 4px var(--tosi-shadow-color), 0 8px 12px 6px #00000026;
+  --tosi-elevation-low: 0 1px 2px var(--tosi-shadow-color), 0 1px 3px 1px #00000026;
+  --tosi-elevation-mid: 0 1px 2px var(--tosi-shadow-color), 0 2px 6px 2px #00000026;
   --tosi-duration: 0.2s;
   --tosi-easing: cubic-bezier(0.2, 0, 0, 1);
   --tosi-transition: var(--tosi-duration) var(--tosi-easing);
   --shadow-color: var(--tosi-shadow-color);
   --menu-bg: var(--tosi-surface);
-  --menu-shadow: calc(var(--tosi-elevation) * 0.02);
+  --menu-shadow: var(--tosi-elevation-mid);
   --header-bg: var(--brand-color);
   --button-shadow: none;
+  --tosi-elevation-high: 0 4px 4px var(--tosi-shadow-color), 0 8px 12px 6px #00000026;
 }
 
 .darkmode.tosi-style-material:not(#tosi-theme-outrank) {
@@ -947,7 +949,7 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --scroll-thumb-color: #ffffff66;
   --scroll-bar-color: #ffffff11;
   --input-border-shadow: inset 0 0 0 1px #938f99;
-  --tosi-elevation2: 0 0 0 2px #6953a1bf;
+  --tosi-elevation-mid: 0 0 0 2px #6953a1bf;
 }
 
 .high-contrast:not(.darkmode).tosi-style-material:not(#tosi-theme-outrank) {
@@ -979,7 +981,7 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --scroll-thumb-color: #0006;
   --scroll-bar-color: #0001;
   --input-border-shadow: inset 0 0 0 1px #79747e;
-  --tosi-elevation2: inset 0 0 0 1px var(--tosi-rim), 0 4px 8px var(--tosi-shadow-color);
+  --tosi-elevation-mid: 0 1px 2px var(--tosi-shadow-color), 0 2px 6px 2px #00000026;
 }
 
 .darkmode.high-contrast.tosi-style-material:not(#tosi-theme-outrank) {
@@ -1011,5 +1013,5 @@ html:not(.tosi-js) .doc-nav:not(.-live) .nav-toggle {
   --scroll-thumb-color: #ffffff66;
   --scroll-bar-color: #ffffff11;
   --input-border-shadow: inset 0 0 0 1px #79747e;
-  --tosi-elevation2: 0 0 0 2px #625487bf;
+  --tosi-elevation-mid: 0 0 0 2px #625487bf;
 }

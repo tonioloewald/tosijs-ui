@@ -99,8 +99,9 @@ test('the settings menu opens the theme editor above Color Theme, and Save posts
   await expect(panel.locator('.theme-panel-status')).toHaveText('Not saved')
 
   await panel.getByRole('button', { name: 'Save' }).click()
+  // The page names the site's theme file; the lane's server keeps it in the scratch file.
   await expect(panel.locator('.theme-panel-status')).toHaveText(
-    `Saved to ${scratch}`
+    'Saved to tosijs-theme.json'
   )
   // Another engine may have saved since; the file holds a theme, and one of ours.
   expect(Object.values(colours)).toContain(

@@ -357,7 +357,9 @@ export class TosiSelect extends withAttributes({
       height: vars.tosiSelectTouchSize,
       padding: vars.tosiSelectPadding,
       width: '100%',
-      borderRadius: varDefault.tosiSelectFieldRadius(vars.spacing50),
+      borderRadius: varDefault.tosiSelectFieldRadius(
+        varDefault.inputRadius(vars.spacing50)
+      ),
       boxShadow: varDefault.inputBorderShadow('inset 0 0 0 1px #8888'),
     },
     ':host:not([show-icon]) [part="field"] > :first-child': {

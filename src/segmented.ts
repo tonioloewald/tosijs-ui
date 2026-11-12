@@ -145,6 +145,7 @@ import {
   withAttributes,
 } from 'tosijs'
 import { icons } from './icon-core.js'
+import { chainRadius } from './theme-chain.js'
 import type { IconElement } from './icon-types.js'
 import { tosiLocalized } from './localize.js'
 import { splitCaptionIcon } from './caption-icon.js'
@@ -251,7 +252,7 @@ export class TosiSegmented extends withAttributes({
       boxShadow: varDefault.segmentedFocusShadow(
         `inset 0 0 0 2px ${varDefault.segmentedOptionCurrentBackground('#44a')}`
       ),
-      borderRadius: varDefault.segmentedOptionsBorderRadius('8px'),
+      borderRadius: varDefault.segmentedOptionsBorderRadius(chainRadius(1.6)),
     },
     // Selection highlight is driven by an explicit `.current` class rather than
     // `label:has(:checked)`. Firefox does not reliably re-evaluate `:has(:checked)`
@@ -279,9 +280,11 @@ export class TosiSegmented extends withAttributes({
     },
     ':host::part(options)': {
       display: 'flex',
-      borderRadius: varDefault.segmentedOptionsBorderRadius('8px'),
-      background: varDefault.segmentedOptionsBackground('#fff'),
-      color: varDefault.segmentedOptionColor('#222'),
+      borderRadius: varDefault.segmentedOptionsBorderRadius(chainRadius(1.6)),
+      background: varDefault.segmentedOptionsBackground(
+        varDefault.inputBg('#fff')
+      ),
+      color: varDefault.segmentedOptionColor(varDefault.textColor('#222')),
       overflow: 'hidden',
       alignItems: varDefault.segmentedOptionAlignItems('stretch'),
     },

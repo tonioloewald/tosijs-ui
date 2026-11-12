@@ -805,6 +805,11 @@ import {
   withAttributes,
 } from 'tosijs'
 import { popFloat, FloatPosition } from './pop-float.js'
+import {
+  chainElevation,
+  chainSurface,
+  chainSurfaceFilter,
+} from './theme-chain.js'
 import { icons, SvgIcon } from './icon-core.js'
 import { chevronRight as chevronRightIcon } from './icons/chevronRight.js'
 import { localize } from './localize.js'
@@ -984,10 +989,10 @@ const menuStyles = {
   overscrollBehavior: 'contain',
   maxHeight: `calc(${vars.maxHeight} - ${varDefault.menuInset('8px')})`,
   borderRadius: varDefault.tosiRadius(vars.spacing50),
-  background: varDefault.menuBg(varDefault.tosiSurface('#fafafa')),
-  backdropFilter: varDefault.tosiSurfaceFilter('none'),
+  background: varDefault.menuBg(chainSurface('#fafafa')),
+  backdropFilter: chainSurfaceFilter,
   boxShadow: varDefault.menuShadow(
-    varDefault.tosiElevation2(
+    chainElevation.mid(
       `${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`
     )
   ),

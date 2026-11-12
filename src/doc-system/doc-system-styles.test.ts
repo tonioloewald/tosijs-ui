@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'bun:test'
-import { Color } from 'tosijs'
+import { Color, css } from 'tosijs'
 import {
   contrastRatio,
   docSystemStyleSpec,
@@ -7,6 +7,12 @@ import {
   readableOn,
 } from './doc-system-styles.js'
 import { resolveTheme } from '../theme-data.js'
+import {
+  chainDuration,
+  chainElevation,
+  chainRadius,
+  chainTransition,
+} from '../theme-chain.js'
 
 describe('#150: no rule POISONS a global palette token', () => {
   test('`--text-color` is redefined only by rules that own a background', () => {
@@ -297,4 +303,32 @@ test('the doc theme generator reproduces the stock stylesheet, and inverts tuned
     docSystemThemeGenerator
   )
   expect(tuned.dark['nav-bg']).not.toBe(resolved.dark['nav-bg'])
+})
+
+describe('the theme chain', () => {
+  const sheet = css(docSystemStyleSpec({}, { fontImport: false }))
+
+  test('elevation names resolve: no level is read as a scale', () => {
+    // `vars.tosiElevation2` is `calc(var(--tosi-elevation) * 0.02)` in tosijs, which left
+    // every link to it invalid and every component on its fallback.
+    expect(sheet).toContain(
+      '--tosi-elevation-mid: inset 0 0 0 1px var(--tosi-rim)'
+    )
+    expect(sheet).toContain('--menu-shadow: var(--tosi-elevation-mid)')
+    expect(sheet).not.toMatch(/--tosi-elevation\d|var\(--tosi-elevation\)/)
+  })
+})
+
+describe('chain readers reproduce the stock look on the chain defaults', () => {
+  test('radius and duration scale from 5px and 0.2s', () => {
+    expect(chainRadius()).toBe('var(--tosi-radius, 5px)')
+    expect(chainRadius(1.2)).toBe('calc(var(--tosi-radius, 5px) * 1.2)')
+    expect(chainDuration(0.15)).toBe('calc(var(--tosi-duration, 0.2s) * 0.75)')
+    expect(chainTransition(['opacity', 'transform'], 0.15)).toBe(
+      'opacity calc(var(--tosi-duration, 0.2s) * 0.75) var(--tosi-easing, ease-out), transform calc(var(--tosi-duration, 0.2s) * 0.75) var(--tosi-easing, ease-out)'
+    )
+    expect(chainElevation.high('0 2px 8px #0006')).toBe(
+      'var(--tosi-elevation-high, 0 2px 8px #0006)'
+    )
+  })
 })

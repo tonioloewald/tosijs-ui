@@ -100,6 +100,7 @@ below it whatever the splitter asks.
 */
 /*{ "headTitle": "<tosi-splitter> resizable split — tosijs-ui", "parent": "Components", "description": "<tosi-splitter> divides the space between two flex items: drag it or use the keyboard, in a row or a column, respecting each side's minimum size." }*/
 import { varDefault, withAttributes, } from 'tosijs';
+import { chainDuration } from './theme-chain.js';
 /**
  * The limits on the first neighbour's size when two items sharing `total` pixels must each
  * stay within their own minimum and maximum. When they cannot both be satisfied, the range
@@ -146,7 +147,7 @@ export class TosiSplitter extends withAttributes({
             content: '""',
             position: 'absolute',
             background: varDefault.tosiSplitterColor('#8884'),
-            transition: 'background 0.15s',
+            transition: `background ${chainDuration(0.15)}`,
         },
         ':host[aria-orientation="vertical"]::after': {
             top: 0,

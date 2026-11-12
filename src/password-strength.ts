@@ -160,6 +160,7 @@ found in Weakpass's database (and spit out extra info to the console).
 /*{ "parent": "Form Components", "description": "Wrap an <input> in <tosi-password-strength> to rate a password as it is typed and securely check whether it appears in known breaches." }*/
 
 import { elements, vars, varDefault, withAttributes } from 'tosijs'
+import { chainDuration, chainEasing } from './theme-chain.js'
 
 export const digest = async (s: string, method = 'SHA-1'): Promise<string> => {
   // Convert password to an ArrayBuffer
@@ -221,7 +222,7 @@ export class TosiPasswordStrength extends withAttributes({
       content: '" "',
       display: 'inline-block',
       width: 0,
-      transition: '0.15s ease-out',
+      transition: `${chainDuration(0.15)} ${chainEasing}`,
       background: vars.indicatorColor,
       margin: varDefault.levelMargin('2px'),
       borderRadius: varDefault.levelRadius('2px'),

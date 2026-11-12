@@ -28,6 +28,7 @@ reads as a bug.
 */
 /*{ "parent": "Components", "headTitle": "<tosi-sidenav> responsive sidebar — tosijs-ui", "description": "<tosi-sidenav> shows a sidebar beside the content when there is room and hides it behind a toggle on small screens, as iPad apps do." }*/
 import { elements, varDefault, withAttributes } from 'tosijs';
+import { chainDuration, chainEasing } from './theme-chain.js';
 const { slot } = elements;
 export class TosiSidenav extends withAttributes({
     minSize: 800,
@@ -94,7 +95,7 @@ export class TosiSidenav extends withAttributes({
             gridTemplateRows: '100%',
             position: 'relative',
             margin: varDefault.margin('0 0 0 -100%'),
-            transition: varDefault.sideNavTransition('0.25s ease-out'),
+            transition: varDefault.sideNavTransition(`${chainDuration(0.25)} ${chainEasing}`),
         },
         ':host slot': {
             position: 'relative',

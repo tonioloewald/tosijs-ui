@@ -158,7 +158,7 @@ export default defineConfig({
       DEV_NO_WATCH: '1',
       // The theme editor's save target: a scratch file, never the repo's theme (WebKit does
       // not route every request, so a test's intercept is not a guarantee).
-      TOSIJS_THEME_FILE: 'test-results/e2e-theme.json',
+      DEV_THEME_FILE: 'test-results/e2e-theme.json',
     },
     url: E2E_BASE_URL,
     reuseExistingServer: false,

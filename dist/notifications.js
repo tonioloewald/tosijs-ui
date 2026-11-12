@@ -173,6 +173,7 @@ import { icons } from './icon-core.js';
 import { info as infoIcon } from './icons/info.js';
 import { x as xIcon } from './icons/x.js';
 import { findHighestZ } from './track-drag.js';
+import { chainDuration, chainEasing, chainElevation, chainRadius, chainSurface, chainSurfaceFilter, } from './theme-chain.js';
 const { div, button } = elements;
 const COLOR_MAP = {
     error: 'red',
@@ -217,14 +218,15 @@ export class TosiNotification extends Component {
             The literals stay as the FALLBACK, so a page that sets no theme looks exactly as before,
             and `--notification-bg`/`--notification-text-color` still override as they always did.
             */
-            _notificationBg: varDefault.background('#fafafa'),
+            _notificationBg: chainSurface(varDefault.background('#fafafa')),
             _notificationAccentColor: '#aaa',
             _notificationTextColor: varDefault.textColor('#444'),
             _notificationIconSize: vars.notificationSpacing300,
             _notificationButtonSize: 48,
             _notificationMaxLines: '4',
             _notificationBorderWidth: '3px 0 0',
-            _notificationBorderRadius: vars.notificationSpacing50,
+            _notificationBorderRadius: chainRadius(0.8),
+            _notificationShadow: chainElevation.high('0 2px 8px #0006'),
             position: 'fixed',
             left: 0,
             right: 0,
@@ -249,7 +251,8 @@ export class TosiNotification extends Component {
             gap: vars.notificationSpacing,
             alignItems: 'center',
             borderRadius: vars.notificationBorderRadius,
-            boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${vars.notificationAccentColor}`,
+            backdropFilter: chainSurfaceFilter,
+            boxShadow: `${vars.notificationShadow}, inset 0 0 0 2px ${vars.notificationAccentColor}`,
             borderColor: vars.notificationAccentColor,
             borderWidth: vars.notificationBorderWidth,
             borderStyle: 'solid',
@@ -258,7 +261,7 @@ export class TosiNotification extends Component {
             room under the front card) used to transition too, and every post or close slid cards in
             from wherever their last offset left them.
             */
-            animation: 'tosi-note-in 0.2s ease-out',
+            animation: `tosi-note-in ${chainDuration()} ${chainEasing}`,
             zIndex: 1,
         },
         /*
@@ -287,7 +290,8 @@ export class TosiNotification extends Component {
             border: 'none',
             borderRadius: 99,
             padding: `${vars.notificationSpacing50} ${vars.notificationSpacing150}`,
-            boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${vars.notificationAccentColor}`,
+            backdropFilter: chainSurfaceFilter,
+            boxShadow: `${vars.notificationShadow}, inset 0 0 0 2px ${vars.notificationAccentColor}`,
             cursor: 'pointer',
         },
         ':host .dismiss-all[hidden]': {

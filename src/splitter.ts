@@ -107,6 +107,7 @@ import {
   varDefault,
   withAttributes,
 } from 'tosijs'
+import { chainDuration } from './theme-chain.js'
 
 /** The axis a splitter works along, from its container's computed style. */
 interface SplitAxis {
@@ -176,7 +177,7 @@ export class TosiSplitter extends withAttributes({
       content: '""',
       position: 'absolute',
       background: varDefault.tosiSplitterColor('#8884'),
-      transition: 'background 0.15s',
+      transition: `background ${chainDuration(0.15)}`,
     },
     ':host[aria-orientation="vertical"]::after': {
       top: 0,

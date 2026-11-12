@@ -28,6 +28,7 @@ from the bottom-right.
 
 import { Component as XinComponent, ElementCreator, vars } from 'tosijs'
 import { resize as resizeIcon } from './icons/resize.js'
+import { chainTransition } from './theme-chain.js'
 import { trackDrag } from './track-drag.js'
 
 export class TosiSizer extends XinComponent {
@@ -45,7 +46,7 @@ export class TosiSizer extends XinComponent {
       width: 44,
       height: 44,
       opacity: 0.25,
-      transition: 'opacity 0.25s ease-out',
+      transition: chainTransition(['opacity'], 0.25),
     },
     ':host(:hover)': {
       opacity: 0.5,

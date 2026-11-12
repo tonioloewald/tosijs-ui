@@ -77,6 +77,7 @@ and (in my opinion) common sense, but  not like [MUI's rating widget](https://mu
 /*{ "headTitle": "<tosi-rating> star rating input — tosijs-ui", "parent": "Form Components", "description": "<tosi-rating> is a form-associated rating input drawn with icons, with half steps, custom icons and sizes, that behaves like an <input>." }*/
 import { elements, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icon-core.js';
+import { chainDuration, chainTransition } from './theme-chain.js';
 // The default icon, drawn by name.
 import './icons/star.js';
 const { span } = elements;
@@ -126,12 +127,12 @@ export class TosiRating extends withAttributes({
         ':host::part(filled)': {
             position: 'absolute',
             left: 0,
-            transition: 'width 0.15s ease-out',
+            transition: chainTransition(['width'], 0.15),
         },
         ':host svg': {
             transform: 'scale(0.9)',
             pointerEvents: 'all !important',
-            transition: '0.25s ease-in-out',
+            transition: `${chainDuration(0.25)} ease-in-out`,
         },
         ':host svg:hover': {
             transform: 'scale(1)',

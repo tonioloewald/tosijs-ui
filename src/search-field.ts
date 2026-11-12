@@ -297,6 +297,11 @@ import {
   withAttributes,
 } from 'tosijs'
 import { popFloat } from './pop-float.js'
+import {
+  chainElevation,
+  chainSurface,
+  chainSurfaceFilter,
+} from './theme-chain.js'
 import type { TosiFloat } from './float.js'
 import { tosiTag, TosiTag } from './tag.js'
 import { x as xIcon } from './icons/x.js'
@@ -344,10 +349,13 @@ function ensureHintStyles(): void {
       // Scrolling past the end of the list must not scroll the page (and close the list).
       overscrollBehavior: 'contain',
       maxHeight: `calc(${vars.maxHeight} - ${varDefault.menuInset('8px')})`,
-      borderRadius: vars.spacing50,
-      background: varDefault.menuBg('#fafafa'),
+      borderRadius: varDefault.tosiRadius(vars.spacing50),
+      background: varDefault.menuBg(chainSurface('#fafafa')),
+      backdropFilter: chainSurfaceFilter,
       boxShadow: varDefault.menuShadow(
-        `${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`
+        chainElevation.mid(
+          `${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`
+        )
       ),
     },
     '.tosi-search-hints [role="option"]': {
@@ -386,7 +394,9 @@ export class TosiSearchField extends withAttributes({
       gap: vars.spacing25,
       padding: vars.spacing25,
       background: varDefault.inputBg('#fff'),
-      borderRadius: varDefault.searchFieldRadius(vars.spacing50),
+      borderRadius: varDefault.searchFieldRadius(
+        varDefault.inputRadius(vars.spacing50)
+      ),
       boxShadow: varDefault.inputBorderShadow('inset 0 0 2px #0006'),
       cursor: 'text',
     },

@@ -78,6 +78,9 @@ export interface SiteConfig {
    * project root. The build writes it into the site's stylesheet, so a page shows the theme on
    * first paint, and in an editing session the settings menu offers "Theme Editor…", which
    * saves back to this file. Its base colours start from `theme`. It need not exist yet.
+   *
+   * `DEV_THEME_FILE=path.json` makes the dev server read and save it at another path (a test
+   * lane's scratch file) without changing what the build writes.
    */
   themeFile?: string
   /**

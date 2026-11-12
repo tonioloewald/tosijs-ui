@@ -795,6 +795,7 @@ preview.append(btn)
 /*{ "headTitle": "Pop-up, nested and drop menus — tosijs-ui", "parent": "Components", "description": "Pop up a menu anywhere with popMenu() or <tosi-menu>: nested submenus, icons, keyboard shortcuts, and drop menus that accept drags." }*/
 import { elements, varDefault, vars, StyleSheet, withAttributes, } from 'tosijs';
 import { popFloat } from './pop-float.js';
+import { chainElevation, chainSurface, chainSurfaceFilter, } from './theme-chain.js';
 import { icons } from './icon-core.js';
 import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
 import { localize } from './localize.js';
@@ -909,9 +910,9 @@ const menuStyles = {
     overscrollBehavior: 'contain',
     maxHeight: `calc(${vars.maxHeight} - ${varDefault.menuInset('8px')})`,
     borderRadius: varDefault.tosiRadius(vars.spacing50),
-    background: varDefault.menuBg(varDefault.tosiSurface('#fafafa')),
-    backdropFilter: varDefault.tosiSurfaceFilter('none'),
-    boxShadow: varDefault.menuShadow(varDefault.tosiElevation2(`${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`)),
+    background: varDefault.menuBg(chainSurface('#fafafa')),
+    backdropFilter: chainSurfaceFilter,
+    boxShadow: varDefault.menuShadow(chainElevation.mid(`${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`)),
 };
 const menuItemStyles = {
     boxShadow: 'none',

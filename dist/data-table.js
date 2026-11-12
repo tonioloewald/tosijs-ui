@@ -1311,6 +1311,7 @@ happy with the untranslated headers.
 /*{ "parent": "Components", "headTitle": "<tosi-table> virtual data table — tosijs-ui", "description": "A virtual data table for very large datasets: sortable, resizable, pinnable columns inferred from the data, keyboard navigation and row detail." }*/
 import { elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, withAttributes, } from 'tosijs';
 import { trackDrag } from './track-drag.js';
+import { chainTransition } from './theme-chain.js';
 import { naturalSorter } from './natural-compare.js';
 import { resolveRowGroupId, withForcedGroups, clusterByGroup, groupRenderMeta, groupCounts, } from './row-grouping.js';
 import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
@@ -1695,7 +1696,7 @@ export class TosiTable extends withAttributes({
             display: 'none',
         },
         ':host .row-expander > *': {
-            transition: 'transform 0.15s ease-out',
+            transition: chainTransition(['transform'], 0.15),
         },
         ':host .row-expander[aria-expanded="true"] > *': {
             transform: 'rotate(90deg)',

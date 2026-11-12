@@ -143,6 +143,7 @@ initTooltips()
 /*{ "parent": "Components", "headTitle": "<tosi-tabs> tab panel — tosijs-ui", "description": "<tosi-tabs> builds a tab panel from its children's name attributes, with closeable tabs and methods to add or remove tabs." }*/
 import { elements, vars, withAttributes, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize.js';
+import { chainDuration, chainEasing } from './theme-chain.js';
 import { x as xIcon } from './icons/x.js';
 const { div, slot, span } = elements;
 export class TosiTabs extends withAttributes({
@@ -250,7 +251,7 @@ export class TosiTabs extends withAttributes({
             width: 0,
             height: vars.tosiTabsBarHeight,
             background: vars.tosiTabsSelectedColor,
-            transition: 'ease-out 0.2s',
+            transition: `${chainDuration()} ${chainEasing}`,
         },
         ':host .close': {
             border: 0,

@@ -1289,7 +1289,7 @@ export async function devServer(
     if (!mayEditSource(resolved, await allowedSources())) {
       return new Response('not an editable doc source', { status: 403 })
     }
-    const file = Bun.file(resolved)
+    const file = Bun.file(resolved === themeFilePath ? themeStore! : resolved)
     if (!(await file.exists())) {
       // A theme not saved yet is no theme, not a missing page: the editor starts from the base.
       if (resolved === themeFilePath) {
@@ -1336,6 +1336,26 @@ export async function devServer(
       resolved.startsWith(PROJECT_ROOT + path.sep)
       ? resolved
       : null
+  })()
+  /*
+  Where that file is really read and saved: itself, unless `DEV_THEME_FILE` points elsewhere.
+  The test lane uses it to save to a scratch file. It changes nothing a build writes, because
+  the lane's server and a `bun start` build into the same folder: a theme file name baked
+  into the pages by one was refused by the other (the menu lost Theme Editor…).
+  */
+  const themeStore = (() => {
+    const redirect = process.env.DEV_THEME_FILE
+    if (!themeFilePath || !redirect) return themeFilePath
+    const resolved = path.resolve(PROJECT_ROOT, redirect)
+    if (
+      !resolved.endsWith('.json') ||
+      !resolved.startsWith(PROJECT_ROOT + path.sep)
+    ) {
+      throw new Error(
+        `DEV_THEME_FILE ${redirect} is not a .json file inside the project`
+      )
+    }
+    return resolved
   })()
   if (config.themeFile && !themeFilePath) {
     console.warn(
@@ -1385,8 +1405,9 @@ export async function devServer(
           )
         }
       }
-      await Bun.write(resolved, content)
-      console.log('wrote', resolved)
+      const target = resolved === themeFilePath ? themeStore! : resolved
+      await Bun.write(target, content)
+      console.log('wrote', target)
       return new Response(JSON.stringify({ ok: true }), {
         headers: { 'Content-Type': 'application/json' },
       })

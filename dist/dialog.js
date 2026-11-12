@@ -146,6 +146,7 @@ preview.append(
 /*{ "headTitle": "<tosi-dialog> modal dialogs and prompts — tosijs-ui", "parent": "Components", "description": "<tosi-dialog> wraps the native <dialog> element with an OK button, a footer slot, and promise-based alert, confirm and prompt helpers." }*/
 import { Component, elements, on, vars, varDefault } from 'tosijs';
 import { findHighestZ } from './track-drag.js';
+import { chainElevation, chainRadius, chainSurface, chainSurfaceFilter, } from './theme-chain.js';
 const { dialog, button, header, footer, tosiSlot, h3, p, label, input, div } = elements;
 export class TosiDialog extends Component {
     static preferredTagName = 'tosi-dialog';
@@ -159,16 +160,16 @@ export class TosiDialog extends Component {
         ':host > dialog[open]': {
             minWidth: 300,
             border: 0,
-            borderRadius: 'calc(var(--tosi-radius, 5px) * 2)',
+            borderRadius: chainRadius(2),
             overflow: 'hidden',
             maxHeight: 'calc(100% - 20px)',
             padding: 0,
             display: 'flex',
             flexDirection: 'column',
             gap: 5,
-            _dialogShadow: varDefault.menuShadow('0 5px 10px #0004'),
-            _dialogBackground: varDefault.background('#fafafa'),
-            backdropFilter: varDefault.tosiSurfaceFilter('none'),
+            _dialogShadow: chainElevation.high(varDefault.menuShadow('0 5px 10px #0004')),
+            _dialogBackground: chainSurface(varDefault.background('#fafafa')),
+            backdropFilter: chainSurfaceFilter,
             _dialogColor: varDefault.textColor('#222'),
             boxShadow: vars.dialogShadow,
             background: vars.dialogBackground,

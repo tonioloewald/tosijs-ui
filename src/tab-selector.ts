@@ -152,6 +152,7 @@ import {
 } from 'tosijs'
 
 import { tosiLocalized, TosiLocalized } from './localize.js'
+import { chainDuration, chainEasing } from './theme-chain.js'
 
 import { x as xIcon } from './icons/x.js'
 
@@ -281,7 +282,7 @@ export class TosiTabs extends withAttributes({
       width: 0,
       height: vars.tosiTabsBarHeight,
       background: vars.tosiTabsSelectedColor,
-      transition: 'ease-out 0.2s',
+      transition: `${chainDuration()} ${chainEasing}`,
     },
     ':host .close': {
       border: 0,

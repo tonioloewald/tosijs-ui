@@ -45,6 +45,7 @@ import { marked } from 'marked'
 import { popFloat, FloatPosition } from './pop-float.js'
 import { TosiFloat } from './float.js'
 import { localize } from './localize.js'
+import { chainRadius } from './theme-chain.js'
 
 const { span } = elements
 
@@ -64,14 +65,14 @@ const tooltipStyleSpec = {
   [`.${TOOLTIP_CLASS}`]: {
     pointerEvents: 'none',
     padding: varDefault.tosiTooltipPadding('4px 10px'),
-    borderRadius: varDefault.tosiTooltipRadius('6px'),
+    borderRadius: varDefault.tosiTooltipRadius(chainRadius(1.2)),
     background: varDefault.tosiTooltipBg('#333'),
     color: varDefault.tosiTooltipColor('#fff'),
     fontSize: varDefault.tosiTooltipFontSize('13px'),
     lineHeight: '1.4',
     maxWidth: varDefault.tosiTooltipMaxWidth('280px'),
     whiteSpace: 'pre-line',
-    boxShadow: '0 2px 8px #0003',
+    boxShadow: varDefault.tosiTooltipShadow('0 2px 8px #0003'),
     position: 'relative',
   },
   [`.${TOOLTIP_CLASS} p`]: {
@@ -80,7 +81,7 @@ const tooltipStyleSpec = {
   [`.${TOOLTIP_CLASS} code`]: {
     background: '#fff2',
     padding: '0 4px',
-    borderRadius: '3px',
+    borderRadius: chainRadius(0.6),
     fontSize: '0.9em',
   },
   [`.${TOOLTIP_CLASS} a`]: {

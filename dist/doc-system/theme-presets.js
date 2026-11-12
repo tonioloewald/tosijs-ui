@@ -2,7 +2,7 @@
 # theme presets
 
 A preset is a whole look, given as theme data: a few base colours for the doc theme's generator,
-and overrides of the theme's chain (`--tosi-radius`, `--tosi-surface`, `--tosi-elevation-2`, …)
+and overrides of the theme's chain (`--tosi-radius`, `--tosi-surface`, `--tosi-elevation-mid`, …)
 in light and dark. The doc site ships three: **Original** (the stock theme, no overrides),
 **Glass** (translucent, blurred surfaces over a gradient backdrop) and **Material** (Material 3
 colours, shapes and elevation).
@@ -34,6 +34,7 @@ const GLASS = {
             'tosi-surface-filter': 'blur(16px) saturate(1.4)',
             'tosi-rim': '#ffffffcc',
             'tosi-shadow-color': '#00000033',
+            'tosi-elevation-high': 'inset 0 0 0 1px var(--tosi-rim), 0 12px 32px var(--tosi-shadow-color)',
             'tosi-radius': '10px',
             'button-radius': '999px',
             'button-shadow': 'inset 1px 1.5px 1px 0 #ffffffb3, inset -1px -1.5px 1px 0 #ffffff66, 0 2px 6px #0002',
@@ -52,7 +53,8 @@ const GLASS = {
             'tosi-surface': '#1c1c1ecc',
             'tosi-rim': '#ffffff33',
             'tosi-shadow-color': '#00000099',
-            'tosi-elevation-2': `inset 0 0 0 1px var(--tosi-rim), 0 8px 24px var(--tosi-shadow-color)`,
+            'tosi-elevation-mid': `inset 0 0 0 1px var(--tosi-rim), 0 8px 24px var(--tosi-shadow-color)`,
+            'tosi-elevation-high': `inset 0 0 0 1px var(--tosi-rim), 0 12px 32px var(--tosi-shadow-color)`,
             'button-shadow': 'inset 1px 1.5px 1px 0 #ffffff33, inset -1px -1.5px 1px 0 #ffffff1a, 0 2px 6px #0006',
             'input-border-shadow': 'inset 0 0 0 1px #ffffff26',
         },
@@ -78,9 +80,9 @@ const MATERIAL = {
             'quote-radius': '16px',
             'code-radius': '8px',
             'tosi-shadow-color': '#0000004d',
-            'tosi-elevation-1': '0 1px 2px var(--tosi-shadow-color), 0 1px 3px 1px #00000026',
-            'tosi-elevation-2': '0 1px 2px var(--tosi-shadow-color), 0 2px 6px 2px #00000026',
-            'tosi-elevation-3': '0 4px 4px var(--tosi-shadow-color), 0 8px 12px 6px #00000026',
+            'tosi-elevation-low': '0 1px 2px var(--tosi-shadow-color), 0 1px 3px 1px #00000026',
+            'tosi-elevation-mid': '0 1px 2px var(--tosi-shadow-color), 0 2px 6px 2px #00000026',
+            'tosi-elevation-high': '0 4px 4px var(--tosi-shadow-color), 0 8px 12px 6px #00000026',
             'input-border-shadow': 'inset 0 0 0 1px #79747e',
             'tosi-hover-bg': 'color-mix(in srgb, var(--brand-color) 8%, transparent)',
             'tosi-press-bg': 'color-mix(in srgb, var(--brand-color) 12%, transparent)',

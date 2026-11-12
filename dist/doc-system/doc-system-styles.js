@@ -49,16 +49,22 @@ export const TOSI_CHAIN = {
     _tosiBackdrop: vars.background,
     _tosiSurfaceFilter: 'none',
     _tosiRim: 'transparent',
-    _tosiElevation1: `inset 0 0 0 1px ${vars.tosiRim}, 0 1px 2px ${vars.tosiShadowColor}`,
-    _tosiElevation2: `inset 0 0 0 1px ${vars.tosiRim}, 0 4px 8px ${vars.tosiShadowColor}`,
-    _tosiElevation3: `inset 0 0 0 1px ${vars.tosiRim}, 0 5px 10px ${vars.tosiShadowColor}`,
+    /*
+    Three levels: controls, things that float (menus, tooltips), things that sit over the page
+    (dialogs, the palette, notifications). No digits in the names: tosijs reads a trailing
+    number as a scale (`vars.tosiElevation2` is `calc(var(--tosi-elevation) * 0.02)`).
+    Mid is the doc theme's menu shadow from before the chain. High is left unset, so dialogs,
+    the palette and notifications keep the shadows they always had until a theme sets it.
+    */
+    _tosiElevationLow: `inset 0 0 0 1px ${vars.tosiRim}, 0 1px 2px ${vars.tosiShadowColor}`,
+    _tosiElevationMid: `inset 0 0 0 1px ${vars.tosiRim}, 0 4px 8px ${vars.tosiShadowColor}`,
     _tosiDuration: '0.2s',
     _tosiEasing: 'ease-out',
     _tosiTransition: `${vars.tosiDuration} ${vars.tosiEasing}`,
     // The doc site's own variables, as links of the chain.
     _shadowColor: vars.tosiShadowColor,
     _menuBg: vars.tosiSurface,
-    _menuShadow: vars.tosiElevation2,
+    _menuShadow: vars.tosiElevationMid,
     _headerBg: vars.brandColor,
     _buttonShadow: 'none',
 };
@@ -259,7 +265,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             _codeColor: readableOn(readableOn(brandColor.brighten(0.18), brandColor.rotate(45).brighten(0.8).inverseLuminance), Color.fromCss(theme.codeBg ?? '#fdfdfd').inverseLuminance),
             _placeholderColor: readableOn(brandColor.brighten(0.18), Color.fromCss(theme.inputBg ?? '#fdfdfd').inverseLuminance),
             _tosiShadowColor: brandColor.opacity(0.5),
-            _tosiElevation2: `0 0 0 2px ${brandColor.opacity(0.75)}`,
+            _tosiElevationMid: `0 0 0 2px ${brandColor.opacity(0.75)}`,
             _menuSeparatorColor: brandColor.opacity(0.5),
         },
         '.high-contrast': {
@@ -854,19 +860,19 @@ export const DOC_SYSTEM_THEME_VARIABLES = [
         group: 'Elevation',
     },
     {
-        name: 'tosi-elevation-1',
+        name: 'tosi-elevation-low',
         kind: 'shadow',
         label: 'Controls',
         group: 'Elevation',
     },
     {
-        name: 'tosi-elevation-2',
+        name: 'tosi-elevation-mid',
         kind: 'shadow',
         label: 'Menus',
         group: 'Elevation',
     },
     {
-        name: 'tosi-elevation-3',
+        name: 'tosi-elevation-high',
         kind: 'shadow',
         label: 'Dialogs',
         group: 'Elevation',
