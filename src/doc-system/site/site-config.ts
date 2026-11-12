@@ -80,6 +80,11 @@ export interface SiteConfig {
    * saves back to this file. Its base colours start from `theme`. It need not exist yet.
    */
   themeFile?: string
+  /**
+   * Offer the theme presets (Original, Glass, Material) in the settings menu's Style submenu.
+   * Their CSS goes into the site's stylesheet, and a reader's choice applies before first paint.
+   */
+  themePresets?: boolean
   /** translation table (TSV) powering the settings menu's language picker */
   localizedStrings?: string
 

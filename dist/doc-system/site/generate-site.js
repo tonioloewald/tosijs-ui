@@ -434,6 +434,8 @@ depth = pageDepth(at)) {
       if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
         document.documentElement.classList.add('darkmode')
       if (p.highContrast) document.documentElement.classList.add('high-contrast')
+      if (p.style && /^[a-z-]+$/.test(p.style))
+        document.documentElement.classList.add('tosi-style-' + p.style)
     } catch (e) {}
   </script>
 ${head}
@@ -527,6 +529,7 @@ export async function generateSite(config) {
         ...(config.themeFile
             ? { themeFile: config.themeFile, theme: config.theme ?? {} }
             : {}),
+        ...(config.themePresets ? { themePresets: true } : {}),
         projectLinks: config.projectLinks,
         logo: siteLogo(config.logo, config.basePath),
         bookVolumes: config.bookVolumes,

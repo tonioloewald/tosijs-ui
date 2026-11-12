@@ -68,6 +68,7 @@ export default defineSiteConfig({
   // writes it into the site's stylesheet. Absent until the first save. The Playwright lane
   // points it at a scratch file, so a save no browser intercepts cannot touch the repo.
   themeFile: process.env.TOSIJS_THEME_FILE || 'tosijs-theme.json',
+  themePresets: true,
 
   // On `bun start`, open (or bring to front) this project's browser tab once the
   // server is up — reusing the tab keyed on the dev origin, so restarts don't pile

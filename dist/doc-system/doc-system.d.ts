@@ -44,12 +44,15 @@ export declare class TosiDocSystem extends TosiDocSystem_base {
     private stylesApplied;
     private applyStyles;
     private applyThemePrefs;
+    private applyStylePreset;
     private persistPrefs;
     private initPrefs;
     private initLocale;
     private settingsButton;
     /** The site's `aliases`, which the build writes into the config attribute (board #3513). */
     private configAliases;
+    /** Whether the build put the style presets in the stylesheet (`themePresets`). */
+    private themePresets;
     /** The site's `themeFile` and `theme`, which the build writes into the config attribute. */
     private themeSite;
     private parseLinks;

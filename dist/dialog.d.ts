@@ -16,7 +16,7 @@ export declare class TosiDialog extends Component<DialogParts> {
         ':host > dialog[open]': {
             minWidth: number;
             border: number;
-            borderRadius: number;
+            borderRadius: string;
             overflow: string;
             maxHeight: string;
             padding: number;
@@ -25,6 +25,7 @@ export declare class TosiDialog extends Component<DialogParts> {
             gap: number;
             _dialogShadow: string;
             _dialogBackground: string;
+            backdropFilter: string;
             _dialogColor: string;
             boxShadow: string;
             background: string;

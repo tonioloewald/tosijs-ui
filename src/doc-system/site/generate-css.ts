@@ -19,6 +19,7 @@ import {
   DocSystemTheme,
 } from '../doc-system-styles.js'
 import { resolveTheme, themeStyleSheet, ThemeData } from '../../theme-data.js'
+import { presetStyleSheet } from '../theme-presets.js'
 
 declare global {
   var Bun: any
@@ -39,7 +40,8 @@ export function themeFileCss(data: ThemeData, theme: DocSystemTheme): string {
 export async function generateCss(
   outputPath = 'docs/doc-system.css',
   theme: DocSystemTheme = {},
-  themeFile?: string
+  themeFile?: string,
+  themePresets = false
 ): Promise<void> {
   // No @import: each page links the fonts itself, in parallel (generate-site.ts, #3631).
   let output = css(docSystemStyleSpec(theme, { fontImport: false }))
@@ -59,6 +61,8 @@ export async function generateCss(
       output += '\n' + themeFileCss(data, theme)
     }
   }
+  // After the saved theme, so a style the reader picks wins over it.
+  if (themePresets) output += '\n' + css(presetStyleSheet(undefined, theme))
   await Bun.write(outputPath, output)
 }
 
@@ -69,6 +73,11 @@ if (import.meta.main) {
   const theme: DocSystemTheme = process.argv[3]
     ? JSON.parse(process.argv[3])
     : {}
-  await generateCss(outputPath, theme, process.argv[4] || undefined)
+  await generateCss(
+    outputPath,
+    theme,
+    process.argv[4] || undefined,
+    process.argv[5] === 'presets'
+  )
   console.log(`generated ${outputPath}`)
 }

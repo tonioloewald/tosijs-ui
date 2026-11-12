@@ -13,6 +13,8 @@ export interface GenerateSiteConfig {
     aliases?: Record<string, string>;
     /** `SiteConfig.themeFile`, for the settings menu's theme editor */
     themeFile?: string;
+    /** `SiteConfig.themePresets`: the settings menu offers the Style submenu */
+    themePresets?: boolean;
     /** `SiteConfig.theme`: the theme editor's starting base colours */
     theme?: DocSystemTheme;
     /** web fonts the saved theme (`themeFile`) uses; each must pass `allowedFontUrl` */

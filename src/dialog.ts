@@ -169,7 +169,7 @@ export class TosiDialog extends Component<DialogParts> {
     ':host > dialog[open]': {
       minWidth: 300,
       border: 0,
-      borderRadius: 10,
+      borderRadius: 'calc(var(--tosi-radius, 5px) * 2)',
       overflow: 'hidden',
       maxHeight: 'calc(100% - 20px)',
       padding: 0,
@@ -178,6 +178,7 @@ export class TosiDialog extends Component<DialogParts> {
       gap: 5,
       _dialogShadow: varDefault.menuShadow('0 5px 10px #0004'),
       _dialogBackground: varDefault.background('#fafafa'),
+      backdropFilter: varDefault.tosiSurfaceFilter('none'),
       _dialogColor: varDefault.textColor('#222'),
       boxShadow: vars.dialogShadow,
       background: vars.dialogBackground,

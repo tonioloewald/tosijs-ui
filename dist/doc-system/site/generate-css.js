@@ -14,6 +14,7 @@ import './build-dom-shim.js'; // must precede any tosijs import (build has no DO
 import { css } from 'tosijs';
 import { docSystemStyleSpec, docSystemThemeGenerator, } from '../doc-system-styles.js';
 import { resolveTheme, themeStyleSheet } from '../../theme-data.js';
+import { presetStyleSheet } from '../theme-presets.js';
 /**
  * The CSS for a theme saved by the theme editor (`themeFile`), after the stock stylesheet so
  * it wins. Its base colours start from the site's `theme`.
@@ -25,7 +26,7 @@ export function themeFileCss(data, theme) {
     };
     return css(themeStyleSheet(resolveTheme(merged, docSystemThemeGenerator)));
 }
-export async function generateCss(outputPath = 'docs/doc-system.css', theme = {}, themeFile) {
+export async function generateCss(outputPath = 'docs/doc-system.css', theme = {}, themeFile, themePresets = false) {
     // No @import: each page links the fonts itself, in parallel (generate-site.ts, #3631).
     let output = css(docSystemStyleSpec(theme, { fontImport: false }));
     if (themeFile) {
@@ -42,6 +43,9 @@ export async function generateCss(outputPath = 'docs/doc-system.css', theme = {}
             output += '\n' + themeFileCss(data, theme);
         }
     }
+    // After the saved theme, so a style the reader picks wins over it.
+    if (themePresets)
+        output += '\n' + css(presetStyleSheet(undefined, theme));
     await Bun.write(outputPath, output);
 }
 if (import.meta.main) {
@@ -51,6 +55,6 @@ if (import.meta.main) {
     const theme = process.argv[3]
         ? JSON.parse(process.argv[3])
         : {};
-    await generateCss(outputPath, theme, process.argv[4] || undefined);
+    await generateCss(outputPath, theme, process.argv[4] || undefined, process.argv[5] === 'presets');
     console.log(`generated ${outputPath}`);
 }

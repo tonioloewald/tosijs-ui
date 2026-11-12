@@ -62,6 +62,8 @@ export interface GenerateSiteConfig {
   aliases?: Record<string, string>
   /** `SiteConfig.themeFile`, for the settings menu's theme editor */
   themeFile?: string
+  /** `SiteConfig.themePresets`: the settings menu offers the Style submenu */
+  themePresets?: boolean
   /** `SiteConfig.theme`: the theme editor's starting base colours */
   theme?: DocSystemTheme
   /** web fonts the saved theme (`themeFile`) uses; each must pass `allowedFontUrl` */
@@ -700,6 +702,8 @@ async function pageHtml(
       if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
         document.documentElement.classList.add('darkmode')
       if (p.highContrast) document.documentElement.classList.add('high-contrast')
+      if (p.style && /^[a-z-]+$/.test(p.style))
+        document.documentElement.classList.add('tosi-style-' + p.style)
     } catch (e) {}
   </script>
 ${head}
@@ -825,6 +829,7 @@ export async function generateSite(
       ...(config.themeFile
         ? { themeFile: config.themeFile, theme: config.theme ?? {} }
         : {}),
+      ...(config.themePresets ? { themePresets: true } : {}),
       projectLinks: config.projectLinks,
       logo: siteLogo(config.logo, config.basePath),
       bookVolumes: config.bookVolumes,

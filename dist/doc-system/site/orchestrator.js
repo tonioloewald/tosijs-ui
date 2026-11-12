@@ -1555,9 +1555,10 @@ export async function buildSite(config, opts = {}) {
             // Bun loader plugin so those modules evaluate. (See BUILD-TJS-HOOK.md.)
             const themeArg = JSON.stringify(config.theme || {});
             const themeFileArg = config.themeFile ?? '';
+            const presetsArg = config.themePresets ? 'presets' : '';
             await (config.generateCssPreload
-                ? $ `bun --preload ${config.generateCssPreload} ${genCss} ${PUBLIC}/doc-system.css ${themeArg} ${themeFileArg}`
-                : $ `bun ${genCss} ${PUBLIC}/doc-system.css ${themeArg} ${themeFileArg}`).text();
+                ? $ `bun --preload ${config.generateCssPreload} ${genCss} ${PUBLIC}/doc-system.css ${themeArg} ${themeFileArg} ${presetsArg}`
+                : $ `bun ${genCss} ${PUBLIC}/doc-system.css ${themeArg} ${themeFileArg} ${presetsArg}`).text();
             /*
             In DEV the stamp must move on every build; in a RELEASE it must be stable (#151).
       
@@ -1670,6 +1671,7 @@ export async function buildSite(config, opts = {}) {
                 llmsTxt: config.llmsTxt !== false,
                 aliases: config.aliases,
                 themeFile: config.themeFile,
+                themePresets: config.themePresets,
                 theme: config.theme,
                 themeFonts: await readThemeFonts(config.themeFile),
                 searchPlaceholder: config.searchPlaceholder,

@@ -9,4 +9,4 @@ declare global {
  * it wins. Its base colours start from the site's `theme`.
  */
 export declare function themeFileCss(data: ThemeData, theme: DocSystemTheme): string;
-export declare function generateCss(outputPath?: string, theme?: DocSystemTheme, themeFile?: string): Promise<void>;
+export declare function generateCss(outputPath?: string, theme?: DocSystemTheme, themeFile?: string, themePresets?: boolean): Promise<void>;

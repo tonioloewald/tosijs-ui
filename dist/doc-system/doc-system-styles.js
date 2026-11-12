@@ -25,6 +25,43 @@ export const SIDEBAR_BREAKPOINT = 600;
 export { contrastRatio, readableOn } from '../theme.js';
 import { readableOn } from '../theme.js';
 import { invertedColors, ruleValues, } from '../theme-data.js';
+/*
+The theme's CHAIN: links that hang from a few roots, written as CSS so that overriding one link
+moves everything below it, and resetting it reconnects. A preset (Glass, Material) is a handful
+of overrides of these, not a new stylesheet.
+
+- shape: `--tosi-radius` (every corner below hangs from it)
+- backdrop: `--tosi-backdrop` (what the page sits on: the background, or a gradient)
+- surface: `--tosi-surface` (the fill of menus and other raised surfaces), `--tosi-surface-filter`
+  (a backdrop filter for surfaces and bars: `none`, or `blur(16px) saturate(1.4)` for glass),
+  `--tosi-rim` (a light edge drawn inside raised surfaces)
+- elevation: `--tosi-shadow-color`, and three levels: controls, menus, dialogs
+- state: `--tosi-hover-bg`, `--tosi-press-bg` (the layer over a borderless control)
+- motion: `--tosi-duration`, `--tosi-easing`, `--tosi-transition`
+
+The colour roots (`--tosi-surface`, `--tosi-shadow-color`, the state layers) are in
+`docSystemColors`, so dark mode inverts them with the rest; the links that are expressions live
+here and follow them.
+*/
+export const TOSI_CHAIN = {
+    _tosiRadius: '5px',
+    // What the page sits on: the background colour, or a gradient or image behind glass.
+    _tosiBackdrop: vars.background,
+    _tosiSurfaceFilter: 'none',
+    _tosiRim: 'transparent',
+    _tosiElevation1: `inset 0 0 0 1px ${vars.tosiRim}, 0 1px 2px ${vars.tosiShadowColor}`,
+    _tosiElevation2: `inset 0 0 0 1px ${vars.tosiRim}, 0 4px 8px ${vars.tosiShadowColor}`,
+    _tosiElevation3: `inset 0 0 0 1px ${vars.tosiRim}, 0 5px 10px ${vars.tosiShadowColor}`,
+    _tosiDuration: '0.2s',
+    _tosiEasing: 'ease-out',
+    _tosiTransition: `${vars.tosiDuration} ${vars.tosiEasing}`,
+    // The doc site's own variables, as links of the chain.
+    _shadowColor: vars.tosiShadowColor,
+    _menuBg: vars.tosiSurface,
+    _menuShadow: vars.tosiElevation2,
+    _headerBg: vars.brandColor,
+    _buttonShadow: 'none',
+};
 /** Compute the full set of `:root` color variables from a few base colors. */
 export function docSystemColors(theme = {}) {
     const brandColor = Color.fromCss(theme.accent ?? '#d92270');
@@ -65,15 +102,17 @@ export function docSystemColors(theme = {}) {
         // off-black, so the editor surface stays a clean neutral in both themes.
         _codeBg: theme.codeBg ?? '#fdfdfd',
         _linkColor: brandColor.rotate(-30).darken(0.5),
-        _shadowColor: '#0004',
-        _menuBg: '#fafafa',
+        // The surface and elevation roots of the chain (see `--tosi-surface` below).
+        _tosiShadowColor: '#0004',
+        _tosiSurface: '#fafafa',
+        _tosiHoverBg: '#0002',
+        _tosiPressBg: '#0004',
         _menuItemActiveColor: '#000',
         _menuItemIconActiveColor: '#000',
         _menuItemActiveBg: '#aaa',
         _menuItemHoverBg: '#eee',
         _menuItemColor: '#222',
         _menuSeparatorColor: '#2224',
-        _menuShadow: '0 4px 8px #0004',
         _scrollThumbColor: '#0006',
         _scrollBarColor: '#0001',
         _inputBorderShadow: 'inset 0 0 2px #0006',
@@ -120,18 +159,19 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             // below — if these two ever disagree, the page jumps on hydration.
             _docContentMaxWidth: '44em',
             /*
-            Corner radii, as variables so a theme can change them, and plain lengths so the theme
-            editor offers them as a number and a unit. These are what the rules computed before
-            (halves and quarters of the default 10px spacing), so a site that sets none looks the
-            same; they no longer follow a changed `--spacing`.
+            Corner radii, as variables so a theme can change them, all hanging from `--tosi-radius`
+            (5px): set that and every corner follows, or set one of these to cut it loose. The
+            defaults are what the rules computed before (halves and quarters of the default 10px
+            spacing), so a site that sets none looks the same.
             */
-            _buttonRadius: '5px',
-            _inputRadius: '5px',
-            _quoteRadius: '10px',
-            _codeRadius: '2.5px',
+            _buttonRadius: vars.tosiRadius,
+            _inputRadius: vars.tosiRadius,
+            _quoteRadius: 'calc(var(--tosi-radius) * 2)',
+            _codeRadius: 'calc(var(--tosi-radius) / 2)',
             // The components' own radii (theme.ts defaults), here so a doc theme can edit them.
-            _tosiBorderRadius: '4px',
-            _tosiBorderRadiusLg: '8px',
+            _tosiBorderRadius: 'calc(var(--tosi-radius) * 0.8)',
+            _tosiBorderRadiusLg: 'calc(var(--tosi-radius) * 1.6)',
+            ...TOSI_CHAIN,
         },
         /*
         Per-page layout, driven by `layout:` in a doc's metadata (see `Doc.layout`).
@@ -218,8 +258,8 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             _brandColor: brandColor.brighten(0.18),
             _codeColor: readableOn(readableOn(brandColor.brighten(0.18), brandColor.rotate(45).brighten(0.8).inverseLuminance), Color.fromCss(theme.codeBg ?? '#fdfdfd').inverseLuminance),
             _placeholderColor: readableOn(brandColor.brighten(0.18), Color.fromCss(theme.inputBg ?? '#fdfdfd').inverseLuminance),
-            _shadowColor: brandColor.opacity(0.5),
-            _menuShadow: `0 0 0 2px ${brandColor.opacity(0.75)}`,
+            _tosiShadowColor: brandColor.opacity(0.5),
+            _tosiElevation2: `0 0 0 2px ${brandColor.opacity(0.75)}`,
             _menuSeparatorColor: brandColor.opacity(0.5),
         },
         '.high-contrast': {
@@ -235,7 +275,8 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             fontSize: vars.fontSize,
             margin: '0',
             lineHeight: vars.lineHeight,
-            background: vars.background,
+            background: vars.tosiBackdrop,
+            backgroundAttachment: 'fixed',
             _tosiTabsSelectedColor: vars.brandColor,
             _tosiTabsBarColor: vars.brandTextColor,
             _menuItemIconColor: vars.brandColor,
@@ -248,6 +289,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
         },
         'tosi-doc-system tosi-sidenav::part(nav)': {
             background: vars.navBg,
+            backdropFilter: vars.tosiSurfaceFilter,
         },
         // ── Pre-hydration layout (`:not(:defined)`) ──────────────────────────────
         //
@@ -367,7 +409,8 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             appearance: 'none',
         },
         header: {
-            background: vars.brandColor,
+            background: vars.headerBg,
+            backdropFilter: vars.tosiSurfaceFilter,
             color: vars.brandTextColor,
             _textColor: vars.brandTextColor,
             _linkColor: vars.brandTextColor,
@@ -462,7 +505,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'ease-out 0.2s',
+            transition: vars.tosiTransition,
             /*
             Set the COLOUR, do not redefine the palette token (#150).
       
@@ -483,6 +526,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             color: vars.brandColor,
             textDecoration: 'none',
             background: vars.buttonBg,
+            boxShadow: vars.buttonShadow,
             padding: '0 calc(var(--spacing) * 1.25)',
             border: 'none',
             borderRadius: vars.buttonRadius,
@@ -589,12 +633,12 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             textAlign: 'center',
         },
         '.transparent:hover, .iconic:hover': {
-            background: '#0002',
+            background: vars.tosiHoverBg,
             boxShadow: 'none',
             color: vars.textColor,
         },
         '.transparent:active, .iconic:active': {
-            background: '#0004',
+            background: vars.tosiPressBg,
             boxShadow: 'none',
             color: vars.textColor,
         },
@@ -604,7 +648,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
         '.doc-link': {
             cursor: 'pointer',
             borderBottom: 'none',
-            transition: '0.15s ease-out',
+            transition: `calc(${vars.tosiDuration} * 0.75) ${vars.tosiEasing}`,
             marginLeft: '10px',
             padding: 'calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5)',
         },
@@ -751,6 +795,7 @@ export const DOC_SYSTEM_THEME_VARIABLES = [
     { name: 'h2-scale', kind: 'number', label: 'Heading 2 scale', group: 'Type' },
     { name: 'h3-scale', kind: 'number', label: 'Heading 3 scale', group: 'Type' },
     { name: 'spacing', kind: 'length', label: 'Spacing', group: 'Layout' },
+    { name: 'tosi-radius', kind: 'length', label: 'Corners', group: 'Corners' },
     {
         name: 'button-radius',
         kind: 'length',
@@ -787,6 +832,55 @@ export const DOC_SYSTEM_THEME_VARIABLES = [
         label: 'Large components',
         group: 'Corners',
     },
+    {
+        name: 'tosi-backdrop',
+        kind: 'image',
+        label: 'Backdrop',
+        group: 'Surfaces',
+    },
+    { name: 'tosi-surface', kind: 'color', label: 'Fill', group: 'Surfaces' },
+    {
+        name: 'tosi-surface-filter',
+        kind: 'text',
+        label: 'Backdrop filter',
+        group: 'Surfaces',
+    },
+    { name: 'tosi-rim', kind: 'color', label: 'Rim', group: 'Surfaces' },
+    { name: 'header-bg', kind: 'color', label: 'Header', group: 'Surfaces' },
+    {
+        name: 'tosi-shadow-color',
+        kind: 'color',
+        label: 'Shadow colour',
+        group: 'Elevation',
+    },
+    {
+        name: 'tosi-elevation-1',
+        kind: 'shadow',
+        label: 'Controls',
+        group: 'Elevation',
+    },
+    {
+        name: 'tosi-elevation-2',
+        kind: 'shadow',
+        label: 'Menus',
+        group: 'Elevation',
+    },
+    {
+        name: 'tosi-elevation-3',
+        kind: 'shadow',
+        label: 'Dialogs',
+        group: 'Elevation',
+    },
+    {
+        name: 'button-shadow',
+        kind: 'shadow',
+        label: 'Buttons',
+        group: 'Elevation',
+    },
+    { name: 'tosi-hover-bg', kind: 'color', label: 'Hover', group: 'States' },
+    { name: 'tosi-press-bg', kind: 'color', label: 'Pressed', group: 'States' },
+    { name: 'tosi-duration', kind: 'text', label: 'Duration', group: 'Motion' },
+    { name: 'tosi-easing', kind: 'text', label: 'Easing', group: 'Motion' },
     {
         name: 'touch-size',
         kind: 'length',

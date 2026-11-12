@@ -18,11 +18,13 @@
       if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
         document.documentElement.classList.add('darkmode')
       if (p.highContrast) document.documentElement.classList.add('high-contrast')
+      if (p.style && /^[a-z-]+$/.test(p.style))
+        document.documentElement.classList.add('tosi-style-' + p.style)
     } catch (e) {}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=cef87fafc4d4" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=c40b81221523" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Documentation System — tosijs-ui</title>
   <meta name="description" content="tosijs-ui/site: turn markdown and doc comments into a static, pre-rendered documentation site with live, self-testing examples, an ePub and print." />
@@ -45,7 +47,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=ec7d4b6d2546" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;test-results/e2e-theme.json&quot;,&quot;theme&quot;:{},&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=1fe84a3fe5a7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;test-results/e2e-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="documentation-system.md">
 <h1 id="documentation-system">Documentation System</h1>
 <!--{ "pin": "bottom", "order": 4, "description": "tosijs-ui/site: turn markdown and doc comments into a static, pre-rendered documentation site with live, self-testing examples, an ePub and print." }-->
@@ -142,6 +144,7 @@ run live and test themselves, plus an ePub, print, <code>llms.txt</code> and a s
       <li><a class="doc-link" href="theme/">theme</a></li>
       <li><a class="doc-link" href="theme-data/">theme data</a></li>
       <li><a class="doc-link" href="theme-editor/">theme editor</a></li>
+      <li><a class="doc-link" href="theme-presets/">theme presets</a></li>
       <li><a class="doc-link" href="theme-stress-tests/">Theme stress tests</a></li>
       <li><a class="doc-link" href="track-drag/">trackDrag</a></li>
       <li><a class="doc-link" href="value-renderer/">valueRenderer</a></li>
@@ -176,6 +179,6 @@ run live and test themselves, plus an ePub, print, <code>llms.txt</code> and a s
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-7mma3ypv.js"></script>
+  <script type="module" src="hydrate-zmycjcyg.js"></script>
 </body>
 </html>

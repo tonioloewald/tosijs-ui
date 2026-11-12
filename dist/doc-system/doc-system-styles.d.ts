@@ -24,6 +24,7 @@ export interface DocSystemTheme {
 }
 export { contrastRatio, readableOn } from '../theme.js';
 import { type ThemeGenerator, type ThemeVariable } from '../theme-data.js';
+export declare const TOSI_CHAIN: XinStyleRule;
 /** Compute the full set of `:root` color variables from a few base colors. */
 export declare function docSystemColors(theme?: DocSystemTheme): XinStyleRule;
 /**

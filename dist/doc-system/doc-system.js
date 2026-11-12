@@ -71,6 +71,8 @@ import { i18n, setLocale, initLocalization } from '../localize.js';
 // tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
 import './css-var-editor.js';
 import { openThemeEditor, themeEditable } from './theme-editor-panel.js';
+import { DOC_THEME_PRESETS, presetClass } from './theme-presets.js';
+import { allowedFontUrl } from '../theme-fonts.js';
 import { sourceWritable } from '../live-example/source-access.js';
 const { button, div } = elements;
 const download = (url) => () => {
@@ -266,13 +268,44 @@ export class TosiDocSystem extends withAttributes({
         // body class stays authoritative — this just keeps the two from disagreeing.
         document.documentElement.classList.toggle('darkmode', dark);
         document.documentElement.classList.toggle('high-contrast', contrast);
+        this.applyStylePreset();
     };
+    /*
+    The style preset (Glass, Material): a class on <html> and <body>, whose CSS the build put in
+    the stylesheet (`themePresets`). The head script sets it on <html> before first paint; this
+    keeps the two in step, and links the preset's web fonts.
+    */
+    applyStylePreset() {
+        const style = this.themePresets() ? this.prefs.style.value : '';
+        for (const { name } of DOC_THEME_PRESETS) {
+            for (const element of [document.documentElement, document.body]) {
+                element.classList.toggle(presetClass(name), name === style);
+            }
+        }
+        const fonts = new Set((DOC_THEME_PRESETS.find(({ name }) => name === style)?.theme?.fonts ?? [])
+            .map(allowedFontUrl)
+            .filter((url) => url !== null));
+        for (const link of document.querySelectorAll('link[data-tosi-style-font]')) {
+            if (fonts.has(link.href))
+                fonts.delete(link.href);
+            else
+                link.remove();
+        }
+        for (const href of fonts) {
+            document.head.append(Object.assign(document.createElement('link'), {
+                rel: 'stylesheet',
+                href,
+            }));
+            document.head.lastElementChild.setAttribute('data-tosi-style-font', '');
+        }
+    }
     persistPrefs() {
         try {
             localStorage.setItem(PREFS_KEY, JSON.stringify({
                 theme: this.prefs.theme.value,
                 highContrast: this.prefs.highContrast.value,
                 locale: this.prefs.locale.value,
+                style: this.prefs.style.value,
             }));
         }
         catch {
@@ -292,6 +325,7 @@ export class TosiDocSystem extends withAttributes({
                 theme: saved.theme || 'system',
                 highContrast: saved.highContrast || false,
                 locale: saved.locale || '',
+                style: typeof saved.style === 'string' ? saved.style : '',
             },
         }).prefs;
         this.applyThemePrefs();
@@ -305,6 +339,10 @@ export class TosiDocSystem extends withAttributes({
             this.persistPrefs();
         });
         this.prefs.locale.observe(() => this.persistPrefs());
+        this.prefs.style.observe(() => {
+            this.applyStylePreset();
+            this.persistPrefs();
+        });
     }
     // ---- Localization --------------------------------------------------------
     async initLocale() {
@@ -488,6 +526,18 @@ export class TosiDocSystem extends withAttributes({
                         },
                     ],
                 });
+                if (this.themePresets()) {
+                    menuItems.push({
+                        caption: 'Style',
+                        icon: 'layers',
+                        menuItems: DOC_THEME_PRESETS.map(({ name, label, theme }) => ({
+                            caption: label,
+                            // Original is the theme as it stands: no class at all.
+                            checked: () => (this.prefs.style.value || 'original') === name,
+                            action: () => (this.prefs.style.value = theme ? name : ''),
+                        })),
+                    });
+                }
                 popMenu({
                     target: event.target,
                     localized: true,
@@ -507,6 +557,15 @@ export class TosiDocSystem extends withAttributes({
         }
         catch {
             return undefined;
+        }
+    }
+    /** Whether the build put the style presets in the stylesheet (`themePresets`). */
+    themePresets() {
+        try {
+            return JSON.parse(this.config || '{}').themePresets === true;
+        }
+        catch {
+            return false;
         }
     }
     /** The site's `themeFile` and `theme`, which the build writes into the config attribute. */

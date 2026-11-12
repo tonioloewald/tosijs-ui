@@ -908,9 +908,10 @@ const menuStyles = {
     // on iPhone that page scroll dismissed the menu mid-gesture (#2460).
     overscrollBehavior: 'contain',
     maxHeight: `calc(${vars.maxHeight} - ${varDefault.menuInset('8px')})`,
-    borderRadius: vars.spacing50,
-    background: varDefault.menuBg('#fafafa'),
-    boxShadow: varDefault.menuShadow(`${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`),
+    borderRadius: varDefault.tosiRadius(vars.spacing50),
+    background: varDefault.menuBg(varDefault.tosiSurface('#fafafa')),
+    backdropFilter: varDefault.tosiSurfaceFilter('none'),
+    boxShadow: varDefault.menuShadow(varDefault.tosiElevation2(`${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`)),
 };
 const menuItemStyles = {
     boxShadow: 'none',

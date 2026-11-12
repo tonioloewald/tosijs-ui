@@ -14,6 +14,10 @@ Close	Fermer	Sulje	Stäng	关闭	閉じる	닫기	Cerrar	Schließen	Chiudi
 Code	Code	Koodi	Koda	代码	コード	암호	Código	Code	Codice
 Color Theme	Thème de couleurs	Väriteema	Färgtema	颜色主题	カラーテーマ	색상 테마	Tema de color	Farbthema	Tema colore
 Theme Editor…	Éditeur de thème…	Teemaeditori…	Temaredigerare…	主题编辑器…	テーマエディター…	테마 편집기…	Editor de tema…	Theme-Editor…	Editor del tema…
+Style	Style	Tyyli	Stil	样式	スタイル	스타일	Estilo	Stil	Stile
+Original	Original	Alkuperäinen	Original	原始	オリジナル	기본	Original	Original	Originale
+Glass	Verre	Lasi	Glas	玻璃	ガラス	글래스	Cristal	Glas	Vetro
+Material	Material	Material	Material	Material	Material	Material	Material	Material	Material
 Copy	Copie	Kopioida	Kopiera	复制	コピー	복사	Copiar	Kopie	Copia
 Cut	Couper	Leikata	Skära	切	カット	자르다	Cortar	Schneiden	Taglio
 Dark	Sombre	Tumma	Mörk	黑暗的	暗い	어두운	Oscuro	Dunkel	Buio

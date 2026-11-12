@@ -227,3 +227,62 @@ test('a translucent link keeps its alpha when its colour well changes it', async
     'rgba(255, 0, 0, 0.2)'
   )
 })
+
+test('the Style menu switches presets, remembers the choice, and applies it before hydration', async ({
+  page,
+}) => {
+  await page.goto('/splitter/')
+  await page.waitForSelector('tosi-doc-system header')
+  const accent = () =>
+    page.evaluate(() =>
+      getComputedStyle(document.body).getPropertyValue('--brand-color').trim()
+    )
+  const original = await accent()
+  await page.locator('header button:has(svg)').last().click()
+  await page.getByText('Style', { exact: true }).click()
+  await page.getByText('Material', { exact: true }).click()
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        document.body.classList.contains('tosi-style-material')
+      )
+    )
+    .toBe(true)
+  await expect.poll(accent).toBe('#6750a4')
+  expect(
+    await page.evaluate(() =>
+      getComputedStyle(document.body).getPropertyValue('--tosi-radius').trim()
+    )
+  ).toBe('12px')
+
+  // Opened with the doc system never defined: the head script alone puts the page in the
+  // style. (Refusing the bundle's request is not enough: WebKit does not route every one.)
+  const bare = await page.context().newPage()
+  await bare.addInitScript(() => {
+    const define = customElements.define.bind(customElements)
+    customElements.define = (name, ...rest) => {
+      if (name !== 'tosi-doc-system') define(name, ...rest)
+    }
+  })
+  await bare.goto('/splitter/')
+  expect(
+    await bare.evaluate(() => ({
+      defined: !!customElements.get('tosi-doc-system'),
+      styled: document.documentElement.classList.contains(
+        'tosi-style-material'
+      ),
+      accent: getComputedStyle(document.documentElement)
+        .getPropertyValue('--brand-color')
+        .trim(),
+    }))
+  ).toEqual({ defined: false, styled: true, accent: '#6750a4' })
+  await bare.close()
+
+  // Original puts the theme back as it was.
+  await page.reload()
+  await page.waitForSelector('tosi-doc-system header')
+  await page.locator('header button:has(svg)').last().click()
+  await page.getByText('Style', { exact: true }).click()
+  await page.getByText('Original', { exact: true }).click()
+  await expect.poll(accent).toBe(original)
+})
