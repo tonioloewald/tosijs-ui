@@ -72,8 +72,9 @@ const MATERIAL = {
     modes: {
         light: {
             'font-family': "'Roboto', system-ui, sans-serif",
-            'nav-bg': '#f7f2fa',
-            'tosi-surface': '#f3edf7',
+            // Material's tonal surfaces: the primary, a few percent into the background.
+            'nav-bg': 'color-mix(in srgb, var(--brand-color) 5%, var(--background))',
+            'tosi-surface': 'color-mix(in srgb, var(--brand-color) 7%, var(--background))',
             'tosi-radius': '12px',
             'button-radius': '20px',
             'input-radius': '4px',

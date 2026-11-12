@@ -20,7 +20,7 @@
   <url><loc>https://ui.tosijs.net/code-editor/</loc><lastmod>2026-11-01T22:10:18+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/color-input/</loc><lastmod>2026-10-29T15:40:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/crud/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/css-value/</loc></url>
+  <url><loc>https://ui.tosijs.net/css-value/</loc><lastmod>2026-11-12T23:41:02+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/dialog/</loc><lastmod>2026-11-12T22:02:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/diff/</loc><lastmod>2026-11-10T22:52:38+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/drag-and-drop/</loc><lastmod>2026-10-29T17:19:06+02:00</lastmod></url>
@@ -66,8 +66,8 @@
   <url><loc>https://ui.tosijs.net/tag-list/</loc><lastmod>2026-11-06T21:16:00+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/theme/</loc><lastmod>2026-11-11T14:40:04+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/theme-data/</loc><lastmod>2026-11-11T19:15:14+02:00</lastmod></url>
-  <url><loc>https://ui.tosijs.net/theme-editor/</loc><lastmod>2026-11-12T21:34:37.377Z</lastmod></url>
-  <url><loc>https://ui.tosijs.net/theme-presets/</loc><lastmod>2026-11-12T22:02:17+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/theme-editor/</loc><lastmod>2026-11-12T23:41:02+02:00</lastmod></url>
+  <url><loc>https://ui.tosijs.net/theme-presets/</loc><lastmod>2026-11-12T23:11:14.359Z</lastmod></url>
   <url><loc>https://ui.tosijs.net/theme-stress-tests/</loc><lastmod>2026-11-11T19:15:14+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/tooltip/</loc><lastmod>2026-11-12T22:02:17+02:00</lastmod></url>
   <url><loc>https://ui.tosijs.net/track-drag/</loc><lastmod>2026-11-10T19:04:30+02:00</lastmod></url>

@@ -15,7 +15,7 @@ const roundTrips: [CssValueKind, CssValueForm, string][] = [
   [
     'color',
     { form: 'contrast', of: 'var(--brand-color)' },
-    'oklch(from var(--brand-color) clamp(0, (0.62 - l) * 1000, 1) 0 0)',
+    'color(from var(--brand-color) xyz-d65 calc(0.9505 * clamp(0, (0.1791 - y) * 1000, 1)) clamp(0, (0.1791 - y) * 1000, 1) calc(1.0888 * clamp(0, (0.1791 - y) * 1000, 1)))',
   ],
   [
     'color',

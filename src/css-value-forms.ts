@@ -64,8 +64,16 @@ export const CSS_VALUE_FORMS: Record<CssValueKind, CssFormName[]> = {
 /** Keywords a colour operand may be besides a variable. */
 export const COLOR_KEYWORDS = ['white', 'black', 'transparent', 'currentColor']
 
-// Below this oklch lightness a colour gets white text, above it black.
-const CONTRAST_THRESHOLD = 0.62
+/*
+Black or white by luminance (the `y` of xyz), which is what WCAG's contrast ratio is made of:
+below 0.1791 white has the better contrast, above it black. Lightness in oklch is not a stand-in
+for it: a saturated pink at luminance 0.17 has oklch lightness 0.6 and reads better in white.
+White is written as D65's, so it comes out as #fff.
+*/
+const LUMINANCE_SWITCH = 'clamp(0, (0.1791 - y) * 1000, 1)'
+const textOn = (of: CssOperand) =>
+  `color(from ${of} xyz-d65 calc(0.9505 * ${LUMINANCE_SWITCH}) ${LUMINANCE_SWITCH} calc(1.0888 * ${LUMINANCE_SWITCH}))`
+const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 const OPERAND = String.raw`(var\(--[\w-]+\)|[a-zA-Z]+|#[0-9a-fA-F]{3,8})`
 const NUMBER = String.raw`(-?\d*\.?\d+)`
@@ -76,9 +84,7 @@ const round = (n: number, places = 4) => {
 
 const patterns = {
   ref: /^var\(--([\w-]+)\)$/,
-  contrast: new RegExp(
-    String.raw`^oklch\(from ${OPERAND} clamp\(0, \(${NUMBER} - l\) \* 1000, 1\) 0 0\)$`
-  ),
+  contrast: new RegExp(`^${escaped(textOn('@of')).replace('@of', OPERAND)}$`),
   mix: new RegExp(
     String.raw`^color-mix\(in ([\w-]+), ${OPERAND} ${NUMBER}%, ${OPERAND}\)$`
   ),
@@ -168,7 +174,7 @@ export function formatCssValue(form: CssValueForm): string {
     case 'current':
       return 'currentColor'
     case 'contrast':
-      return `oklch(from ${form.of} clamp(0, (${CONTRAST_THRESHOLD} - l) * 1000, 1) 0 0)`
+      return textOn(form.of)
     case 'mix':
       return `color-mix(in ${form.space}, ${form.a} ${round(form.amount, 2)}%, ${form.b})`
     case 'adjust': {

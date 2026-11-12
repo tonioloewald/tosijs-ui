@@ -6,15 +6,18 @@ a finished doc site without depending on any app bootstrap. It uses the legacy
 `--brand-color` / `--background` / `--spacing` CSS-variable family that the doc
 browser and markdown styles are built on.
 
-Colors are computed from a small set of base colors via tosijs `Color` math, so the
-palette can eventually be driven entirely by a few attributes on the element
-(accent/background/text) — most of the palette is derived from `accent`.
+Colors are computed from a small set of base colors (accent/background/text and three
+surfaces). The derived ones are CSS (`color-mix()`, relative colour syntax) that the browser
+computes, so they follow a root wherever it changes; tosijs `Color` math is left only for what
+CSS cannot do yet (a colour searched for until it reads on a surface). The aim is to retire the
+rest of it as CSS catches up.
 */
 import { navSectionStyleSpec } from './nav-styles.js';
 import { highlightStyleSpec } from './highlight-styles.js';
 import { vars, Color, invertLuminance, } from 'tosijs';
 import { icons, svg2DataUrl } from '../icons.js';
 import { DOC_SYSTEM_FONTS_URL } from './doc-fonts.js';
+import { formatCssValue } from '../css-value-forms.js';
 // The sidebar's geometry, shared by the hydrated layout and the pre-hydration one.
 // These mirror what <tosi-sidenav> is given by doc-browser (navSize / minSize): the
 // sidebar is `SIDEBAR_WIDTH` wide and collapses behind a toggle below
@@ -68,60 +71,133 @@ export const TOSI_CHAIN = {
     _headerBg: vars.brandColor,
     _buttonShadow: 'none',
 };
-/** Compute the full set of `:root` color variables from a few base colors. */
-export function docSystemColors(theme = {}) {
-    const brandColor = Color.fromCss(theme.accent ?? '#d92270');
+/*
+How much of the brand each derived colour takes. They are written as `color-mix(in srgb, …)`,
+which the browser computes, and `Color.blend` is the same arithmetic, so the contrast checks
+below measure exactly what the page shows.
+*/
+const NAV_TINT = 8;
+const INSET_TINT = 12;
+const LINK_BRAND = 60;
+const tint = (color, percent, into) => `color-mix(in srgb, ${color} ${percent}%, ${into})`;
+// `percent` of `color` over nothing: the colour, translucent
+const veil = (color, percent) => tint(color, percent, 'transparent');
+// The same mix, in script, for the checks that CSS cannot make yet (readable-on).
+const blended = (color, percent, into) => color.blend(into, 1 - percent / 100);
+// Black or white, whichever reads on `color` (see `css-value-forms`).
+const textOn = (color) => formatCssValue({ form: 'contrast', of: color });
+/*
+The colours CSS cannot compute yet, because they are a SEARCH: the brand, darkened or lightened
+until it reads on a surface. `contrast-color()` is the CSS for the simple case and is not
+baseline; until something like it is, these are worked out here, per mode, from the same
+arithmetic as the CSS that draws the surfaces.
+*/
+function readableColors(brandColor, { background, inputBg, codeBg }) {
     return {
-        _textColor: theme.text ?? '#222',
-        _brandColor: brandColor,
-        _background: theme.background ?? '#fafafa',
-        _buttonBg: theme.buttonBg ?? '#fdfdfd',
-        _inputBg: theme.inputBg ?? '#fdfdfd',
-        _backgroundShaded: '#f5f5f5',
-        _navBg: brandColor.rotate(30).desaturate(0.5).brighten(0.9),
-        _barColor: brandColor.opacity(0.4),
-        _focusColor: brandColor.opacity(0.7),
         /*
         Readable, not faint (#3520). This was the brand at 40% opacity, which an axe scan measured
         at 1.88:1 on the input (#eda7c5 on #fdfdfd) where AA asks 4.5:1, and it colours the doc
         header's search trigger, a real label, not just a hint.
         */
-        _placeholderColor: readableOn(brandColor, Color.fromCss(theme.inputBg ?? '#fdfdfd')),
-        /*
-        `contrasting()` rather than a hand-tuned tint.
-    
-        `brandColor.rotate(30).brighten(0.9)` produced a warm off-white (#fbeae9) that sat at
-        **4.09:1** on the brand bar — under AA for the normal-size nav links in it. Every
-        brighten value short of pure white also misses (0.96 lands at 4.49), so the tint had
-        to go; it was imperceptible anyway. `contrasting()` picks the readable extreme for
-        whatever the brand currently is, so this cannot drift the next time the brand moves.
-        Dark mode is unaffected: invertLuminance flips this to near-black on the brightened
-        bar, which is already high-contrast.
-        */
-        _brandTextColor: brandColor.contrasting(),
-        _insetBg: brandColor.rotate(45).brighten(0.8),
+        _placeholderColor: readableOn(brandColor, inputBg),
         // The brand, made readable on the inset (blockquote) background, the darker of the two
         // surfaces code sits on. The raw brand measured 3.72:1 there (#3520).
         // Checked against the code background too: a custom `codeBg` can be the darker one.
-        _codeColor: readableOn(readableOn(brandColor, brandColor.rotate(45).brighten(0.8)), Color.fromCss(theme.codeBg ?? '#fdfdfd')),
-        // Neutral off-white (not brand-tinted); dark mode inverts its luminance to
-        // off-black, so the editor surface stays a clean neutral in both themes.
-        _codeBg: theme.codeBg ?? '#fdfdfd',
-        _linkColor: brandColor.rotate(-30).darken(0.5),
+        _codeColor: readableOn(readableOn(brandColor, blended(brandColor, INSET_TINT, background)), codeBg),
+    };
+}
+/*
+The base colours, as the doc theme computes with them: `theme`'s, or the defaults. Dark mode is
+these with their luminance inverted (the brand is lifted instead; see `.darkmode`).
+*/
+function rootColors(theme) {
+    return {
+        brand: Color.fromCss(theme.accent ?? '#d92270'),
+        text: theme.text ?? '#222',
+        background: theme.background ?? '#fafafa',
+        buttonBg: theme.buttonBg ?? '#fdfdfd',
+        inputBg: theme.inputBg ?? '#fdfdfd',
+        codeBg: theme.codeBg ?? '#fdfdfd',
+    };
+}
+/** Compute the full set of `:root` color variables from a few base colors. */
+export function docSystemColors(theme = {}) {
+    const roots = rootColors(theme);
+    const brandColor = roots.brand;
+    /*
+    Everything but the roots is CSS the browser computes from them, so it follows a root wherever
+    it changes: in the theme editor, in dark mode (which inverts the roots and lets these
+    re-derive) and in a preset. A theme editor shows each as what it is (a mix of the brand into
+    the background) rather than as a colour someone typed.
+    */
+    return {
+        _textColor: roots.text,
+        _brandColor: brandColor,
+        _background: roots.background,
+        _buttonBg: roots.buttonBg,
+        _inputBg: roots.inputBg,
+        _codeBg: roots.codeBg,
+        _backgroundShaded: tint(vars.textColor, 2, vars.background),
+        // Tints of the brand, into the page: pale on a light page, deep on a dark one.
+        _navBg: tint(vars.brandColor, NAV_TINT, vars.background),
+        _insetBg: tint(vars.brandColor, INSET_TINT, vars.background),
+        // The brand, toward the text: darker on a light page, lighter on a dark one.
+        _linkColor: tint(vars.brandColor, LINK_BRAND, vars.textColor),
+        _barColor: veil(vars.brandColor, 40),
+        _focusColor: veil(vars.brandColor, 70),
+        /*
+        Black or white, whichever reads on the brand bar (#3520: a hand-tuned off-white tint
+        measured 4.09:1 there). Computed by the browser, so it flips by itself when dark mode lifts
+        the brand past the midpoint.
+        */
+        _brandTextColor: textOn(vars.brandColor),
+        ...readableColors(brandColor, {
+            background: Color.fromCss(roots.background),
+            inputBg: Color.fromCss(roots.inputBg),
+            codeBg: Color.fromCss(roots.codeBg),
+        }),
         // The surface and elevation roots of the chain (see `--tosi-surface` below).
         _tosiShadowColor: '#0004',
-        _tosiSurface: '#fafafa',
-        _tosiHoverBg: '#0002',
-        _tosiPressBg: '#0004',
-        _menuItemActiveColor: '#000',
-        _menuItemIconActiveColor: '#000',
-        _menuItemActiveBg: '#aaa',
-        _menuItemHoverBg: '#eee',
-        _menuItemColor: '#222',
-        _menuSeparatorColor: '#2224',
-        _scrollThumbColor: '#0006',
-        _scrollBarColor: '#0001',
+        _tosiSurface: vars.background,
+        _tosiHoverBg: veil(vars.textColor, 13),
+        _tosiPressBg: veil(vars.textColor, 27),
+        _menuItemActiveColor: vars.textColor,
+        _menuItemIconActiveColor: vars.textColor,
+        _menuItemActiveBg: tint(vars.textColor, 37, vars.background),
+        _menuItemHoverBg: tint(vars.textColor, 5, vars.background),
+        _menuItemColor: vars.textColor,
+        _menuSeparatorColor: veil(vars.textColor, 27),
+        _scrollThumbColor: veil(vars.textColor, 40),
+        _scrollBarColor: veil(vars.textColor, 7),
         _inputBorderShadow: 'inset 0 0 2px #0006',
+    };
+}
+/** The dark mode's overrides: the roots inverted, the brand lifted, and what reads on them. */
+function darkColors(theme) {
+    const roots = rootColors(theme);
+    /*
+    Lift the brand color for dark backgrounds.
+  
+    Inverting the luminance flips the neutrals but would leave a saturated brand hue roughly
+    where it was, so one accent would have to serve both a near-white and a near-black page,
+    and a pink dark enough to clear AA on `#fafafa` (4.56:1) lands at 4.4:1 on `#050505`, just
+    under. Brightening it in dark mode is the standard resolution: the hue is the brand, the
+    luminance belongs to the background it sits on.
+    */
+    const brandColor = roots.brand.brighten(0.18);
+    const inverted = (color) => Color.fromCss(color).inverseLuminance;
+    return {
+        // Only the roots are colours here; everything computed from them re-derives.
+        ...invertLuminance(docSystemColors(theme)),
+        _brandColor: brandColor,
+        ...readableColors(brandColor, {
+            background: inverted(roots.background),
+            inputBg: inverted(roots.inputBg),
+            codeBg: inverted(roots.codeBg),
+        }),
+        _tosiShadowColor: veil(vars.brandColor, 50),
+        _tosiElevationMid: `0 0 0 2px ${veil(vars.brandColor, 75)}`,
+        _menuSeparatorColor: veil(vars.brandColor, 50),
     };
 }
 /**
@@ -133,7 +209,6 @@ export function docSystemColors(theme = {}) {
  */
 export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
     const colors = docSystemColors(theme);
-    const brandColor = Color.fromCss(theme.accent ?? '#d92270');
     return {
         ...(fontImport ? { '@import': DOC_SYSTEM_FONTS_URL } : {}),
         ':root': {
@@ -250,24 +325,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
         'tosi-doc-system[data-no-header]::before, tosi-doc-system[data-no-header] header': {
             display: 'none',
         },
-        '.darkmode': {
-            ...invertLuminance(colors),
-            /*
-            Lift the brand color for dark backgrounds.
-      
-            `invertLuminance` flips the neutrals but leaves a saturated brand hue roughly where
-            it was, so one accent has to serve both a near-white and a near-black page — and a
-            pink dark enough to clear AA on `#fafafa` (4.56:1) lands at 4.4:1 on `#050505`,
-            just under. Brightening it in dark mode is the standard resolution: the hue is the
-            brand, the luminance belongs to the background it sits on.
-            */
-            _brandColor: brandColor.brighten(0.18),
-            _codeColor: readableOn(readableOn(brandColor.brighten(0.18), brandColor.rotate(45).brighten(0.8).inverseLuminance), Color.fromCss(theme.codeBg ?? '#fdfdfd').inverseLuminance),
-            _placeholderColor: readableOn(brandColor.brighten(0.18), Color.fromCss(theme.inputBg ?? '#fdfdfd').inverseLuminance),
-            _tosiShadowColor: brandColor.opacity(0.5),
-            _tosiElevationMid: `0 0 0 2px ${brandColor.opacity(0.75)}`,
-            _menuSeparatorColor: brandColor.opacity(0.5),
-        },
+        '.darkmode': darkColors(theme),
         '.high-contrast': {
             filter: 'contrast(2)',
         },

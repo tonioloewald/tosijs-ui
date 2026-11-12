@@ -1,5 +1,6 @@
 import { test, expect, describe } from 'bun:test'
 import { Color, css } from 'tosijs'
+import { formatCssValue } from '../css-value-forms.js'
 import {
   contrastRatio,
   docSystemStyleSpec,
@@ -240,6 +241,37 @@ describe('placeholder color meets AA on the input (#3520)', () => {
   }
 })
 
+/*
+What a variable comes to on the page, for the forms the doc theme writes: a colour, another
+variable, and `color-mix(in srgb, …)`. Dark mode's values are the `.darkmode` rule over the
+`:root` one, as the cascade has it. So these checks measure the CSS the browser computes,
+not a copy of the arithmetic.
+*/
+const resolver = (spec: Record<string, any>, dark = false) => {
+  const rule: Record<string, unknown> = {
+    ...spec[':root'],
+    ...(dark ? spec['.darkmode'] : {}),
+  }
+  const resolve = (css: string): Color => {
+    const value = css.trim()
+    const ref = /^var\(--([\w-]+)\)$/.exec(value)
+    if (ref) {
+      const key = '_' + ref[1].replace(/-(\w)/g, (_, c) => c.toUpperCase())
+      return resolve(String(rule[key]))
+    }
+    const mix = /^color-mix\(in srgb, (.+) (\d+)%, (.+)\)$/.exec(value)
+    if (mix) {
+      const into = mix[3] === 'transparent' ? null : resolve(mix[3])
+      const color = resolve(mix[1])
+      return into
+        ? color.blend(into, 1 - Number(mix[2]) / 100)
+        : color.opacity(Number(mix[2]) / 100)
+    }
+    return Color.fromCss(value)
+  }
+  return (name: string) => resolve(`var(--${name})`)
+}
+
 describe('code color meets AA where code sits (#3520)', () => {
   const cases: Array<[string, Parameters<typeof docSystemStyleSpec>[0]]> = [
     ['default', {}],
@@ -249,20 +281,44 @@ describe('code color meets AA where code sits (#3520)', () => {
   for (const [name, theme] of cases) {
     test(name, () => {
       const spec = docSystemStyleSpec(theme) as Record<string, any>
-      const root = spec[':root']
-      const color = (v: unknown) => Color.fromCss(String(v))
-      const surfaces = [root._insetBg, root._codeBg, root._background]
-      for (const bg of surfaces) {
-        expect(
-          contrastRatio(color(root._codeColor), color(bg))
-        ).toBeGreaterThanOrEqual(4.5)
-        expect(
-          contrastRatio(
-            color(spec['.darkmode']._codeColor),
-            color(bg).inverseLuminance
-          )
-        ).toBeGreaterThanOrEqual(4.5)
+      for (const dark of [false, true]) {
+        const color = resolver(spec, dark)
+        for (const bg of ['inset-bg', 'code-bg', 'background']) {
+          expect(
+            contrastRatio(color('code-color'), color(bg))
+          ).toBeGreaterThanOrEqual(4.5)
+        }
       }
+    })
+  }
+})
+
+describe('computed colours follow the roots, and read', () => {
+  const spec = docSystemStyleSpec() as Record<string, any>
+  test('the derived colours are CSS, not values worked out in script', () => {
+    const root = spec[':root']
+    for (const key of [
+      '_navBg',
+      '_insetBg',
+      '_linkColor',
+      '_barColor',
+      '_tosiSurface',
+    ]) {
+      expect(String(root[key])).toMatch(/^(color-mix|var)\(/)
+    }
+    expect(String(root._brandTextColor)).toBe(
+      formatCssValue({ form: 'contrast', of: 'var(--brand-color)' })
+    )
+    // so dark mode inverts the roots only, and leaves these to re-derive
+    expect(spec['.darkmode']._navBg).toBeUndefined()
+    expect(spec['.darkmode']._background).toBeDefined()
+  })
+  for (const dark of [false, true]) {
+    test(`links read on the page${dark ? ', in dark mode' : ''}`, () => {
+      const color = resolver(spec, dark)
+      expect(
+        contrastRatio(color('link-color'), color('background'))
+      ).toBeGreaterThanOrEqual(4.5)
     })
   }
 })
