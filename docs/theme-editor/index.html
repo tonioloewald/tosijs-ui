@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=4d3116849f60" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=b6fbf539ed69" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>theme editor — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-theme-editor&gt; edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="theme editor — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme editor","description":"\u003ctosi-theme-editor> edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON.","url":"https://ui.tosijs.net/theme-editor/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-11T19:15:14+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme editor","description":"\u003ctosi-theme-editor> edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON.","url":"https://ui.tosijs.net/theme-editor/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-12T21:34:37.377Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"theme editor","item":"https://ui.tosijs.net/theme-editor/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=5b4d011b702f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=3c44d51e66e3" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="theme-editor.ts">
 <h1 id="theme-editor">theme editor</h1>
 <p><code>&lt;tosi-theme-editor&gt;</code> edits a theme as data (see <a href="/theme-data/">theme data</a>): the base colours
@@ -105,11 +105,13 @@ preview.append(editor, sample)
     await new Promise((resolve) =&gt; requestAnimationFrame(resolve))
   }
   const sample = preview.querySelector(&#39;.theme-editor-demo button&#39;)
-  const field = (name) =&gt; editor.shadowRoot.querySelector(`[data-name=&quot;${name}&quot;] input[type=&quot;text&quot;]`)
+  // A base colour is a text field; a variable is a &lt;tosi-css-value&gt;, whose value is its CSS.
   const edit = (name, value) =&gt; {
-    const input = field(name)
-    input.value = value
-    input.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
+    const control = editor.shadowRoot.querySelector(
+      `[data-name=&quot;${name}&quot;] :is(tosi-css-value, input[type=&quot;text&quot;])`
+    )
+    control.value = value
+    control.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
   }
   edit(&#39;accent&#39;, &#39;#0064d2&#39;)
   // The variable, not the button&#39;s colour, which is mid-transition at this instant.
@@ -239,6 +241,7 @@ unreadable.</p>
     <li class="nav-branch -open"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="true" aria-controls="tosi-nav-helper-libraries" aria-label="Helper Libraries"></button><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></div>
     <ul id="tosi-nav-helper-libraries">
       <li><a class="doc-link" href="../ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="../css-value/">css value</a></li>
       <li><a class="doc-link" href="../drag-and-drop/">drag &amp; drop</a></li>
       <li><a class="doc-link" href="../hash-state/">hash-state</a></li>
       <li><a class="doc-link" href="../live-theme/">live-theme</a></li>
@@ -285,6 +288,6 @@ unreadable.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-wvqnkz58.js"></script>
+  <script type="module" src="../hydrate-ankj7bw3.js"></script>
 </body>
 </html>

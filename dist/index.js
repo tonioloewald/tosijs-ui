@@ -101,6 +101,8 @@ export { scriptTag, styleSheet } from './via-tag.js';
 export * from './theme.js';
 export * from './theme-data.js';
 export * from './theme-chain.js';
+export * from './css-value-forms.js';
+export * from './css-value.js';
 export * from './tooltip.js';
 export * from './value-renderer.js';
 export * as tosijs from 'tosijs';

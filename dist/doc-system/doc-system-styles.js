@@ -540,14 +540,29 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
         'button, select, .clickable, input': {
             lineHeight: 'calc(var(--line-height) + var(--spacing))',
         },
-        'input, textarea': {
+        /*
+        Text fields. Not a checkbox, radio, range or colour well: the field's padding and inset
+        border drew a box around a slider's track.
+        */
+        'input:where(:not([type=checkbox], [type=radio], [type=range], [type=color])), textarea': {
             border: 'none',
             outline: 'none',
             borderRadius: vars.inputRadius,
             boxShadow: vars.inputBorderShadow,
-        },
-        input: {
             padding: '0 calc(var(--spacing) * 1.5)',
+        },
+        // A textarea's lines are the text's, with the same inset as a field's single line.
+        textarea: {
+            padding: 'calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5)',
+            lineHeight: vars.lineHeight,
+        },
+        /*
+        A segmented control is as tall as the fields and buttons beside it, and its corners follow
+        the buttons' (8px on the stock 5px, a pill where buttons are pills).
+        */
+        'tosi-segmented': {
+            _segmentedOptionPadding: 'calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.25)',
+            _segmentedOptionsBorderRadius: 'calc(var(--button-radius) * 1.6)',
         },
         '::placeholder': {
             color: vars.placeholderColor,

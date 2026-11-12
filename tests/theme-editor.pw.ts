@@ -30,16 +30,16 @@ test('typing a value applies it, and a mode button previews that mode', async ({
 
   // A length is a number with arrows and a unit menu.
   const corners = editor.locator('[data-name="tosi-border-radius"]')
-  const amount = corners.locator('.length-amount')
+  const amount = corners.locator('[data-key="amount"]')
   await expect(amount).toHaveValue('4')
   await amount.focus()
   await amount.press('ArrowUp')
   await amount.press('ArrowUp')
   await expect(button).toHaveCSS('border-radius', '6px')
-  await corners.locator('.length-unit').selectOption('rem')
+  await corners.locator('[data-key="unit"]').selectOption('rem')
   await expect(button).toHaveCSS('border-radius', '96px')
   await amount.fill('12')
-  await corners.locator('.length-unit').selectOption('px')
+  await corners.locator('[data-key="unit"]').selectOption('px')
   await expect(button).toHaveCSS('border-radius', '12px')
 
   // Mounting changed nothing; picking a mode previews it.
@@ -186,7 +186,12 @@ test('given a pattern, the editor finds Material tokens; an edit flows down the 
     .poll(() => tonal.evaluate((el) => getComputedStyle(el).backgroundColor))
     .not.toBe(before)
 
-  // Overriding a link cuts it from its parent…
+  // A derived value shows as what it is declared as: a mix of the primary with white.
+  await expect(container.locator('[part="form"]')).toHaveValue('mix')
+  await expect(container.locator('[data-key="amount"]')).toHaveValue('18')
+
+  // Overriding a link with a colour cuts it from its parent…
+  await container.locator('[part="form"]').selectOption('literal')
   await text('md-sys-color-primary-container').fill('#ffcc00')
   await text('md-sys-color-primary-container').press('Enter')
   await expect(tonal).toHaveCSS('background-color', 'rgb(255, 204, 0)')
@@ -200,9 +205,10 @@ test('given a pattern, the editor finds Material tokens; an edit flows down the 
   await container.locator('.reset').click()
   await expect(tonal).not.toHaveCSS('background-color', 'rgb(255, 204, 0)')
   await expect(container).toHaveClass(/-derived/)
+  await expect(container.locator('[part="form"]')).toHaveValue('mix')
 })
 
-test('a translucent link keeps its alpha when its colour well changes it', async ({
+test('a mix is edited as a mix and stays live; a colour well keeps the alpha', async ({
   page,
 }) => {
   await page.goto('/theme-stress-tests/')
@@ -211,7 +217,23 @@ test('a translucent link keeps its alpha when its colour well changes it', async
     .nth(1)
     .locator('tosi-theme-editor')
   const surface = editor.locator('[data-name="glass-surface"]')
+  const panel = page.locator('.glass-demo .glass-panel')
   await expect(surface).toHaveClass(/-derived/)
+
+  // 20% of the tint over nothing, edited to 40%: still made from the tint.
+  await expect(surface.locator('[part="form"]')).toHaveValue('mix')
+  await surface.locator('[data-key="amount"]').fill('40')
+  await surface.locator('[data-key="amount"]').press('Enter')
+  await expect(surface).toHaveClass(/-tuned/)
+  const tint = editor.locator('[data-name="glass-tint"] input[type="text"]')
+  await tint.fill('#ff0000')
+  await tint.press('Enter')
+  // A mixed colour serialises as color(srgb …); either spelling is 40% red.
+  const red40 = /^(rgba\(255, 0, 0, 0\.4\)|color\(srgb 1 0 0 \/ 0\.4\))$/
+  await expect(panel).toHaveCSS('background-color', red40)
+
+  // Typed in as a colour, it starts from what it came to, alpha and all.
+  await surface.locator('[part="form"]').selectOption('literal')
   // A colour well cannot be driven through its native picker; set it as the picker would.
   await surface
     .locator('input[type="color"]')
@@ -221,12 +243,9 @@ test('a translucent link keeps its alpha when its colour well changes it', async
     })
   const value = await surface.locator('input[type="text"]').inputValue()
   expect(value.slice(0, 7)).toBe('#ff0000')
-  // 20% white over nothing: the alpha byte is 0x33.
-  expect(value.slice(7)).toBe('33')
-  await expect(page.locator('.glass-demo .glass-panel')).toHaveCSS(
-    'background-color',
-    'rgba(255, 0, 0, 0.2)'
-  )
+  // 40% red over nothing: the alpha byte is 0x66.
+  expect(value.slice(7)).toBe('66')
+  await expect(panel).toHaveCSS('background-color', red40)
 })
 
 test('the Style menu switches presets, remembers the choice, and applies it before hydration', async ({

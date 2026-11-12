@@ -58,11 +58,13 @@ test('editing a base colour or a variable applies it, and a tuned value can be r
     await new Promise((resolve) => requestAnimationFrame(resolve))
   }
   const sample = preview.querySelector('.theme-editor-demo button')
-  const field = (name) => editor.shadowRoot.querySelector(`[data-name="${name}"] input[type="text"]`)
+  // A base colour is a text field; a variable is a <tosi-css-value>, whose value is its CSS.
   const edit = (name, value) => {
-    const input = field(name)
-    input.value = value
-    input.dispatchEvent(new Event('change', { bubbles: true }))
+    const control = editor.shadowRoot.querySelector(
+      `[data-name="${name}"] :is(tosi-css-value, input[type="text"])`
+    )
+    control.value = value
+    control.dispatchEvent(new Event('change', { bubbles: true }))
   }
   edit('accent', '#0064d2')
   // The variable, not the button's colour, which is mid-transition at this instant.

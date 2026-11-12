@@ -6,6 +6,7 @@ General purpose utilities and behaviors — routing, theming, localization, sort
 
 <!-- toc -->
 - [ab-test](/ab-test/)
+- [css value](/css-value/)
 - [drag & drop](/drag-and-drop/)
 - [hash-state](/hash-state/)
 - [live-theme](/live-theme/)

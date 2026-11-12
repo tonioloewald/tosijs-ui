@@ -59,11 +59,13 @@ test('editing a base colour or a variable applies it, and a tuned value can be r
     await new Promise((resolve) => requestAnimationFrame(resolve))
   }
   const sample = preview.querySelector('.theme-editor-demo button')
-  const field = (name) => editor.shadowRoot.querySelector(`[data-name="${name}"] input[type="text"]`)
+  // A base colour is a text field; a variable is a <tosi-css-value>, whose value is its CSS.
   const edit = (name, value) => {
-    const input = field(name)
-    input.value = value
-    input.dispatchEvent(new Event('change', { bubbles: true }))
+    const control = editor.shadowRoot.querySelector(
+      `[data-name="${name}"] :is(tosi-css-value, input[type="text"])`
+    )
+    control.value = value
+    control.dispatchEvent(new Event('change', { bubbles: true }))
   }
   edit('accent', '#0064d2')
   // The variable, not the button's colour, which is mid-transition at this instant.
@@ -125,6 +127,9 @@ unreadable.
 import { Color, elements, withAttributes, } from 'tosijs';
 import { THEME_MODE_SPECS, applyThemeData, componentThemeGenerator, deriveTheme, fontFamilies, parseFontImport, } from './theme-data.js';
 import { declaredValues, discoverThemeVariables, groupVariables, isDerived, resolveColor, resolveLength, } from './theme-discovery.js';
+import { tosiCssValue } from './css-value.js';
+// The kinds a value element edits; the rest (fonts, shadows, menus) keep plain controls.
+const VALUE_KINDS = ['color', 'length', 'number'];
 const { div, h3, label, input, select, option, button, datalist, span } = elements;
 /** `#rrggbb` for a colour well, which takes nothing else. */
 const wellValue = (value) => {
@@ -251,8 +256,33 @@ export class TosiThemeEditor extends withAttributes({
     /** The variables being edited: the list, or what the pattern found, labelled and grouped. */
     editable() {
         const variables = this._variables;
-        if (Array.isArray(variables))
-            return variables;
+        if (Array.isArray(variables)) {
+            /*
+            A list's variables are read from the page too, for what each is DECLARED as
+            (`calc(var(--tosi-radius) * 2)`, not the 10px it computes to) and what it is made from.
+            */
+            const names = variables.map((v) => v.name);
+            const key = `${names.join()}|${JSON.stringify(this.modeSelectors())}`;
+            if (key !== this.discoveredFor) {
+                this.discoveredFor = key;
+                const escaped = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+                const found = names.length
+                    ? discoverThemeVariables(new RegExp(`^(${escaped.join('|')})$`), {
+                        selectors: this.modeSelectors(),
+                        scope: this.scopeElement(),
+                        exclude: this.applyId
+                            ? document.getElementById(this.applyId)
+                            : null,
+                    })
+                    : [];
+                this.discovered = new Map(found.map((v) => [v.name, v]));
+            }
+            this.labels = new Map(variables.map((v) => [v.name, v.label ?? v.name]));
+            return variables.map((variable) => ({
+                ...variable,
+                parents: this.discovered.get(variable.name)?.parents ?? [],
+            }));
+        }
         const key = `${String(variables)}|${JSON.stringify(this.modeSelectors())}`;
         if (key !== this.discoveredFor) {
             this.discoveredFor = key;
@@ -338,6 +368,11 @@ export class TosiThemeEditor extends withAttributes({
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
         },
+        // A value element sits beside its label, and takes its own line when it needs the room.
+        ':host .field.-css': { flexWrap: 'wrap', rowGap: '4px', padding: '2px 0' },
+        ':host .field.-css label': { flex: '1 1 4em' },
+        // Nothing to reset takes no room: a hidden button wrapped onto a line of its own.
+        ':host .field.-css:not(.-tuned) .reset': { display: 'none' },
         ':host .chain': {
             display: 'block',
             fontSize: '11px',
@@ -464,6 +499,10 @@ export class TosiThemeEditor extends withAttributes({
         if (!field)
             return;
         const { name, scope } = field.dataset;
+        if (target.localName === 'tosi-css-value') {
+            this.set(scope, name, target.value || null);
+            return;
+        }
         if (target.type === 'color') {
             const text = field.querySelector('input[type="text"]');
             // A colour well knows nothing of alpha; keep the translucency the value had.
@@ -551,7 +590,9 @@ export class TosiThemeEditor extends withAttributes({
     */
     handleLiveInput = (event) => {
         const target = event.target;
-        if (target.type === 'color' || target.classList.contains('length-amount'))
+        if (target.type === 'color' ||
+            target.classList.contains('length-amount') ||
+            target.localName === 'tosi-css-value')
             this.handleInput(event);
     };
     content = () => [
@@ -569,51 +610,63 @@ export class TosiThemeEditor extends withAttributes({
         const id = `theme-${scope}-${variable.name}`;
         const caption = variable.label ?? variable.name;
         let controls;
-        switch (variable.kind) {
-            case 'color':
-                controls = [
-                    input({ type: 'color', ariaLabel: caption, tabIndex: -1 }),
-                    input({ type: 'text', id, spellcheck: false }),
-                ];
-                break;
-            case 'number':
-                controls = [input({ type: 'number', id, step: 0.05 })];
-                break;
-            /*
-            A number with arrows and a unit menu, so a size can be nudged rather than retyped. A
-            value that is not a plain length (`calc(…)`, a `var()`) shows as text instead.
-            */
-            case 'length':
-                controls = [
-                    input({ type: 'number', id, class: 'length-amount' }),
-                    select({ class: 'length-unit', ariaLabel: `${caption} unit` }, ...LENGTH_UNITS.map((unit) => option({ value: unit }, unit))),
-                    input({
-                        type: 'text',
-                        class: 'length-text',
-                        ariaLabel: caption,
-                        spellcheck: false,
-                        hidden: true,
-                    }),
-                ];
-                break;
-            case 'enum':
-                controls = [
-                    select({ id }, ...(variable.options ?? []).map((choice) => option({ value: choice }, choice))),
-                ];
-                break;
-            case 'font-family':
-                {
-                    const text = input({ type: 'text', id, spellcheck: false });
-                    // `list` is a read-only property; only the attribute sets it.
-                    text.setAttribute('list', 'theme-editor-fonts');
-                    controls = [text];
-                }
-                break;
-            default:
-                controls = [input({ type: 'text', id, spellcheck: false })];
+        if (scope !== 'base' && VALUE_KINDS.includes(variable.kind)) {
+            controls = [
+                tosiCssValue({
+                    kind: variable.kind,
+                    noAuto: true,
+                    ariaLabel: caption,
+                    // Its parts join the field's row: the form beside the label, the rest after.
+                    style: { display: 'contents' },
+                }),
+            ];
         }
+        else
+            switch (variable.kind) {
+                case 'color':
+                    controls = [
+                        input({ type: 'color', ariaLabel: caption, tabIndex: -1 }),
+                        input({ type: 'text', id, spellcheck: false }),
+                    ];
+                    break;
+                case 'number':
+                    controls = [input({ type: 'number', id, step: 0.05 })];
+                    break;
+                /*
+              A number with arrows and a unit menu, so a size can be nudged rather than retyped. A
+              value that is not a plain length (`calc(…)`, a `var()`) shows as text instead.
+              */
+                case 'length':
+                    controls = [
+                        input({ type: 'number', id, class: 'length-amount' }),
+                        select({ class: 'length-unit', ariaLabel: `${caption} unit` }, ...LENGTH_UNITS.map((unit) => option({ value: unit }, unit))),
+                        input({
+                            type: 'text',
+                            class: 'length-text',
+                            ariaLabel: caption,
+                            spellcheck: false,
+                            hidden: true,
+                        }),
+                    ];
+                    break;
+                case 'enum':
+                    controls = [
+                        select({ id }, ...(variable.options ?? []).map((choice) => option({ value: choice }, choice))),
+                    ];
+                    break;
+                case 'font-family':
+                    {
+                        const text = input({ type: 'text', id, spellcheck: false });
+                        // `list` is a read-only property; only the attribute sets it.
+                        text.setAttribute('list', 'theme-editor-fonts');
+                        controls = [text];
+                    }
+                    break;
+                default:
+                    controls = [input({ type: 'text', id, spellcheck: false })];
+            }
         return div({
-            class: 'field',
+            class: controls[0]?.localName === 'tosi-css-value' ? 'field -css' : 'field',
             dataKind: variable.kind,
             dataName: variable.name,
             dataScope: scope,
@@ -681,6 +734,8 @@ export class TosiThemeEditor extends withAttributes({
         this.previewing = false;
     }
     builtFor = '';
+    // What a value element may refer to; one array per build, so elements rebuild only then.
+    valueVariables = [];
     /*
     The fields are rebuilt only when what they ARE changes (the mode, the variables, the base);
     an edit updates them in place. Rebuilding on every edit would destroy a colour well while it
@@ -718,9 +773,13 @@ export class TosiThemeEditor extends withAttributes({
         for (const field of this.shadowRoot.querySelectorAll('.field')) {
             const { name, scope } = field.dataset;
             const tunedIn = (scope === 'base' ? this.value.base : this.value.modes?.[scope]) ?? {};
+            const declared = this.discovered.get(name)?.declared;
             const value = scope === 'base'
                 ? (base[name] ?? '')
-                : full[scope]?.[name] || page.getPropertyValue(`--${name}`).trim();
+                : full[scope]?.[name] ||
+                    declared?.[scope] ||
+                    declared?.[this.modes[0].name] ||
+                    page.getPropertyValue(`--${name}`).trim();
             field.classList.toggle('-tuned', name in tunedIn);
             /*
             A derived value (one that refers to other variables) shows what it comes to, muted, with
@@ -730,6 +789,15 @@ export class TosiThemeEditor extends withAttributes({
             const derived = !(name in tunedIn) && isDerived(value);
             field.classList.toggle('-derived', derived);
             field.title = derived ? `${name}: ${value}` : name;
+            const valueElement = field.querySelector('tosi-css-value');
+            if (valueElement) {
+                // What it is declared as, shown as its form: a mix, a scale, a colour.
+                valueElement.scope = scopeElement;
+                if (valueElement.variables !== this.valueVariables)
+                    valueElement.variables = this.valueVariables;
+                valueElement.value = value;
+                continue;
+            }
             const kind = field.dataset.kind;
             const shown = !derived
                 ? value
@@ -820,6 +888,11 @@ export class TosiThemeEditor extends withAttributes({
         ].join('|');
         if (structure !== this.builtFor) {
             this.builtFor = structure;
+            this.valueVariables = variables.map(({ name, label, kind }) => ({
+                name,
+                label,
+                kind,
+            }));
             this.build();
         }
         this.refresh(full);

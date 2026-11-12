@@ -349,15 +349,22 @@ button, select, .clickable, input {
   line-height: calc(var(--line-height) + var(--spacing));
 }
 
-input, textarea {
+input:where(:not([type=checkbox], [type=radio], [type=range], [type=color])), textarea {
   border: none;
   outline: none;
   border-radius: var(--input-radius);
   box-shadow: var(--input-border-shadow);
+  padding: 0 calc(var(--spacing) * 1.5);
 }
 
-input {
-  padding: 0 calc(var(--spacing) * 1.5);
+textarea {
+  padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5);
+  line-height: var(--line-height);
+}
+
+tosi-segmented {
+  --segmented-option-padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.25);
+  --segmented-options-border-radius: calc(var(--button-radius) * 1.6);
 }
 
 ::placeholder {

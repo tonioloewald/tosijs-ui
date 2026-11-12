@@ -82,6 +82,7 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private previewMode;
     private restoreMode;
     private builtFor;
+    private valueVariables;
     private build;
     /** Show each field's current value, and whether it is tuned. */
     private refresh;

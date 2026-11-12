@@ -78,6 +78,7 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
 
 - [Helper Libraries](https://ui.tosijs.net/helper-libraries/index.md): General purpose utilities and behaviors — routing, theming, localization, sorting, drag-and-drop, and other building blocks.
 - [<tosi-ab> A/B tests and feature flags](https://ui.tosijs.net/ab-test/index.md): <tosi-ab> shows or hides content by condition, so you can run A/B tests or feature flags by setting AbTest.conditions.
+- [css value](https://ui.tosijs.net/css-value/index.md): <tosi-css-value> edits a CSS value as what it is: a colour, another variable, that variable lightened or mixed, a contrast colour, a scaled length or any expression — written as live CSS.
 - [drag & drop](https://ui.tosijs.net/drag-and-drop/index.md): Make HTML5 drag and drop usable: one init() call highlights compatible drop zones as a drag starts, including zones added mid-drag.
 - [hash-state](https://ui.tosijs.net/hash-state/index.md): Key-value state in the page's URL hash: shareable, bookmarkable, and back/forward work without you writing any of it.
 - [live-theme](https://ui.tosijs.net/live-theme/index.md): The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser.
