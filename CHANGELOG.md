@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.17.9
+
+> Icon strokes have round ends and corners wherever an icon is drawn, not only inside
+> `<tosi-icon>`. Nothing to change on upgrade, unless you relied on the square ends: set
+> `--tosi-icon-stroke-linecap` and `--tosi-icon-stroke-linejoin` to get them back.
+
+### Changed
+
+- Icons drawn with `icons.<name>()` default to round stroke caps and joins, read from
+  `--tosi-icon-stroke-linecap` and `--tosi-icon-stroke-linejoin` as `<tosi-icon>` already
+  did. They used to fall back to the browser's square ends and mitred corners, so a dot drawn
+  as a zero-length stroke (the one in `helpCircle`) disappeared. #261
+- `iconSvg()` markup has `stroke-linecap="round"` and `stroke-linejoin="round"` on its root
+  `<svg>`, unless the icon declares its own. They are presentation attributes, so any CSS on
+  the page overrides them.
+
+### Fixed
+
+- `svg2DataUrl()` writes round caps and joins on the image's root. It strips the variables
+  (they cannot resolve inside an image), which used to leave mitred corners.
+
 ## 1.17.8
 
 > A new `<tosi-splitter>`, which the live example's code view now uses, Continue links for
