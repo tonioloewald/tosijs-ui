@@ -2607,7 +2607,9 @@ test('filter input and prefix select exist', () => {
 
 Icons take their colour from the text around them (`currentColor`). Override fill and stroke
 with `--tosi-icon-fill` and `--tosi-icon-stroke`, or per icon with the `F` and `S` suffixes
-(see [Icon modifier suffixes](#icon-modifier-suffixes)). The icon data is generated from a
+(see [Icon modifier suffixes](#icon-modifier-suffixes)). Strokes have round ends and corners
+by default, as feather and lucide draw them; set `--tosi-icon-stroke-linecap` or
+`--tosi-icon-stroke-linejoin` to change that. The icon data is generated from a
 directory of SVGs (see [Building icon data](#building-icon-data)).
 
 ## Importing only the icons you draw
@@ -3237,6 +3239,10 @@ SVG string **throws**, saying why: a stack (`a$b`), a rule (`spin90Loader`, `unL
 other style suffix (`check50o`), a redirect to a name that is not an icon, or a redirect
 cycle. Render those with `icons.<name>()` where there is a DOM; the suffixes and rules are
 described on the [[icons]] page. Only a name that nothing would draw returns `undefined`.
+
+The root `<svg>` carries `stroke-linecap="round"` and `stroke-linejoin="round"`, as the DOM
+renderer draws them, unless the icon declares its own. They are presentation attributes, so any
+CSS on the page wins over them.
 
 It needs no DOM, so it works in a build script, a static-page generator, an ePub pass or a
 server-rendered template, where `icons.<name>()` (which builds DOM elements) cannot run.

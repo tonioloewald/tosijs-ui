@@ -25,5 +25,9 @@ other style suffix (`check50o`), a redirect to a name that is not an icon, or a 
 cycle. Render those with `icons.<name>()` where there is a DOM; the suffixes and rules are
 described on the [[icons]] page. Only a name that nothing would draw returns `undefined`.
 
+The root `<svg>` carries `stroke-linecap="round"` and `stroke-linejoin="round"`, as the DOM
+renderer draws them, unless the icon declares its own. They are presentation attributes, so any
+CSS on the page wins over them.
+
 It needs no DOM, so it works in a build script, a static-page generator, an ePub pass or a
 server-rendered template, where `icons.<name>()` (which builds DOM elements) cannot run.

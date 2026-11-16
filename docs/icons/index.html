@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=072908ee3203" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=c05dcefd85bc" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>SVG icon library and composition — tosijs-ui</title>
   <meta name="description" content="SVG icons as element creators (icons.chevronDown()), themeable with CSS variables, with a small language for composing new icons from old." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/icons.webp" />
   <meta name="twitter:image:alt" content="SVG icon library and composition — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"SVG icon library and composition","description":"SVG icons as element creators (icons.chevronDown()), themeable with CSS variables, with a small language for composing new icons from old.","url":"https://ui.tosijs.net/icons/","inLanguage":"en","image":"https://ui.tosijs.net/og/icons.webp","dateModified":"2026-11-08T16:50:23+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"SVG icon library and composition","description":"SVG icons as element creators (icons.chevronDown()), themeable with CSS variables, with a small language for composing new icons from old.","url":"https://ui.tosijs.net/icons/","inLanguage":"en","image":"https://ui.tosijs.net/og/icons.webp","dateModified":"2026-11-16T11:21:11.859Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Components","item":"https://ui.tosijs.net/components/"},{"@type":"ListItem","position":2,"name":"icons","item":"https://ui.tosijs.net/icons/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=3c44d51e66e3" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=aee4c024f413" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="icons.ts">
 <h1 id="icons">icons</h1>
 <div class="center" style="display: flex; gap: 10px; padding: 10px">
@@ -247,7 +247,9 @@ test(&#39;filter input and prefix select exist&#39;, () =&gt; {
 </code></pre>
 <p>Icons take their colour from the text around them (<code>currentColor</code>). Override fill and stroke
 with <code>--tosi-icon-fill</code> and <code>--tosi-icon-stroke</code>, or per icon with the <code>F</code> and <code>S</code> suffixes
-(see <a href="#icon-modifier-suffixes">Icon modifier suffixes</a>). The icon data is generated from a
+(see <a href="#icon-modifier-suffixes">Icon modifier suffixes</a>). Strokes have round ends and corners
+by default, as feather and lucide draw them; set <code>--tosi-icon-stroke-linecap</code> or
+<code>--tosi-icon-stroke-linejoin</code> to change that. The icon data is generated from a
 directory of SVGs (see <a href="#building-icon-data">Building icon data</a>).</p>
 <h2 id="importing-only-the-icons-you-draw">Importing only the icons you draw</h2>
 <p><code>icons</code> carries all of them. To carry only the ones you draw, import each from its own module.
@@ -727,6 +729,6 @@ copies or substantial portions of the Software.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-q6ye2maj.js"></script>
+  <script type="module" src="../hydrate-hnne22xe.js"></script>
 </body>
 </html>

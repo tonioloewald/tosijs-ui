@@ -27,6 +27,10 @@ other style suffix (`check50o`), a redirect to a name that is not an icon, or a 
 cycle. Render those with `icons.<name>()` where there is a DOM; the suffixes and rules are
 described on the [[icons]] page. Only a name that nothing would draw returns `undefined`.
 
+The root `<svg>` carries `stroke-linecap="round"` and `stroke-linejoin="round"`, as the DOM
+renderer draws them, unless the icon declares its own. They are presentation attributes, so any
+CSS on the page wins over them.
+
 It needs no DOM, so it works in a build script, a static-page generator, an ePub pass or a
 server-rendered template, where `icons.<name>()` (which builds DOM elements) cannot run.
 */
@@ -62,8 +66,20 @@ export function iconSvg(name) {
     const key = stripEscape(name);
     if (!isComposition(key))
         return undefined;
-    return resolve(name, key, new Set());
+    return rounded(resolve(name, key, new Set()));
 }
+/*
+Round ends and corners on the root, as presentation attributes: the DOM renderer gets them
+from its styles, and markup used on its own has none. An attribute loses to any CSS, so a page
+that styles icons otherwise still wins; one the icon already declares is kept.
+*/
+const rounded = (svg) => svg.replace(/^(\s*<svg\b)([^>]*)>/, (open, tag, attrs) => {
+    const add = ['stroke-linecap', 'stroke-linejoin']
+        .filter((name) => !new RegExp(`\\s${name}=`).test(attrs))
+        .map((name) => ` ${name}="round"`)
+        .join('');
+    return `${tag}${attrs}${add}>`;
+});
 // How to call the creator for a name: `icons.lock()`, or `icons['check:box']()` for a name
 // that is not an identifier.
 const creatorCall = (name) => /^[A-Za-z_$][\w$]*$/.test(name) ? `icons.${name}()` : `icons['${name}']()`;
