@@ -116,6 +116,10 @@ export const svg2DataUrl = (
   */
   const styled = svg.querySelectorAll('[style]')
   svg.removeAttribute('style')
+  // The root's round ends and corners were variables, which resolve to nothing in here.
+  for (const name of ['stroke-linecap', 'stroke-linejoin']) {
+    if (!svg.hasAttribute(name)) svg.setAttribute(name, 'round')
+  }
   for (const item of [...styled] as HTMLElement[]) {
     const s = item.style
     if (s.fill) item.setAttribute('fill', Color.fromCss(s.fill).html)
@@ -276,6 +280,9 @@ function makeIcon(spec: string, parts: ElementPart[]): SVGElement {
     ...sourceSvg.children
   )
   svg.style.strokeWidth = varDefault.tosiIconStrokeWidth('2px')
+  // Round ends and corners, as <tosi-icon> and the feather/lucide geometry assume.
+  svg.style.strokeLinecap = varDefault.tosiIconStrokeLinecap('round')
+  svg.style.strokeLinejoin = varDefault.tosiIconStrokeLinejoin('round')
   if (classes.has('stroked') && classes.has('filled')) {
     /*
     An outline in the ink over a knockout in the colour behind it, as tosijs-3d draws them.

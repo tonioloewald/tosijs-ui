@@ -71,3 +71,14 @@ test('the result is a usable css url() with an svg payload', () => {
   expect(url.endsWith(')')).toBe(true)
   expect(attributes(url)).toContain('<svg')
 })
+
+test('a stroked icon has round ends and corners, in the page and in a data URL', () => {
+  const svg = icons.check() as unknown as SVGElement
+  expect(svg.style.strokeLinecap).toBe('var(--tosi-icon-stroke-linecap, round)')
+  expect(svg.style.strokeLinejoin).toBe(
+    'var(--tosi-icon-stroke-linejoin, round)'
+  )
+  const markup = attributes(svg2DataUrl(icons.check()))
+  expect(markup).toContain('stroke-linecap="round"')
+  expect(markup).toContain('stroke-linejoin="round"')
+})

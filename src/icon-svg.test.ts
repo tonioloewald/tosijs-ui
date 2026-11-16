@@ -166,3 +166,18 @@ test('iconNames is sorted and includes well-known icons', () => {
   expect([...names].sort()).toEqual(names)
   expect(names).toContain('tosiPlatform')
 })
+
+test('markup has round ends and corners, unless the icon says otherwise', () => {
+  const svg = iconSvg('check')!
+  expect(svg).toMatch(/^<svg\b[^>]*\sstroke-linecap="round"/)
+  expect(svg).toMatch(/^<svg\b[^>]*\sstroke-linejoin="round"/)
+  iconData.squareEnds = '<svg viewBox="0 0 24 24" stroke-linecap="butt"></svg>'
+  try {
+    const own = iconSvg('squareEnds')!
+    expect(own).toContain('stroke-linecap="butt"')
+    expect(own).not.toContain('stroke-linecap="round"')
+    expect(own).toContain('stroke-linejoin="round"')
+  } finally {
+    delete iconData.squareEnds
+  }
+})

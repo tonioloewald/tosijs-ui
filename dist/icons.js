@@ -204,7 +204,9 @@ test('filter input and prefix select exist', () => {
 
 Icons take their colour from the text around them (`currentColor`). Override fill and stroke
 with `--tosi-icon-fill` and `--tosi-icon-stroke`, or per icon with the `F` and `S` suffixes
-(see [Icon modifier suffixes](#icon-modifier-suffixes)). The icon data is generated from a
+(see [Icon modifier suffixes](#icon-modifier-suffixes)). Strokes have round ends and corners
+by default, as feather and lucide draw them; set `--tosi-icon-stroke-linecap` or
+`--tosi-icon-stroke-linejoin` to change that. The icon data is generated from a
 directory of SVGs (see [Building icon data](#building-icon-data)).
 
 ## Importing only the icons you draw
