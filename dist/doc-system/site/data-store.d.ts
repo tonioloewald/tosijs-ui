@@ -20,6 +20,11 @@ export interface DataStore {
     extensions: string[];
     commit: boolean;
 }
+export declare function resolveThemeFile(root: string, file: string): {
+    path: string;
+} | {
+    refused: string;
+};
 /** The folder setting, checked and resolved, or null when the project has none. Throws. */
 export declare function resolveDataStore(setting: string[] | EditableDataOptions | undefined, root: string, 
 /** The site's build output, which every build deletes and rewrites. */

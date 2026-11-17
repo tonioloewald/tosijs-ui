@@ -87,6 +87,11 @@ export declare function ruleValues(rule: XinStyleRule | undefined): ThemeValues;
 export declare function invertedColors(values: ThemeValues): ThemeValues;
 /** White background, black text, and the accent darkened to 7:1 against it. */
 export declare function highContrastBase(base: Record<string, string>): Record<string, string>;
+/**
+ * The values among `values` that hold colours without being one (a gradient's stops), with those
+ * colours' luminance inverted: what `invertedColors` leaves out.
+ */
+export declare function invertedColorsWithin(values: ThemeValues): ThemeValues;
 export interface ThemeModeOptions {
     /** the modes, the first being the one every other is made from (`THEME_MODE_SPECS`) */
     modes?: ThemeModeSpec[];
@@ -109,7 +114,14 @@ export declare function deriveTheme(data: ThemeData, generator: ThemeGenerator |
  * high contrast too), so one mode's value must never show through in another.
  */
 export declare function resolveTheme(data: ThemeData, generator: ThemeGenerator | null, options?: ThemeModeOptions): Record<ThemeMode, ThemeValues>;
-/** The stylesheet for a theme: each mode's variables under its selector. */
+/** Whether `value` stays one declaration's value, whatever rule it is written into. */
+export declare function isSafeCssValue(value: string): boolean;
+/** The declarations among `resolved` that could escape their rule, as `mode: name`. */
+export declare function unsafeThemeValues(resolved: Record<ThemeMode, ThemeValues>): string[];
+/**
+ * The stylesheet for `resolved`. A declaration that could escape its rule (see
+ * `unsafeThemeValues`) is left out, so a half-typed `url(` in an editor applies nothing yet.
+ */
 export declare function themeStyleSheet(resolved: Record<ThemeMode, ThemeValues>, selectors?: Partial<Record<ThemeMode, string>>, modes?: ThemeModeSpec[]): XinStyleSheet;
 export interface ApplyThemeOptions extends ThemeModeOptions {
     /** the stylesheet's id; one theme per id, updated in place */

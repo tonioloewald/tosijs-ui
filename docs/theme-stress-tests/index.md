@@ -1,6 +1,6 @@
 # Theme stress tests
 
-<!--{ "parent": "Helper Libraries", "description": "Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern." }-->
+<!--{ "parent": "Helper Libraries", "description": "Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern." }-->
 
 `<tosi-theme-editor>` is not tied to tosijs-ui's own variables. Given a pattern, it finds the
 matching custom properties in the page's stylesheets, reads which variables each one is

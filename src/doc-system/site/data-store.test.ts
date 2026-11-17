@@ -13,6 +13,7 @@ import * as path from 'path'
 import {
   resolveDataStore,
   resolveDataFile,
+  resolveThemeFile,
   dataContentProblem,
   writeDataFile,
   listDataFiles,
@@ -400,5 +401,34 @@ describe('versions', () => {
     expect(
       (await saveDataFile(s, target(s, file), '{"n":0}', 'x')).commit
     ).toMatch(/^[0-9a-f]{40}$/)
+  })
+})
+
+describe('the theme file', () => {
+  const root = path.resolve('/project')
+  test('a .json file inside the project is the theme file', () => {
+    expect(resolveThemeFile(root, 'tosijs-theme.json')).toEqual({
+      path: path.join(root, 'tosijs-theme.json'),
+    })
+    expect(resolveThemeFile(root, 'themes/site.json')).toEqual({
+      path: path.join(root, 'themes', 'site.json'),
+    })
+  })
+  test('anything that could run, or that is outside the project, is refused', () => {
+    for (const file of [
+      '../x.json',
+      '/etc/x.json',
+      'a.json/../../x.json',
+      'theme.js',
+      'theme.json.js',
+      'package.json',
+      'tsconfig.json',
+      'tsconfig.build.json',
+      'firebase.json',
+      '.claude/settings.json',
+      '.vscode/tasks.json',
+      'themes/.hidden.json',
+    ])
+      expect(resolveThemeFile(root, file)).toHaveProperty('refused')
   })
 })

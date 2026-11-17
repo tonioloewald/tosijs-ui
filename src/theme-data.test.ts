@@ -212,3 +212,52 @@ test('applyThemeFonts links the theme fonts and unlinks the ones it drops', () =
   expect(hrefs()).toEqual([b])
   applyThemeFonts([])
 })
+
+test('what the theme-data docs name is importable from the path they give', async () => {
+  const discovery = await import('tosijs-ui/theme-discovery')
+  expect(typeof discovery.discoverThemeVariables).toBe('function')
+  expect(typeof discovery.declaredValues).toBe('function')
+  const styles = await import('tosijs-ui/doc-system/doc-system-styles')
+  expect(typeof styles.docSystemThemeGenerator.light).toBe('function')
+})
+
+test('a theme value or name cannot write CSS of its own', async () => {
+  const { isSafeCssValue, themeStyleSheet, unsafeThemeValues } =
+    await import('./theme-data.js')
+  const { css } = await import('tosijs')
+  for (const value of [
+    '#0064d2',
+    'calc(var(--tosi-spacing) * 2)',
+    'color-mix(in srgb, var(--brand-color) 8%, var(--background))',
+    "'Lora', sans-serif",
+    'url(data:image/svg+xml;base64,PHN2Zz4=)',
+    'url("a;b.png")',
+    'inset 0 0 0 1px #fff9, 0 2px 6px #0002',
+  ])
+    expect(isSafeCssValue(value)).toBe(true)
+  for (const value of [
+    'red;} input[value^="a"]{background:url(https://evil.example/a)} :root{x:y',
+    'red; color: blue',
+    'red /* swallow the rest',
+    'url(x',
+    "'unclosed",
+    'a) b',
+    '</style><script>alert(1)</script>',
+    'red\n}',
+  ])
+    expect(isSafeCssValue(value)).toBe(false)
+  const resolved = {
+    light: {
+      fine: '#fff',
+      bad: 'red;} body{display:none} x{y:z',
+      'a:b}body{display:none}x{y': '1px',
+    },
+  }
+  expect(unsafeThemeValues(resolved)).toEqual([
+    'light: bad',
+    'light: a:b}body{display:none}x{y',
+  ])
+  const written = css(themeStyleSheet(resolved))
+  expect(written).toContain('--fine: #fff')
+  expect(written).not.toContain('display:none')
+})

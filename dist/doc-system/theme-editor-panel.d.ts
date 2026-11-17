@@ -13,5 +13,7 @@ export declare const themeEditable: (file: string) => Promise<boolean>;
 export declare function loadTheme(file: string, fetcher?: typeof fetch): Promise<ThemeData>;
 /** Save the theme; resolves to an error message, or null when it saved. */
 export declare function saveTheme(file: string, theme: ThemeData, fetcher?: typeof fetch): Promise<string | null>;
+/** Whether the panel is open: the doc system leaves the Style preset off meanwhile. */
+export declare const themeEditorOpen: () => boolean;
 /** Open the panel, or bring it forward if it is already open. */
 export declare function openThemeEditor(site: ThemeEditorSite): Promise<void>;

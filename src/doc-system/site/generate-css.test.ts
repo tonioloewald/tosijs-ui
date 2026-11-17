@@ -30,3 +30,15 @@ test('each preset is scoped to its class, in every mode, and Original writes not
   expect(output).toContain('--brand-color: #6750a4')
   expect(output).toContain('--tosi-surface-filter: blur(16px) saturate(1.4)')
 })
+
+test('a theme file with a value that would escape its rule fails the build, naming it', () => {
+  expect(() =>
+    themeFileCss(
+      {
+        base: {},
+        modes: { light: { 'nav-bg': 'red;} body{display:none} x{y:z' } },
+      },
+      {}
+    )
+  ).toThrow('light: nav-bg')
+})

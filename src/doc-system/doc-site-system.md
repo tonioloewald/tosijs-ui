@@ -308,6 +308,8 @@ for the authoritative typed definition.
 | `navbarLinks`      | —       | header-bar icon links                                                 |
 | `searchPlaceholder` | `'Search'` | the hint in the header's search field; localized through `localizedStrings` |
 | `theme`            | —       | base colors (palette derived from `accent`)                           |
+| `themeFile`        | —       | a JSON theme saved by the theme editor (see "Themes" below) |
+| `themePresets`     | `false` | offer the Style presets (Original, Glass, Material) in the settings menu |
 | `localizedStrings` | —       | TSV table for the language picker                                     |
 
 The header **brand mark** (left of the site title) resolves in this order: an
@@ -322,6 +324,38 @@ The same `logo` is accepted by `createDocBrowser({ logo })` and by an embedded
 (`.logo-mark`), so retune them with one CSS variable each rather than editing the
 build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (default
 10px).
+
+### Themes
+
+`theme` sets the base colours (`accent`, `background`, `text`, and optionally `codeBg`,
+`inputBg`, `buttonBg`); everything else derives from them. Most derived colours are written as
+`color-mix()` and relative colour syntax over those roots, so they follow a root wherever it
+changes, and dark mode inverts only the roots and lifts the brand. The corner radii
+(`--button-radius`, `--input-radius`, `--quote-radius`, `--code-radius`) are plain lengths, not
+multiples of `--spacing`.
+
+**`themeFile`** names a JSON file of [theme data](/theme-data/), such as `'site-theme.json'`.
+It need not exist yet: an absent file is an unsaved theme. The build writes it into the site's
+stylesheet, so a saved theme paints on first load with no flash, and links its web fonts from
+every page. A file that does not parse fails the build.
+
+In an editing session (the same gate as save-to-source: this machine, an edit session over the
+tunnel, or the LAN under `trustLan`), the settings menu offers **Theme Editor…**, a floating
+[`<tosi-theme-editor>`](/theme-editor/) that previews as you edit and saves back to the file
+through `/__docstore/source`. Only a `.json` file inside the project can be the theme file, never
+a dot-path or a name tools read as configuration (`package.json`, `tsconfig.json`, …), and a
+save must be a JSON object. A `themeFile` that breaks those rules gets a warning at launch and no
+editor. A deployed site has no source endpoint, so the item never appears there.
+
+`DEV_THEME_FILE` makes the dev server read and save the theme somewhere else (the same rules
+apply) without changing what the build writes: the Playwright lane uses it to keep test saves
+out of the repository.
+
+**`themePresets: true`** adds a **Style** submenu offering Original, Glass and Material (see
+[theme presets](/theme-presets/)). Their CSS is in the stylesheet, scoped to a `tosi-style-*`
+class that the head script sets before first paint. A reader's Style wins over the site's theme
+wherever they set the same variable; the theme editor's **Load preset…** copies a preset into
+the theme being edited, and takes the reader's Style off the page while it is open.
 
 ### Accessibility (opt-in)
 
@@ -456,6 +490,9 @@ It runs on every build, watch rebuilds included, so cache anything slow or paid 
 | `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`; `'no-code'` — only `html` and `css` run, for a host with a strict CSP. See "Marking a fence display-only" and "No-code examples". Any other value fails the build |
 | `exampleModules`  | `false`     | write each script example to `_examples/<hash>.js` and run it by `import()`, for a strict CSP. See "Script examples under a strict CSP" |
 | `exampleTabs`     | all         | the tabs an example's code panel shows: `'js'`, `'html'`, `'css'`, `'test'`, `'console'`, `'chat'`. Under `'no-code'` the default is `['html', 'css', 'chat']`. A fence overrides it with `{"tabs": [...]}` |
+| `exampleConsole`  | `true`      | live examples get a Console tab: what the example logs, and a REPL in its scope. `false` turns it off site-wide (logs still reach devtools); one example opts out with `{"console": false}` |
+| `dialects`        | —           | the live-example dialects your bundle registers with `registerDialect` (`['ajs']`, or a built-in you replace such as `['tjs']`). Declared, the build treats them as live examples too (the static highlighter leaves them alone, and a replaced built-in is not checked or pre-transpiled), and the page reports a declared dialect nobody registered |
+| `importResolver`  | `false`     | experimental: a service worker that lets live examples import npm packages by bare specifier, resolved and cached under a prefix (`true` uses `prefix: '/lib/'`, or pass an object). See `import-resolver-plan.md` |
 | `exampleView`     | `'preview'` | the view every example opens in: `'code'` puts the preview beside its code, `'console'` the console beside the code. A page overrides it with `exampleView` in its metadata, a fence with `{"view": …}`; `'preview'` opts out. Any other value fails the build |
 | `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
@@ -532,6 +569,7 @@ the example, plus ten pages importing a symbol their barrel did not export.
 | `trustLan`          | `false`  | With `editableSources` or `editableData` on, trust the local network for reading and editing source and data, so a phone or headset on your LAN can use "Edit page source" directly instead of going through the tunnel (#227), and a live example's "Save to source" is offered there too. Each write admitted this way is logged with the device's address and the file. Trusted: a **direct** peer at a private address (RFC 1918 IPv4, IPv6 unique-local or link-local). Never trusted: tunnel traffic (it still needs a session) or a request with forwarding headers. Writes must still come from the dev server's own origin. **It means anyone on the network can change files here, including code that runs on this machine**: use it on a network you control, never shared wifi, and note that a reverse proxy on the LAN that forwards outside traffic without forwarding headers would look like a LAN peer. Prefer naming your network, which trusts only private addresses inside it and so does nothing on anyone else's: `'192.168.1.0/24'` or a list. A refused device outside the named networks is told so in the server log. Or keep it out of the config: `TOSIJS_TRUST_LAN=1` (or a network, or `0`) sets it for one run and wins over the config. A network that cannot be parsed stops the server at launch. Agent driving, invite links, builds and test reports stay this machine only. |
 | `memoryLimitMb`      | `4096`   | RSS ceiling for the dev server; past it, print growth-per-rebuild and exit (see below); also `DEV_MEMORY_LIMIT_MB`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `idleTimeoutHours`   | `8`      | exit after this long with no request and no rebuild; `0` disables (see below); also `DEV_IDLE_TIMEOUT_HOURS`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `preflight`          | `'fail'` | machine-health check before each build and at dev-server launch, refusing to add load to a machine that is already dying; `'warn'` prints and proceeds, `false`/`'off'` skips it (also `DEV_SKIP_PREFLIGHT=1`). A failure is only a warning in CI and when stdout is not a TTY |
 | `audit`              | `true`   | dependency-audit gate — `bun audit` on the initial build — synchronously in `buildSite` (ungated high+ advisories fail the build), and after the port is bound under `bun start` (reported, never blocking) (findings annotated with the nature of the risk). `true`/omitted = `{ mode: 'fail', level: 'high' }`; `false`/`{ mode: 'off' }` disables; also `TOSIJS_AUDIT=off\|warn\|fail`. Time-box exceptions via `{ allow: [{ advisory, reason, expires }] }` (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 #### Dependency audit gate

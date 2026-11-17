@@ -72,7 +72,7 @@ form may refer to (`{ name, label?, kind }`, names without the dashes). The rela
 forms (Adjust, Text on) appear only where the browser supports relative colour syntax.
 */
 
-/*{ "parent": "Helper Libraries", "description": "<tosi-css-value> edits a CSS value as what it is: a colour, another variable, that variable lightened or mixed, a contrast colour, a scaled length or any expression — written as live CSS." }*/
+/*{ "parent": "Helper Libraries", "description": "<tosi-css-value> edits a CSS value as what it is: a colour, another variable, a mix, a contrast colour, a scaled length or an expression, as live CSS." }*/
 
 import {
   ElementCreator,

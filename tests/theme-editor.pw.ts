@@ -206,6 +206,59 @@ test('Load preset replaces the theme being edited with a copy of the preset', as
   await panel.getByRole('button', { name: 'Close the theme editor' }).click()
 })
 
+for (const scheme of ['light', 'dark'] as const) {
+  test(`with a Style preset on, the editor's edits show, and closing puts the preset back (${scheme})`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: scheme })
+    await page.addInitScript(() =>
+      localStorage.setItem(
+        'tosi-doc-system-prefs',
+        JSON.stringify({ style: 'glass' })
+      )
+    )
+    const asked = page.waitForResponse(
+      (response) =>
+        response.url().includes('/__docstore/source') &&
+        response.request().method() === 'HEAD'
+    )
+    await page.goto('/splitter/')
+    await asked
+    await page.waitForSelector('tosi-doc-system header')
+    const glass = () =>
+      page.evaluate(() =>
+        [document.documentElement, document.body].map((element) =>
+          element.classList.contains('tosi-style-glass')
+        )
+      )
+    expect(await glass()).toEqual([true, true])
+    await page.locator('header button:has(svg)').last().click()
+    await page.getByText('Theme Editor…').click()
+    const panel = page.locator('.theme-editor-panel')
+    await expect(panel).toBeVisible()
+    await expect.poll(glass).toEqual([false, false])
+
+    // A corner edit in the mode on show reaches the page, which Glass's own rules hid before.
+    const corners = panel.locator(
+      '[data-name="tosi-radius"] [data-key="amount"]'
+    )
+    await corners.fill('23')
+    await corners.press('Enter')
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          getComputedStyle(document.body)
+            .getPropertyValue('--tosi-radius')
+            .trim()
+        )
+      )
+      .toBe('23px')
+
+    await panel.getByRole('button', { name: 'Close the theme editor' }).click()
+    await expect.poll(glass).toEqual([true, true])
+  })
+}
+
 test('given a pattern, the editor finds Material tokens; an edit flows down the chain, an override cuts it', async ({
   page,
 }) => {

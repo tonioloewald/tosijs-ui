@@ -72,6 +72,30 @@ const CONFIG_NAMES = [
   /^(Cargo|pyproject|netlify|wrangler|fly|Pipfile)\.toml$/i,
 ]
 
+/*
+The theme editor's file (`themeFile`, or `DEV_THEME_FILE` where the dev server really keeps it):
+data, never executed, so it may be edited like a doc source. Only a `.json` file inside the
+project counts, never a dot-path (`.claude/settings.json`, `.vscode/tasks.json`) or a name tools
+read as configuration (`package.json`), some of which run commands on the next install or build.
+*/
+export function resolveThemeFile(
+  root: string,
+  file: string
+): { path: string } | { refused: string } {
+  const resolved = path.resolve(root, file)
+  if (!resolved.startsWith(root + path.sep))
+    return { refused: 'it is not inside the project' }
+  const parts = path.relative(root, resolved).split(path.sep)
+  if (parts.some((part) => part.startsWith('.')))
+    return { refused: 'it is in or is a dot-file or dot-folder' }
+  const base = parts[parts.length - 1]
+  if (path.extname(base).toLowerCase() !== '.json')
+    return { refused: 'it is not a .json file' }
+  if (CONFIG_NAMES.some((re) => re.test(base)))
+    return { refused: `${base} is a name tools read as configuration` }
+  return { path: resolved }
+}
+
 /** The folder setting, checked and resolved, or null when the project has none. Throws. */
 export function resolveDataStore(
   setting: string[] | EditableDataOptions | undefined,

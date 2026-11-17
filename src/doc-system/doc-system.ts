@@ -86,7 +86,11 @@ import type { AccessibilityMode } from './render.js'
 // Side-effect: register <tosi-css-var-editor> so doc pages can drop the live CSS-var
 // tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
 import './css-var-editor.js'
-import { openThemeEditor, themeEditable } from './theme-editor-panel.js'
+import {
+  openThemeEditor,
+  themeEditable,
+  themeEditorOpen,
+} from './theme-editor-panel.js'
 import { DOC_THEME_PRESETS, presetClass } from './theme-presets.js'
 import { allowedFontUrl } from '../theme-fonts.js'
 import { sourceWritable } from '../live-example/source-access.js'
@@ -340,6 +344,8 @@ export class TosiDocSystem extends withAttributes({
   keeps the two in step, and links the preset's web fonts.
   */
   private applyStylePreset(): void {
+    // The theme editor takes the preset off while it is open, so an edit is not hidden by it.
+    if (themeEditorOpen()) return
     const style = this.themePresets() ? this.prefs.style.value : ''
     for (const { name } of DOC_THEME_PRESETS) {
       for (const element of [document.documentElement, document.body]) {

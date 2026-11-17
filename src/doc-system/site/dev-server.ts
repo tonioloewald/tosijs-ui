@@ -91,6 +91,7 @@ import { revocationList, startRevocationSweep } from './device-revocation.js'
 import {
   resolveDataStore,
   resolveDataFile,
+  resolveThemeFile,
   dataContentProblem,
   listDataFiles,
   saveDataFile,
@@ -1327,16 +1328,15 @@ export async function devServer(
 
   /*
   The theme editor's file (`themeFile`): data, never executed, so it may be edited like a doc
-  source. Only a `.json` file inside the project counts, and a save must parse as an object.
+  source (resolveThemeFile says which files count), and a save must parse as an object.
   */
-  const themeFilePath = (() => {
-    if (!config.themeFile) return null
-    const resolved = path.resolve(PROJECT_ROOT, config.themeFile)
-    return resolved.endsWith('.json') &&
-      resolved.startsWith(PROJECT_ROOT + path.sep)
-      ? resolved
+  const themeFileResolved = config.themeFile
+    ? resolveThemeFile(PROJECT_ROOT, config.themeFile)
+    : null
+  const themeFilePath =
+    themeFileResolved && 'path' in themeFileResolved
+      ? themeFileResolved.path
       : null
-  })()
   /*
   Where that file is really read and saved: itself, unless `DEV_THEME_FILE` points elsewhere.
   The test lane uses it to save to a scratch file. It changes nothing a build writes, because
@@ -1346,20 +1346,17 @@ export async function devServer(
   const themeStore = (() => {
     const redirect = process.env.DEV_THEME_FILE
     if (!themeFilePath || !redirect) return themeFilePath
-    const resolved = path.resolve(PROJECT_ROOT, redirect)
-    if (
-      !resolved.endsWith('.json') ||
-      !resolved.startsWith(PROJECT_ROOT + path.sep)
-    ) {
+    const resolved = resolveThemeFile(PROJECT_ROOT, redirect)
+    if ('refused' in resolved) {
       throw new Error(
-        `DEV_THEME_FILE ${redirect} is not a .json file inside the project`
+        `DEV_THEME_FILE ${redirect} cannot be the theme file: ${resolved.refused}`
       )
     }
-    return resolved
+    return resolved.path
   })()
-  if (config.themeFile && !themeFilePath) {
+  if (themeFileResolved && 'refused' in themeFileResolved) {
     console.warn(
-      `⚠️  themeFile ${config.themeFile} is not a .json file inside the project: the theme editor cannot save it.`
+      `⚠️  themeFile ${config.themeFile} cannot be edited (${themeFileResolved.refused}): the theme editor cannot save it.`
     )
   }
 

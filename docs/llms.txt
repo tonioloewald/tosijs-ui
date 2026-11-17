@@ -78,7 +78,7 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
 
 - [Helper Libraries](https://ui.tosijs.net/helper-libraries/index.md): General purpose utilities and behaviors — routing, theming, localization, sorting, drag-and-drop, and other building blocks.
 - [<tosi-ab> A/B tests and feature flags](https://ui.tosijs.net/ab-test/index.md): <tosi-ab> shows or hides content by condition, so you can run A/B tests or feature flags by setting AbTest.conditions.
-- [css value](https://ui.tosijs.net/css-value/index.md): <tosi-css-value> edits a CSS value as what it is: a colour, another variable, that variable lightened or mixed, a contrast colour, a scaled length or any expression — written as live CSS.
+- [css value](https://ui.tosijs.net/css-value/index.md): <tosi-css-value> edits a CSS value as what it is: a colour, another variable, a mix, a contrast colour, a scaled length or an expression, as live CSS.
 - [drag & drop](https://ui.tosijs.net/drag-and-drop/index.md): Make HTML5 drag and drop usable: one init() call highlights compatible drop zones as a drag starts, including zones added mid-drag.
 - [hash-state](https://ui.tosijs.net/hash-state/index.md): Key-value state in the page's URL hash: shareable, bookmarkable, and back/forward work without you writing any of it.
 - [live-theme](https://ui.tosijs.net/live-theme/index.md): The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser.
@@ -88,10 +88,10 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
 - [Client-side router for single-page apps](https://ui.tosijs.net/router/index.md): A lightweight client-side router for single-page apps, with named parameters, hash routing, and several named views per route.
 - [scriptTag & styleSheet](https://ui.tosijs.net/via-tag/index.md): scriptTag() and styleSheet() load a classic script or stylesheet from a CDN and return a promise, much like import() for older libraries.
 - [Theme, CSS variables and dark mode](https://ui.tosijs.net/theme/index.md): The tosijs-ui theme: CSS variables for spacing, colour and type shared by every component, with dark mode computed from your colours.
-- [theme data](https://ui.tosijs.net/theme-data/index.md): A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it.
+- [theme data](https://ui.tosijs.net/theme-data/index.md): A theme as plain JSON: base colours generate light, dark, high-contrast and declared modes, hand-tuned values win, and one stylesheet applies it.
 - [theme editor](https://ui.tosijs.net/theme-editor/index.md): <tosi-theme-editor> edits a theme as data: base colours, then each declared variable per mode (light, dark, high contrast), applied live and saved as JSON.
 - [theme presets](https://ui.tosijs.net/theme-presets/index.md): Theme presets: Original, Glass and Material as theme data over the doc theme's chain, switchable from the settings menu with no flash on load.
-- [Theme stress tests](https://ui.tosijs.net/theme-stress-tests/index.md): Two themes the theme editor must handle without knowing about them: Material 3 design tokens and a faux-glass look, each discovered from its own CSS by a variable pattern.
+- [Theme stress tests](https://ui.tosijs.net/theme-stress-tests/index.md): Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern.
 - [trackDrag](https://ui.tosijs.net/track-drag/index.md): trackDrag() follows a mouse or touch drag with one callback that reports the offset, for resize handles, sliders and draggable parts.
 - [valueRenderer](https://ui.tosijs.net/value-renderer/index.md): valueRenderer() turns a short type string into a formatter for numbers, currency, bytes or booleans, each with a default alignment.
 

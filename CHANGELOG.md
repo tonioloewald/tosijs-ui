@@ -19,7 +19,11 @@
 > - The doc site's corner radii are plain lengths and no longer follow a changed `--spacing`.
 > - `tosiThemeEditor` is a new component that edits theme data, and it no longer drives
 >   `liveTheme`, which still works on its own. Import it from `tosijs-ui/theme-editor`; the
->   root export is deprecated.
+>   root export is deprecated and will be removed in a later minor.
+> - **Size.** That deprecated root export carries the whole editor (and `<tosi-css-value>`)
+>   into the root barrel, which no bundler can drop: importing anything from `tosijs-ui` costs
+>   **106.1 → 118.5 kB gzip (+12.4 kB, +11.7%)**. Removing the root export takes most of that
+>   back. `dist/iife.js`, the CDN bundle, went **515.9 → 531.7 kB gzip (+15.8 kB, +3.1%)**.
 
 ### Added
 
@@ -29,7 +33,7 @@
 - theme modes are a list (`ThemeModeSpec`: name, label, selector, classes, `from`, `derive`), and `THEME_MODE_SPECS` (light, dark, high contrast, dark high contrast) is only the default. Transforms: `invert`, `contrast`, `monochrome`, `{ tint }`, or a function. Only colour literals change (gradient stops included); values mixed from others follow in the browser
 - `ThemeModeSpec.variant` ({ of, label }) makes a mode a checkbox on another mode rather than an entry in the menu; the default high-contrast modes are variants
 - theme data without a generator: the page's own CSS derives one variable from another, and a theme is just its overrides per mode (`base` is optional)
-- a theme with no generator derives its modes from the page's own CSS (`page`, from `declaredValues(discoverThemeVariables(…))`); a mode the page declares itself is left as the page has it
+- a theme with no generator derives its modes from the page's own CSS (`page`, from `declaredValues(discoverThemeVariables(…))`, both from `tosijs-ui/theme-discovery`); a mode the page declares itself is left as the page has it
 - web fonts in a theme: paste what Google Fonts offers to copy (a `<link>`, an `@import` line, or the URL) into the editor's Web fonts section, and its families are offered in the font fields. Only fonts.googleapis.com and fonts.bunny.net are accepted (linking a stylesheet injects CSS). Theme data carries them as `fonts`; applyThemeData links them, and the doc site's build links a saved theme's fonts from every page. #3914
 
 **The theme editor**
@@ -61,6 +65,8 @@
 
 ### Changed
 
+- a theme value or name that could escape its rule (a brace, a comment, a `;` outside brackets or quotes, unbalanced brackets or quotes) is left out of the stylesheet, and fails the doc site's build when it is in a saved theme file; `isSafeCssValue` and `unsafeThemeValues` say which
+- the dev server refuses a `themeFile` (or `DEV_THEME_FILE`) that is a dot-path or a name tools read as configuration (`package.json`, `tsconfig.json`, …), as `editableData` already did
 - `tosiThemeEditor` is a new editor: it edits theme data and no longer drives `liveTheme`, which still works on its own. Importing it from `tosijs-ui` is deprecated; use `tosijs-ui/theme-editor`.
 - dark mode now inverts only the roots and lifts the brand; the derived colours re-derive from them. Links are the brand mixed toward the text (no longer hue-shifted), and the navigation and inset tints are the brand mixed into the background
 - those radii were multiples of `--spacing` and are now plain lengths with the same values at the default 10px spacing (5px, 5px, 10px, 2.5px), so the editor can offer them as a number and a unit; they no longer follow a changed `--spacing`
@@ -77,6 +83,9 @@
 
 ### Fixed
 
+- dark high contrast ignored what a theme tuned for dark (it is made from high contrast, which is made from light), so the Glass preset's dark high contrast kept the light backdrop under white text, at about 1:1. A variant mode now also takes the tuned values of the mode it varies
+- a gradient tuned in light reached dark mode un-inverted, because only whole colours were inverted; the colours inside a tuned value (a gradient's stops) are inverted too
+- with a Style preset on, the doc site's theme editor showed none of its edits in dark mode (the preset's rules outrank the edited theme's); the editor takes the reader's Style off the page while it is open, and puts it back on close
 - the Glass style preset's brand-coloured text failed WCAG AA contrast: headings, links, inline code and the search label sat at 1.4–3.9:1 over its translucent surfaces, and in dark mode the header's site name was black on dark blue. Glass keeps its look (lighter backdrop, deeper accent, explicit code and placeholder colours, a dimmer dark header) and now passes everywhere
 - the theme editor always started on Light, so on a dark page its edits went to a mode the page was not showing, and its inline doc test failed for any reader in dark mode
 - the chain's elevation levels never resolved: tosijs reads a trailing digit as a scale, so `vars.tosiElevation2` was `calc(var(--tosi-elevation) * 0.02)` and `--menu-shadow` was invalid. Menus and dialogs fell back to their literals, and the presets' shadows reached nothing. The levels are now `--tosi-elevation-low`, `-mid` and `-high`.

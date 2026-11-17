@@ -27,7 +27,7 @@ export const SIDEBAR_BREAKPOINT = 600;
 // The contrast helpers live with the theme, which generates high-contrast modes from them.
 export { contrastRatio, readableOn } from '../theme.js';
 import { readableOn } from '../theme.js';
-import { invertedColors, ruleValues, } from '../theme-data.js';
+import { invertedColors, invertedColorsWithin, ruleValues, } from '../theme-data.js';
 /*
 The theme's CHAIN: links that hang from a few roots, written as CSS so that overriding one link
 moves everything below it, and resetting it reconnects. A preset (Glass, Material) is a handful
@@ -828,10 +828,12 @@ export const docSystemThemeGenerator = {
     dark: (base, light) => {
         const spec = docSystemStyleSpec(base, { fontImport: false });
         const generated = docThemeVariables(spec[':root']);
-        // Colours tuned by hand in light carry into dark, inverted like the generated ones.
+        // Colours tuned by hand in light carry into dark, inverted like the generated ones, and so
+        // do the colours inside a tuned value (a gradient's stops).
         const tuned = Object.fromEntries(Object.entries(light).filter(([name, value]) => generated[name] !== value));
         return {
             ...docThemeVariables(spec['.darkmode']),
+            ...invertedColorsWithin(tuned),
             ...invertedColors(tuned),
         };
     },

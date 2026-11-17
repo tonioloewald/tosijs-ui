@@ -94,10 +94,19 @@ another mode writes, since mode selectors can match together. Pass `selectors` t
 somewhere else, such as a scoped part of the page.
 
 **No generator.** A design system whose CSS derives its own variables (most do) needs no
-generator: pass `null`, and pass `page`, what its CSS declares in each mode
-(`discoverThemeVariables` finds it), so a derived mode has roots to transform. A mode with no
-`derive`, or one the page's CSS declares itself, is then just what the page declares, plus
-what you tune: the page's own dark mode is not second-guessed.
+generator: pass `null`, and pass `page`, what its CSS declares in each mode, so a derived mode
+has roots to transform. A mode with no `derive`, or one the page's CSS declares itself, is then
+just what the page declares, plus what you tune: the page's own dark mode is not second-guessed.
+`discoverThemeVariables` finds the page's variables and `declaredValues` turns them into `page`;
+both come from `tosijs-ui/theme-discovery`, not the package root:
+
+```typescript
+import { applyThemeData, THEME_MODE_SELECTORS } from 'tosijs-ui'
+import { declaredValues, discoverThemeVariables } from 'tosijs-ui/theme-discovery'
+
+const found = discoverThemeVariables('md-sys-*', { selectors: THEME_MODE_SELECTORS })
+applyThemeData(theme, null, { page: declaredValues(found) })
+```
 
 ## Web fonts
 
@@ -107,13 +116,20 @@ page's `<head>`. Only `fonts.googleapis.com` and `fonts.bunny.net` are accepted,
 stylesheet injects CSS. `parseFontImport` takes whatever Google Fonts offers you to copy (a
 `<link>`, an `@import` line, or the URL) and returns the URL and its families.
 
+Values are checked too: a theme is data, never CSS of its own. A variable name is letters,
+digits, `-` and `_`, and a value that could close its rule (a brace, a comment, a `;` outside
+brackets or quotes, unbalanced brackets or quotes) is left out of the stylesheet; the doc site's
+build fails on one in a saved theme file. Treat a theme from someone you do not trust as you
+would their images: it can still change how your page looks.
+
 ## Generators
 
 A generator says which base values there are, and turns them into each mode's variables:
 
 - `componentThemeGenerator` is the tosijs-ui component theme (`createTheme`), with base values
   `accent`, `background` and `text`;
-- the doc system has its own, `docSystemThemeGenerator`, which its theme editor uses.
+- the doc system has its own, `docSystemThemeGenerator` (from
+  `tosijs-ui/doc-system/doc-system-styles`), which its theme editor uses.
 
 Variable names are CSS custom properties without the leading dashes: `tosi-accent`, not
 `--tosi-accent` or `tosiAccent`.

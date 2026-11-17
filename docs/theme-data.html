@@ -24,16 +24,16 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=3e1467b279b0" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=80950e01ad23" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>theme data — tosijs-ui</title>
-  <meta name="description" content="A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it." />
+  <meta name="description" content="A theme as plain JSON: base colours generate light, dark, high-contrast and declared modes, hand-tuned values win, and one stylesheet applies it." />
   <link rel="canonical" href="https://ui.tosijs.net/theme-data/" />
   <link rel="alternate" type="text/markdown" href="index.md" title="theme data — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="theme data — tosijs-ui" />
-  <meta property="og:description" content="A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it." />
+  <meta property="og:description" content="A theme as plain JSON: base colours generate light, dark, high-contrast and declared modes, hand-tuned values win, and one stylesheet applies it." />
   <meta property="og:url" content="https://ui.tosijs.net/theme-data/" />
   <meta property="og:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta property="og:image:width" content="1200" />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="theme data — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme data","description":"A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it.","url":"https://ui.tosijs.net/theme-data/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-17T20:56:56+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"theme data","description":"A theme as plain JSON: base colours generate light, dark, high-contrast and declared modes, hand-tuned values win, and one stylesheet applies it.","url":"https://ui.tosijs.net/theme-data/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-17T19:24:29.434Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"theme data","item":"https://ui.tosijs.net/theme-data/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=b38f0e2dbe7f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=7f9917fde603" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="theme-data.ts">
 <h1 id="theme-data">theme data</h1>
 <p>A theme as plain data: a few <strong>base</strong> values (the brand colours) that a generator turns into
@@ -132,22 +132,35 @@ a font or a size you set once applies in every mode unless a mode tunes it), plu
 another mode writes, since mode selectors can match together. Pass <code>selectors</code> to write a mode
 somewhere else, such as a scoped part of the page.</p>
 <p><strong>No generator.</strong> A design system whose CSS derives its own variables (most do) needs no
-generator: pass <code>null</code>, and pass <code>page</code>, what its CSS declares in each mode
-(<code>discoverThemeVariables</code> finds it), so a derived mode has roots to transform. A mode with no
-<code>derive</code>, or one the page&#39;s CSS declares itself, is then just what the page declares, plus
-what you tune: the page&#39;s own dark mode is not second-guessed.</p>
+generator: pass <code>null</code>, and pass <code>page</code>, what its CSS declares in each mode, so a derived mode
+has roots to transform. A mode with no <code>derive</code>, or one the page&#39;s CSS declares itself, is then
+just what the page declares, plus what you tune: the page&#39;s own dark mode is not second-guessed.
+<code>discoverThemeVariables</code> finds the page&#39;s variables and <code>declaredValues</code> turns them into <code>page</code>;
+both come from <code>tosijs-ui/theme-discovery</code>, not the package root:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> applyThemeData<span class="token punctuation">,</span> <span class="token constant">THEME_MODE_SELECTORS</span> <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> declaredValues<span class="token punctuation">,</span> discoverThemeVariables <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/theme-discovery'</span>
+
+<span class="token keyword">const</span> found <span class="token operator">=</span> <span class="token function">discoverThemeVariables</span><span class="token punctuation">(</span><span class="token string">'md-sys-*'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> selectors<span class="token operator">:</span> <span class="token constant">THEME_MODE_SELECTORS</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token function">applyThemeData</span><span class="token punctuation">(</span>theme<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> page<span class="token operator">:</span> <span class="token function">declaredValues</span><span class="token punctuation">(</span>found<span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
 <h2 id="web-fonts">Web fonts</h2>
 <p><code>fonts</code> lists stylesheets to link, such as a Google Fonts URL; <code>applyThemeData</code> links them
 (and unlinks ones the theme no longer names), and the doc site&#39;s build links them from each
 page&#39;s <code>&lt;head&gt;</code>. Only <code>fonts.googleapis.com</code> and <code>fonts.bunny.net</code> are accepted, since linking a
 stylesheet injects CSS. <code>parseFontImport</code> takes whatever Google Fonts offers you to copy (a
 <code>&lt;link&gt;</code>, an <code>@import</code> line, or the URL) and returns the URL and its families.</p>
+<p>Values are checked too: a theme is data, never CSS of its own. A variable name is letters,
+digits, <code>-</code> and <code>_</code>, and a value that could close its rule (a brace, a comment, a <code>;</code> outside
+brackets or quotes, unbalanced brackets or quotes) is left out of the stylesheet; the doc site&#39;s
+build fails on one in a saved theme file. Treat a theme from someone you do not trust as you
+would their images: it can still change how your page looks.</p>
 <h2 id="generators">Generators</h2>
 <p>A generator says which base values there are, and turns them into each mode&#39;s variables:</p>
 <ul>
 <li><code>componentThemeGenerator</code> is the tosijs-ui component theme (<code>createTheme</code>), with base values
 <code>accent</code>, <code>background</code> and <code>text</code>;</li>
-<li>the doc system has its own, <code>docSystemThemeGenerator</code>, which its theme editor uses.</li>
+<li>the doc system has its own, <code>docSystemThemeGenerator</code> (from
+<code>tosijs-ui/doc-system/doc-system-styles</code>), which its theme editor uses.</li>
 </ul>
 <p>Variable names are CSS custom properties without the leading dashes: <code>tosi-accent</code>, not
 <code>--tosi-accent</code> or <code>tosiAccent</code>.</p>
@@ -258,6 +271,6 @@ stylesheet injects CSS. <code>parseFontImport</code> takes whatever Google Fonts
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-zafnzt7n.js"></script>
+  <script type="module" src="hydrate-098d6vmq.js"></script>
 </body>
 </html>

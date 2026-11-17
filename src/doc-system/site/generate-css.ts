@@ -18,7 +18,12 @@ import {
   docSystemThemeGenerator,
   DocSystemTheme,
 } from '../doc-system-styles.js'
-import { resolveTheme, themeStyleSheet, ThemeData } from '../../theme-data.js'
+import {
+  resolveTheme,
+  themeStyleSheet,
+  unsafeThemeValues,
+  ThemeData,
+} from '../../theme-data.js'
 import { presetStyleSheet } from '../theme-presets.js'
 
 declare global {
@@ -34,7 +39,15 @@ export function themeFileCss(data: ThemeData, theme: DocSystemTheme): string {
     ...data,
     base: { ...(theme as Record<string, string>), ...(data.base ?? {}) },
   }
-  return css(themeStyleSheet(resolveTheme(merged, docSystemThemeGenerator)))
+  const resolved = resolveTheme(merged, docSystemThemeGenerator)
+  // The editor leaves an unsafe value out as it is typed; a saved one fails the build.
+  const unsafe = unsafeThemeValues(resolved)
+  if (unsafe.length) {
+    throw new Error(
+      `the theme file has values that are not plain CSS values (a brace, a comment, a stray ; or unbalanced brackets): ${unsafe.join(', ')}`
+    )
+  }
+  return css(themeStyleSheet(resolved))
 }
 
 export async function generateCss(

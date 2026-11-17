@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=3e1467b279b0" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=80950e01ad23" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-11T09:26:38+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-17T19:21:04.391Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=b38f0e2dbe7f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=7f9917fde603" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -371,6 +371,16 @@ for the authoritative typed definition.</p>
 <td>base colors (palette derived from <code>accent</code>)</td>
 </tr>
 <tr>
+<td><code>themeFile</code></td>
+<td>—</td>
+<td>a JSON theme saved by the theme editor (see &quot;Themes&quot; below)</td>
+</tr>
+<tr>
+<td><code>themePresets</code></td>
+<td><code>false</code></td>
+<td>offer the Style presets (Original, Glass, Material) in the settings menu</td>
+</tr>
+<tr>
 <td><code>localizedStrings</code></td>
 <td>—</td>
 <td>TSV table for the language picker</td>
@@ -388,6 +398,32 @@ The same <code>logo</code> is accepted by <code>createDocBrowser({ logo })</code
 (<code>.logo-mark</code>), so retune them with one CSS variable each rather than editing the
 build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-mark-gap</code> (default
 10px).</p>
+<h3 id="themes">Themes</h3>
+<p><code>theme</code> sets the base colours (<code>accent</code>, <code>background</code>, <code>text</code>, and optionally <code>codeBg</code>,
+<code>inputBg</code>, <code>buttonBg</code>); everything else derives from them. Most derived colours are written as
+<code>color-mix()</code> and relative colour syntax over those roots, so they follow a root wherever it
+changes, and dark mode inverts only the roots and lifts the brand. The corner radii
+(<code>--button-radius</code>, <code>--input-radius</code>, <code>--quote-radius</code>, <code>--code-radius</code>) are plain lengths, not
+multiples of <code>--spacing</code>.</p>
+<p><strong><code>themeFile</code></strong> names a JSON file of <a href="/theme-data/">theme data</a>, such as <code>&#39;site-theme.json&#39;</code>.
+It need not exist yet: an absent file is an unsaved theme. The build writes it into the site&#39;s
+stylesheet, so a saved theme paints on first load with no flash, and links its web fonts from
+every page. A file that does not parse fails the build.</p>
+<p>In an editing session (the same gate as save-to-source: this machine, an edit session over the
+tunnel, or the LAN under <code>trustLan</code>), the settings menu offers <strong>Theme Editor…</strong>, a floating
+<a href="/theme-editor/"><code>&lt;tosi-theme-editor&gt;</code></a> that previews as you edit and saves back to the file
+through <code>/__docstore/source</code>. Only a <code>.json</code> file inside the project can be the theme file, never
+a dot-path or a name tools read as configuration (<code>package.json</code>, <code>tsconfig.json</code>, …), and a
+save must be a JSON object. A <code>themeFile</code> that breaks those rules gets a warning at launch and no
+editor. A deployed site has no source endpoint, so the item never appears there.</p>
+<p><code>DEV_THEME_FILE</code> makes the dev server read and save the theme somewhere else (the same rules
+apply) without changing what the build writes: the Playwright lane uses it to keep test saves
+out of the repository.</p>
+<p><strong><code>themePresets: true</code></strong> adds a <strong>Style</strong> submenu offering Original, Glass and Material (see
+<a href="/theme-presets/">theme presets</a>). Their CSS is in the stylesheet, scoped to a <code>tosi-style-*</code>
+class that the head script sets before first paint. A reader&#39;s Style wins over the site&#39;s theme
+wherever they set the same variable; the theme editor&#39;s <strong>Load preset…</strong> copies a preset into
+the theme being edited, and takes the reader&#39;s Style off the page while it is open.</p>
 <h3 id="accessibility-opt-in">Accessibility (opt-in)</h3>
 <table>
 <thead>
@@ -569,6 +605,21 @@ something you review before it becomes authored text. Return nothing to leave an
 <td><code>exampleTabs</code></td>
 <td>all</td>
 <td>the tabs an example&#39;s code panel shows: <code>&#39;js&#39;</code>, <code>&#39;html&#39;</code>, <code>&#39;css&#39;</code>, <code>&#39;test&#39;</code>, <code>&#39;console&#39;</code>, <code>&#39;chat&#39;</code>. Under <code>&#39;no-code&#39;</code> the default is <code>[&#39;html&#39;, &#39;css&#39;, &#39;chat&#39;]</code>. A fence overrides it with <code>{&quot;tabs&quot;: [...]}</code></td>
+</tr>
+<tr>
+<td><code>exampleConsole</code></td>
+<td><code>true</code></td>
+<td>live examples get a Console tab: what the example logs, and a REPL in its scope. <code>false</code> turns it off site-wide (logs still reach devtools); one example opts out with <code>{&quot;console&quot;: false}</code></td>
+</tr>
+<tr>
+<td><code>dialects</code></td>
+<td>—</td>
+<td>the live-example dialects your bundle registers with <code>registerDialect</code> (<code>[&#39;ajs&#39;]</code>, or a built-in you replace such as <code>[&#39;tjs&#39;]</code>). Declared, the build treats them as live examples too (the static highlighter leaves them alone, and a replaced built-in is not checked or pre-transpiled), and the page reports a declared dialect nobody registered</td>
+</tr>
+<tr>
+<td><code>importResolver</code></td>
+<td><code>false</code></td>
+<td>experimental: a service worker that lets live examples import npm packages by bare specifier, resolved and cached under a prefix (<code>true</code> uses <code>prefix: &#39;/lib/&#39;</code>, or pass an object). See <code>import-resolver-plan.md</code></td>
 </tr>
 <tr>
 <td><code>exampleView</code></td>
@@ -786,6 +837,11 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <td><code>idleTimeoutHours</code></td>
 <td><code>8</code></td>
 <td>exit after this long with no request and no rebuild; <code>0</code> disables (see below); also <code>DEV_IDLE_TIMEOUT_HOURS</code></td>
+</tr>
+<tr>
+<td><code>preflight</code></td>
+<td><code>&#39;fail&#39;</code></td>
+<td>machine-health check before each build and at dev-server launch, refusing to add load to a machine that is already dying; <code>&#39;warn&#39;</code> prints and proceeds, <code>false</code>/<code>&#39;off&#39;</code> skips it (also <code>DEV_SKIP_PREFLIGHT=1</code>). A failure is only a warning in CI and when stdout is not a TTY</td>
 </tr>
 <tr>
 <td><code>audit</code></td>
@@ -2753,6 +2809,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-zafnzt7n.js"></script>
+  <script type="module" src="hydrate-098d6vmq.js"></script>
 </body>
 </html>

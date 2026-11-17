@@ -71,7 +71,7 @@ Its value is a string, its `change` event says the value changed, and `variables
 form may refer to (`{ name, label?, kind }`, names without the dashes). The relative-colour
 forms (Adjust, Text on) appear only where the browser supports relative colour syntax.
 */
-/*{ "parent": "Helper Libraries", "description": "<tosi-css-value> edits a CSS value as what it is: a colour, another variable, that variable lightened or mixed, a contrast colour, a scaled length or any expression — written as live CSS." }*/
+/*{ "parent": "Helper Libraries", "description": "<tosi-css-value> edits a CSS value as what it is: a colour, another variable, a mix, a contrast colour, a scaled length or an expression, as live CSS." }*/
 import { elements, varDefault, withAttributes, } from 'tosijs';
 import { COLOR_KEYWORDS, CSS_VALUE_FORMS, formatCssValue, operandName, parseCssValue, startForm, } from './css-value-forms.js';
 const { div, select, option, input, span } = elements;

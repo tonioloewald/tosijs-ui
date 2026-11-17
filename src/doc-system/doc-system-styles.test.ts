@@ -7,7 +7,7 @@ import {
   docSystemThemeGenerator,
   readableOn,
 } from './doc-system-styles.js'
-import { resolveTheme } from '../theme-data.js'
+import { deriveTheme, resolveTheme } from '../theme-data.js'
 import {
   chainDuration,
   chainElevation,
@@ -386,5 +386,48 @@ describe('chain readers reproduce the stock look on the chain defaults', () => {
     expect(chainElevation.high('0 2px 8px #0006')).toBe(
       'var(--tosi-elevation-high, 0 2px 8px #0006)'
     )
+  })
+})
+
+describe('the doc theme in every mode', () => {
+  test('a gradient tuned in light is inverted in dark, stops and all', () => {
+    const full = deriveTheme(
+      {
+        base: {},
+        modes: {
+          light: {
+            'tosi-backdrop': 'linear-gradient(160deg, #ffffff, #eeeeee)',
+          },
+        },
+      },
+      docSystemThemeGenerator
+    )
+    const stops = (value: string) =>
+      [...value.matchAll(/#[0-9a-f]{6}/gi)].map(
+        ([hex]) => Color.fromCss(hex).brightness
+      )
+    expect(full.light['tosi-backdrop']).toContain('#ffffff')
+    for (const mode of ['dark', 'darkHighContrast']) {
+      expect(full[mode]['tosi-backdrop']).toContain('linear-gradient(160deg')
+      for (const brightness of stops(full[mode]['tosi-backdrop']))
+        expect(brightness).toBeLessThan(0.2)
+    }
+  })
+
+  test('dark high contrast has what was tuned for dark, unless it tunes its own', () => {
+    const full = deriveTheme(
+      {
+        base: {},
+        modes: {
+          dark: { 'tosi-backdrop': '#101820', 'nav-bg': '#000000' },
+          darkHighContrast: { 'nav-bg': '#111111' },
+        },
+      },
+      docSystemThemeGenerator
+    )
+    expect(full.darkHighContrast['tosi-backdrop']).toBe('#101820')
+    expect(full.darkHighContrast['nav-bg']).toBe('#111111')
+    // High contrast is a variation on light, and dark's values stay out of it.
+    expect(full.highContrast['tosi-backdrop']).not.toBe('#101820')
   })
 })

@@ -10,6 +10,10 @@ Saving writes the file through the same endpoint as save-to-source; the watcher 
 the build writes the theme into the site's stylesheet, so the next load paints it first time.
 Closing without saving takes the preview away and leaves the page on the saved theme, fonts
 included.
+
+While it is open, the reader's Style preset (Glass, Material) is taken off the page and put back
+on close: a preset's rules win over the site's theme, so with one on, an edit would not show.
+To build on a preset, load it in the editor.
 */
 
 import { StyleSheet, elements } from 'tosijs'
@@ -84,6 +88,21 @@ export async function saveTheme(
 
 let open: TosiFloat | null = null
 let styled = false
+
+/** Whether the panel is open: the doc system leaves the Style preset off meanwhile. */
+export const themeEditorOpen = (): boolean => !!open?.isConnected
+
+const isStyleClass = (name: string) => name.startsWith('tosi-style-')
+
+/** Take the Style preset's classes off the page; returns what puts them back. */
+function suspendStylePreset(): () => void {
+  const removed = [document.documentElement, document.body].map((element) => {
+    const names = [...element.classList].filter(isStyleClass)
+    element.classList.remove(...names)
+    return () => element.classList.add(...names)
+  })
+  return () => removed.forEach((restore) => restore())
+}
 
 // Fixed colours, like the editor's own: no theme being edited can make the panel unreadable.
 const panelStyles = {
@@ -163,6 +182,7 @@ export async function openThemeEditor(site: ThemeEditorSite): Promise<void> {
   let saved = JSON.stringify(value)
 
   const close = () => {
+    restoreStylePreset()
     document.getElementById(THEME_PREVIEW_STYLE_ID)?.remove()
     // Back to the saved theme's fonts, which the page's own links were.
     applyThemeFonts((JSON.parse(saved) as ThemeData).fonts)
@@ -212,6 +232,7 @@ export async function openThemeEditor(site: ThemeEditorSite): Promise<void> {
       button({ onClick: save }, 'Save')
     )
   ) as TosiFloat
+  const restoreStylePreset = suspendStylePreset()
   open = panel
   document.body.append(panel)
 }

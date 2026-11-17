@@ -95,10 +95,19 @@ another mode writes, since mode selectors can match together. Pass `selectors` t
 somewhere else, such as a scoped part of the page.
 
 **No generator.** A design system whose CSS derives its own variables (most do) needs no
-generator: pass `null`, and pass `page`, what its CSS declares in each mode
-(`discoverThemeVariables` finds it), so a derived mode has roots to transform. A mode with no
-`derive`, or one the page's CSS declares itself, is then just what the page declares, plus
-what you tune: the page's own dark mode is not second-guessed.
+generator: pass `null`, and pass `page`, what its CSS declares in each mode, so a derived mode
+has roots to transform. A mode with no `derive`, or one the page's CSS declares itself, is then
+just what the page declares, plus what you tune: the page's own dark mode is not second-guessed.
+`discoverThemeVariables` finds the page's variables and `declaredValues` turns them into `page`;
+both come from `tosijs-ui/theme-discovery`, not the package root:
+
+```typescript
+import { applyThemeData, THEME_MODE_SELECTORS } from 'tosijs-ui'
+import { declaredValues, discoverThemeVariables } from 'tosijs-ui/theme-discovery'
+
+const found = discoverThemeVariables('md-sys-*', { selectors: THEME_MODE_SELECTORS })
+applyThemeData(theme, null, { page: declaredValues(found) })
+```
 
 ## Web fonts
 
@@ -108,19 +117,26 @@ page's `<head>`. Only `fonts.googleapis.com` and `fonts.bunny.net` are accepted,
 stylesheet injects CSS. `parseFontImport` takes whatever Google Fonts offers you to copy (a
 `<link>`, an `@import` line, or the URL) and returns the URL and its families.
 
+Values are checked too: a theme is data, never CSS of its own. A variable name is letters,
+digits, `-` and `_`, and a value that could close its rule (a brace, a comment, a `;` outside
+brackets or quotes, unbalanced brackets or quotes) is left out of the stylesheet; the doc site's
+build fails on one in a saved theme file. Treat a theme from someone you do not trust as you
+would their images: it can still change how your page looks.
+
 ## Generators
 
 A generator says which base values there are, and turns them into each mode's variables:
 
 - `componentThemeGenerator` is the tosijs-ui component theme (`createTheme`), with base values
   `accent`, `background` and `text`;
-- the doc system has its own, `docSystemThemeGenerator`, which its theme editor uses.
+- the doc system has its own, `docSystemThemeGenerator` (from
+  `tosijs-ui/doc-system/doc-system-styles`), which its theme editor uses.
 
 Variable names are CSS custom properties without the leading dashes: `tosi-accent`, not
 `--tosi-accent` or `tosiAccent`.
 */
 
-/*{ "parent": "Helper Libraries", "description": "A theme as plain JSON data: base colours generate light, dark, high-contrast and any declared modes, values tuned by hand win, and one stylesheet applies it." }*/
+/*{ "parent": "Helper Libraries", "description": "A theme as plain JSON: base colours generate light, dark, high-contrast and declared modes, hand-tuned values win, and one stylesheet applies it." }*/
 
 import { Color, XinStyleRule, XinStyleSheet, invertLuminance } from 'tosijs'
 import { createTheme, readableOn, replaceStyleSheet } from './theme.js'
@@ -350,6 +366,19 @@ const mapColors = (
   return out
 }
 
+/**
+ * The values among `values` that hold colours without being one (a gradient's stops), with those
+ * colours' luminance inverted: what `invertedColors` leaves out.
+ */
+export function invertedColorsWithin(values: ThemeValues): ThemeValues {
+  return mapColors(
+    Object.fromEntries(
+      Object.entries(values).filter(([, value]) => !isColor(value))
+    ),
+    (color) => color.inverseLuminance
+  )
+}
+
 const pushedApart = (l: number): number => (l < 0.5 ? l / 2 : 1 - (1 - l) / 2)
 
 interface ModeState {
@@ -430,6 +459,19 @@ export interface ThemeModeOptions {
   page?: Record<ThemeMode, ThemeValues>
 }
 
+/** The modes `spec` is made from, nearest first. */
+function ancestors(spec: ThemeModeSpec, modes: ThemeModeSpec[]): ThemeMode[] {
+  const out: ThemeMode[] = []
+  let current: ThemeModeSpec | undefined = spec
+  while (current && current !== modes[0]) {
+    const from: ThemeMode = current.from ?? modes[0].name
+    if (out.includes(from)) break
+    out.push(from)
+    current = modes.find((each) => each.name === from)
+  }
+  return out
+}
+
 /**
  * Every mode's values, in full: generated or derived, then what the page declares for the mode,
  * then the hand-tuned values on top.
@@ -468,9 +510,22 @@ export function deriveTheme(
       (state, transform) => transformed(state, transform, generator),
       from
     )
+    /*
+    A variant is also the mode it varies: dark high contrast is made from high contrast, but what
+    was tuned for dark (a dark backdrop, say) belongs in it too, or light's would show through.
+    Not when the varied mode is what it is made from, whose values it already has.
+    */
+    const varies = spec.variant?.of
+    const layered =
+      varies && !ancestors(spec, modes).includes(varies) ? tuned[varies] : {}
     states.set(spec.name, {
       base: made.base,
-      values: { ...made.values, ...page[spec.name], ...tuned[spec.name] },
+      values: {
+        ...made.values,
+        ...page[spec.name],
+        ...layered,
+        ...tuned[spec.name],
+      },
     })
   }
   return Object.fromEntries(
@@ -531,6 +586,55 @@ const outranking = (selector: string): string =>
     .join(', ')
 
 /** The stylesheet for a theme: each mode's variables under its selector. */
+/*
+A theme is data, and data must not become CSS of its own: a value like `red;} body{display:none}`
+would close the rule and write new ones. A name is letters, digits, `-` and `_`; a value has no
+braces, no comment, no `</`, and no `;` outside brackets or quotes, and its brackets and quotes
+balance (a `;` inside `url(data:…;base64,…)` is part of the value).
+*/
+const SAFE_NAME = /^[A-Za-z0-9_-]+$/
+
+/** Whether `value` stays one declaration's value, whatever rule it is written into. */
+export function isSafeCssValue(value: string): boolean {
+  if (/[{}\n\r]|\/\*|\*\/|<\//.test(value)) return false
+  let quote = ''
+  let depth = 0
+  for (let i = 0; i < value.length; i++) {
+    const c = value[i]
+    if (c === '\\') {
+      i++
+    } else if (quote) {
+      if (c === quote) quote = ''
+    } else if (c === '"' || c === "'") {
+      quote = c
+    } else if (c === '(' || c === '[') {
+      depth++
+    } else if (c === ')' || c === ']') {
+      if (--depth < 0) return false
+    } else if (c === ';' && depth === 0) {
+      return false
+    }
+  }
+  return !quote && depth === 0
+}
+
+/** The declarations among `resolved` that could escape their rule, as `mode: name`. */
+export function unsafeThemeValues(
+  resolved: Record<ThemeMode, ThemeValues>
+): string[] {
+  return Object.entries(resolved).flatMap(([mode, values]) =>
+    Object.entries(values)
+      .filter(
+        ([name, value]) => !SAFE_NAME.test(name) || !isSafeCssValue(value)
+      )
+      .map(([name]) => `${mode}: ${name}`)
+  )
+}
+
+/**
+ * The stylesheet for `resolved`. A declaration that could escape its rule (see
+ * `unsafeThemeValues`) is left out, so a half-typed `url(` in an editor applies nothing yet.
+ */
 export function themeStyleSheet(
   resolved: Record<ThemeMode, ThemeValues>,
   selectors: Partial<Record<ThemeMode, string>> = {},
@@ -543,7 +647,8 @@ export function themeStyleSheet(
     if (!selector) throw new Error(`theme mode "${mode}" has no selector`)
     const rule: XinStyleRule = {}
     for (const [name, value] of Object.entries(values)) {
-      rule[ruleKey(name)] = value
+      if (SAFE_NAME.test(name) && isSafeCssValue(value))
+        rule[ruleKey(name)] = value
     }
     if (Object.keys(rule).length) sheet[outranking(selector)] = rule
   }

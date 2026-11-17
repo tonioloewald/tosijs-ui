@@ -60,6 +60,7 @@ export { contrastRatio, readableOn } from '../theme.js'
 import { readableOn } from '../theme.js'
 import {
   invertedColors,
+  invertedColorsWithin,
   ruleValues,
   type ThemeGenerator,
   type ThemeValues,
@@ -898,12 +899,14 @@ export const docSystemThemeGenerator: ThemeGenerator = {
   dark: (base, light) => {
     const spec = docSystemStyleSpec(base, { fontImport: false })
     const generated = docThemeVariables(spec[':root'])
-    // Colours tuned by hand in light carry into dark, inverted like the generated ones.
+    // Colours tuned by hand in light carry into dark, inverted like the generated ones, and so
+    // do the colours inside a tuned value (a gradient's stops).
     const tuned = Object.fromEntries(
       Object.entries(light).filter(([name, value]) => generated[name] !== value)
     )
     return {
       ...docThemeVariables(spec['.darkmode']),
+      ...invertedColorsWithin(tuned),
       ...invertedColors(tuned),
     }
   },
