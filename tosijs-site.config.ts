@@ -71,6 +71,20 @@ export default defineSiteConfig({
   themeFile: 'tosijs-theme.json',
   themePresets: true,
 
+  audit: {
+    allow: [
+      {
+        // Published 2026-11-17 against every picomatch release (<=4.0.7, the latest), so there
+        // is nothing to pin to yet. It reaches us only through typescript-eslint's tinyglobby
+        // (lint tooling), and it is a ReDoS: nothing a reader's browser or a build output runs.
+        advisory: 'GHSA-fc5q-39xc-vjpf',
+        reason:
+          'no patched picomatch exists yet; build-only (typescript-eslint → tinyglobby), DoS-only',
+        expires: '2026-12-01',
+      },
+    ],
+  },
+
   // On `bun start`, open (or bring to front) this project's browser tab once the
   // server is up — reusing the tab keyed on the dev origin, so restarts don't pile
   // up tabs. macOS reuse is via AppleScript (one-time automation prompt). Override
