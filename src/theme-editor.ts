@@ -19,6 +19,19 @@ const editor = tosiThemeEditor({
   variables: [
     { name: 'tosi-border-radius', kind: 'length', label: 'Corners', group: 'Shape' },
     { name: 'tosi-spacing', kind: 'length', label: 'Spacing', group: 'Shape' },
+    { name: 'tosi-font-family', kind: 'font-family', label: 'Font', group: 'Type' },
+    { name: 'tosi-font-size', kind: 'length', label: 'Size', group: 'Type' },
+  ],
+  presets: [
+    { name: 'plain', label: 'Plain', theme: null },
+    {
+      name: 'rounded',
+      label: 'Rounded',
+      theme: {
+        base: { accent: '#7a3cc4' },
+        modes: { light: { 'tosi-border-radius': '16px', 'tosi-spacing': '16px' } },
+      },
+    },
   ],
 })
 const sample = document.createElement('div')
@@ -42,6 +55,8 @@ preview.append(editor, sample)
   border-radius: var(--tosi-border-radius);
   background: var(--tosi-bg);
   color: var(--tosi-text);
+  font-family: var(--tosi-font-family);
+  font-size: var(--tosi-font-size);
 }
 .theme-editor-demo button {
   border: none;
@@ -52,6 +67,8 @@ preview.append(editor, sample)
 }
 ```
 ```test
+import { deriveTheme } from 'tosijs-ui'
+
 test('editing a base colour or a variable applies it, and a tuned value can be reset', async () => {
   const editor = preview.querySelector('tosi-theme-editor')
   // The fields exist once the editor has rendered, and so do their listeners.
@@ -67,32 +84,49 @@ test('editing a base colour or a variable applies it, and a tuned value can be r
     control.value = value
     control.dispatchEvent(new Event('change', { bubbles: true }))
   }
+  // The editor starts on the mode the page is in, so a dark page edits dark mode.
+  const { mode } = editor
   edit('accent', '#0064d2')
   // The variable, not the button's colour, which is mid-transition at this instant.
-  expect(getComputedStyle(sample).getPropertyValue('--tosi-accent')).toBe('#0064d2')
+  const accent = deriveTheme(editor.value, editor.generator, { modes: editor.modes })[mode]['tosi-accent']
+  if (mode === 'light') expect(accent).toBe('#0064d2')
+  expect(getComputedStyle(sample).getPropertyValue('--tosi-accent')).toBe(accent)
   const radius = () => getComputedStyle(sample).getPropertyValue('--tosi-border-radius')
   edit('tosi-border-radius', '12px')
   expect(radius()).toBe('12px')
-  expect(editor.value.modes.light['tosi-border-radius']).toBe('12px')
+  expect(editor.value.modes[mode]['tosi-border-radius']).toBe('12px')
   editor.shadowRoot.querySelector('[data-name="tosi-border-radius"] .reset').click()
-  expect(editor.value.modes.light['tosi-border-radius']).toBe(undefined)
+  expect(editor.value.modes[mode]['tosi-border-radius']).toBe(undefined)
   expect(radius()).toBe('4px')
 })
 ```
 
 ## Modes
 
-The mode buttons choose which mode you are editing: by default light, dark, high contrast, and
-dark high contrast. Pass `modes` (a `ThemeModeSpec[]`, see [theme data](/theme-data/)) for a
-theme's own, such as a tinted or monochrome mode; with only `selectors`, the editor offers the
-modes those name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
+The mode menu and the **High contrast** checkbox choose which mode you are editing. Light and
+dark are the menu, and high contrast goes with either, so the four default modes (light, dark,
+high contrast, dark high contrast) are two choices rather than four buttons. Each of the four
+keeps its own tuned values.
+
+Pass `modes` (a `ThemeModeSpec[]`, see [theme data](/theme-data/)) for a theme's own, such as a
+tinted or monochrome mode: a mode joins the menu, unless its `variant` says it is a variation on
+another mode, which makes it a checkbox. With only `selectors`, the editor offers the modes those
+name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
 mode only, marked with a dot, and stays put when the base colours change. The ↺ button puts it
 back to the generated value.
 
-Editing a mode previews it: the editor shows the page in that mode while you work, by setting
-the mode's `classes` on `<html>` and `<body>` (the doc system's `darkmode` and `high-contrast`
-for the default modes), and puts them back when it is removed.
+The editor starts on the mode the page is in, so a reader in dark mode edits dark mode, unless
+you set `mode`. Choosing a mode previews it: the editor shows the page in that mode while you
+work, by setting the mode's `classes` on `<html>` and `<body>` (the doc system's `darkmode` and
+`high-contrast` for the default modes), and puts them back when it is removed.
 Set `previewModes` to `false` to leave the page alone.
+
+## Presets
+
+Pass `presets` (`ThemePreset[]`: a `name`, a `label` and a `theme`) and a **Load preset…** menu
+appears at the top, as in the example above. Loading one replaces the theme being edited with a copy of the
+preset's, which you then tune like any other; a preset whose `theme` is null loads an empty
+theme. The doc site's theme editor offers its Original, Glass and Material presets this way.
 
 ## Declaring variables
 
@@ -118,6 +152,7 @@ its control:
   to apply nothing.
 - `selectors`: per-mode selectors for that stylesheet (see theme data).
 - `modes`: the theme's modes (`THEME_MODE_SPECS` by default).
+- `presets`: what the Load preset menu offers (none by default, and the menu is hidden).
 - A `change` event fires on every edit.
 
 The editor is styled with fixed colours in its shadow DOM, so no theme you make can make it
@@ -139,6 +174,7 @@ import {
   ThemeGenerator,
   ThemeMode,
   ThemeModeSpec,
+  ThemePreset,
   ThemeValues,
   ThemeVariable,
   applyThemeData,
@@ -218,6 +254,17 @@ export class TosiThemeEditor extends withAttributes({
   private _variables: ThemeVariable[] | string | RegExp = []
   private _selectors: Partial<Record<ThemeMode, string>> = {}
   private _modes: ThemeModeSpec[] | null = null
+  private _presets: ThemePreset[] = []
+
+  /** what the Load preset menu offers; it is hidden when there are none */
+  get presets(): ThemePreset[] {
+    return this._presets
+  }
+  set presets(presets: ThemePreset[] | null) {
+    this._presets = presets ?? []
+    this.builtFor = ''
+    this.queueRender()
+  }
 
   /** the theme being edited */
   get value(): ThemeData {
@@ -390,24 +437,23 @@ export class TosiThemeEditor extends withAttributes({
     ':host .modes': {
       display: 'flex',
       flexWrap: 'wrap',
-      gap: '4px',
+      alignItems: 'center',
+      gap: '6px 12px',
       marginBottom: '8px',
     },
-    ':host .modes button': {
-      flex: '1 1 auto',
-      padding: '4px 6px',
-      border: '1px solid #bbb',
-      borderRadius: '4px',
-      background: '#f5f5f5',
-      color: '#222',
-      font: 'inherit',
+    ':host .modes select': { flex: '1 1 auto', width: 'auto' },
+    ':host [part="presets"]': {
+      display: 'block',
+      width: '100%',
+      marginBottom: '8px',
+    },
+    ':host .variant': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '4px',
       cursor: 'pointer',
     },
-    ':host .modes button[aria-pressed="true"]': {
-      background: '#222',
-      borderColor: '#222',
-      color: '#fff',
-    },
+    ':host .variant:has(input:disabled)': { color: '#888', cursor: 'default' },
     ':host h3': {
       fontSize: '11px',
       textTransform: 'uppercase',
@@ -556,6 +602,10 @@ export class TosiThemeEditor extends withAttributes({
 
   private handleInput = (event: Event): void => {
     const target = event.target as HTMLInputElement | HTMLSelectElement
+    if (target.closest('[part="modes"]')) {
+      this.pickMode()
+      return
+    }
     const field = target.closest('.field') as HTMLElement | null
     if (!field) return
     const { name, scope } = field.dataset as { name: string; scope: string }
@@ -589,12 +639,6 @@ export class TosiThemeEditor extends withAttributes({
 
   private handleClick = (event: Event): void => {
     const target = event.target as HTMLElement
-    const modeButton = target.closest('[data-mode]') as HTMLElement | null
-    if (modeButton) {
-      this.previewing = true
-      this.mode = modeButton.dataset.mode!
-      return
-    }
     if (target.closest('[part="fontAdd"]')) {
       this.addFont()
       return
@@ -651,6 +695,71 @@ export class TosiThemeEditor extends withAttributes({
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
+  /** Replace the theme with a preset's (a copy: editing it leaves the preset alone). */
+  loadPreset = (name: string): void => {
+    const preset = this.presets.find((each) => each.name === name)
+    if (!preset) return
+    this._value = preset.theme
+      ? (JSON.parse(JSON.stringify(preset.theme)) as ThemeData)
+      : { base: {} }
+    this._value.base ??= {}
+    this.update()
+    this.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+
+  private handlePreset = (): void => {
+    const menu = this.parts.presets as HTMLSelectElement
+    this.loadPreset(menu.value)
+    // A menu of actions, not a setting: it goes back to its prompt.
+    menu.value = ''
+  }
+
+  /** The modes the mode menu offers: every mode that is not a variant of another. */
+  private menuModes(): ThemeModeSpec[] {
+    return this.modes.filter((spec) => !spec.variant)
+  }
+
+  /** The variant checkboxes: one per variant label, in the order the modes give them. */
+  private variantLabels(): string[] {
+    return [
+      ...new Set(
+        this.modes.flatMap((spec) => (spec.variant ? [spec.variant.label] : []))
+      ),
+    ]
+  }
+
+  /** The mode the menu and the checkboxes name together. */
+  private pickMode(): void {
+    const menu = this.parts.modes.querySelector('select') as HTMLSelectElement
+    const checked = [
+      ...this.parts.modes.querySelectorAll<HTMLInputElement>(
+        'input[type="checkbox"]:checked:not(:disabled)'
+      ),
+    ].map((box) => box.value)
+    const variant = this.modes.find(
+      (spec) =>
+        spec.variant?.of === menu.value && checked.includes(spec.variant.label)
+    )
+    this.previewing = true
+    this.mode = variant?.name ?? menu.value
+  }
+
+  /** The mode the page is in: the one whose classes it has, the most specific first. */
+  private pageMode(): ThemeMode {
+    const has = (name: string) =>
+      document.documentElement.classList.contains(name) ||
+      document.body.classList.contains(name)
+    const modeClasses = this.modeClasses().filter(has)
+    const matches = this.modes.filter((spec) => {
+      const classes = spec.classes ?? []
+      return (
+        classes.every(has) &&
+        modeClasses.every((name) => classes.includes(name))
+      )
+    })
+    return (matches[0] ?? this.modes[0]).name
+  }
+
   /*
   Follow a colour well while it is dragged, and a length while its arrows are clicked or its
   arrow keys held, without waiting for `change` (which comes on blur).
@@ -668,7 +777,8 @@ export class TosiThemeEditor extends withAttributes({
   content = () => [
     div(
       { part: 'fields', class: 'fields' },
-      div({ part: 'modes', class: 'modes', role: 'group', ariaLabel: 'Mode' }),
+      select({ part: 'presets', ariaLabel: 'Load a preset', hidden: true }),
+      div({ part: 'modes', class: 'modes' }),
       div({ part: 'base' }),
       div(
         { part: 'fontsSection', hidden: true },
@@ -854,12 +964,38 @@ export class TosiThemeEditor extends withAttributes({
     const modes = this.modes
     // One mode is nothing to choose between.
     ;(this.parts.modes as HTMLElement).hidden = modes.length < 2
+    // Light or dark is the menu; high contrast is a checkbox, since it goes with either.
+    const shown = current.variant?.of ?? mode
+    const variants = modes.filter((spec) => spec.variant?.of === shown)
     this.parts.modes.replaceChildren(
-      ...modes.map((each) =>
-        button(
-          { dataMode: each.name, ariaPressed: String(each.name === mode) },
-          each.label ?? each.name
+      select(
+        { ariaLabel: 'Mode' },
+        ...this.menuModes().map((each) =>
+          option(
+            { value: each.name, selected: each.name === shown },
+            each.label ?? each.name
+          )
         )
+      ),
+      ...this.variantLabels().map((text) =>
+        label(
+          { class: 'variant' },
+          input({
+            type: 'checkbox',
+            value: text,
+            checked: current.variant?.label === text,
+            disabled: !variants.some((spec) => spec.variant!.label === text),
+          }),
+          text
+        )
+      )
+    )
+    const presetMenu = this.parts.presets as HTMLSelectElement
+    presetMenu.hidden = !this.presets.length
+    presetMenu.replaceChildren(
+      option({ value: '', disabled: true, selected: true }, 'Load preset…'),
+      ...this.presets.map((preset) =>
+        option({ value: preset.name }, preset.label)
       )
     )
     const generator = this.generator
@@ -1002,6 +1138,7 @@ export class TosiThemeEditor extends withAttributes({
     fields.addEventListener('input', this.handleLiveInput)
     fields.addEventListener('click', this.handleClick)
     this.parts.reset.addEventListener('click', this.resetAll)
+    this.parts.presets.addEventListener('change', this.handlePreset)
     ;(this.parts.fontInput as HTMLInputElement).addEventListener(
       'keydown',
       this.handleFontKey
@@ -1053,6 +1190,8 @@ export class TosiThemeEditor extends withAttributes({
         this.modeClasses().filter((name) => element.classList.contains(name)),
       ])
     )
+    // Unless told otherwise, edit the mode the reader is looking at.
+    if (this.mode === this.modes[0].name) this.mode = this.pageMode()
   }
 
   disconnectedCallback(): void {

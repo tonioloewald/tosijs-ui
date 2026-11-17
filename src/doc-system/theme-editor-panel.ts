@@ -20,6 +20,7 @@ import {
   DOC_SYSTEM_THEME_VARIABLES,
   docSystemThemeGenerator,
 } from './doc-system-styles.js'
+import { DOC_THEME_PRESETS } from './theme-presets.js'
 import {
   hasSourceEndpoint,
   sourceAccess,
@@ -155,6 +156,7 @@ export async function openThemeEditor(site: ThemeEditorSite): Promise<void> {
       defaults: { ...docSystemThemeGenerator.defaults, ...(site.theme ?? {}) },
     },
     variables: DOC_SYSTEM_THEME_VARIABLES,
+    presets: DOC_THEME_PRESETS,
     value,
   }) as TosiThemeEditor
   const status = span({ class: 'theme-panel-status', role: 'status' })

@@ -1,14 +1,7 @@
 import type { XinStyleSheet } from 'tosijs';
-import { type ThemeData } from '../theme-data.js';
+import { type ThemePreset } from '../theme-data.js';
 import { type DocSystemTheme } from './doc-system-styles.js';
-export interface ThemePreset {
-    /** what it is stored under, and its class: `glass` → `tosi-style-glass` */
-    name: string;
-    /** what the menu calls it */
-    label: string;
-    /** the overrides; null for the theme as it stands */
-    theme: ThemeData | null;
-}
+export type { ThemePreset };
 /** The presets the doc site offers. */
 export declare const DOC_THEME_PRESETS: ThemePreset[];
 /** The class that selects a preset, on `<html>` and `<body>`. */

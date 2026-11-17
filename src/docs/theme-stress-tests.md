@@ -269,14 +269,16 @@ test('the glass variables are found; a translucent link keeps its alpha', async 
 })
 test('a declared mode derives the roots, and the mixes follow', async () => {
   const editor = preview.querySelector('tosi-theme-editor')
-  while (!editor.shadowRoot?.querySelector('[data-mode="mono"]')) {
+  while (!editor.shadowRoot?.querySelector('[part="modes"] option[value="mono"]')) {
     await new Promise((resolve) => requestAnimationFrame(resolve))
   }
   const demo = preview.querySelector('.glass-demo')
   const variable = (name) => getComputedStyle(demo).getPropertyValue(`--${name}`).trim()
   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
   const pick = async (mode) => {
-    editor.shadowRoot.querySelector(`[data-mode="${mode}"]`).click()
+    const menu = editor.shadowRoot.querySelector('[part="modes"] select')
+    menu.value = mode
+    menu.dispatchEvent(new Event('change', { bubbles: true }))
     while (!document.body.classList.contains(`glass-${mode}`) && mode !== 'light') await frame()
     await frame()
   }

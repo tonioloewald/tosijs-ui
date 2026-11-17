@@ -44,12 +44,19 @@ test('typing a value applies it, and a mode button previews that mode', async ({
 
   // Mounting changed nothing; picking a mode previews it.
   await expect(page.locator('html')).not.toHaveClass(/high-contrast/)
-  await editor.locator('[data-mode="highContrast"]').click()
+  // Light or dark is a menu; high contrast is a checkbox that goes with either.
+  const contrast = editor.getByRole('checkbox', { name: 'High contrast' })
+  await contrast.check()
   await expect(page.locator('html')).toHaveClass(/high-contrast/)
-  await expect(editor.locator('[data-mode="highContrast"]')).toHaveAttribute(
-    'aria-pressed',
-    'true'
-  )
+  await expect(page.locator('html')).not.toHaveClass(/darkmode/)
+  await editor.getByRole('combobox', { name: 'Mode' }).selectOption('dark')
+  await expect(page.locator('html')).toHaveClass(/darkmode/)
+  await expect(page.locator('html')).toHaveClass(/high-contrast/)
+  await expect(contrast).toBeChecked()
+  await contrast.uncheck()
+  await expect(page.locator('html')).not.toHaveClass(/high-contrast/)
+  await expect(page.locator('html')).toHaveClass(/darkmode/)
+  await editor.getByRole('combobox', { name: 'Mode' }).selectOption('light')
 
   await editor.locator('[part="reset"]').click()
   await expect(button).toHaveCSS('border-radius', '4px')
@@ -162,6 +169,41 @@ test('a pasted Google Fonts link is linked, and its families are offered for fon
   // Closing without saving unlinks it again.
   await panel.getByRole('button', { name: 'Close the theme editor' }).click()
   await expect(page.locator('link[data-tosi-theme-font]')).toHaveCount(0)
+})
+
+test('Load preset replaces the theme being edited with a copy of the preset', async ({
+  page,
+}) => {
+  const asked = page.waitForResponse(
+    (response) =>
+      response.url().includes('/__docstore/source') &&
+      response.request().method() === 'HEAD'
+  )
+  await page.goto('/splitter/')
+  await asked
+  await page.waitForSelector('tosi-doc-system header')
+  await page.locator('header button:has(svg)').last().click()
+  await page.getByText('Theme Editor…').click()
+  const panel = page.locator('.theme-editor-panel')
+  const presets = panel.getByRole('combobox', { name: 'Load a preset' })
+  const radius = () =>
+    page.evaluate(() =>
+      getComputedStyle(document.body).getPropertyValue('--tosi-radius').trim()
+    )
+
+  await presets.selectOption('material')
+  await expect.poll(radius).toBe('12px')
+  await expect(panel.locator('.font span')).toHaveText('Roboto')
+  await expect(panel.locator('.theme-panel-status')).toHaveText('Not saved')
+  // An action, not a setting: the menu goes back to its prompt.
+  await expect(presets).toHaveValue('')
+
+  // Original is no preset at all.
+  await presets.selectOption('original')
+  await expect.poll(radius).not.toBe('12px')
+  await expect(panel.locator('.font')).toHaveCount(0)
+
+  await panel.getByRole('button', { name: 'Close the theme editor' }).click()
 })
 
 test('given a pattern, the editor finds Material tokens; an edit flows down the chain, an override cuts it', async ({

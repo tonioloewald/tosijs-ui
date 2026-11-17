@@ -24,20 +24,15 @@ import {
   themeStyleSheet,
   THEME_MODE_SPECS,
   type ThemeData,
+  type ThemePreset,
 } from '../theme-data.js'
 import {
   docSystemThemeGenerator,
   type DocSystemTheme,
 } from './doc-system-styles.js'
 
-export interface ThemePreset {
-  /** what it is stored under, and its class: `glass` → `tosi-style-glass` */
-  name: string
-  /** what the menu calls it */
-  label: string
-  /** the overrides; null for the theme as it stands */
-  theme: ThemeData | null
-}
+// A preset's `name` is also its class: `glass` → `tosi-style-glass`.
+export type { ThemePreset }
 
 const GLASS: ThemeData = {
   base: { accent: '#2a46c4', background: '#eef2f8', text: '#1d1d1f' },

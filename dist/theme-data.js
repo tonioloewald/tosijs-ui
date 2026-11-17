@@ -142,6 +142,7 @@ export const THEME_MODE_SPECS = [
         selector: '.high-contrast:not(.darkmode)',
         classes: ['high-contrast'],
         derive: ['contrast'],
+        variant: { of: 'light', label: 'High contrast' },
     },
     {
         name: 'darkHighContrast',
@@ -150,6 +151,7 @@ export const THEME_MODE_SPECS = [
         classes: ['darkmode', 'high-contrast'],
         from: 'highContrast',
         derive: ['invert'],
+        variant: { of: 'dark', label: 'High contrast' },
     },
 ];
 export const THEME_MODES = THEME_MODE_SPECS.map((m) => m.name);

@@ -16,6 +16,7 @@ import { tosiFloat } from '../float.js';
 import { tosiThemeEditor } from '../theme-editor.js';
 import { applyThemeFonts } from '../theme-data.js';
 import { DOC_SYSTEM_THEME_VARIABLES, docSystemThemeGenerator, } from './doc-system-styles.js';
+import { DOC_THEME_PRESETS } from './theme-presets.js';
 import { hasSourceEndpoint, sourceAccess, } from '../live-example/source-access.js';
 const { div, span, button } = elements;
 /** The id of the stylesheet the panel previews the theme through. */
@@ -126,6 +127,7 @@ export async function openThemeEditor(site) {
             defaults: { ...docSystemThemeGenerator.defaults, ...(site.theme ?? {}) },
         },
         variables: DOC_SYSTEM_THEME_VARIABLES,
+        presets: DOC_THEME_PRESETS,
         value,
     });
     const status = span({ class: 'theme-panel-status', role: 'status' });

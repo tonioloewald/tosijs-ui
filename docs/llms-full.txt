@@ -12093,6 +12093,19 @@ const editor = tosiThemeEditor({
   variables: [
     { name: 'tosi-border-radius', kind: 'length', label: 'Corners', group: 'Shape' },
     { name: 'tosi-spacing', kind: 'length', label: 'Spacing', group: 'Shape' },
+    { name: 'tosi-font-family', kind: 'font-family', label: 'Font', group: 'Type' },
+    { name: 'tosi-font-size', kind: 'length', label: 'Size', group: 'Type' },
+  ],
+  presets: [
+    { name: 'plain', label: 'Plain', theme: null },
+    {
+      name: 'rounded',
+      label: 'Rounded',
+      theme: {
+        base: { accent: '#7a3cc4' },
+        modes: { light: { 'tosi-border-radius': '16px', 'tosi-spacing': '16px' } },
+      },
+    },
   ],
 })
 const sample = document.createElement('div')
@@ -12116,6 +12129,8 @@ preview.append(editor, sample)
   border-radius: var(--tosi-border-radius);
   background: var(--tosi-bg);
   color: var(--tosi-text);
+  font-family: var(--tosi-font-family);
+  font-size: var(--tosi-font-size);
 }
 .theme-editor-demo button {
   border: none;
@@ -12126,6 +12141,8 @@ preview.append(editor, sample)
 }
 ```
 ```test
+import { deriveTheme } from 'tosijs-ui'
+
 test('editing a base colour or a variable applies it, and a tuned value can be reset', async () => {
   const editor = preview.querySelector('tosi-theme-editor')
   // The fields exist once the editor has rendered, and so do their listeners.
@@ -12141,32 +12158,49 @@ test('editing a base colour or a variable applies it, and a tuned value can be r
     control.value = value
     control.dispatchEvent(new Event('change', { bubbles: true }))
   }
+  // The editor starts on the mode the page is in, so a dark page edits dark mode.
+  const { mode } = editor
   edit('accent', '#0064d2')
   // The variable, not the button's colour, which is mid-transition at this instant.
-  expect(getComputedStyle(sample).getPropertyValue('--tosi-accent')).toBe('#0064d2')
+  const accent = deriveTheme(editor.value, editor.generator, { modes: editor.modes })[mode]['tosi-accent']
+  if (mode === 'light') expect(accent).toBe('#0064d2')
+  expect(getComputedStyle(sample).getPropertyValue('--tosi-accent')).toBe(accent)
   const radius = () => getComputedStyle(sample).getPropertyValue('--tosi-border-radius')
   edit('tosi-border-radius', '12px')
   expect(radius()).toBe('12px')
-  expect(editor.value.modes.light['tosi-border-radius']).toBe('12px')
+  expect(editor.value.modes[mode]['tosi-border-radius']).toBe('12px')
   editor.shadowRoot.querySelector('[data-name="tosi-border-radius"] .reset').click()
-  expect(editor.value.modes.light['tosi-border-radius']).toBe(undefined)
+  expect(editor.value.modes[mode]['tosi-border-radius']).toBe(undefined)
   expect(radius()).toBe('4px')
 })
 ```
 
 ## Modes
 
-The mode buttons choose which mode you are editing: by default light, dark, high contrast, and
-dark high contrast. Pass `modes` (a `ThemeModeSpec[]`, see [theme data](/theme-data/)) for a
-theme's own, such as a tinted or monochrome mode; with only `selectors`, the editor offers the
-modes those name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
+The mode menu and the **High contrast** checkbox choose which mode you are editing. Light and
+dark are the menu, and high contrast goes with either, so the four default modes (light, dark,
+high contrast, dark high contrast) are two choices rather than four buttons. Each of the four
+keeps its own tuned values.
+
+Pass `modes` (a `ThemeModeSpec[]`, see [theme data](/theme-data/)) for a theme's own, such as a
+tinted or monochrome mode: a mode joins the menu, unless its `variant` says it is a variation on
+another mode, which makes it a checkbox. With only `selectors`, the editor offers the modes those
+name. Every mode but the first starts out generated or derived; a value you change there is tuned for that
 mode only, marked with a dot, and stays put when the base colours change. The ↺ button puts it
 back to the generated value.
 
-Editing a mode previews it: the editor shows the page in that mode while you work, by setting
-the mode's `classes` on `<html>` and `<body>` (the doc system's `darkmode` and `high-contrast`
-for the default modes), and puts them back when it is removed.
+The editor starts on the mode the page is in, so a reader in dark mode edits dark mode, unless
+you set `mode`. Choosing a mode previews it: the editor shows the page in that mode while you
+work, by setting the mode's `classes` on `<html>` and `<body>` (the doc system's `darkmode` and
+`high-contrast` for the default modes), and puts them back when it is removed.
 Set `previewModes` to `false` to leave the page alone.
+
+## Presets
+
+Pass `presets` (`ThemePreset[]`: a `name`, a `label` and a `theme`) and a **Load preset…** menu
+appears at the top, as in the example above. Loading one replaces the theme being edited with a copy of the
+preset's, which you then tune like any other; a preset whose `theme` is null loads an empty
+theme. The doc site's theme editor offers its Original, Glass and Material presets this way.
 
 ## Declaring variables
 
@@ -12192,6 +12226,7 @@ its control:
   to apply nothing.
 - `selectors`: per-mode selectors for that stylesheet (see theme data).
 - `modes`: the theme's modes (`THEME_MODE_SPECS` by default).
+- `presets`: what the Load preset menu offers (none by default, and the menu is hidden).
 - A `change` event fires on every edit.
 
 The editor is styled with fixed colours in its shadow DOM, so no theme you make can make it
@@ -12490,14 +12525,16 @@ test('the glass variables are found; a translucent link keeps its alpha', async 
 })
 test('a declared mode derives the roots, and the mixes follow', async () => {
   const editor = preview.querySelector('tosi-theme-editor')
-  while (!editor.shadowRoot?.querySelector('[data-mode="mono"]')) {
+  while (!editor.shadowRoot?.querySelector('[part="modes"] option[value="mono"]')) {
     await new Promise((resolve) => requestAnimationFrame(resolve))
   }
   const demo = preview.querySelector('.glass-demo')
   const variable = (name) => getComputedStyle(demo).getPropertyValue(`--${name}`).trim()
   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
   const pick = async (mode) => {
-    editor.shadowRoot.querySelector(`[data-mode="${mode}"]`).click()
+    const menu = editor.shadowRoot.querySelector('[part="modes"] select')
+    menu.value = mode
+    menu.dispatchEvent(new Event('change', { bubbles: true }))
     while (!document.body.classList.contains(`glass-${mode}`) && mode !== 'light') await frame()
     await frame()
   }

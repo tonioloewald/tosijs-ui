@@ -39,6 +39,23 @@ export interface ThemeModeSpec {
     from?: ThemeMode;
     /** how it is made from that mode; a mode with none is only what the page and the theme say */
     derive?: ThemeTransform[];
+    /**
+     * a variation on another mode, which the editor offers as a checkbox beside its mode menu
+     * rather than as a mode of its own: high contrast is `{ of: 'light', label: 'High contrast' }`
+     */
+    variant?: {
+        of: ThemeMode;
+        label: string;
+    };
+}
+/** A whole look, as theme data, offered by the theme editor's Load preset menu. */
+export interface ThemePreset {
+    /** what it is stored under */
+    name: string;
+    /** what the menu calls it */
+    label: string;
+    /** the theme; null for none (the base colours alone) */
+    theme: ThemeData | null;
 }
 /** The modes a theme has unless it declares its own. */
 export declare const THEME_MODE_SPECS: ThemeModeSpec[];

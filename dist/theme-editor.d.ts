@@ -1,5 +1,5 @@
 import { ElementCreator, XinStyleSheet } from 'tosijs';
-import { ThemeData, ThemeGenerator, ThemeMode, ThemeModeSpec, ThemeVariable } from './theme-data.js';
+import { ThemeData, ThemeGenerator, ThemeMode, ThemeModeSpec, ThemePreset, ThemeVariable } from './theme-data.js';
 /** The units a length field offers. */
 export declare const LENGTH_UNITS: string[];
 /** `16px` → `{ amount: 16, unit: 'px' }`; null for anything else (`calc(…)`, a `var()`). */
@@ -22,6 +22,10 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private _variables;
     private _selectors;
     private _modes;
+    private _presets;
+    /** what the Load preset menu offers; it is hidden when there are none */
+    get presets(): ThemePreset[];
+    set presets(presets: ThemePreset[] | null);
     /** the theme being edited */
     get value(): ThemeData;
     set value(theme: ThemeData);
@@ -70,6 +74,17 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     private handleFontKey;
     /** Put every mode and every value back to what the base colours generate. */
     resetAll: () => void;
+    /** Replace the theme with a preset's (a copy: editing it leaves the preset alone). */
+    loadPreset: (name: string) => void;
+    private handlePreset;
+    /** The modes the mode menu offers: every mode that is not a variant of another. */
+    private menuModes;
+    /** The variant checkboxes: one per variant label, in the order the modes give them. */
+    private variantLabels;
+    /** The mode the menu and the checkboxes name together. */
+    private pickMode;
+    /** The mode the page is in: the one whose classes it has, the most specific first. */
+    private pageMode;
     private handleLiveInput;
     content: () => HTMLDivElement[];
     private field;
