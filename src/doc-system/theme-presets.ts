@@ -40,10 +40,12 @@ export interface ThemePreset {
 }
 
 const GLASS: ThemeData = {
-  base: { accent: '#3355dd', background: '#eef2f8', text: '#1d1d1f' },
+  base: { accent: '#2a46c4', background: '#eef2f8', text: '#1d1d1f' },
   modes: {
     light: {
-      'tosi-backdrop': 'linear-gradient(160deg, #6087ba, #b7cdea)',
+      'tosi-backdrop': 'linear-gradient(160deg, #8fabd6, #d3e0f2)',
+      'code-color': '#1f3699',
+      'placeholder-color': '#1f3699',
       background: '#ffffff40',
       'background-shaded': '#ffffff26',
       'nav-bg': '#ffffff33',
@@ -67,6 +69,11 @@ const GLASS: ThemeData = {
     },
     dark: {
       'tosi-backdrop': 'linear-gradient(160deg, #10182c, #2b3a5a)',
+      'brand-color': '#8fa2f5',
+      'header-bg': 'color-mix(in srgb, var(--brand-color) 35%, transparent)',
+      'header-color': 'var(--text-color)',
+      'code-color': '#a9b8ff',
+      'placeholder-color': '#a9b8ff',
       background: '#00000040',
       'background-shaded': '#ffffff0a',
       'nav-bg': '#0000004d',

@@ -69,6 +69,9 @@ export const TOSI_CHAIN = {
     _menuBg: vars.tosiSurface,
     _menuShadow: vars.tosiElevationMid,
     _headerBg: vars.brandColor,
+    // Readable on the brand, which is the header's default background. A theme that gives the
+    // header its own background gives it text to match.
+    _headerColor: vars.brandTextColor,
     _buttonShadow: 'none',
 };
 /*
@@ -475,9 +478,9 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
         header: {
             background: vars.headerBg,
             backdropFilter: vars.tosiSurfaceFilter,
-            color: vars.brandTextColor,
-            _textColor: vars.brandTextColor,
-            _linkColor: vars.brandTextColor,
+            color: vars.headerColor,
+            _textColor: vars.headerColor,
+            _linkColor: vars.headerColor,
             display: 'flex',
             alignItems: 'center',
             padding: '0 var(--spacing)',
@@ -495,7 +498,7 @@ export function docSystemStyleSpec(theme = {}, { fontImport = true } = {}) {
             padding: 0,
         },
         'header .site-name': {
-            color: vars.brandTextColor,
+            color: vars.headerColor,
             whiteSpace: 'nowrap',
             fontWeight: '700',
             fontSize: 'calc(var(--font-size) * var(--h2-scale))',
@@ -926,6 +929,12 @@ export const DOC_SYSTEM_THEME_VARIABLES = [
     },
     { name: 'tosi-rim', kind: 'color', label: 'Rim', group: 'Surfaces' },
     { name: 'header-bg', kind: 'color', label: 'Header', group: 'Surfaces' },
+    {
+        name: 'header-color',
+        kind: 'color',
+        label: 'Header text',
+        group: 'Surfaces',
+    },
     {
         name: 'tosi-shadow-color',
         kind: 'color',
