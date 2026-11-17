@@ -151,9 +151,13 @@ test('a pasted Google Fonts link is linked, and its families are offered for fon
   await expect(
     page.locator(`link[data-tosi-theme-font][href="${url}"]`)
   ).toHaveCount(1)
-  await expect(
-    panel.locator('datalist option[value="\'Lora\', sans-serif"]')
-  ).toHaveCount(1)
+  // Each font field offers it as it is typed.
+  for (const name of ['font-family', 'code-font-family'])
+    await expect(
+      panel.locator(
+        `[data-name="${name}"] datalist option[value="'Lora', sans-serif"]`
+      )
+    ).toHaveCount(1)
 
   // Closing without saving unlinks it again.
   await panel.getByRole('button', { name: 'Close the theme editor' }).click()

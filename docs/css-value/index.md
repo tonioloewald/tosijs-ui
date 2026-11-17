@@ -1,6 +1,7 @@
 # css value
 
-`<tosi-css-value>` edits one CSS value of a given `kind` (`color`, `length`, `number`, `text`)
+`<tosi-css-value>` edits one CSS value of a given `kind` (`color`, `length`, `number`, `text`,
+`shadow`, `font-family`)
 as what it IS rather than only what it comes to: a colour typed in, another variable, that
 variable lightened or turned, a mix of two, the text colour that reads on it, a length scaled
 from another, or any expression. Each form is written as plain CSS (`var()`, `calc()`,

@@ -10,7 +10,8 @@ was written; anything it does not recognise is an `expression`, kept exactly as 
 DOM-free, so it runs at build time and in tests.
 */
 
-export type CssValueKind = 'color' | 'length' | 'number' | 'text'
+export type CssValueKind =
+  'color' | 'length' | 'number' | 'text' | 'shadow' | 'font-family'
 
 /** A colour or length a form refers to: `var(--brand-color)`, or a keyword (`white`). */
 export type CssOperand = string
@@ -59,6 +60,9 @@ export const CSS_VALUE_FORMS: Record<CssValueKind, CssFormName[]> = {
   length: ['auto', 'literal', 'ref', 'scale', 'expression'],
   number: ['auto', 'literal', 'ref', 'scale', 'expression'],
   text: ['auto', 'literal', 'ref'],
+  // A shadow that names a colour (`0 2px 6px var(--tosi-shadow-color)`) is an expression.
+  shadow: ['auto', 'literal', 'ref', 'expression'],
+  'font-family': ['auto', 'literal', 'ref'],
 }
 
 /** Keywords a colour operand may be besides a variable. */
@@ -154,7 +158,11 @@ export function parseCssValue(raw: string, kind: CssValueKind): CssValueForm {
     return { form: 'literal', value }
   if (kind === 'number' && patterns.number.test(value))
     return { form: 'literal', value }
-  if (kind === 'text' && !/var\(/.test(value)) return { form: 'literal', value }
+  if (
+    (kind === 'text' || kind === 'shadow' || kind === 'font-family') &&
+    !/var\(/.test(value)
+  )
+    return { form: 'literal', value }
   return { form: 'expression', value }
 }
 

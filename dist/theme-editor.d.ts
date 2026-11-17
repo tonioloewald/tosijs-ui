@@ -71,7 +71,7 @@ export declare class TosiThemeEditor extends TosiThemeEditor_base {
     /** Put every mode and every value back to what the base colours generate. */
     resetAll: () => void;
     private handleLiveInput;
-    content: () => (HTMLDivElement | HTMLDataListElement)[];
+    content: () => HTMLDivElement[];
     private field;
     /** Families the page already uses, as suggestions. */
     private fontSuggestions;

@@ -1,7 +1,8 @@
 /*#
 # css value
 
-`<tosi-css-value>` edits one CSS value of a given `kind` (`color`, `length`, `number`, `text`)
+`<tosi-css-value>` edits one CSS value of a given `kind` (`color`, `length`, `number`, `text`,
+`shadow`, `font-family`)
 as what it IS rather than only what it comes to: a colour typed in, another variable, that
 variable lightened or turned, a mix of two, the text colour that reads on it, a length scaled
 from another, or any expression. Each form is written as plain CSS (`var()`, `calc()`,
@@ -119,7 +120,12 @@ const LITERAL_LABELS: Record<CssValueKind, string> = {
   length: 'Length',
   number: 'Number',
   text: 'Text',
+  shadow: 'Shadow',
+  'font-family': 'Font',
 }
+
+/** Kinds whose typed-in value is words (a font stack, a shadow), given a line of its own. */
+const WORDY_KINDS: CssValueKind[] = ['text', 'shadow', 'font-family']
 
 const LENGTH_UNITS = ['px', 'rem', 'em', '%', 'vw', 'vh', 'ch', 'pt']
 
@@ -212,6 +218,11 @@ export class TosiCssValue extends withAttributes({
     ':host .pair': { display: 'inline-flex', alignItems: 'center', gap: '2px' },
     ':host .pair input[type="number"]': { width: '3.75em' },
     ':host [part="controls"].-wide .operand': { flex: '1 1 100%' },
+    // A mix reads as one line, `Brand 60% Text`: the two colours share what the number leaves.
+    ':host [part="controls"][data-form="mix"] .operand': {
+      flex: '1 1 0',
+      width: 'auto',
+    },
     ':host [part="controls"].-wide': {
       flexBasis: '100%',
       justifyContent: 'space-between',
@@ -251,6 +262,16 @@ export class TosiCssValue extends withAttributes({
     this.queueRender()
   }
 
+  private _suggestions: string[] = []
+  /** values a typed-in `font-family` (or `text`) may be picked from, offered as it is typed */
+  get suggestions(): string[] {
+    return this._suggestions
+  }
+  set suggestions(suggestions: string[]) {
+    this._suggestions = Array.isArray(suggestions) ? suggestions : []
+    this.queueRender()
+  }
+
   /** what a form may refer to */
   get variables(): CssValueVariable[] {
     return this._variables
@@ -277,6 +298,7 @@ export class TosiCssValue extends withAttributes({
     span({ class: 'swatch', part: 'swatch', hidden: true }),
     span({ part: 'computed' }),
     div({ part: 'controls' }),
+    elements.datalist({ part: 'suggestions', id: 'suggestions' }),
   ]
 
   /** The forms this element offers. */
@@ -291,11 +313,9 @@ export class TosiCssValue extends withAttributes({
   /** The variables a form of this kind may refer to: same kind (lengths and numbers mix). */
   private operands(includeKeywords: boolean): string[] {
     const kinds =
-      this.kind === 'color'
-        ? ['color']
-        : this.kind === 'text'
-          ? [this.kind]
-          : ['length', 'number']
+      this.kind === 'length' || this.kind === 'number'
+        ? ['length', 'number']
+        : [this.kind]
     return [
       ...(includeKeywords && this.kind === 'color' ? COLOR_KEYWORDS : []),
       ...this._variables
@@ -325,17 +345,26 @@ export class TosiCssValue extends withAttributes({
     )
   }
 
-  /** A number with a short caption before it (`L+`) and its full name as the label. */
+  /**
+   * A number with a short caption (`L+` before it, `%` after) and its full name as the label.
+   */
   private numberInput(
     key: string,
     label: string,
     step: number,
-    caption: string
+    caption: string,
+    after = false
   ) {
+    const field = input({
+      type: 'number',
+      dataKey: key,
+      ariaLabel: label,
+      step,
+    })
+    const unit = span({ class: 'unit' }, caption)
     return elements.label(
       { class: 'pair', title: label },
-      span({ class: 'unit' }, caption),
-      input({ type: 'number', dataKey: key, ariaLabel: label, step })
+      ...(after ? [field, unit] : [unit, field])
     )
   }
 
@@ -366,15 +395,21 @@ export class TosiCssValue extends withAttributes({
               ...LENGTH_UNITS.map((unit) => option({ value: unit }, unit))
             ),
           ]
-        return [
-          input({
+        {
+          const field = input({
             type: this.kind === 'number' ? 'number' : 'text',
             dataKey: 'value',
-            ariaLabel: 'Value',
+            // A font stack or a shadow does not fit beside the form: it gets its own line.
+            class: WORDY_KINDS.includes(this.kind) ? '-expression' : '',
+            ariaLabel: LITERAL_LABELS[this.kind],
             step: 0.05,
             spellcheck: false,
-          }),
-        ]
+          })
+          // `list` is a read-only property; only the attribute sets it. Ids are scoped to the
+          // shadow root, so each element's list is its own.
+          if (this.kind !== 'number') field.setAttribute('list', 'suggestions')
+          return [field]
+        }
       case 'ref':
         return [this.operandSelect('of', form.of, 'Variable')]
       case 'contrast':
@@ -382,7 +417,7 @@ export class TosiCssValue extends withAttributes({
       case 'mix':
         return [
           this.operandSelect('a', form.a, 'First colour', true),
-          this.numberInput('amount', 'Percent of the first', 5, '%'),
+          this.numberInput('amount', 'Percent of the first', 5, '%', true),
           this.operandSelect('b', form.b, 'Second colour', true),
         ]
       case 'adjust':
@@ -586,15 +621,27 @@ export class TosiCssValue extends withAttributes({
         )
       )
       controls.replaceChildren(...this.controlsFor(form))
+      controls.dataset.form = form.form
       controls.classList.toggle(
         '-wide',
         form.form === 'adjust' ||
           form.form === 'mix' ||
-          form.form === 'expression'
+          form.form === 'expression' ||
+          (form.form === 'literal' && WORDY_KINDS.includes(this.kind))
       )
     }
     formSelect.value = form.form
     this.showValues(form)
+    const suggestions = this.parts.suggestions as HTMLDataListElement
+    if (
+      suggestions.childElementCount !== this._suggestions.length ||
+      [...suggestions.children].some(
+        (o, i) => (o as HTMLOptionElement).value !== this._suggestions[i]
+      )
+    )
+      suggestions.replaceChildren(
+        ...this._suggestions.map((value) => option({ value }))
+      )
 
     const shown = this._value || this._computed
     const swatch = this.parts.swatch as HTMLElement

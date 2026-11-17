@@ -25,6 +25,10 @@ export declare class TosiCssValue extends TosiCssValue_base {
     private _computed;
     get computed(): string;
     set computed(computed: string);
+    private _suggestions;
+    /** values a typed-in `font-family` (or `text`) may be picked from, offered as it is typed */
+    get suggestions(): string[];
+    set suggestions(suggestions: string[]);
     /** what a form may refer to */
     get variables(): CssValueVariable[];
     set variables(variables: CssValueVariable[]);
@@ -41,7 +45,9 @@ export declare class TosiCssValue extends TosiCssValue_base {
     /** The variables a form of this kind may refer to: same kind (lengths and numbers mix). */
     private operands;
     private operandSelect;
-    /** A number with a short caption before it (`L+`) and its full name as the label. */
+    /**
+     * A number with a short caption (`L+` before it, `%` after) and its full name as the label.
+     */
     private numberInput;
     /** The controls for a form, built when the form (not its numbers) changes. */
     private controlsFor;

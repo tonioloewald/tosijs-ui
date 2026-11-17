@@ -24,6 +24,9 @@ export const CSS_VALUE_FORMS = {
     length: ['auto', 'literal', 'ref', 'scale', 'expression'],
     number: ['auto', 'literal', 'ref', 'scale', 'expression'],
     text: ['auto', 'literal', 'ref'],
+    // A shadow that names a colour (`0 2px 6px var(--tosi-shadow-color)`) is an expression.
+    shadow: ['auto', 'literal', 'ref', 'expression'],
+    'font-family': ['auto', 'literal', 'ref'],
 };
 /** Keywords a colour operand may be besides a variable. */
 export const COLOR_KEYWORDS = ['white', 'black', 'transparent', 'currentColor'];
@@ -111,7 +114,8 @@ export function parseCssValue(raw, kind) {
         return { form: 'literal', value };
     if (kind === 'number' && patterns.number.test(value))
         return { form: 'literal', value };
-    if (kind === 'text' && !/var\(/.test(value))
+    if ((kind === 'text' || kind === 'shadow' || kind === 'font-family') &&
+        !/var\(/.test(value))
         return { form: 'literal', value };
     return { form: 'expression', value };
 }

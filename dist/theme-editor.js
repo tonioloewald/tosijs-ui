@@ -129,8 +129,15 @@ import { THEME_MODE_SPECS, applyThemeData, componentThemeGenerator, deriveTheme,
 import { declaredValues, discoverThemeVariables, groupVariables, isDerived, resolveColor, resolveLength, } from './theme-discovery.js';
 import { tosiCssValue } from './css-value.js';
 // The kinds a value element edits; the rest (fonts, shadows, menus) keep plain controls.
-const VALUE_KINDS = ['color', 'length', 'number'];
-const { div, h3, label, input, select, option, button, datalist, span } = elements;
+const VALUE_KINDS = [
+    'color',
+    'length',
+    'number',
+    'text',
+    'shadow',
+    'font-family',
+];
+const { div, h3, label, input, select, option, button, span } = elements;
 /** `#rrggbb` for a colour well, which takes nothing else. */
 const wellValue = (value) => {
     try {
@@ -603,7 +610,6 @@ export class TosiThemeEditor extends withAttributes({
             ariaLabel: 'Font link, @import line or URL',
             spellcheck: false,
         }), button({ part: 'fontAdd' }, 'Add')), div({ part: 'fontError', class: 'font-error', role: 'status' })), div({ part: 'variables' })),
-        datalist({ part: 'fonts', id: 'theme-editor-fonts' }),
         div({ class: 'actions' }, button({ part: 'reset' }, 'Reset all')),
     ];
     field(variable, scope) {
@@ -653,14 +659,6 @@ export class TosiThemeEditor extends withAttributes({
                     controls = [
                         select({ id }, ...(variable.options ?? []).map((choice) => option({ value: choice }, choice))),
                     ];
-                    break;
-                case 'font-family':
-                    {
-                        const text = input({ type: 'text', id, spellcheck: false });
-                        // `list` is a read-only property; only the attribute sets it.
-                        text.setAttribute('list', 'theme-editor-fonts');
-                        controls = [text];
-                    }
                     break;
                 default:
                     controls = [input({ type: 'text', id, spellcheck: false })];
@@ -770,6 +768,7 @@ export class TosiThemeEditor extends withAttributes({
         const focused = this.shadowRoot.activeElement;
         const scopeElement = this.scopeElement();
         const page = getComputedStyle(scopeElement);
+        const fonts = this.fontSuggestions(full);
         for (const field of this.shadowRoot.querySelectorAll('.field')) {
             const { name, scope } = field.dataset;
             const tunedIn = (scope === 'base' ? this.value.base : this.value.modes?.[scope]) ?? {};
@@ -795,6 +794,8 @@ export class TosiThemeEditor extends withAttributes({
                 valueElement.scope = scopeElement;
                 if (valueElement.variables !== this.valueVariables)
                     valueElement.variables = this.valueVariables;
+                if (field.dataset.kind === 'font-family')
+                    valueElement.suggestions = fonts;
                 valueElement.value = value;
                 continue;
             }
@@ -826,7 +827,6 @@ export class TosiThemeEditor extends withAttributes({
             dataFont: url,
             ariaLabel: `Remove ${fontFamilies(url).join(', ')}`,
         }, 'Remove'))));
-        this.parts.fonts.replaceChildren(...this.fontSuggestions(full).map((family) => option({ value: family })));
     }
     showLength(field, value, focused) {
         const amount = field.querySelector('.length-amount');

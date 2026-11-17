@@ -1,5 +1,6 @@
 import { test, expect, describe } from 'bun:test'
 import {
+  CSS_VALUE_FORMS,
   formatCssValue,
   parseCssValue,
   startForm,
@@ -121,5 +122,35 @@ describe('css value forms', () => {
     expect(
       startForm('literal', was, { literal: '#d92270', operand: 'var(--x)' })
     ).toEqual({ form: 'literal', value: '#d92270' })
+  })
+
+  test('a shadow or a font is a value, another variable, or (a shadow) an expression', () => {
+    expect(parseCssValue('0 2px 6px #0002', 'shadow')).toEqual({
+      form: 'literal',
+      value: '0 2px 6px #0002',
+    })
+    expect(parseCssValue('var(--tosi-elevation-low)', 'shadow')).toEqual({
+      form: 'ref',
+      of: 'var(--tosi-elevation-low)',
+    })
+    // naming a colour makes it derived: it follows that colour
+    const derived = '0 8px 24px var(--tosi-shadow-color)'
+    expect(parseCssValue(derived, 'shadow')).toEqual({
+      form: 'expression',
+      value: derived,
+    })
+    expect(formatCssValue(parseCssValue(derived, 'shadow'))).toBe(derived)
+
+    expect(
+      parseCssValue("'Roboto', system-ui, sans-serif", 'font-family')
+    ).toEqual({
+      form: 'literal',
+      value: "'Roboto', system-ui, sans-serif",
+    })
+    expect(parseCssValue('var(--font-family)', 'font-family')).toEqual({
+      form: 'ref',
+      of: 'var(--font-family)',
+    })
+    expect(CSS_VALUE_FORMS['font-family']).not.toContain('expression')
   })
 })

@@ -1,4 +1,4 @@
-export type CssValueKind = 'color' | 'length' | 'number' | 'text';
+export type CssValueKind = 'color' | 'length' | 'number' | 'text' | 'shadow' | 'font-family';
 /** A colour or length a form refers to: `var(--brand-color)`, or a keyword (`white`). */
 export type CssOperand = string;
 export type CssValueForm = 
