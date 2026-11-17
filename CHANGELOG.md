@@ -1,5 +1,101 @@
 # Changelog
 
+## 1.18.0
+
+> **Themes as data, and an editor for them.** A theme is plain JSON: a few base colours, plus
+> whatever you tune by hand in light, dark, high contrast and dark high contrast.
+> `<tosi-theme-editor>` (`tosijs-ui/theme-editor`) edits it live. It shows each variable as
+> what it is made from (a mix of the brand into the background, the corners × 2), not just what
+> it computes to, and it finds a design system's own variables by pattern (Material 3 tokens
+> work unchanged). A doc site with `themeFile` gets **Theme Editor…** in its settings menu in an
+> editing session, saving back to the file and painting first time on the next load, web fonts
+> included. `themePresets: true` adds a **Style** menu with Original, Glass and Material, which
+> the editor can also load as starting points.
+>
+> **On upgrade:**
+> - The doc theme now derives its secondary colours in CSS (`color-mix()`, relative colour
+>   syntax) and dark mode inverts only the roots. The stock look is close to before, but links
+>   and tints in dark mode are slightly different.
+> - The doc site's corner radii are plain lengths and no longer follow a changed `--spacing`.
+> - `tosiThemeEditor` is a new component that edits theme data, and it no longer drives
+>   `liveTheme`, which still works on its own. Import it from `tosijs-ui/theme-editor`; the
+>   root export is deprecated.
+
+### Added
+
+**Theme data**
+
+- theme data (`applyThemeData`, `resolveTheme`, `themeStyleSheet`): a theme as plain JSON, base colours plus values tuned by hand per mode. Dark is generated from the light values (tuned ones included), high contrast from the base (white, black, the accent at 7:1), and dark high contrast from that; a tuned value wins and survives a change to the base. One stylesheet applies it, under `:root`, `.darkmode`, `.high-contrast:not(.darkmode)` and `.darkmode.high-contrast` unless you pass your own selectors. `componentThemeGenerator` drives the component theme. #3914
+- theme modes are a list (`ThemeModeSpec`: name, label, selector, classes, `from`, `derive`), and `THEME_MODE_SPECS` (light, dark, high contrast, dark high contrast) is only the default. Transforms: `invert`, `contrast`, `monochrome`, `{ tint }`, or a function. Only colour literals change (gradient stops included); values mixed from others follow in the browser
+- `ThemeModeSpec.variant` ({ of, label }) makes a mode a checkbox on another mode rather than an entry in the menu; the default high-contrast modes are variants
+- theme data without a generator: the page's own CSS derives one variable from another, and a theme is just its overrides per mode (`base` is optional)
+- a theme with no generator derives its modes from the page's own CSS (`page`, from `declaredValues(discoverThemeVariables(…))`); a mode the page declares itself is left as the page has it
+- web fonts in a theme: paste what Google Fonts offers to copy (a `<link>`, an `@import` line, or the URL) into the editor's Web fonts section, and its families are offered in the font fields. Only fonts.googleapis.com and fonts.bunny.net are accepted (linking a stylesheet injects CSS). Theme data carries them as `fonts`; applyThemeData links them, and the doc site's build links a saved theme's fonts from every page. #3914
+
+**The theme editor**
+
+- `<tosi-theme-editor>` (tosijs-ui/theme-editor) edits a theme as data: the generator's base colours, then each declared variable with a control for its kind (colour, length, number, font family, enum), one mode at a time (light, dark, high contrast, dark high contrast). A tuned value is marked and has a reset to the generated one; picking a mode previews it on the page. It applies the theme live and fires `change`; `value` is the theme, as JSON. #3914
+- `<tosi-theme-editor variables="sf-*">`: given a pattern (or a RegExp) instead of a list, the editor finds the matching custom properties in the page's stylesheets, with their value in each mode (by the mode selectors), their PARENTS (the variables each value refers to) and a kind inferred from what the value resolves to (colour, length, number, font, shadow, image). It is not tied to tosijs-ui's variables. A field shows which link it hangs from ("← primary"); overriding it cuts the link, and reset joins it again. A derived value shows what it resolves to, muted. #3914
+- `<tosi-theme-editor modes>` offers the theme's modes and previews each by its classes; with only `selectors`, it offers the modes those name
+- `presets` on `<tosi-theme-editor>` adds a Load preset menu that replaces the theme being edited with a copy of a preset; the doc site's panel offers Original, Glass and Material
+- `<tosi-theme-editor>`'s length fields are a number with arrows and a unit menu (px, rem, em, %, vw, vh, ch, pt), so a size can be nudged instead of retyped; a value that is not a plain length (`calc(…)`) shows as text. #3914
+- `<tosi-css-value kind="color|length|number|text">` edits one CSS value by its form: a literal, Same as (another variable), Adjust (oklch lightness, chroma, hue, alpha via relative colour syntax), Mix (color-mix, keeping its colour space), Text on (black or white, whichever reads on a colour), Text colour (currentColor), Scale (calc × n), or an Expression. Every form is written as live CSS, so it follows the values it is made from. `parseCssValue`/`formatCssValue` (css-value-forms) read and write the forms, DOM-free.
+- `<tosi-css-value>` takes `kind="shadow"` (a value, another shadow variable, or an expression, e.g. one naming a colour variable) and `kind="font-family"` (a stack or another font variable), plus a `suggestions` list offered as a value is typed
+- theme stress tests (/theme-stress-tests/): Material 3 tokens (`md-sys-*`) and the faux-glass look of react.tosijs.net, each discovered and edited by pattern
+
+**The chain and the presets**
+
+- the doc theme hangs from a chain of `--tosi-*` links: shape (`--tosi-radius`, which every corner follows); backdrop (`--tosi-backdrop`); surface (`--tosi-surface`, `--tosi-surface-filter`, `--tosi-rim`); elevation (`--tosi-shadow-color` and the elevation levels); state layers (`--tosi-hover-bg`, `--tosi-press-bg`); motion (`--tosi-duration`, `--tosi-easing`, `--tosi-transition`). The doc site's own variables (`--menu-bg`, `--menu-shadow`, `--button-radius`, …) are links of it. The stock look is unchanged (screenshots compared byte for byte)
+- `theme-chain` helpers (chainRadius, chainDuration, chainEasing, chainTransition, chainElevation, chainSurface, chainSurfaceFilter), exported for component authors
+- menus and dialogs read the chain: corners, surface fill, backdrop filter and elevation, with the old values as fallbacks
+- notifications, the palette and dialogs wear the chain's surface, blur, radius and overlay elevation; search suggestions match menus; select and search fields take the input radius; tooltips and segmented controls the chain radius; tabs, rating, side nav, splitter, table row expanders, password meter, sizer and pocket bar its duration and easing. The scales reproduce each component's old look on the stock chain.
+- theme presets (`tosijs-ui/doc-system/theme-presets`): Original, Glass and Material, each as theme data over the chain, in light and dark. `themePresets: true` in the site config adds a Style submenu. The CSS is in the stylesheet, scoped to a `tosi-style-*` class, and the head script applies the reader's choice before first paint
+- the doc theme's derived colours (navigation, inset, links, bar, focus, brand text, menu and scrollbar neutrals, surfaces) are written as `color-mix()` and relative colour syntax over the roots, so they follow a root wherever it changes and the theme editor shows each as its recipe (Navigation = Mix, Brand 8% into Background)
+- `--header-color`, the doc header's text colour (default: readable on the brand). A theme that gives the header its own `--header-bg` gives it text to match; the theme editor lists it under Surfaces as "Header text"
+
+**Doc site**
+
+- `themeFile` in the site config: a theme saved by the editor. The build writes it into the site's stylesheet (first paint, no flash), and in an editing session the settings menu offers "Theme Editor…" above Color Theme, a floating panel that saves back to the file through /__docstore/source (the same session gate as save-to-source; only a .json file inside the project, and a save must be a JSON object). #3914
+- the doc site's corner radii are variables a theme can set (`--button-radius`, `--input-radius`, `--quote-radius`, `--code-radius`, plus the components' `--tosi-border-radius` and `--tosi-border-radius-lg`), offered in the theme editor under Corners. #3914
+- `DEV_THEME_FILE` makes the dev server read and save the site's themeFile at another path without changing what the build writes
+
+### Changed
+
+- `tosiThemeEditor` is a new editor: it edits theme data and no longer drives `liveTheme`, which still works on its own. Importing it from `tosijs-ui` is deprecated; use `tosijs-ui/theme-editor`.
+- dark mode now inverts only the roots and lifts the brand; the derived colours re-derive from them. Links are the brand mixed toward the text (no longer hue-shifted), and the navigation and inset tints are the brand mixed into the background
+- those radii were multiples of `--spacing` and are now plain lengths with the same values at the default 10px spacing (5px, 5px, 10px, 2.5px), so the editor can offer them as a number and a unit; they no longer follow a changed `--spacing`
+- the contrast ("Text on") form picks black or white by luminance (xyz `y`, WCAG's crossover at 0.1791) instead of oklch lightness, which chose black on the default pink where white reads better
+- the Material preset's navigation and surface tints are mixes of its primary, not fixed colours
+- `ThemeData` keeps tuned values under `modes` by name (`{ base, modes: { light, dark, tinted }, fonts }`), not top-level keys
+- a theme's rules outrank the page's own declarations (`:not(#tosi-theme-outrank)`, an id's weight), so a stylesheet later in the document cannot undo an edit
+- the theme editor starts on the mode the page is in, unless `mode` is set
+- light and dark are a menu and high contrast a checkbox beside it, in place of four mode buttons; each of the four modes still keeps its own tuned values
+- the theme editor edits colour, length and number variables with <tosi-css-value>, showing each as what its stylesheet declares (`calc(var(--tosi-radius) * 2)` is Scale, Corners × 2; a color-mix is a Mix) rather than what it computes to; a listed variable is read from the page's stylesheets for its declaration and its chain, as a pattern's was
+- the theme editor edits text, shadow and font variables through `<tosi-css-value>`, so a shadow shows its chain (Controls ← Rim ← Shadow colour) and can be pointed at another one; each font field suggests the page's fonts and any added web font
+- a Mix reads as one line (`Brand 60% Text`) instead of stacking four rows, and a typed font stack or shadow gets a full-width line instead of a 6.5em field
+- `<tosi-theme-editor>`'s fields are as wide as what they hold, and the editor is 300px wide (was 360)
+
+### Fixed
+
+- the Glass style preset's brand-coloured text failed WCAG AA contrast: headings, links, inline code and the search label sat at 1.4–3.9:1 over its translucent surfaces, and in dark mode the header's site name was black on dark blue. Glass keeps its look (lighter backdrop, deeper accent, explicit code and placeholder colours, a dimmer dark header) and now passes everywhere
+- the theme editor always started on Light, so on a dark page its edits went to a mode the page was not showing, and its inline doc test failed for any reader in dark mode
+- the chain's elevation levels never resolved: tosijs reads a trailing digit as a scale, so `vars.tosiElevation2` was `calc(var(--tosi-elevation) * 0.02)` and `--menu-shadow` was invalid. Menus and dialogs fell back to their literals, and the presets' shadows reached nothing. The levels are now `--tosi-elevation-low`, `-mid` and `-high`.
+- a colour well kept no alpha: changing a translucent colour (`#ffffff33`) through it made it opaque; the alpha now carries over
+- `applyTheme` added a new <style> element on every call (tosijs's StyleSheet never deduplicates by id); it now updates one in place (`replaceStyleSheet`)
+- doc theme: a textarea had 2px padding and the default line height; it has a field's inset and the text's lines. A range slider, checkbox or radio no longer gets a text field's padding and inset border (it drew a box around a slider's track)
+- doc theme: a segmented control is as tall as the fields and buttons beside it (36px, was 34), and its corners follow the buttons' (a pill where buttons are pills)
+- a segmented control's unselected options were white in dark mode; they take the input background and text colour
+- a live example's test results were #0a0 / #f00 text, 2.98:1 against the page (AA asks 4.5); they have their own backgrounds now, 6.4:1 in either theme
+- the dev server could rebuild in a loop: make-icon-data rewrote src/icons/data/index.ts (and the icon data) unchanged on every build, under the watched src/. Written only when they change now.
+
+### Already in 1.17.9
+
+The icon fix shipped in 1.17.9 from a release branch; this is the same change on the main line.
+
+- icons drawn with `icons.<name>()` now default to round stroke caps and joins (`--tosi-icon-stroke-linecap` / `--tosi-icon-stroke-linejoin`, as `<tosi-icon>` already had); they used to fall back to butt ends and mitred corners
+- `iconSvg()` markup carries `stroke-linecap="round"` and `stroke-linejoin="round"` on its root unless the icon declares its own; as presentation attributes they lose to any page CSS
+- `svg2DataUrl()` writes round caps and joins on the root, where the variables it strips would otherwise leave mitred corners in the image
+
 ## 1.17.9
 
 > Icon strokes have round ends and corners wherever an icon is drawn, not only inside
