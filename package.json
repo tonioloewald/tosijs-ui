@@ -213,5 +213,13 @@
   },
   "engines": {
     "bun": ">=1.2"
+  },
+  "releaseDoctor": {
+    "auditExemptions": {
+      "GHSA-fc5q-39xc-vjpf": {
+        "reason": "no patched picomatch exists yet (affects <=4.0.7, the latest); reached only through typescript-eslint -> tinyglobby, lint tooling; ReDoS only. Same gate as tosijs-site.config.ts audit.allow",
+        "expires": "2026-12-01"
+      }
+    }
   }
 }

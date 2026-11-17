@@ -77,8 +77,8 @@ for (const style of ['original', 'glass', 'material']) {
               }
             })
             .filter(
-              (n: any) =>
-                n &&
+              (n): n is NonNullable<typeof n> =>
+                !!n &&
                 n.box[2] > 0 &&
                 n.box[3] > 0 &&
                 n.box[1] < innerHeight &&
