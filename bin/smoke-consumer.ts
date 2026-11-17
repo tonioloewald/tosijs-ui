@@ -113,13 +113,17 @@ try {
   3.01MB with the schema-form's sections and proposals. Raised to 3.5MB, which still fails
   on anything shaped like the accident. When it trips again, look at what grew first: half
   the tarball is `dist/iife.js.map`, and `CHANGELOG.md` is 0.39MB unpacked.
+
+  Tripped again at 1.18.0 (3.42MB → 3.54MB): the theme editor, theme data and <tosi-css-value>,
+  their share of the iife and its map (+197kB unpacked of the +435kB), and no stray file.
+  Ordinary growth again, so raised to 4MB, still well under the 5.2MB accident.
   */
   const bytes = Bun.file(tarball).size
   check(
-    `tarball is under 3.5MB (is ${(bytes / 1e6).toFixed(2)}MB, ${
+    `tarball is under 4MB (is ${(bytes / 1e6).toFixed(2)}MB, ${
       listing.length
     } files)`,
-    bytes < 3_500_000
+    bytes < 4_000_000
   )
   for (const bin of Object.values(pkg.bin ?? {}) as string[]) {
     check(

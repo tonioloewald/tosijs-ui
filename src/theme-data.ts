@@ -43,8 +43,11 @@ preview.append(
 test('base values generate the palette, and a hand-tuned value wins', () => {
   const box = preview.querySelector('.theme-data-demo')
   const style = getComputedStyle(box)
+  // The radius tuned in light holds in every mode; the accent is light's only in light.
   expect(style.borderRadius).toBe('12px')
-  expect(style.backgroundColor).toBe('rgb(11, 122, 92)')
+  const light = !document.body.matches('.darkmode, .high-contrast')
+  if (light) expect(style.backgroundColor).toBe('rgb(11, 122, 92)')
+  else expect(style.backgroundColor).not.toBe('rgb(11, 122, 92)')
 })
 ```
 

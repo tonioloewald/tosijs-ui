@@ -275,13 +275,20 @@ test('a declared mode derives the roots, and the mixes follow', async () => {
   const demo = preview.querySelector('.glass-demo')
   const variable = (name) => getComputedStyle(demo).getPropertyValue(`--${name}`).trim()
   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
+  // Each mode's classes, which picking it puts on the page (and takes the others' off).
+  const classes = { light: [], dark: ['darkmode'], tinted: ['glass-tinted'], mono: ['glass-mono'] }
+  const all = Object.values(classes).flat()
   const pick = async (mode) => {
     const menu = editor.shadowRoot.querySelector('[part="modes"] select')
     menu.value = mode
     menu.dispatchEvent(new Event('change', { bubbles: true }))
-    while (!document.body.classList.contains(`glass-${mode}`) && mode !== 'light') await frame()
+    const on = () => all.filter((name) => document.body.classList.contains(name)).join()
+    while (on() !== classes[mode].join()) await frame()
     await frame()
   }
+  // The editor starts on the mode the page is in; the test starts from light and ends where it began.
+  const start = editor.mode
+  await pick('light')
   expect(variable('glass-accent')).toBe('#3355dd')
   await pick('mono')
   const grey = variable('glass-accent').slice(1)
@@ -292,5 +299,6 @@ test('a declared mode derives the roots, and the mixes follow', async () => {
   await pick('light')
   expect(document.body.classList.contains('glass-mono')).toBe(false)
   expect(variable('glass-accent')).toBe('#3355dd')
+  await pick(start)
 })
 ```

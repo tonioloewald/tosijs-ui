@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Theme stress tests — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Theme stress tests","description":"Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern.","url":"https://ui.tosijs.net/theme-stress-tests/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-17T19:23:46.723Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Theme stress tests","description":"Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern.","url":"https://ui.tosijs.net/theme-stress-tests/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-17T19:27:51.098Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"Theme stress tests","item":"https://ui.tosijs.net/theme-stress-tests/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=7f9917fde603" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=c9e360ae3cc8" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="theme-stress-tests.md">
 <h1 id="theme-stress-tests">Theme stress tests</h1>
 <!--{ "parent": "Helper Libraries", "description": "Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern." }-->
@@ -310,13 +310,20 @@ test(&#39;a declared mode derives the roots, and the mixes follow&#39;, async ()
   const demo = preview.querySelector(&#39;.glass-demo&#39;)
   const variable = (name) =&gt; getComputedStyle(demo).getPropertyValue(`--${name}`).trim()
   const frame = () =&gt; new Promise((resolve) =&gt; requestAnimationFrame(resolve))
+  // Each mode&#39;s classes, which picking it puts on the page (and takes the others&#39; off).
+  const classes = { light: [], dark: [&#39;darkmode&#39;], tinted: [&#39;glass-tinted&#39;], mono: [&#39;glass-mono&#39;] }
+  const all = Object.values(classes).flat()
   const pick = async (mode) =&gt; {
     const menu = editor.shadowRoot.querySelector(&#39;[part=&quot;modes&quot;] select&#39;)
     menu.value = mode
     menu.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
-    while (!document.body.classList.contains(`glass-${mode}`) &amp;&amp; mode !== &#39;light&#39;) await frame()
+    const on = () =&gt; all.filter((name) =&gt; document.body.classList.contains(name)).join()
+    while (on() !== classes[mode].join()) await frame()
     await frame()
   }
+  // The editor starts on the mode the page is in; the test starts from light and ends where it began.
+  const start = editor.mode
+  await pick(&#39;light&#39;)
   expect(variable(&#39;glass-accent&#39;)).toBe(&#39;#3355dd&#39;)
   await pick(&#39;mono&#39;)
   const grey = variable(&#39;glass-accent&#39;).slice(1)
@@ -327,6 +334,7 @@ test(&#39;a declared mode derives the roots, and the mixes follow&#39;, async ()
   await pick(&#39;light&#39;)
   expect(document.body.classList.contains(&#39;glass-mono&#39;)).toBe(false)
   expect(variable(&#39;glass-accent&#39;)).toBe(&#39;#3355dd&#39;)
+  await pick(start)
 })
 </code></pre>
 
