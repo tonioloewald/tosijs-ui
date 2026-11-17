@@ -1176,3 +1176,24 @@ gap, recorded rather than hidden.
 - **The approval wait expired** (60 minutes) with the version staged and unverified; the
   verify-only run after approval was green. Expect this when a release is cut while the
   maintainer is remote.
+
+## 1.18.0 (2026-11-18) — theme data and `<tosi-theme-editor>` (#3914)
+
+- **The gate caught a CSS injection:** the nine-lens review found that a theme value carrying a
+  `}` could close the rule and write arbitrary CSS into every page. `isSafeCssValue` now guards
+  the live sheet, and the build throws on an unsafe value rather than skipping it. A theme file
+  is author input that reaches every reader, so it was treated as untrusted.
+- **A build that failed was committed anyway:** a pipe masked `bun run build`'s exit code, and
+  ece055b07 went in while a new picomatch high advisory (no fix available) was failing the
+  audit gate. It was time-boxed with an expiry, but the advisory also had to be recorded in
+  `package.json` `releaseDoctor.auditExemptions`, because release-doctor does not read the site
+  config's `audit.allow`. Two lists for one decision will drift.
+- **Doc tests fragile in dark mode:** three inline tests assumed the page starts in light mode
+  and failed only for a reader (or a haltija window) in dark mode. The fix was to read the
+  page's mode, not to force one. A lane that runs in one mode can't see this.
+- **Ordinary growth tripped a tripwire:** the consumer tarball hit 3.54MB against a 3.5MB limit,
+  with no regression behind it. The limit is now 4MB, and the rationale is recorded beside it.
+  Barrel +12.4kB gzip and iife +15.8kB, both recorded in the CHANGELOG.
+- **The approval wait expired again** (second release running): staged at 60 minutes,
+  unverified until the verify-only run after approval, which was green. The published `dist/`
+  diffs clean against the tag.
