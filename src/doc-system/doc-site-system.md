@@ -835,6 +835,63 @@ Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413
 stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
 — otherwise `tail -f` would show a split event and the reader could not tell.
 
+#### Test checklists
+
+Some checks only a person can make: whether something works by touch, looks right in Safari, or
+feels smooth on a phone. When an agent finishes a change, it can post a list of things to try,
+and wait for the answers the way it waits for CI:
+
+```bash
+tosijs-checklist post checks.json     # or - to read stdin; replaces any current list
+tosijs-checklist wait --timeout=3600  # exit 0: all passed · 1: something failed · 2: timed out
+tosijs-checklist status               # the answers so far
+tosijs-checklist clear
+```
+
+```json
+{
+  "title": "The new menu",
+  "sections": [
+    {
+      "title": "Phone",
+      "items": [
+        { "id": "tap", "text": "The menu opens with one tap", "url": "/menu/" },
+        { "text": "Long captions wrap", "steps": ["Switch to German", "Open the menu"] }
+      ]
+    }
+  ]
+}
+```
+
+A list may give `items` directly, without sections. An item can be just text; if it has no `id`,
+it is numbered (`s1-2`). Its `url` must be a site path or an http(s) URL, since it becomes an
+**Open** link.
+
+While a list is waiting, every page the dev server serves shows a badge, such as "2 checks
+waiting". The settings menu gains **Test Checklist…** too. The reader answers each item with 👍 or
+👎 and an optional comment, on any device that can open the site: this machine, a trusted LAN
+device, or the tunnel with an edit session. These are the same people who may save files, because
+reading and answering go through the same gate as `/__docstore/data`. Answers are saved as they
+are given, and the panel reopens after a reload.
+
+**Each verdict carries a schematic of the page.** The page draws an SVG of what is on screen at
+that moment: a labelled box for each visible element (tag, id, part, role, accessible name) and
+the element's own text. The panel and badge are left out. An agent reads the schematic as text,
+without vision. It never includes form values. Past its budget, it drops text first and then the
+deepest boxes, and says so in `data-truncated`, `data-dropped` and a visible banner, so a partial
+schematic is never mistaken for a complete one. `wait` and `status` print each comment and the
+path of each schematic.
+
+The list, answers and schematics live outside the repo, in a per-project folder in the temp
+directory. A file under the project root would be swept into a build, a `git add -A` or a
+tarball. `DEV_CHECKLIST_DIR` (or `--dir`) moves the folder, and must be set the same for the dev
+server and the bin. Posting a list removes the last list's answers. An answer is capped at
+1 MB as sent, gzipped by the page, and 8 MB inflated; inflation stops at the cap rather than
+after it. The list itself is capped at 200 items.
+
+The panel is [`<tosi-checklist>`](/checklist/), which you can use on its own: it shows a list and
+collects answers, and leaves saving them to you.
+
 #### `POST /__build` — let a build delegate to a running dev server
 
 `bun run build` used to refuse while a dev server held the build lock, and the workflow that

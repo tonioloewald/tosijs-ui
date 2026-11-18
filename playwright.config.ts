@@ -159,6 +159,8 @@ export default defineConfig({
       // The theme editor's save target: a scratch file, never the repo's theme (WebKit does
       // not route every request, so a test's intercept is not a guarantee).
       DEV_THEME_FILE: 'test-results/e2e-theme.json',
+      // The test checklists' store: a scratch folder the spec posts to and reads back.
+      DEV_CHECKLIST_DIR: 'test-results/e2e-checklist',
     },
     url: E2E_BASE_URL,
     reuseExistingServer: false,

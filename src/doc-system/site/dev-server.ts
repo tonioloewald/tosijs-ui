@@ -26,6 +26,13 @@ import { acquireBuildLock, describeHolder } from './build-lock.js'
 import { sinkPathFor, appendToSink } from './debug-sink.js'
 import { invitePageHtml } from './invite-page.js'
 import {
+  checklistDirFor,
+  checklistResults,
+  parseAnswerBody,
+  saveChecklistAnswer,
+} from './checklist-store.js'
+import { CHECKLIST_ENDPOINT_SNIPPET } from '../checklist-client.js'
+import {
   TUNNEL_LINK_CMD,
   resolveLinkArrival,
   linkRejection,
@@ -978,6 +985,14 @@ export async function devServer(
   decision somebody made rather than a default they inherited.
   */
   const SINK_PATH = testMode ? null : sinkPathFor(config.debugSink, '.')
+
+  /*
+  Test checklists (#4147): an agent posts a list with `tosijs-checklist post`, which writes it
+  to this folder (outside the repo, per project); a reader answers it from any page. Reading and
+  answering are admitted exactly as /__docstore/data is, so over the tunnel it takes an edit
+  session. `DEV_CHECKLIST_DIR` moves the folder (the Playwright lane uses a scratch one).
+  */
+  const CHECKLIST_DIR = checklistDirFor('.', process.env.DEV_CHECKLIST_DIR)
   const HALTIJA_SNIPPET = haltijaLoaderSnippet(HALTIJA_HTTPS_PORT)
   const HALTIJA_TUNNEL_SNIPPET = haltijaTunnelLoaderSnippet()
 
@@ -1775,7 +1790,8 @@ export async function devServer(
       (testMode ? '' : statusSnippet(request, viaTunnel)) +
       // Tells a live example there is a source endpoint to ask (source-access.ts), so a
       // deployed static site, which has none, is never asked.
-      (config.editableSources ? SOURCE_ENDPOINT_SNIPPET : '')
+      (config.editableSources ? SOURCE_ENDPOINT_SNIPPET : '') +
+      CHECKLIST_ENDPOINT_SNIPPET
     const encoding = negotiateEncoding(
       request?.headers.get('accept-encoding') ?? null
     )
@@ -2976,6 +2992,39 @@ export async function devServer(
       const admitted = admit(request, reqPath, srv, viaTunnel)
       if (admitted instanceof Response) return admitted
       return handleData(request, dataStore, admitted)
+    }
+
+    if (reqPath === '/__checklist' || reqPath === '/__checklist/answer') {
+      const admitted = admit(request, reqPath, srv, viaTunnel)
+      if (admitted instanceof Response) return admitted
+      const json = (body: unknown, status = 200) =>
+        new Response(JSON.stringify(body), {
+          status,
+          headers: { 'Content-Type': 'application/json', ...NO_CACHE },
+        })
+      if (reqPath === '/__checklist') {
+        if (request.method !== 'GET') return json({ error: 'GET only' }, 405)
+        const { list, answers, total, pass, fail, open } =
+          checklistResults(CHECKLIST_DIR)
+        // Verdicts and comments only: the schematics stay on this machine, for the agent.
+        const shown = Object.fromEntries(
+          Object.entries(answers).map(([id, { verdict, comment }]) => [
+            id,
+            { verdict, comment },
+          ])
+        )
+        return json({ list, answers: shown, total, pass, fail, open })
+      }
+      if (request.method !== 'POST') return json({ error: 'POST only' }, 405)
+      const parsed = await parseAnswerBody(
+        new Uint8Array(await request.arrayBuffer()),
+        request.headers.get('content-encoding') === 'gzip'
+      )
+      if ('status' in parsed)
+        return json({ error: parsed.reason }, parsed.status)
+      const saved = saveChecklistAnswer(CHECKLIST_DIR, parsed.body)
+      if (!saved.ok) return json({ error: saved.reason }, saved.status)
+      return json({ ok: true })
     }
 
     /*

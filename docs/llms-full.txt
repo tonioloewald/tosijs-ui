@@ -10332,6 +10332,7 @@ General purpose utilities and behaviors — routing, theming, localization, sort
 
 <!-- toc -->
 - [ab-test](/ab-test/)
+- [checklist](/checklist/)
 - [css value](/css-value/)
 - [drag & drop](/drag-and-drop/)
 - [hash-state](/hash-state/)
@@ -10431,6 +10432,79 @@ randomize()
 - `not` reverses the condition (so `<tosi-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 
 Source: https://ui.tosijs.net/ab-test/
+
+---
+
+# checklist
+
+`<tosi-checklist>` shows a list of things to check and takes a 👍 or 👎 and a comment for each.
+It is how a doc site's dev server asks a person to try something an agent cannot (see
+[test checklists](/doc-site-system/#test-checklists)), but it knows nothing about servers:
+`value` is the list, `answers` holds the answers, and it fires `change` with the item that
+changed. Saving the answer is up to you.
+
+In an app, import it from `tosijs-ui/checklist`: it is not in the root barrel, so an app that
+does not use it ships none of it. (The example below imports from `tosijs-ui` because doc pages
+run against the full bundle.)
+
+A list has a `title` and either `items` or `sections`, each with a `title` and `items`. An item
+is text, or `{ id, text, url, steps }`. Items without an `id` are numbered (`s1-1`, `s1-2`, …).
+
+```js
+import { tosiChecklist } from 'tosijs-ui'
+
+const list = tosiChecklist({
+  value: {
+    id: 'demo',
+    title: 'Before the release',
+    sections: [
+      {
+        title: 'Phone',
+        items: [
+          { id: 'tap', text: 'The menu opens with one tap', url: '/menu/' },
+          {
+            id: 'scroll',
+            text: 'The table scrolls smoothly',
+            steps: ['Open the table page', 'Flick the rows up and down'],
+          },
+        ],
+      },
+      { title: 'Desktop', items: ['Keyboard focus is always visible'] },
+    ],
+  },
+})
+const log = document.createElement('pre')
+list.addEventListener('change', (event) => {
+  log.textContent = JSON.stringify(event.detail, null, 2)
+})
+preview.append(list, log)
+```
+```test
+const list = preview.querySelector('tosi-checklist')
+test('a verdict is an answer, and pressing it again takes it back', async () => {
+  await list.whenHydrated
+  await new Promise((resolve) => requestAnimationFrame(resolve))
+  const pass = list.shadowRoot.querySelector('[data-id="tap"] .pass')
+  pass.click()
+  expect(list.answers.tap.verdict).toBe('pass')
+  expect(pass.getAttribute('aria-pressed')).toBe('true')
+  pass.click()
+  expect(list.answers.tap.verdict).toBe(null)
+  expect(list.shadowRoot.querySelectorAll('.item').length).toBe(3)
+})
+```
+
+## Answers
+
+`answers` maps an item's id to `{ verdict, comment }`, where `verdict` is `'pass'`, `'fail'` or
+`null`. Pressing a verdict again takes it back. Each `change` event's `detail` is
+`{ itemId, verdict, comment, changed }`, where `changed` is `'verdict'` or `'comment'`, so a
+caller can, for instance, capture the page only when a verdict is given.
+
+An item's `url` becomes an **Open** link. Only a site path (`/button/`) or an http(s) URL is
+linked; anything else is shown as text.
+
+Source: https://ui.tosijs.net/checklist/
 
 ---
 
@@ -13928,6 +14002,63 @@ endpoint on a LAN-reachable server should be a decision you made rather than one
 Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413) and the file
 stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
 — otherwise `tail -f` would show a split event and the reader could not tell.
+
+#### Test checklists
+
+Some checks only a person can make: whether something works by touch, looks right in Safari, or
+feels smooth on a phone. When an agent finishes a change, it can post a list of things to try,
+and wait for the answers the way it waits for CI:
+
+```bash
+tosijs-checklist post checks.json     # or - to read stdin; replaces any current list
+tosijs-checklist wait --timeout=3600  # exit 0: all passed · 1: something failed · 2: timed out
+tosijs-checklist status               # the answers so far
+tosijs-checklist clear
+```
+
+```json
+{
+  "title": "The new menu",
+  "sections": [
+    {
+      "title": "Phone",
+      "items": [
+        { "id": "tap", "text": "The menu opens with one tap", "url": "/menu/" },
+        { "text": "Long captions wrap", "steps": ["Switch to German", "Open the menu"] }
+      ]
+    }
+  ]
+}
+```
+
+A list may give `items` directly, without sections. An item can be just text; if it has no `id`,
+it is numbered (`s1-2`). Its `url` must be a site path or an http(s) URL, since it becomes an
+**Open** link.
+
+While a list is waiting, every page the dev server serves shows a badge, such as "2 checks
+waiting". The settings menu gains **Test Checklist…** too. The reader answers each item with 👍 or
+👎 and an optional comment, on any device that can open the site: this machine, a trusted LAN
+device, or the tunnel with an edit session. These are the same people who may save files, because
+reading and answering go through the same gate as `/__docstore/data`. Answers are saved as they
+are given, and the panel reopens after a reload.
+
+**Each verdict carries a schematic of the page.** The page draws an SVG of what is on screen at
+that moment: a labelled box for each visible element (tag, id, part, role, accessible name) and
+the element's own text. The panel and badge are left out. An agent reads the schematic as text,
+without vision. It never includes form values. Past its budget, it drops text first and then the
+deepest boxes, and says so in `data-truncated`, `data-dropped` and a visible banner, so a partial
+schematic is never mistaken for a complete one. `wait` and `status` print each comment and the
+path of each schematic.
+
+The list, answers and schematics live outside the repo, in a per-project folder in the temp
+directory. A file under the project root would be swept into a build, a `git add -A` or a
+tarball. `DEV_CHECKLIST_DIR` (or `--dir`) moves the folder, and must be set the same for the dev
+server and the bin. Posting a list removes the last list's answers. An answer is capped at
+1 MB as sent, gzipped by the page, and 8 MB inflated; inflation stops at the cap rather than
+after it. The list itself is capped at 200 items.
+
+The panel is [`<tosi-checklist>`](/checklist/), which you can use on its own: it shows a list and
+collects answers, and leaves saving them to you.
 
 #### `POST /__build` — let a build delegate to a running dev server
 

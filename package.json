@@ -95,6 +95,7 @@
     "/NOTICE",
     "/README.md",
     "/bin/caddy-install.ts",
+    "/bin/checklist.ts",
     "/bin/deploy-preview.ts",
     "/bin/docs.ts",
     "/bin/format.ts",
@@ -115,7 +116,8 @@
     "tosijs-deploy": "bin/deploy-preview.ts",
     "tosijs-release-notes": "bin/release-notes.ts",
     "tosijs-caddy-install": "bin/caddy-install.ts",
-    "tosijs-format": "bin/format.ts"
+    "tosijs-format": "bin/format.ts",
+    "tosijs-checklist": "bin/checklist.ts"
   },
   "source": "src/index.ts",
   "types": "dist/index.d.ts",
@@ -169,6 +171,11 @@
       "types": "./dist/theme.d.ts",
       "import": "./dist/theme.js",
       "default": "./dist/theme.js"
+    },
+    "./checklist": {
+      "types": "./dist/checklist.d.ts",
+      "import": "./dist/checklist.js",
+      "default": "./dist/checklist.js"
     },
     "./theme-editor": {
       "types": "./dist/theme-editor.d.ts",

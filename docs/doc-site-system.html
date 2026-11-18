@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=80950e01ad23" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=651591a9d2ea" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-17T21:26:01+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-18T12:13:22.157Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=c9e360ae3cc8" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=70a176f73bc6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1112,6 +1112,52 @@ endpoint on a LAN-reachable server should be a decision you made rather than one
 <p>Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413) and the file
 stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
 — otherwise <code>tail -f</code> would show a split event and the reader could not tell.</p>
+<h4 id="test-checklists">Test checklists</h4>
+<p>Some checks only a person can make: whether something works by touch, looks right in Safari, or
+feels smooth on a phone. When an agent finishes a change, it can post a list of things to try,
+and wait for the answers the way it waits for CI:</p>
+<pre><code class="language-bash" data-highlighted>tosijs-checklist post checks.json     <span class="token comment"># or - to read stdin; replaces any current list</span>
+tosijs-checklist <span class="token function">wait</span> <span class="token parameter variable">--timeout</span><span class="token operator">=</span><span class="token number">3600</span>  <span class="token comment"># exit 0: all passed · 1: something failed · 2: timed out</span>
+tosijs-checklist status               <span class="token comment"># the answers so far</span>
+tosijs-checklist <span class="token function">clear</span>
+</code></pre>
+<pre><code class="language-json" data-highlighted><span class="token punctuation">{</span>
+  <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"The new menu"</span><span class="token punctuation">,</span>
+  <span class="token property">"sections"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"title"</span><span class="token operator">:</span> <span class="token string">"Phone"</span><span class="token punctuation">,</span>
+      <span class="token property">"items"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span> <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"tap"</span><span class="token punctuation">,</span> <span class="token property">"text"</span><span class="token operator">:</span> <span class="token string">"The menu opens with one tap"</span><span class="token punctuation">,</span> <span class="token property">"url"</span><span class="token operator">:</span> <span class="token string">"/menu/"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span> <span class="token property">"text"</span><span class="token operator">:</span> <span class="token string">"Long captions wrap"</span><span class="token punctuation">,</span> <span class="token property">"steps"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"Switch to German"</span><span class="token punctuation">,</span> <span class="token string">"Open the menu"</span><span class="token punctuation">]</span> <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>A list may give <code>items</code> directly, without sections. An item can be just text; if it has no <code>id</code>,
+it is numbered (<code>s1-2</code>). Its <code>url</code> must be a site path or an http(s) URL, since it becomes an
+<strong>Open</strong> link.</p>
+<p>While a list is waiting, every page the dev server serves shows a badge, such as &quot;2 checks
+waiting&quot;. The settings menu gains <strong>Test Checklist…</strong> too. The reader answers each item with 👍 or
+👎 and an optional comment, on any device that can open the site: this machine, a trusted LAN
+device, or the tunnel with an edit session. These are the same people who may save files, because
+reading and answering go through the same gate as <code>/__docstore/data</code>. Answers are saved as they
+are given, and the panel reopens after a reload.</p>
+<p><strong>Each verdict carries a schematic of the page.</strong> The page draws an SVG of what is on screen at
+that moment: a labelled box for each visible element (tag, id, part, role, accessible name) and
+the element&#39;s own text. The panel and badge are left out. An agent reads the schematic as text,
+without vision. It never includes form values. Past its budget, it drops text first and then the
+deepest boxes, and says so in <code>data-truncated</code>, <code>data-dropped</code> and a visible banner, so a partial
+schematic is never mistaken for a complete one. <code>wait</code> and <code>status</code> print each comment and the
+path of each schematic.</p>
+<p>The list, answers and schematics live outside the repo, in a per-project folder in the temp
+directory. A file under the project root would be swept into a build, a <code>git add -A</code> or a
+tarball. <code>DEV_CHECKLIST_DIR</code> (or <code>--dir</code>) moves the folder, and must be set the same for the dev
+server and the bin. Posting a list removes the last list&#39;s answers. An answer is capped at
+1 MB as sent, gzipped by the page, and 8 MB inflated; inflation stops at the cap rather than
+after it. The list itself is capped at 200 items.</p>
+<p>The panel is <a href="/checklist/"><code>&lt;tosi-checklist&gt;</code></a>, which you can use on its own: it shows a list and
+collects answers, and leaves saving them to you.</p>
 <h4 id="post-__build--let-a-build-delegate-to-a-running-dev-server"><code>POST /__build</code> — let a build delegate to a running dev server</h4>
 <p><code>bun run build</code> used to refuse while a dev server held the build lock, and the workflow that
 produced was &quot;kill the server, build, forget to restart it&quot;. It now asks the server to build and
@@ -2762,6 +2808,7 @@ exports.</p>
     <li class="nav-branch"><div class="nav-branch-head"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="tosi-nav-helper-libraries" aria-label="Helper Libraries"></button><a class="doc-link" href="helper-libraries/">Helper Libraries</a></div>
     <ul id="tosi-nav-helper-libraries">
       <li><a class="doc-link" href="ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="checklist/">checklist</a></li>
       <li><a class="doc-link" href="css-value/">css value</a></li>
       <li><a class="doc-link" href="drag-and-drop/">drag &amp; drop</a></li>
       <li><a class="doc-link" href="hash-state/">hash-state</a></li>
@@ -2809,6 +2856,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-098d6vmq.js"></script>
+  <script type="module" src="hydrate-95xvqwy2.js"></script>
 </body>
 </html>

@@ -29,6 +29,9 @@ import * as highlightBlock from './highlight-block.js';
 import * as docBrowser from './doc-browser.js';
 import * as docSystem from './doc-system/doc-system.js';
 import * as liveExample from './live-example.js';
+// Kept out of the root barrel (an app importing a button ships none of it); the doc site's
+// test checklists panel uses it, and a CDN page gets it here.
+import * as checklist from './checklist.js';
 const xinjsui = {
     ...xinjsuiCore,
     ...codeEditor,
@@ -36,6 +39,7 @@ const xinjsui = {
     ...docBrowser,
     ...docSystem,
     ...liveExample,
+    ...checklist,
 };
 import * as xinjs from 'tosijs';
 import { validate, inferSchema, unenforcedKeywords, setWarnings, } from 'tosijs-schema';

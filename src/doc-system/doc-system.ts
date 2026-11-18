@@ -92,6 +92,11 @@ import {
   themeEditorOpen,
 } from './theme-editor-panel.js'
 import { DOC_THEME_PRESETS, presetClass } from './theme-presets.js'
+import {
+  checklistWaiting,
+  openChecklist,
+  watchChecklist,
+} from './checklist-panel.js'
 import { allowedFontUrl } from '../theme-fonts.js'
 import { sourceWritable } from '../live-example/source-access.js'
 
@@ -585,6 +590,13 @@ export class TosiDocSystem extends withAttributes({
             menuItems.push(null)
           }
 
+          if (checklistWaiting()) {
+            menuItems.push({
+              caption: 'Test Checklist…',
+              icon: 'checkSquare',
+              action: () => void openChecklist(),
+            })
+          }
           // Only where the dev server would accept the save (theme-editor-panel.ts).
           const themeSite = this.themeSite()
           if (themeSite && sourceWritable(themeSite.file)) {
@@ -713,6 +725,8 @@ export class TosiDocSystem extends withAttributes({
     // Ask now, so the settings menu knows whether to offer the theme editor when it opens.
     const themeSite = this.themeSite()
     if (themeSite) void themeEditable(themeSite.file)
+    // An agent's test checklist, on a page the dev server served (checklist-panel.ts).
+    watchChecklist()
     // Async data source: fetch once, then let the normal render pipeline mount.
     if (this.corpus === undefined) {
       const url = this.docs || '/docs.json'
