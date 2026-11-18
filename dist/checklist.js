@@ -171,7 +171,9 @@ export class TosiChecklist extends withAttributes({
             marginTop: '6px',
             minHeight: '2.4em',
             font: 'inherit',
-            fontSize: '0.9em',
+            // Full size, never smaller: iOS zooms the page into any field it
+            // focuses whose text is under 16px.
+            fontSize: '1em',
             color: 'inherit',
             background: 'transparent',
             border: '1px solid color-mix(in srgb, currentColor 25%, transparent)',

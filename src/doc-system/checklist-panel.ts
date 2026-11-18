@@ -71,7 +71,7 @@ const panelStyles = {
     borderRadius: '10px',
     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
     fontFamily: 'system-ui, -apple-system, sans-serif',
-    fontSize: '14px',
+    fontSize: '16px',
     colorScheme: 'light',
   },
   '.checklist-panel tosi-checklist': {

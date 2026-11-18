@@ -81,6 +81,11 @@ async function answerTheList(page: import('@playwright/test').Page) {
 
   const second = panel.locator('tosi-checklist [data-id="s1-2"]')
   await second.locator('.fail').click()
+  // Under 16px, iOS zooms the page into the field when it takes focus.
+  const fontSize = await second
+    .locator('textarea')
+    .evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
+  expect(fontSize).toBeGreaterThanOrEqual(16)
   await second.locator('textarea').fill('does not work')
   await second.locator('textarea').press('Tab')
   await expect
