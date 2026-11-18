@@ -58,7 +58,7 @@
     "prettier": "^3.9.10",
     "prismjs": "^1.30.0",
     "tjs-lang": "0.14.0-rc.5",
-    "tosijs": "1.10.10",
+    "tosijs": "1.10.11",
     "tosijs-schema": "1.14.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.2"
