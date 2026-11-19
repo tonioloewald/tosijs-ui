@@ -227,6 +227,13 @@
     "bun": ">=1.2"
   },
   "releaseDoctor": {
-    "auditExemptions": {}
+    "auditExemptions": {},
+    "securityEntries": [
+      "src/doc-system/site/dev-server.ts",
+      "src/doc-system/site/dev-auth.ts",
+      "src/doc-system/site/checklist-handler.ts",
+      "src/doc-system/site/checklist-store.ts",
+      "bin/checklist.ts"
+    ]
   }
 }
