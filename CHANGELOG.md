@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.19.1
+
+> **Typing no longer loses focus while background tests run.** On a doc page with background
+> tests on, a field could lose focus mid-sentence: the runner loads other pages in a hidden
+> frame, and Safari lets their `focus()` calls take focus from the page you are on. It made the
+> 1.19.0 checklist's comment fields unusable on a phone. Upgrade if you answer checklists or
+> edit on a doc site with tests running.
+
+### Fixed
+
+- Typing in any field of a doc page (a checklist comment, search, a live example's editor) no longer loses focus mid-sentence while background tests run. The runner starts no page while you are in a field you focused yourself, and a page it is running when you enter one is abandoned and run again once you have left the field. (e47cce34)
+- The checklist panel no longer jumps a line each time a comment saves: the "Saving…" status is gone, and the status line shows only a save that failed. (e47cce34)
+
 ## 1.19.0
 
 > **Test checklists: an agent asks, a person answers.** Some checks only a person can make:
