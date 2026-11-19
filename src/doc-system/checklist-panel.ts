@@ -216,7 +216,6 @@ export async function openChecklist(): Promise<void> {
   // The list is the one answered when the change was made, so a replaced list is a 409.
   const send = (change: ChecklistChange, listId: string): Promise<void> =>
     (sending = sending.then(async () => {
-      status.textContent = 'Saving…'
       const problem = await sendChecklistAnswer({
         listId,
         itemId: change.itemId,
@@ -235,6 +234,8 @@ export async function openChecklist(): Promise<void> {
       ) {
         unsaved.delete(change.itemId)
       }
+      // Problems only. A "Saving…" line showed and hid itself on every pause in typing, and
+      // the panel jumped a line each time under the reader's thumb.
       status.textContent = problem ?? ''
       if (problem) await refresh()
       else if (state) {

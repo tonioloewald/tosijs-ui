@@ -517,6 +517,74 @@ export interface DocBrowserOptions {
 // logoMarkStyleSpec) so a consumer retunes them with one CSS variable each,
 // rather than a hard-wired pixel value.
 
+/*
+The background runner loads other pages into a hidden frame, and their examples call
+`focus()`. Safari lets a frame take focus from its parent that way, so a reader typing in the
+page they are on (a checklist comment, on a phone) was thrown out of the field mid-sentence,
+whenever the runner reached a page that focuses something. Ten pages do, and their tests
+check focus, so the frame cannot simply be made inert. The runner stands aside instead: it
+starts no page while the reader is in a field, and a page running when they enter one is
+abandoned and run again once they have left it.
+
+Only a field the READER focused counts: one focused straight after a real tap or key press.
+A page's own examples focus fields in the page they are on, and the runner must not wait on
+those for ever.
+*/
+const READER_QUIET_MS = 2_000
+const NOT_TYPED_IN = new Set([
+  'button',
+  'checkbox',
+  'color',
+  'file',
+  'hidden',
+  'image',
+  'radio',
+  'range',
+  'reset',
+  'submit',
+])
+
+let lastGesture = 0
+let readerField: EventTarget | null = null
+let watchingReader = false
+function watchReader(): void {
+  if (watchingReader) return
+  watchingReader = true
+  const gesture = (event: Event) => {
+    if (event.isTrusted) lastGesture = Date.now()
+  }
+  document.addEventListener('pointerdown', gesture, true)
+  document.addEventListener('keydown', gesture, true)
+  document.addEventListener(
+    'focusin',
+    (event) => {
+      readerField =
+        Date.now() - lastGesture < 1_000 ? event.composedPath()[0] : null
+    },
+    true
+  )
+}
+
+function readerIsTyping(): boolean {
+  let el = document.activeElement
+  while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement
+  if (!el || el !== readerField) return false
+  if (el instanceof HTMLTextAreaElement) return !el.readOnly && !el.disabled
+  if (el instanceof HTMLInputElement) {
+    return !NOT_TYPED_IN.has(el.type) && !el.readOnly && !el.disabled
+  }
+  return el instanceof HTMLElement && el.isContentEditable
+}
+
+/** Resolves at once if the reader is not in a field, else once they have left it a while. */
+async function readerIdle(): Promise<void> {
+  let quiet = readerIsTyping() ? 0 : READER_QUIET_MS
+  while (quiet < READER_QUIET_MS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    quiet = readerIsTyping() ? 0 : quiet + 250
+  }
+}
+
 // `icons` is a Proxy that returns a factory for ANY string (unknown names get a
 // placeholder glyph), so we can't ask it whether a name is real — we route by the
 // shape of the string instead: an inline `<svg>` renders as-is, a URL/path/data:
@@ -2562,6 +2630,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (!testManager.enabled.value) return
     if (isTestFrame) return // Don't run background tests in test iframe
     backgroundTestsStarted = true
+    watchReader()
 
     /*
     Find all docs that have test blocks.
@@ -2666,35 +2735,46 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       // Skip current page — it runs tests naturally
       if (doc.filename === currentFilename) continue
 
-      // Navigate iframe to the page
-      testFrame.src =
+      const src =
         routing === 'path'
           ? `${window.location.origin}${hrefFor(doc.filename)}?_testMode=1`
           : `${window.location.origin}${window.location.pathname}?${doc.filename}&_testMode=1`
-
-      // Wait for the iframe to signal it's done. LONGER than the frame's own 30s stall
-      // timeout, so a frame that gives up on a hung example gets to say so: at the same 30s
-      // the two raced, and the parent could move on a moment before the stall report landed.
-      let timedOut = false
-      await new Promise<void>((resolve) => {
-        const deadline = Date.now() + PAGE_DEADLINE_MS
-        const onDone = (event: MessageEvent) => {
-          if (
-            event.source === testFrame.contentWindow &&
-            event.data?.type === 'tosi-tests-done' &&
-            event.data.filename === doc.filename
-          ) {
+      let outcome: 'done' | 'timeout' | 'interrupted'
+      do {
+        await readerIdle()
+        // A run abandoned for the reader starts again from nothing.
+        delete pageTestResults[doc.filename]
+        testFrame.src = src
+        // Wait for the iframe to signal it's done. LONGER than the frame's own 30s stall
+        // timeout, so a frame that gives up on a hung example gets to say so: at the same 30s
+        // the two raced, and the parent could move on a moment before the stall report landed.
+        outcome = await new Promise((resolve) => {
+          const settle = (how: typeof outcome) => {
             window.removeEventListener('message', onDone)
-            resolve()
+            document.removeEventListener('focusin', onFocus, true)
+            clearTimeout(timer)
+            resolve(how)
           }
-        }
-        window.addEventListener('message', onDone)
-        setTimeout(() => {
-          window.removeEventListener('message', onDone)
-          timedOut = true
-          resolve()
-        }, deadline - Date.now())
-      })
+          const onDone = (event: MessageEvent) => {
+            if (
+              event.source === testFrame.contentWindow &&
+              event.data?.type === 'tosi-tests-done' &&
+              event.data.filename === doc.filename
+            ) {
+              settle('done')
+            }
+          }
+          const onFocus = () => {
+            if (readerIsTyping()) settle('interrupted')
+          }
+          const timer = setTimeout(() => settle('timeout'), PAGE_DEADLINE_MS)
+          window.addEventListener('message', onDone)
+          document.addEventListener('focusin', onFocus, true)
+        })
+        // Stop its scripts now, before one of them takes the reader's field.
+        if (outcome === 'interrupted') testFrame.src = 'about:blank'
+      } while (outcome === 'interrupted')
+      const timedOut = outcome === 'timeout'
 
       // A page that timed out fails even if some of its examples had reported (closePage).
       pageTestResults[doc.filename] = closePage(pageTestResults[doc.filename], {

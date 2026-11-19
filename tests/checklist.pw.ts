@@ -30,7 +30,10 @@ test('a reader answers a posted list, and each verdict carries a schematic', asy
   page,
   browserName,
 }) => {
-  test.skip(browserName !== 'chromium', 'one store per server: see above')
+  test.skip(
+    browserName !== (process.env.CHECKLIST_ENGINE ?? 'chromium'),
+    'one store per server: see above'
+  )
   const list = normalizeChecklist({
     title: 'E2E checks',
     id: 'e2e',
@@ -92,6 +95,19 @@ async function answerTheList(page: import('@playwright/test').Page) {
   await expect
     .poll(() => checklistResults(DIR).answers['s1-2']?.comment)
     .toBe('does not work')
+  // ...and the reader can go on typing at a person's speed, pausing between words long
+  // enough for saves to land mid-sentence, without losing the field.
+  for (const word of [' at', ' all', ' on', ' my', ' phone']) {
+    await page.keyboard.type(word, { delay: 120 })
+    await page.waitForTimeout(800)
+    await expect(second.locator('textarea')).toBeFocused()
+  }
+  await expect(second.locator('textarea')).toHaveValue(
+    'does not work at all on my phone'
+  )
+  await expect
+    .poll(() => checklistResults(DIR).answers['s1-2']?.comment)
+    .toBe('does not work at all on my phone')
   expect(checklistResults(DIR)).toMatchObject({ pass: 1, fail: 1, open: 0 })
 
   // A poll landing while a comment waits out its pause does not undo it, and a verdict
@@ -117,7 +133,9 @@ async function answerTheList(page: import('@playwright/test').Page) {
   await expect(panel).toBeVisible()
   await expect(item.locator('.fail')).toHaveAttribute('aria-pressed', 'true')
   await expect(first).toHaveValue('keep me')
-  await expect(second.locator('textarea')).toHaveValue('does not work')
+  await expect(second.locator('textarea')).toHaveValue(
+    'does not work at all on my phone'
+  )
 
   // Closed with nothing left to check, there is no badge.
   await panel.getByRole('button', { name: 'Close the test checklist' }).click()
