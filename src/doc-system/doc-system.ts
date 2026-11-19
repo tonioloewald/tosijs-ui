@@ -97,6 +97,7 @@ import {
   openChecklist,
   watchChecklist,
 } from './checklist-panel.js'
+import { hasChecklistEndpoint } from './checklist-client.js'
 import { allowedFontUrl } from '../theme-fonts.js'
 import { sourceWritable } from '../live-example/source-access.js'
 
@@ -726,7 +727,7 @@ export class TosiDocSystem extends withAttributes({
     const themeSite = this.themeSite()
     if (themeSite) void themeEditable(themeSite.file)
     // An agent's test checklist, on a page the dev server served (checklist-panel.ts).
-    watchChecklist()
+    if (hasChecklistEndpoint()) watchChecklist()
     // Async data source: fetch once, then let the normal render pipeline mount.
     if (this.corpus === undefined) {
       const url = this.docs || '/docs.json'

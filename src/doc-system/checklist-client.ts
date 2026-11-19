@@ -10,6 +10,12 @@ export const CHECKLIST_ENDPOINT_SNIPPET =
   '<script>window.__tosiChecklist=true</script>'
 
 export const CHECKLIST_ENDPOINT = '/__checklist'
+let endpoint = CHECKLIST_ENDPOINT
+
+/** Where the page asks: where your server mounted `checklistHandler`. */
+export function setChecklistEndpoint(path: string): void {
+  endpoint = path.replace(/\/+$/, '') || CHECKLIST_ENDPOINT
+}
 const KEEPALIVE_LIMIT = 60_000
 
 /** Whether the page was served by a dev server with a checklist endpoint. */
@@ -31,7 +37,7 @@ export async function fetchChecklist(
   fetcher: typeof fetch = fetch
 ): Promise<ChecklistState | null> {
   try {
-    const response = await fetcher(CHECKLIST_ENDPOINT, { cache: 'no-store' })
+    const response = await fetcher(endpoint, { cache: 'no-store' })
     if (!response.ok) return null
     const state = (await response.json()) as ChecklistState
     return state.list ? state : null
@@ -63,7 +69,7 @@ export async function sendChecklistAnswer(
 ): Promise<string | null> {
   try {
     const zipped = await gzip(JSON.stringify(body))
-    const response = await fetcher(`${CHECKLIST_ENDPOINT}/answer`, {
+    const response = await fetcher(`${endpoint}/answer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

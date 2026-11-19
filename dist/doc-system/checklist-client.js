@@ -5,6 +5,11 @@ answer. No components here, so the dev server can import the snippet without a D
 /** Injected by the dev server into the pages it serves: there is a checklist endpoint to ask. */
 export const CHECKLIST_ENDPOINT_SNIPPET = '<script>window.__tosiChecklist=true</script>';
 export const CHECKLIST_ENDPOINT = '/__checklist';
+let endpoint = CHECKLIST_ENDPOINT;
+/** Where the page asks: where your server mounted `checklistHandler`. */
+export function setChecklistEndpoint(path) {
+    endpoint = path.replace(/\/+$/, '') || CHECKLIST_ENDPOINT;
+}
 const KEEPALIVE_LIMIT = 60_000;
 /** Whether the page was served by a dev server with a checklist endpoint. */
 export const hasChecklistEndpoint = () => typeof window !== 'undefined' &&
@@ -12,7 +17,7 @@ export const hasChecklistEndpoint = () => typeof window !== 'undefined' &&
 /** The posted list and its answers, or null when this page may not see it (or there is none). */
 export async function fetchChecklist(fetcher = fetch) {
     try {
-        const response = await fetcher(CHECKLIST_ENDPOINT, { cache: 'no-store' });
+        const response = await fetcher(endpoint, { cache: 'no-store' });
         if (!response.ok)
             return null;
         const state = (await response.json());
@@ -32,7 +37,7 @@ async function gzip(text) {
 export async function sendChecklistAnswer(body, fetcher = fetch) {
     try {
         const zipped = await gzip(JSON.stringify(body));
-        const response = await fetcher(`${CHECKLIST_ENDPOINT}/answer`, {
+        const response = await fetcher(`${endpoint}/answer`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

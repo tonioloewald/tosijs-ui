@@ -6,8 +6,8 @@ to the page as they change.
 
 The editor that used to live here is now [`<tosi-theme-editor>`](/theme-editor/), on
 `tosijs-ui/theme-editor`, and edits a whole theme as [data](/theme-data/). It no longer drives
-`liveTheme`. `tosiThemeEditor` and `TosiThemeEditor` are still exported from `tosijs-ui` for
-now, and are deprecated there: import them from `tosijs-ui/theme-editor`.
+`liveTheme`. As of 1.19.0 it is no longer exported from `tosijs-ui`: import it from
+`tosijs-ui/theme-editor`.
 
 ## Programmatic Control
 
@@ -169,11 +169,3 @@ export function enableLiveTheme() {
 export function disableLiveTheme() {
     liveThemeActive = false;
 }
-// ============================================================================
-// The editor moved to theme-editor.ts
-// ============================================================================
-export { 
-/** @deprecated import it from `tosijs-ui/theme-editor` */
-TosiThemeEditor, 
-/** @deprecated import it from `tosijs-ui/theme-editor` */
-tosiThemeEditor, } from './theme-editor.js';

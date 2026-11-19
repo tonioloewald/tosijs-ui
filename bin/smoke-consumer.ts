@@ -444,6 +444,8 @@ try {
     'tosijs-ui/hash-state',
     'tosijs-ui/crud',
     'tosijs-ui/highlight-block',
+    // Test checklists outside the doc site (#4182): a named export into a nested file.
+    'tosijs-ui/checklist-panel',
     // Nested, through the wildcard: what an editor imports to save data (#3365).
     'tosijs-ui/doc-system/data-client',
     // One icon as a function, and as a string (#3885): `tosijs-ui/icons` is a named export
@@ -491,12 +493,12 @@ try {
   the runtime a consumer's `stop` script actually uses.
   */
   const lockRead =
-    await $`bun -e ${"import('tosijs-ui/site').then(m=>{for(const n of ['currentHolder','describeHolder'])if(typeof m[n]!=='function')throw new Error('missing '+n);console.log('OK')})"}`
+    await $`bun -e ${"import('tosijs-ui/site').then(m=>{for(const n of ['currentHolder','describeHolder','checklistHandler','checklistDirFor'])if(typeof m[n]!=='function')throw new Error('missing '+n);console.log('OK')})"}`
       .cwd(proj)
       .nothrow()
       .quiet()
   check(
-    'tosijs-ui/site exposes the build-lock reader (currentHolder/describeHolder)',
+    'tosijs-ui/site exposes the build-lock reader and the checklist handler',
     lockRead.stdout.toString().includes('OK'),
     lockRead.stderr.toString().slice(0, 200)
   )

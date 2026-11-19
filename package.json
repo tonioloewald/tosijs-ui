@@ -177,6 +177,11 @@
       "import": "./dist/checklist.js",
       "default": "./dist/checklist.js"
     },
+    "./checklist-panel": {
+      "types": "./dist/doc-system/checklist-panel.d.ts",
+      "import": "./dist/doc-system/checklist-panel.js",
+      "default": "./dist/doc-system/checklist-panel.js"
+    },
     "./theme-editor": {
       "types": "./dist/theme-editor.d.ts",
       "import": "./dist/theme-editor.js",

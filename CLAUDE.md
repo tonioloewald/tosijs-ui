@@ -376,7 +376,7 @@ Public surface (this is the contract; the pre-1.7 ACE `theme`/`options` props we
 
 ### Subpath Exports & Tree-Shaking
 
-`package.json` `exports` expose stable subpaths — `tosijs-ui/site`, `/icons`, `/code-editor`, `/live-example`, `/doc-browser`, `/diff`, `/theme`, `/theme-editor`, `/checklist` — plus a `./*` wildcard so `import 'tosijs-ui/rating'` resolves to `dist/rating.js` and registers just that element.
+`package.json` `exports` expose stable subpaths — `tosijs-ui/site`, `/icons`, `/code-editor`, `/live-example`, `/doc-browser`, `/diff`, `/theme`, `/theme-editor`, `/checklist`, `/checklist-panel` — plus a `./*` wildcard so `import 'tosijs-ui/rating'` resolves to `dist/rating.js` and registers just that element.
 
 There is a **second `./*.js` wildcard** beside it, because `./*` alone maps `tosijs-ui/foo.js` to `dist/foo.js.js` — so the extension-ful spelling, which is exactly what an adopter copying this repo's own ESM import style would write, failed to resolve. `bin/smoke-consumer.ts` checks both spellings for a nested path (`tosijs-ui/schema-form/fields` and `…/fields.js`); nested paths only exist through the wildcards, so nothing else covers them.
 

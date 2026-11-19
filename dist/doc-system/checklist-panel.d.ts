@@ -4,5 +4,14 @@ export declare const checklistWaiting: () => boolean;
 export declare function closeChecklist(): void;
 /** Open the panel, or bring it forward. */
 export declare function openChecklist(): Promise<void>;
-/** Start watching for a list: once, on a page the dev server served. */
-export declare function watchChecklist(): void;
+export interface WatchChecklistOptions {
+    /** Where your server mounted `checklistHandler` (default `/__checklist`). */
+    endpoint?: string;
+}
+/**
+ * Show a badge while a list is waiting, and the panel to answer it. Call it once, on pages
+ * served by a server with the endpoints; only in development, since anyone the server admits
+ * sees the list. The doc site calls it for you.
+ */
+export declare function watchChecklist(options?: WatchChecklistOptions): void;
+export { setChecklistEndpoint } from './checklist-client.js';

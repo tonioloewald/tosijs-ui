@@ -41,6 +41,12 @@ choice also the easy one.
 */
 export { currentHolder, describeHolder, lockPathFor, lockDecision, isProcessAlive, } from './build-lock.js';
 /*
+Test checklists (#4147, #4182): the store `tosijs-checklist` writes to, and the endpoints as one
+`Request` → `Response` handler, for a server that is not this package's dev server.
+*/
+export { checklistHandler } from './checklist-handler.js';
+export { checklistDirFor, checklistResults, checklistVerdict, formatChecklistResults, normalizeChecklist, postChecklist, clearChecklist, } from './checklist-store.js';
+/*
 Syntax highlighting for static code blocks.
 
 `registerGrammar` is the seam for a language that ships its own Prism definition — tjs-lang

@@ -9,12 +9,15 @@ loses nothing, and the panel reopens after a navigation that reloads the page.
 
 A deployed site has no endpoint, so nothing here runs there; a reader the server does not
 admit (over the tunnel without an edit session) gets no badge.
+
+Outside the doc site, import it from `tosijs-ui/checklist-panel` and call `watchChecklist()`
+on pages served by a server that mounts `checklistHandler` (`tosijs-ui/site`).
 */
 import { StyleSheet, elements } from 'tosijs';
 import { tosiFloat } from '../float.js';
 import { tosiChecklist, } from '../checklist.js';
 import { pageSchematic } from '../page-schematic.js';
-import { fetchChecklist, hasChecklistEndpoint, sendChecklistAnswer, } from './checklist-client.js';
+import { fetchChecklist, sendChecklistAnswer, setChecklistEndpoint, } from './checklist-client.js';
 const { div, span, button } = elements;
 /** Left out of the schematic: the panel and the badge are not the page under test. */
 const SKIP = '[data-schematic-skip]';
@@ -259,11 +262,17 @@ function editorOpenCount(editor) {
     const ids = [...(editor.shadowRoot?.querySelectorAll('.item') ?? [])].map((item) => item.getAttribute('data-id'));
     return ids.filter((id) => !editor.answers[id]?.verdict).length;
 }
-/** Start watching for a list: once, on a page the dev server served. */
-export function watchChecklist() {
+/**
+ * Show a badge while a list is waiting, and the panel to answer it. Call it once, on pages
+ * served by a server with the endpoints; only in development, since anyone the server admits
+ * sees the list. The doc site calls it for you.
+ */
+export function watchChecklist(options = {}) {
     // A test runner's hidden frame or an embedded example is not where anyone answers.
-    if (started || !hasChecklistEndpoint() || window.top !== window)
+    if (started || window.top !== window)
         return;
+    if (options.endpoint)
+        setChecklistEndpoint(options.endpoint);
     started = true;
     void refresh().then(() => {
         if (state && remembered())
@@ -282,3 +291,4 @@ export function watchChecklist() {
     });
     window.addEventListener('pagehide', () => flushComments());
 }
+export { setChecklistEndpoint } from './checklist-client.js';

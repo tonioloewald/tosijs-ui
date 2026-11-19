@@ -119,7 +119,7 @@ test('#133/F9: no heavy source reaches a bundle built from the barrel', async ()
     that were heavy in 1.14.
     */
     const HEAVY =
-      /@codemirror\/|@lezer\/|tjs-lang|prismjs|code-editor|live-example|doc-browser|doc-system\/doc-system|highlight-block/
+      /@codemirror\/|@lezer\/|tjs-lang|prismjs|code-editor|live-example|doc-browser|doc-system\/doc-system|highlight-block|theme-editor|checklist|page-schematic/
     const heavy = (map.sources as string[]).filter((s) => HEAVY.test(s))
 
     expect(
@@ -131,6 +131,21 @@ test('#133/F9: no heavy source reaches a bundle built from the barrel', async ()
       `these reached a plain component bundle through the root barrel, which is the ~1.3MB ` +
         `regression #133 removed. Find the transitive import and move it behind a subpath.`
     ).toEqual([])
+
+    /*
+    A byte ceiling as well (#4153). The source list only catches what the pattern names; the
+    theme editor reached the barrel through a deprecated re-export in `live-theme.ts` and cost
+    +7% (105.5kB → 113.4kB gzip) before anything here noticed. ~4% headroom: a dependency bump
+    may need it raised, deliberately, with the reason recorded here.
+    */
+    const gzipped = Bun.gzipSync(
+      await readFile(join(out, 'entry.js'))
+    ).byteLength
+    expect(
+      gzipped,
+      `the barrel bundle is ${gzipped} bytes gzipped. Something heavy joined the root barrel: ` +
+        `find it in the sourcemap and move it behind a subpath.`
+    ).toBeLessThan(110_000)
   } finally {
     await rm(dir, { recursive: true, force: true })
   }

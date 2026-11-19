@@ -30,5 +30,9 @@ export { assembleCorpus, resolveInsets, splitConditions, SingleSourceError, } fr
 export { listEpubVolumes, epubVolumeIdentity, renderEpubDownloads, attachCovers, printCoverManifestUrl, VOLUME_MANIFEST, type EpubVolume, } from './epub-volumes.js';
 export { currentHolder, describeHolder, lockPathFor, lockDecision, isProcessAlive, } from './build-lock.js';
 export type { LockHolder, LockDecision } from './build-lock.js';
+export { checklistHandler } from './checklist-handler.js';
+export type { ChecklistHandlerOptions } from './checklist-handler.js';
+export { checklistDirFor, checklistResults, checklistVerdict, formatChecklistResults, normalizeChecklist, postChecklist, clearChecklist, } from './checklist-store.js';
+export type { Checklist, ChecklistAnswer, ChecklistResults, } from './checklist-store.js';
 export { registerGrammar, registeredGrammars, highlightHtml, highlightBlocks, grammarFor, } from '../highlight.js';
 export { registerLiveLanguage } from '../example-policy.js';

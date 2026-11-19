@@ -892,6 +892,39 @@ after it. The list itself is capped at 200 items.
 The panel is [`<tosi-checklist>`](/checklist/), which you can use on its own: it shows a list and
 collects answers, and leaves saving them to you.
 
+**In your own app, without this dev server.** The bin works from any project. Your server needs
+the two endpoints, and your pages need the badge:
+
+```ts:static
+// The server: any that speaks Request/Response (Bun.serve, Hono, a Next route handler)
+import { checklistHandler, checklistDirFor } from 'tosijs-ui/site'
+
+const checklist = checklistHandler({
+  dir: checklistDirFor(process.cwd()), // where `tosijs-checklist post` writes
+  admit: (request) => isDeveloper(request), // required: who may see and answer the list
+})
+
+Bun.serve({
+  async fetch(request) {
+    return (await checklist(request)) ?? handleTheRest(request)
+  },
+})
+```
+
+```ts:static
+// The page, in development only
+import { watchChecklist } from 'tosijs-ui/checklist-panel'
+
+if (import.meta.env.DEV) watchChecklist()
+```
+
+`checklistHandler` answers `GET /__checklist` and `POST /__checklist/answer`, and returns `null`
+for any other path. `endpoint` moves both, and `watchChecklist({ endpoint })` must name the same
+path. `admit` returns `true`, `false` (a 403) or a `Response` to send instead. There is no
+default: the list is shown to everyone it admits, and what they send is written to disk. Answers
+must be `application/json`, which a cross-site form cannot send without a preflight. For Vite,
+wrap the handler in a dev-server middleware that converts Node's request to a `Request`.
+
 #### `POST /__build` — let a build delegate to a running dev server
 
 `bun run build` used to refuse while a dev server held the build lock, and the workflow that

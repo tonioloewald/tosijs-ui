@@ -2,6 +2,8 @@ import type { ChecklistSpec, ChecklistItemAnswer } from '../checklist.js';
 /** Injected by the dev server into the pages it serves: there is a checklist endpoint to ask. */
 export declare const CHECKLIST_ENDPOINT_SNIPPET = "<script>window.__tosiChecklist=true</script>";
 export declare const CHECKLIST_ENDPOINT = "/__checklist";
+/** Where the page asks: where your server mounted `checklistHandler`. */
+export declare function setChecklistEndpoint(path: string): void;
 /** Whether the page was served by a dev server with a checklist endpoint. */
 export declare const hasChecklistEndpoint: () => boolean;
 export interface ChecklistState {

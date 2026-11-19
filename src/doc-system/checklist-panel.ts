@@ -9,6 +9,9 @@ loses nothing, and the panel reopens after a navigation that reloads the page.
 
 A deployed site has no endpoint, so nothing here runs there; a reader the server does not
 admit (over the tunnel without an edit session) gets no badge.
+
+Outside the doc site, import it from `tosijs-ui/checklist-panel` and call `watchChecklist()`
+on pages served by a server that mounts `checklistHandler` (`tosijs-ui/site`).
 */
 
 import { StyleSheet, elements } from 'tosijs'
@@ -21,8 +24,8 @@ import {
 import { pageSchematic } from '../page-schematic.js'
 import {
   fetchChecklist,
-  hasChecklistEndpoint,
   sendChecklistAnswer,
+  setChecklistEndpoint,
   type ChecklistState,
 } from './checklist-client.js'
 
@@ -288,10 +291,20 @@ function editorOpenCount(editor: TosiChecklist): number {
   return ids.filter((id) => !editor.answers[id]?.verdict).length
 }
 
-/** Start watching for a list: once, on a page the dev server served. */
-export function watchChecklist(): void {
+export interface WatchChecklistOptions {
+  /** Where your server mounted `checklistHandler` (default `/__checklist`). */
+  endpoint?: string
+}
+
+/**
+ * Show a badge while a list is waiting, and the panel to answer it. Call it once, on pages
+ * served by a server with the endpoints; only in development, since anyone the server admits
+ * sees the list. The doc site calls it for you.
+ */
+export function watchChecklist(options: WatchChecklistOptions = {}): void {
   // A test runner's hidden frame or an embedded example is not where anyone answers.
-  if (started || !hasChecklistEndpoint() || window.top !== window) return
+  if (started || window.top !== window) return
+  if (options.endpoint) setChecklistEndpoint(options.endpoint)
   started = true
   void refresh().then(() => {
     if (state && remembered()) void openChecklist()
@@ -306,3 +319,5 @@ export function watchChecklist(): void {
   })
   window.addEventListener('pagehide', () => flushComments())
 }
+
+export { setChecklistEndpoint } from './checklist-client.js'

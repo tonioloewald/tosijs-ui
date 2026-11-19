@@ -32,6 +32,9 @@ import * as liveExample from './live-example.js'
 // Kept out of the root barrel (an app importing a button ships none of it); the doc site's
 // test checklists panel uses it, and a CDN page gets it here.
 import * as checklist from './checklist.js'
+import * as checklistPanel from './doc-system/checklist-panel.js'
+// Not in the root barrel since 1.19.0 (it carries <tosi-css-value> and the whole editor).
+import * as themeEditor from './theme-editor.js'
 
 const xinjsui = {
   ...xinjsuiCore,
@@ -40,7 +43,9 @@ const xinjsui = {
   ...docBrowser,
   ...docSystem,
   ...liveExample,
+  ...themeEditor,
   ...checklist,
+  ...checklistPanel,
 }
 import * as xinjs from 'tosijs'
 import {

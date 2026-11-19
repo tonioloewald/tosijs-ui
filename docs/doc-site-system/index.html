@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=897d014dd439" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=0ca5ccde2eaf" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-18T14:24:02+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-19T10:27:57.226Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e31e11814dc5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=f12051c039ca" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1158,6 +1158,33 @@ server and the bin. Posting a list removes the last list&#39;s answers. An answe
 after it. The list itself is capped at 200 items.</p>
 <p>The panel is <a href="/checklist/"><code>&lt;tosi-checklist&gt;</code></a>, which you can use on its own: it shows a list and
 collects answers, and leaves saving them to you.</p>
+<p><strong>In your own app, without this dev server.</strong> The bin works from any project. Your server needs
+the two endpoints, and your pages need the badge:</p>
+<pre data-example-mode="static"><code class="language-ts" data-highlighted><span class="token comment">// The server: any that speaks Request/Response (Bun.serve, Hono, a Next route handler)</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> checklistHandler<span class="token punctuation">,</span> checklistDirFor <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
+
+<span class="token keyword">const</span> checklist <span class="token operator">=</span> <span class="token function">checklistHandler</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  dir<span class="token operator">:</span> <span class="token function">checklistDirFor</span><span class="token punctuation">(</span>process<span class="token punctuation">.</span><span class="token function">cwd</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// where `tosijs-checklist post` writes</span>
+  <span class="token function-variable function">admit</span><span class="token operator">:</span> <span class="token punctuation">(</span>request<span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token function">isDeveloper</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment">// required: who may see and answer the list</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+Bun<span class="token punctuation">.</span><span class="token function">serve</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token keyword">async</span> <span class="token function">fetch</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">await</span> <span class="token function">checklist</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">??</span> <span class="token function">handleTheRest</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<pre data-example-mode="static"><code class="language-ts" data-highlighted><span class="token comment">// The page, in development only</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> watchChecklist <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/checklist-panel'</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">import</span><span class="token punctuation">.</span>meta<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">DEV</span><span class="token punctuation">)</span> <span class="token function">watchChecklist</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<p><code>checklistHandler</code> answers <code>GET /__checklist</code> and <code>POST /__checklist/answer</code>, and returns <code>null</code>
+for any other path. <code>endpoint</code> moves both, and <code>watchChecklist({ endpoint })</code> must name the same
+path. <code>admit</code> returns <code>true</code>, <code>false</code> (a 403) or a <code>Response</code> to send instead. There is no
+default: the list is shown to everyone it admits, and what they send is written to disk. Answers
+must be <code>application/json</code>, which a cross-site form cannot send without a preflight. For Vite,
+wrap the handler in a dev-server middleware that converts Node&#39;s request to a <code>Request</code>.</p>
 <h4 id="post-__build--let-a-build-delegate-to-a-running-dev-server"><code>POST /__build</code> — let a build delegate to a running dev server</h4>
 <p><code>bun run build</code> used to refuse while a dev server held the build lock, and the workflow that
 produced was &quot;kill the server, build, forget to restart it&quot;. It now asks the server to build and
@@ -2856,6 +2883,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-8kg35dhk.js"></script>
+  <script type="module" src="../hydrate-00qrhgjk.js"></script>
 </body>
 </html>
