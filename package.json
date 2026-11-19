@@ -177,6 +177,11 @@
       "import": "./dist/checklist.js",
       "default": "./dist/checklist.js"
     },
+    "./checklist-client": {
+      "types": "./dist/doc-system/checklist-client.d.ts",
+      "import": "./dist/doc-system/checklist-client.js",
+      "default": "./dist/doc-system/checklist-client.js"
+    },
     "./checklist-panel": {
       "types": "./dist/doc-system/checklist-panel.d.ts",
       "import": "./dist/doc-system/checklist-panel.js",

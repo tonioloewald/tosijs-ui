@@ -76,53 +76,23 @@ import { ElementCreator, XinStyleSheet, elements, withAttributes } from 'tosijs'
 
 const { h2, div, h3, ol, li, a, button, textarea, span } = elements
 
-export interface ChecklistItemSpec {
-  id?: string
-  text: string
-  url?: string
-  steps?: string[]
-}
+import {
+  checklistSections,
+  type ChecklistItemAnswer,
+  type ChecklistChange,
+  type ChecklistSpec,
+} from './doc-system/checklist-client.js'
 
-export interface ChecklistSpec {
-  id?: string
-  title: string
-  items?: (ChecklistItemSpec | string)[]
-  sections?: { title?: string; items: (ChecklistItemSpec | string)[] }[]
-}
-
-export type ChecklistVerdict = 'pass' | 'fail' | null
-
-export interface ChecklistItemAnswer {
-  verdict: ChecklistVerdict
-  comment: string
-}
-
-export interface ChecklistChange extends ChecklistItemAnswer {
-  itemId: string
-  changed: 'verdict' | 'comment'
-}
-
-interface Item {
-  id: string
-  text: string
-  url?: string
-  steps?: string[]
-}
-
-/** The list's sections, with every item given an id the way the dev server's store does. */
-export function checklistSections(
-  spec: ChecklistSpec | null
-): { title?: string; items: Item[] }[] {
-  if (!spec) return []
-  const sections = spec.sections ?? (spec.items ? [{ items: spec.items }] : [])
-  return sections.map((section, s) => ({
-    title: section.title,
-    items: (section.items ?? []).map((raw, i) => {
-      const item = typeof raw === 'string' ? { text: raw } : raw
-      return { ...item, id: item.id ?? `s${s + 1}-${i + 1}` }
-    }),
-  }))
-}
+// Defined with the client, which needs no DOM, and re-exported here as they always were.
+export { checklistSections } from './doc-system/checklist-client.js'
+export type {
+  ChecklistItem,
+  ChecklistItemAnswer,
+  ChecklistItemSpec,
+  ChecklistChange,
+  ChecklistSpec,
+  ChecklistVerdict,
+} from './doc-system/checklist-client.js'
 
 /** A site path or an http(s) URL: what an item may link to. */
 export const linkableUrl = (url: string): boolean =>

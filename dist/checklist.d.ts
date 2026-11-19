@@ -1,39 +1,7 @@
 import { ElementCreator, XinStyleSheet } from 'tosijs';
-export interface ChecklistItemSpec {
-    id?: string;
-    text: string;
-    url?: string;
-    steps?: string[];
-}
-export interface ChecklistSpec {
-    id?: string;
-    title: string;
-    items?: (ChecklistItemSpec | string)[];
-    sections?: {
-        title?: string;
-        items: (ChecklistItemSpec | string)[];
-    }[];
-}
-export type ChecklistVerdict = 'pass' | 'fail' | null;
-export interface ChecklistItemAnswer {
-    verdict: ChecklistVerdict;
-    comment: string;
-}
-export interface ChecklistChange extends ChecklistItemAnswer {
-    itemId: string;
-    changed: 'verdict' | 'comment';
-}
-interface Item {
-    id: string;
-    text: string;
-    url?: string;
-    steps?: string[];
-}
-/** The list's sections, with every item given an id the way the dev server's store does. */
-export declare function checklistSections(spec: ChecklistSpec | null): {
-    title?: string;
-    items: Item[];
-}[];
+import { type ChecklistItemAnswer, type ChecklistSpec } from './doc-system/checklist-client.js';
+export { checklistSections } from './doc-system/checklist-client.js';
+export type { ChecklistItem, ChecklistItemAnswer, ChecklistItemSpec, ChecklistChange, ChecklistSpec, ChecklistVerdict, } from './doc-system/checklist-client.js';
 /** A site path or an http(s) URL: what an item may link to. */
 export declare const linkableUrl: (url: string) => boolean;
 declare const TosiChecklist_base: import("tosijs").WithAttributes<{

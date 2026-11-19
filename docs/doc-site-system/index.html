@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=f564be11a573" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=58c0c167a093" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-19T12:56:39+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-19T19:52:28.205Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b56941e14d8b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ac483d1ea3be" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1185,6 +1185,28 @@ path. <code>admit</code> returns <code>true</code>, <code>false</code> (a 403) o
 default: the list is shown to everyone it admits, and what they send is written to disk. Answers
 must be <code>application/json</code>, which a cross-site form cannot send without a preflight. For Vite,
 wrap the handler in a dev-server middleware that converts Node&#39;s request to a <code>Request</code>.</p>
+<p><strong>Drawing the list yourself.</strong> Where the panel cannot go (tosijs-3d answers a list in a 3D scene
+or a headset), import the client from <code>tosijs-ui/checklist-client</code>. It needs no DOM:</p>
+<pre data-example-mode="static"><code class="language-ts" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span>
+  fetchChecklist<span class="token punctuation">,</span>
+  sendChecklistAnswer<span class="token punctuation">,</span>
+  checklistSections<span class="token punctuation">,</span>
+<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/checklist-client'</span>
+
+<span class="token keyword">const</span> state <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchChecklist</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment">// null when there is no list, or this page may not see it</span>
+<span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> section <span class="token keyword">of</span> <span class="token function">checklistSections</span><span class="token punctuation">(</span>state<span class="token operator">?.</span>list <span class="token operator">??</span> <span class="token keyword">null</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// section.items each carry the id the store gives them: answer by that id</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">const</span> problem <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">sendChecklistAnswer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  listId<span class="token operator">:</span> state<span class="token operator">!</span><span class="token punctuation">.</span>list<span class="token operator">!</span><span class="token punctuation">.</span>id<span class="token punctuation">,</span>
+  itemId<span class="token operator">:</span> <span class="token string">'s1-1'</span><span class="token punctuation">,</span>
+  verdict<span class="token operator">:</span> <span class="token string">'pass'</span><span class="token punctuation">,</span>
+  comment<span class="token operator">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token comment">// null when it saved, else what went wrong</span>
+</code></pre>
+<p>A verdict may carry a <code>schematic</code>, an SVG of what the reader saw. The panel sends a drawing of
+the page. A client that draws somewhere else should send its own, even one that only says where
+the answer was given.</p>
 <h4 id="post-__build--let-a-build-delegate-to-a-running-dev-server"><code>POST /__build</code> — let a build delegate to a running dev server</h4>
 <p><code>bun run build</code> used to refuse while a dev server held the build lock, and the workflow that
 produced was &quot;kill the server, build, forget to restart it&quot;. It now asks the server to build and
@@ -2883,6 +2905,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-7ymbgdnf.js"></script>
+  <script type="module" src="../hydrate-ep17zz3k.js"></script>
 </body>
 </html>

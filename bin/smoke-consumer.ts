@@ -446,6 +446,7 @@ try {
     'tosijs-ui/highlight-block',
     // Test checklists outside the doc site (#4182): a named export into a nested file.
     'tosijs-ui/checklist',
+    'tosijs-ui/checklist-client',
     'tosijs-ui/checklist-panel',
     // Where the theme editor lives now that the root no longer exports it (1.19.0).
     'tosijs-ui/theme-editor',
@@ -517,6 +518,18 @@ try {
     'tosijs-ui/doc-system/data-client exports its four calls and DataStoreError',
     dataClient.stdout.toString().includes('OK'),
     dataClient.stderr.toString().slice(0, 200)
+  )
+  // The checklist client imports without a DOM, for a client that draws the list itself
+  // (tosijs-3d, in a scene or a headset: #4194).
+  const checklistClient =
+    await $`node -e ${"import('tosijs-ui/checklist-client').then(m=>{for(const n of ['fetchChecklist','sendChecklistAnswer','hasChecklistEndpoint','setChecklistEndpoint','checklistSections'])if(typeof m[n]!=='function')throw new Error('missing '+n);if(m.checklistSections({title:'t',items:['a']})[0].items[0].id!=='s1-1')throw new Error('wrong id');console.log('OK')})"}`
+      .cwd(proj)
+      .nothrow()
+      .quiet()
+  check(
+    'tosijs-ui/checklist-client imports without a DOM and exports the client',
+    checklistClient.stdout.toString().includes('OK'),
+    checklistClient.stderr.toString().slice(0, 200)
   )
   const dataExtensions =
     await $`bun -e ${"import('tosijs-ui/site').then(m=>{if(!Array.isArray(m.DATA_EXTENSIONS)||!m.DATA_EXTENSIONS.includes('.json'))throw new Error('no DATA_EXTENSIONS');console.log('OK')})"}`

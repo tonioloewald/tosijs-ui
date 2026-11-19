@@ -14101,6 +14101,32 @@ default: the list is shown to everyone it admits, and what they send is written 
 must be `application/json`, which a cross-site form cannot send without a preflight. For Vite,
 wrap the handler in a dev-server middleware that converts Node's request to a `Request`.
 
+**Drawing the list yourself.** Where the panel cannot go (tosijs-3d answers a list in a 3D scene
+or a headset), import the client from `tosijs-ui/checklist-client`. It needs no DOM:
+
+```ts:static
+import {
+  fetchChecklist,
+  sendChecklistAnswer,
+  checklistSections,
+} from 'tosijs-ui/checklist-client'
+
+const state = await fetchChecklist() // null when there is no list, or this page may not see it
+for (const section of checklistSections(state?.list ?? null)) {
+  // section.items each carry the id the store gives them: answer by that id
+}
+const problem = await sendChecklistAnswer({
+  listId: state!.list!.id,
+  itemId: 's1-1',
+  verdict: 'pass',
+  comment: '',
+}) // null when it saved, else what went wrong
+```
+
+A verdict may carry a `schematic`, an SVG of what the reader saw. The panel sends a drawing of
+the page. A client that draws somewhere else should send its own, even one that only says where
+the answer was given.
+
 #### `POST /__build` — let a build delegate to a running dev server
 
 `bun run build` used to refuse while a dev server held the build lock, and the workflow that

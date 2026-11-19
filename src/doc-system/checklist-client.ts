@@ -1,9 +1,57 @@
 /*
 The page's side of the dev server's test checklists (#4147): read the posted list, send an
-answer. No components here, so the dev server can import the snippet without a DOM.
+answer. No components here, so it imports without a DOM: the dev server reads the snippet, and
+a client that draws the list itself (tosijs-3d answers in a scene or a headset) imports it as
+`tosijs-ui/checklist-client` (#4194).
 */
 
-import type { ChecklistSpec, ChecklistItemAnswer } from '../checklist.js'
+export interface ChecklistItemSpec {
+  id?: string
+  text: string
+  url?: string
+  steps?: string[]
+}
+
+export interface ChecklistSpec {
+  id?: string
+  title: string
+  items?: (ChecklistItemSpec | string)[]
+  sections?: { title?: string; items: (ChecklistItemSpec | string)[] }[]
+}
+
+export type ChecklistVerdict = 'pass' | 'fail' | null
+
+export interface ChecklistItemAnswer {
+  verdict: ChecklistVerdict
+  comment: string
+}
+
+export interface ChecklistChange extends ChecklistItemAnswer {
+  itemId: string
+  changed: 'verdict' | 'comment'
+}
+
+export interface ChecklistItem {
+  id: string
+  text: string
+  url?: string
+  steps?: string[]
+}
+
+/** The list's sections, with every item given an id the way the dev server's store does. */
+export function checklistSections(
+  spec: ChecklistSpec | null
+): { title?: string; items: ChecklistItem[] }[] {
+  if (!spec) return []
+  const sections = spec.sections ?? (spec.items ? [{ items: spec.items }] : [])
+  return sections.map((section, s) => ({
+    title: section.title,
+    items: (section.items ?? []).map((raw, i) => {
+      const item = typeof raw === 'string' ? { text: raw } : raw
+      return { ...item, id: item.id ?? `s${s + 1}-${i + 1}` }
+    }),
+  }))
+}
 
 /** Injected by the dev server into the pages it serves: there is a checklist endpoint to ask. */
 export const CHECKLIST_ENDPOINT_SNIPPET =

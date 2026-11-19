@@ -72,19 +72,9 @@ linked; anything else is shown as text.
 /*{ "parent": "Helper Libraries", "description": "<tosi-checklist> shows things to check and takes a thumbs up or down and a comment for each; the dev server's test checklists use it." }*/
 import { elements, withAttributes } from 'tosijs';
 const { h2, div, h3, ol, li, a, button, textarea, span } = elements;
-/** The list's sections, with every item given an id the way the dev server's store does. */
-export function checklistSections(spec) {
-    if (!spec)
-        return [];
-    const sections = spec.sections ?? (spec.items ? [{ items: spec.items }] : []);
-    return sections.map((section, s) => ({
-        title: section.title,
-        items: (section.items ?? []).map((raw, i) => {
-            const item = typeof raw === 'string' ? { text: raw } : raw;
-            return { ...item, id: item.id ?? `s${s + 1}-${i + 1}` };
-        }),
-    }));
-}
+import { checklistSections, } from './doc-system/checklist-client.js';
+// Defined with the client, which needs no DOM, and re-exported here as they always were.
+export { checklistSections } from './doc-system/checklist-client.js';
 /** A site path or an http(s) URL: what an item may link to. */
 export const linkableUrl = (url) => (url.startsWith('/') && !url.startsWith('//')) || /^https?:\/\//i.test(url);
 const sizesItself = typeof CSS !== 'undefined' && CSS.supports?.('field-sizing', 'content');

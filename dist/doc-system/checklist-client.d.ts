@@ -1,4 +1,38 @@
-import type { ChecklistSpec, ChecklistItemAnswer } from '../checklist.js';
+export interface ChecklistItemSpec {
+    id?: string;
+    text: string;
+    url?: string;
+    steps?: string[];
+}
+export interface ChecklistSpec {
+    id?: string;
+    title: string;
+    items?: (ChecklistItemSpec | string)[];
+    sections?: {
+        title?: string;
+        items: (ChecklistItemSpec | string)[];
+    }[];
+}
+export type ChecklistVerdict = 'pass' | 'fail' | null;
+export interface ChecklistItemAnswer {
+    verdict: ChecklistVerdict;
+    comment: string;
+}
+export interface ChecklistChange extends ChecklistItemAnswer {
+    itemId: string;
+    changed: 'verdict' | 'comment';
+}
+export interface ChecklistItem {
+    id: string;
+    text: string;
+    url?: string;
+    steps?: string[];
+}
+/** The list's sections, with every item given an id the way the dev server's store does. */
+export declare function checklistSections(spec: ChecklistSpec | null): {
+    title?: string;
+    items: ChecklistItem[];
+}[];
 /** Injected by the dev server into the pages it serves: there is a checklist endpoint to ask. */
 export declare const CHECKLIST_ENDPOINT_SNIPPET = "<script>window.__tosiChecklist=true</script>";
 export declare const CHECKLIST_ENDPOINT = "/__checklist";
