@@ -32,11 +32,14 @@ const { div, span, button } = elements
 const SKIP = '[data-schematic-skip]'
 const OPEN_KEY = 'tosi-checklist-open'
 const POLL_MS = 15_000
+const COMMENT_PAUSE_MS = 600
 
 let state: ChecklistState | null = null
 let panel: TosiFloat | null = null
 let badge: HTMLButtonElement | null = null
 let started = false
+// Saves any comment still waiting out its pause (closing, or leaving the page).
+let flushComments = (): void => {}
 
 const remember = (open: boolean) => {
   try {
@@ -174,6 +177,7 @@ async function refresh(): Promise<void> {
 
 /** Close the panel; the badge comes back while there is something left to check. */
 export function closeChecklist(): void {
+  flushComments()
   panel?.remove()
   panel = null
   remember(false)
@@ -195,26 +199,57 @@ export async function openChecklist(): Promise<void> {
     value: state.list,
     answers: state.answers,
   }) as TosiChecklist
-  editor.addEventListener('change', async (event) => {
+  // One send at a time, so an older comment never lands after a newer one.
+  let sending: Promise<void> = Promise.resolve()
+  const send = (change: ChecklistChange): Promise<void> =>
+    (sending = sending.then(async () => {
+      if (!state?.list) return
+      status.textContent = 'Saving…'
+      const problem = await sendChecklistAnswer({
+        listId: state.list.id,
+        itemId: change.itemId,
+        verdict: change.verdict,
+        comment: change.comment,
+        page: location.href,
+        ...(change.changed === 'verdict'
+          ? { schematic: pageSchematic({ skip: SKIP }) }
+          : {}),
+      })
+      status.textContent = problem ?? ''
+      if (problem) await refresh()
+      else {
+        state.answers = editor.answers
+        state.open = editorOpenCount(editor)
+      }
+    }))
+  // Comments save as they are typed, once typing pauses; a verdict saves at once.
+  const typed = new Map<string, ReturnType<typeof setTimeout>>()
+  const pending = new Map<string, ChecklistChange>()
+  const flush = (itemId: string): void => {
+    clearTimeout(typed.get(itemId))
+    typed.delete(itemId)
+    const change = pending.get(itemId)
+    pending.delete(itemId)
+    if (change) send(change)
+  }
+  flushComments = () => [...pending.keys()].forEach(flush)
+  editor.addEventListener('change', (event) => {
     const change = (event as CustomEvent<ChecklistChange>).detail
     if (!change?.itemId || !state?.list) return
-    status.textContent = 'Saving…'
-    const problem = await sendChecklistAnswer({
-      listId: state.list.id,
-      itemId: change.itemId,
-      verdict: change.verdict,
-      comment: change.comment,
-      page: location.href,
-      ...(change.changed === 'verdict'
-        ? { schematic: pageSchematic({ skip: SKIP }) }
-        : {}),
-    })
-    status.textContent = problem ?? ''
-    if (problem) await refresh()
-    else {
-      state.answers = editor.answers
-      state.open = editorOpenCount(editor)
+    if (change.changed === 'comment') {
+      pending.set(change.itemId, change)
+      clearTimeout(typed.get(change.itemId))
+      typed.set(
+        change.itemId,
+        setTimeout(() => flush(change.itemId), COMMENT_PAUSE_MS)
+      )
+      return
     }
+    // A verdict carries the comment as it stands, so a pending one is superseded.
+    clearTimeout(typed.get(change.itemId))
+    typed.delete(change.itemId)
+    pending.delete(change.itemId)
+    send(change)
   })
   panel = tosiFloat(
     {
@@ -267,5 +302,7 @@ export function watchChecklist(): void {
   }, POLL_MS)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') void refresh()
+    else flushComments()
   })
+  window.addEventListener('pagehide', () => flushComments())
 }

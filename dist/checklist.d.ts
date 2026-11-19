@@ -57,6 +57,7 @@ export declare class TosiChecklist extends TosiChecklist_base {
     private emit;
     handleClick: (event: Event) => void;
     handleComment: (event: Event) => void;
+    handleInput: (event: Event) => void;
     content: () => HTMLDivElement[];
     connectedCallback(): void;
     private build;

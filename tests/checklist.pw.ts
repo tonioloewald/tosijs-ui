@@ -86,8 +86,9 @@ async function answerTheList(page: import('@playwright/test').Page) {
     .locator('textarea')
     .evaluate((el) => parseFloat(getComputedStyle(el).fontSize))
   expect(fontSize).toBeGreaterThanOrEqual(16)
+  // Saved as it is typed: the field keeps focus throughout.
   await second.locator('textarea').fill('does not work')
-  await second.locator('textarea').press('Tab')
+  await expect(second.locator('textarea')).toBeFocused()
   await expect
     .poll(() => checklistResults(DIR).answers['s1-2']?.comment)
     .toBe('does not work')
@@ -121,4 +122,23 @@ test('every engine can draw the schematic and gzip it', async ({ page }) => {
   expect(result.svg).toMatch(/^<svg/)
   expect(result.same).toBe(true)
   expect(result.zipped).toBeLessThan(result.svg.length)
+})
+
+test('a comment field grows with what is typed', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('tosi-doc-system')).toBeVisible()
+  await page.evaluate(() => {
+    const list = (window as any).xinjsui.tosiChecklist({
+      id: 'grow-test',
+      value: { title: 'Grow', items: [{ id: 'a', text: 'Item' }] },
+    })
+    document.body.append(list)
+  })
+  const field = page.locator('#grow-test textarea')
+  const height = () => field.evaluate((el) => el.getBoundingClientRect().height)
+  await expect(field).toBeVisible()
+  const empty = await height()
+  await field.fill('one\ntwo\nthree\nfour')
+  await expect.poll(height).toBeGreaterThan(empty * 2)
+  await page.evaluate(() => document.getElementById('grow-test')!.remove())
 })

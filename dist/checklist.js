@@ -63,7 +63,8 @@ test('a verdict is an answer, and pressing it again takes it back', async () => 
 `answers` maps an item's id to `{ verdict, comment }`, where `verdict` is `'pass'`, `'fail'` or
 `null`. Pressing a verdict again takes it back. Each `change` event's `detail` is
 `{ itemId, verdict, comment, changed }`, where `changed` is `'verdict'` or `'comment'`, so a
-caller can, for instance, capture the page only when a verdict is given.
+caller can, for instance, capture the page only when a verdict is given. A comment fires
+`change` as it is typed, so a caller that saves comments should debounce them.
 
 An item's `url` becomes an **Open** link. Only a site path (`/button/`) or an http(s) URL is
 linked; anything else is shown as text.
@@ -86,6 +87,14 @@ export function checklistSections(spec) {
 }
 /** A site path or an http(s) URL: what an item may link to. */
 export const linkableUrl = (url) => (url.startsWith('/') && !url.startsWith('//')) || /^https?:\/\//i.test(url);
+const sizesItself = typeof CSS !== 'undefined' && CSS.supports?.('field-sizing', 'content');
+/** Fit a comment field to its text, where the browser will not do it itself. */
+const fitComment = (field) => {
+    if (sizesItself)
+        return;
+    field.style.height = 'auto';
+    field.style.height = `${field.scrollHeight + field.offsetHeight - field.clientHeight}px`;
+};
 export class TosiChecklist extends withAttributes({
     /** answers can be seen but not changed */
     disabled: false,
@@ -179,7 +188,10 @@ export class TosiChecklist extends withAttributes({
             border: '1px solid color-mix(in srgb, currentColor 25%, transparent)',
             borderRadius: '4px',
             padding: '4px 6px',
-            resize: 'vertical',
+            // Grows with what is typed, so the text being written never scrolls out of view.
+            fieldSizing: 'content',
+            maxHeight: '12em',
+            resize: 'none',
         },
     };
     answerFor(id) {
@@ -215,13 +227,21 @@ export class TosiChecklist extends withAttributes({
         if (this.disabled)
             return;
         const id = target.closest('.item')?.getAttribute('data-id');
-        if (!id)
+        if (!id || this.answerFor(id).comment === target.value)
             return;
         this._answers = {
             ...this._answers,
             [id]: { ...this.answerFor(id), comment: target.value },
         };
         this.emit(id, 'comment');
+    };
+    // A comment is reported as it is typed, not only when the field loses focus.
+    handleInput = (event) => {
+        const target = event.target;
+        if (target.localName !== 'textarea')
+            return;
+        fitComment(target);
+        this.handleComment(event);
     };
     content = () => [
         h2({ part: 'title' }),
@@ -238,6 +258,7 @@ export class TosiChecklist extends withAttributes({
             this.listening = true;
             this.shadowRoot?.addEventListener('click', this.handleClick);
             this.shadowRoot?.addEventListener('change', this.handleComment);
+            this.shadowRoot?.addEventListener('input', this.handleInput);
         }
     }
     build() {
@@ -300,7 +321,10 @@ export class TosiChecklist extends withAttributes({
             const comment = element.querySelector('textarea');
             // Never overwrite what someone is typing.
             if (this.shadowRoot?.activeElement !== comment) {
-                comment.value = answer.comment;
+                if (comment.value !== answer.comment) {
+                    comment.value = answer.comment;
+                    fitComment(comment);
+                }
             }
             comment.disabled = this.disabled;
         }

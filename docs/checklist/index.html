@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=f719ec6ae6d8" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=897d014dd439" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>checklist — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-checklist&gt; shows things to check and takes a thumbs up or down and a comment for each; the dev server&#39;s test checklists use it." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="checklist — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"checklist","description":"\u003ctosi-checklist> shows things to check and takes a thumbs up or down and a comment for each; the dev server's test checklists use it.","url":"https://ui.tosijs.net/checklist/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-18T14:29:56.532Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"checklist","description":"\u003ctosi-checklist> shows things to check and takes a thumbs up or down and a comment for each; the dev server's test checklists use it.","url":"https://ui.tosijs.net/checklist/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-19T09:45:45.449Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"checklist","item":"https://ui.tosijs.net/checklist/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=70a176f73bc6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=e31e11814dc5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="checklist.ts">
 <h1 id="checklist">checklist</h1>
 <p><code>&lt;tosi-checklist&gt;</code> shows a list of things to check and takes a 👍 or 👎 and a comment for each.
@@ -106,7 +106,8 @@ test(&#39;a verdict is an answer, and pressing it again takes it back&#39;, asyn
 <p><code>answers</code> maps an item&#39;s id to <code>{ verdict, comment }</code>, where <code>verdict</code> is <code>&#39;pass&#39;</code>, <code>&#39;fail&#39;</code> or
 <code>null</code>. Pressing a verdict again takes it back. Each <code>change</code> event&#39;s <code>detail</code> is
 <code>{ itemId, verdict, comment, changed }</code>, where <code>changed</code> is <code>&#39;verdict&#39;</code> or <code>&#39;comment&#39;</code>, so a
-caller can, for instance, capture the page only when a verdict is given.</p>
+caller can, for instance, capture the page only when a verdict is given. A comment fires
+<code>change</code> as it is typed, so a caller that saves comments should debounce them.</p>
 <p>An item&#39;s <code>url</code> becomes an <strong>Open</strong> link. Only a site path (<code>/button/</code>) or an http(s) URL is
 linked; anything else is shown as text.</p>
 
@@ -217,6 +218,6 @@ linked; anything else is shown as text.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-b3pn6knw.js"></script>
+  <script type="module" src="../hydrate-8kg35dhk.js"></script>
 </body>
 </html>

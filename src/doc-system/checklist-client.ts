@@ -10,6 +10,7 @@ export const CHECKLIST_ENDPOINT_SNIPPET =
   '<script>window.__tosiChecklist=true</script>'
 
 export const CHECKLIST_ENDPOINT = '/__checklist'
+const KEEPALIVE_LIMIT = 60_000
 
 /** Whether the page was served by a dev server with a checklist endpoint. */
 export const hasChecklistEndpoint = (): boolean =>
@@ -61,13 +62,17 @@ export async function sendChecklistAnswer(
   fetcher: typeof fetch = fetch
 ): Promise<string | null> {
   try {
+    const zipped = await gzip(JSON.stringify(body))
     const response = await fetcher(`${CHECKLIST_ENDPOINT}/answer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Encoding': 'gzip',
       },
-      body: (await gzip(JSON.stringify(body))) as BodyInit,
+      body: zipped as BodyInit,
+      // Outlives the page (a comment saved as the tab closes), but browsers cap a
+      // keepalive body at 64KB, so a large schematic goes as an ordinary request.
+      keepalive: zipped.byteLength < KEEPALIVE_LIMIT,
     })
     if (response.ok) return null
     return (await response.text().catch(() => '')) || `${response.status}`

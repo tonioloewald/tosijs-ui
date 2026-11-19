@@ -62,7 +62,8 @@ test('a verdict is an answer, and pressing it again takes it back', async () => 
 `answers` maps an item's id to `{ verdict, comment }`, where `verdict` is `'pass'`, `'fail'` or
 `null`. Pressing a verdict again takes it back. Each `change` event's `detail` is
 `{ itemId, verdict, comment, changed }`, where `changed` is `'verdict'` or `'comment'`, so a
-caller can, for instance, capture the page only when a verdict is given.
+caller can, for instance, capture the page only when a verdict is given. A comment fires
+`change` as it is typed, so a caller that saves comments should debounce them.
 
 An item's `url` becomes an **Open** link. Only a site path (`/button/`) or an http(s) URL is
 linked; anything else is shown as text.
