@@ -31,7 +31,7 @@ const PAGES = [
   '/carousel/',
   '/palette/',
   '/schema-form/',
-  '/live-theme/',
+  '/theme-editor/',
   '/rich-text/',
   '/icons/',
   '/icon-composition/',
