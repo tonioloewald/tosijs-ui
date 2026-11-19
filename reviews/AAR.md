@@ -1197,3 +1197,33 @@ gap, recorded rather than hidden.
 - **The approval wait expired again** (second release running): staged at 60 minutes,
   unverified until the verify-only run after approval, which was green. The published `dist/`
   diffs clean against the tag.
+
+## 1.19.0 (2026-11-19) — test checklists (#4147, #4182), editor out of the root barrel (#4153)
+
+- **The gate caught:** the security-focused review cleared a blocker, a major and the security
+  minors before tagging. Among them: the store directory had to be private and could not be a
+  planted symlink, `clear` had to remove only its own files, and agent-facing output had to
+  escape control characters so a comment cannot forge lines.
+- **The gate missed:** the feature's main use. A phone reader could not type a sentence into a
+  comment field. It was found within minutes of the first real use over the tunnel, and fixed
+  in 1.19.1.
+- **Surprise:** a unit file failed to load, and I read past it because I tailed the summary
+  line. Now I grep the pass and fail counts.
+
+## 1.19.1 (2026-11-19) — the background test runner stops taking the reader's focus
+
+- **Cause:** not the autosave, as it looked, but the background doc-test runner. Its hidden
+  frame loads pages whose examples call `focus()`, and Safari lets a child frame take focus
+  from the parent page. The runner now pauses while the reader is in a field they focused
+  themselves (a trusted tap or key press), and re-runs a page it abandoned.
+- **Why no lane saw it:** every Playwright spec turns the background runner off. The
+  realistic-typing test added for 1.19.0 passed in all three engines against the bug. The
+  regression test turns the runner ON, and failed in all three engines before the fix.
+- **How it was found:** a temporary beacon probe to the dev server's `/__debug-sink`. One
+  try on the phone named the culprit (`active: iframe` at focusout) after two rounds of
+  guessing from desktop had not. Instrument the real device early.
+- **The gate caught:** a flaky axe check. Since 1.18.0, `/live-theme/` had only a test-only
+  example, whose preview is visible only while the CSS test's boxes are in it. The check now
+  points at `/theme-editor/`.
+- **Process:** the 60-minute staged-approval window lapsed once. Approving and then running
+  `verify_only` recovered it, as designed.
