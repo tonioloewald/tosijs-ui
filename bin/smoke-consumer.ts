@@ -445,7 +445,10 @@ try {
     'tosijs-ui/crud',
     'tosijs-ui/highlight-block',
     // Test checklists outside the doc site (#4182): a named export into a nested file.
+    'tosijs-ui/checklist',
     'tosijs-ui/checklist-panel',
+    // Where the theme editor lives now that the root no longer exports it (1.19.0).
+    'tosijs-ui/theme-editor',
     // Nested, through the wildcard: what an editor imports to save data (#3365).
     'tosijs-ui/doc-system/data-client',
     // One icon as a function, and as a string (#3885): `tosijs-ui/icons` is a named export

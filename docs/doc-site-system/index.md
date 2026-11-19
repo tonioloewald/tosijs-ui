@@ -912,10 +912,10 @@ Bun.serve({
 ```
 
 ```ts:static
-// The page, in development only
+// The page: call it only in development builds, however your bundler says so
 import { watchChecklist } from 'tosijs-ui/checklist-panel'
 
-if (import.meta.env.DEV) watchChecklist()
+watchChecklist()
 ```
 
 `checklistHandler` answers `GET /__checklist` and `POST /__checklist/answer`, and returns `null`

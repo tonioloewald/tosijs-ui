@@ -57,7 +57,7 @@ The `tosijs-ui` iife build bundles `tosijs`, `tosijs-ui`, `marked` and — as of
 **CodeMirror** into a single minified javascript source file. You can access `xinjs` and
 `xinjsui` as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
 
-> **Size (1.18.0):** ~528KB gzip, up from ~120KB in 1.6. Two things dominate it, and
+> **Size (1.19.0):** ~533KB gzip, up from ~120KB in 1.6. Two things dominate it, and
 > `bun build --format iife` cannot
 > code-split, so `<tosi-code>`'s lazy CodeMirror import is flattened into this bundle
 > whether or not the page uses an editor. **If you don't need `<tosi-code>`, use the ESM
@@ -14088,10 +14088,10 @@ Bun.serve({
 ```
 
 ```ts:static
-// The page, in development only
+// The page: call it only in development builds, however your bundler says so
 import { watchChecklist } from 'tosijs-ui/checklist-panel'
 
-if (import.meta.env.DEV) watchChecklist()
+watchChecklist()
 ```
 
 `checklistHandler` answers `GET /__checklist` and `POST /__checklist/answer`, and returns `null`

@@ -1,5 +1,61 @@
 # Changelog
 
+## 1.19.0
+
+> **Test checklists: an agent asks, a person answers.** Some checks only a person can make:
+> whether something works by touch, looks right in Safari, or feels smooth on a phone. An agent
+> posts a list with `tosijs-checklist post`; every page the dev server serves shows a badge; the
+> reader answers each item 👍 or 👎 with a comment, from a phone over the tunnel if they like;
+> and `tosijs-checklist wait` returns the verdict the way CI does (exit 0, 1 or 2), printing each
+> comment and the path of an SVG schematic of the page as the reader saw it. Outside the doc
+> site, `checklistHandler` (`tosijs-ui/site`) and `watchChecklist` (`tosijs-ui/checklist-panel`)
+> put the same thing on any server and page.
+>
+> **On upgrade:**
+> - **Breaking:** `tosiThemeEditor` and `TosiThemeEditor` are no longer exported from
+>   `tosijs-ui`. Import them from `tosijs-ui/theme-editor`. The CDN global `xinjsui` still has
+>   them.
+> - **Size.** That removal takes the root barrel back down: a bundle of four components is
+>   **113.4 → 105.5 kB gzip (−7%)**. `dist/iife.js`, the CDN bundle, went **528.4 → 533.2 kB
+>   gzip (+4.8 kB, +0.9%)**, because the checklist, its panel and the page schematic are in it
+>   and in every doc site's bundle, though only a dev server ever shows them. Loading them
+>   lazily is #4189.
+> - The checklist endpoints admit exactly who may save files (this machine, a trusted LAN
+>   device, or the tunnel with an edit session), and refuse cross-origin requests.
+>   `checklistHandler` requires an `admit` function: there is no default.
+
+### Breaking
+
+- `tosiThemeEditor` and `TosiThemeEditor` are no longer exported from `tosijs-ui` (deprecated in 1.18.0): import them from `tosijs-ui/theme-editor`. They carried the whole editor and <tosi-css-value> into every app that imported anything from the root, and no bundler could drop them: a four-component bundle is 7% smaller (113.4kB → 105.5kB gzip). The CDN global `xinjsui` still has them. closes #4153 (3364cd55)
+
+### Added
+
+- `checklistHandler({ dir, admit })` in `tosijs-ui/site`: the test checklist endpoints as one Request → Response handler, for any server that is not this package's dev server (Bun.serve, Hono, a Next route handler). `admit` is required. The store functions (`checklistDirFor`, `checklistResults`, …) are exported too (3364cd55)
+- `tosijs-ui/checklist-panel`: `watchChecklist({ endpoint })` shows the badge and answer panel on any page, without <tosi-doc-system>. closes #4182 (3364cd55)
+- `tosijs-checklist post | status | wait | clear`: an agent posts a list of things only a person can check, and `wait` blocks until it is answered (exit 0 all passed, 1 any failed, 2 timeout or no list; `--fail-fast`). closes #4147 (07d3bf89)
+- while a list is waiting, every page the dev server serves shows a badge and the settings menu offers Test Checklist…; each item takes 👍/👎 and a comment, from this machine, a trusted LAN device or the tunnel with an edit session (the same gate as /__docstore/data) (07d3bf89)
+- each verdict carries an SVG schematic of the page drawn by the page itself: labelled boxes and own text, no form values, simplified visibly (data-truncated, a banner) past its budget (07d3bf89)
+- `<tosi-checklist>` and `pageSchematic()` at `tosijs-ui/checklist`, kept out of the root barrel (07d3bf89)
+
+### Fixed before release
+
+Found by answering the first checklists on a phone, and by the 1.19.0 review. None of these shipped.
+
+- the test checklist panel saves a comment once typing pauses (600ms), and when the page is hidden or closed, so a comment no longer waits for a blur that a phone may never give it (fa8901ad)
+- checklist comment fields grow with their text (`field-sizing: content`, with a fallback where it is unsupported), so iOS no longer scrolls the line being typed out of view (fa8901ad)
+- the checklist's comment field was ~12.6px (0.9em of a 14px panel), so iOS Safari zoomed the page every time it took focus. The panel is 16px and the field inherits it at 1em. Found answering the first checklist on a phone. (bf21e7a1)
+- `tosijs-checklist clear` (and `clearChecklist()`) removed the whole folder named by `--dir` or `DEV_CHECKLIST_DIR`, so `--dir=.` deleted the project, `.git` and all. It now removes only the files the store writes, and the folder only if that leaves it empty. Never in a release: found by the 1.19.0 review (0c842fe0)
+- `status` and `wait` print a reader's comment and page with control characters escaped, so an answer cannot forge a PASS line or send escape sequences to the terminal; `page` must be an http(s) URL (0c842fe0)
+- the checklist store folder is created private (0700) and refused unless it is a real folder the user owns, so on a shared Linux host another user cannot plant one at the predictable temp-dir name (0c842fe0)
+- `checklistHandler` refuses a cross-origin request before asking `admit`, so CORS middleware in front of it cannot let another page post verdicts (0c842fe0)
+- a poll landing while a comment waited out its pause no longer undoes the comment (nor sends it blank with the next verdict); a queued answer keeps the list it was given for, so a replaced list is still a conflict (0c842fe0)
+
+### Changed
+
+- a `<tosi-checklist>` comment fires `change` as it is typed, not only when the field loses focus; a caller that saves comments should debounce them (fa8901ad)
+
+Closes #4147, #4153, #4182.
+
 ## 1.18.0
 
 > **Themes as data, and an editor for them.** A theme is plain JSON: a few base colours, plus
