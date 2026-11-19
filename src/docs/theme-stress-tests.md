@@ -11,6 +11,9 @@ Each theme builds out from one colour, and every link of the chain can be overri
 the root colour and everything derived from it follows; override a link and what hangs from
 it follows the override instead.
 
+In an app, import the editor from `tosijs-ui/theme-editor`. (The examples here import from
+`tosijs-ui` because doc pages run against the full bundle.)
+
 ## Material 3 tokens
 
 Material's own token names (`--md-sys-color-primary`, `--md-sys-shape-corner-*`,

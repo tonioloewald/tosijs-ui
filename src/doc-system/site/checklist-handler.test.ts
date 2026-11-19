@@ -95,3 +95,28 @@ test('the endpoint can move', async () => {
   expect(await handle(at('/__checklist'))).toBeNull()
   expect((await handle(at('/dev/checks')))!.status).toBe(200)
 })
+
+test('a cross-origin request is refused before admit is asked', async () => {
+  let asked = false
+  const handle = checklistHandler({
+    dir,
+    admit: () => (asked = true),
+  })
+  const forged = await handle(
+    at('/__checklist/answer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://evil.test',
+      },
+      body: JSON.stringify({ listId: 'l', itemId: 's1-1', verdict: 'pass' }),
+    })
+  )
+  expect(forged!.status).toBe(403)
+  expect(asked).toBe(false)
+  expect(checklistResults(dir).pass).toBe(0)
+  const sameSite = await handle(
+    at('/__checklist', { headers: { 'Sec-Fetch-Site': 'cross-site' } })
+  )
+  expect(sameSite!.status).toBe(403)
+})

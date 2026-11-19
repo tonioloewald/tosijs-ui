@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=a21ceb207cd7" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=d9d1227466cb" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Theme stress tests — tosijs-ui</title>
   <meta name="description" content="Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Theme stress tests — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Theme stress tests","description":"Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern.","url":"https://ui.tosijs.net/theme-stress-tests/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-17T21:33:25+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Theme stress tests","description":"Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern.","url":"https://ui.tosijs.net/theme-stress-tests/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-19T10:48:12.212Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"Theme stress tests","item":"https://ui.tosijs.net/theme-stress-tests/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=f12051c039ca" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=36442c3bda59" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="theme-stress-tests.md">
 <h1 id="theme-stress-tests">Theme stress tests</h1>
 <!--{ "parent": "Helper Libraries", "description": "Two themes the theme editor handles without knowing them: Material 3 tokens and a faux-glass look, each found in its own CSS by a variable pattern." }-->
@@ -60,6 +60,8 @@ neither was written for it.</p>
 <p>Each theme builds out from one colour, and every link of the chain can be overridden. Change
 the root colour and everything derived from it follows; override a link and what hangs from
 it follows the override instead.</p>
+<p>In an app, import the editor from <code>tosijs-ui/theme-editor</code>. (The examples here import from
+<code>tosijs-ui</code> because doc pages run against the full bundle.)</p>
 <h2 id="material-3-tokens">Material 3 tokens</h2>
 <p>Material&#39;s own token names (<code>--md-sys-color-primary</code>, <code>--md-sys-shape-corner-*</code>,
 <code>--md-sys-elevation-level*</code>, the type scale), with the containers and surfaces mixed from the
@@ -445,6 +447,6 @@ test(&#39;a declared mode derives the roots, and the mixes follow&#39;, async ()
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-35t6fv7y.js"></script>
+  <script type="module" src="hydrate-g5evx74x.js"></script>
 </body>
 </html>

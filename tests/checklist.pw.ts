@@ -94,10 +94,29 @@ async function answerTheList(page: import('@playwright/test').Page) {
     .toBe('does not work')
   expect(checklistResults(DIR)).toMatchObject({ pass: 1, fail: 1, open: 0 })
 
+  // A poll landing while a comment waits out its pause does not undo it, and a verdict
+  // given then carries it.
+  const first = item.locator('textarea')
+  await first.fill('keep me')
+  await first.blur()
+  const polled = page.waitForResponse(
+    (r) => new URL(r.url()).pathname === '/__checklist'
+  )
+  await page.evaluate(() =>
+    document.dispatchEvent(new Event('visibilitychange'))
+  )
+  await polled
+  await expect(first).toHaveValue('keep me')
+  await item.locator('.fail').click()
+  await expect
+    .poll(() => checklistResults(DIR).answers.menu)
+    .toMatchObject({ verdict: 'fail', comment: 'keep me' })
+
   // The panel comes back after a reload, with the answers.
   await page.reload()
   await expect(panel).toBeVisible()
-  await expect(item.locator('.pass')).toHaveAttribute('aria-pressed', 'true')
+  await expect(item.locator('.fail')).toHaveAttribute('aria-pressed', 'true')
+  await expect(first).toHaveValue('keep me')
   await expect(second.locator('textarea')).toHaveValue('does not work')
 
   // Closed with nothing left to check, there is no badge.

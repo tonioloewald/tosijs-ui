@@ -5,6 +5,10 @@
 at the top, then each variable you declare, for one mode at a time. What you change applies to
 the page as you change it, and `value` is the theme, ready to save as JSON.
 
+In an app, import it from `tosijs-ui/theme-editor`: as of 1.19.0 it is not in the root barrel,
+so an app that does not use it ships none of it. (The examples here import from `tosijs-ui`
+because doc pages run against the full bundle.)
+
 ```js
 import { tosiThemeEditor } from 'tosijs-ui'
 

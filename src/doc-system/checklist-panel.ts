@@ -20,6 +20,7 @@ import {
   tosiChecklist,
   TosiChecklist,
   type ChecklistChange,
+  type ChecklistItemAnswer,
 } from '../checklist.js'
 import { pageSchematic } from '../page-schematic.js'
 import {
@@ -41,6 +42,8 @@ let state: ChecklistState | null = null
 let panel: TosiFloat | null = null
 let badge: HTMLButtonElement | null = null
 let started = false
+// Answers given here whose save has not landed yet (waiting out the pause, or in flight).
+const unsaved = new Map<string, ChecklistItemAnswer>()
 // Saves any comment still waiting out its pause (closing, or leaving the page).
 let flushComments = (): void => {}
 
@@ -172,8 +175,14 @@ async function refresh(): Promise<void> {
       closeChecklist()
       return
     }
-    if (replaced) editor.value = state.list
-    editor.answers = state.answers
+    if (replaced) {
+      unsaved.clear()
+      editor.value = state.list
+      editor.answers = state.answers
+    } else {
+      // What this reader has given and not yet seen saved wins over the server's copy.
+      editor.answers = { ...state.answers, ...Object.fromEntries(unsaved) }
+    }
   }
   updateBadge()
 }
@@ -204,12 +213,12 @@ export async function openChecklist(): Promise<void> {
   }) as TosiChecklist
   // One send at a time, so an older comment never lands after a newer one.
   let sending: Promise<void> = Promise.resolve()
-  const send = (change: ChecklistChange): Promise<void> =>
+  // The list is the one answered when the change was made, so a replaced list is a 409.
+  const send = (change: ChecklistChange, listId: string): Promise<void> =>
     (sending = sending.then(async () => {
-      if (!state?.list) return
       status.textContent = 'Saving…'
       const problem = await sendChecklistAnswer({
-        listId: state.list.id,
+        listId,
         itemId: change.itemId,
         verdict: change.verdict,
         comment: change.comment,
@@ -218,29 +227,45 @@ export async function openChecklist(): Promise<void> {
           ? { schematic: pageSchematic({ skip: SKIP }) }
           : {}),
       })
+      const sent = unsaved.get(change.itemId)
+      if (
+        !pending.has(change.itemId) &&
+        sent?.verdict === change.verdict &&
+        sent?.comment === change.comment
+      ) {
+        unsaved.delete(change.itemId)
+      }
       status.textContent = problem ?? ''
       if (problem) await refresh()
-      else {
-        state.answers = editor.answers
+      else if (state) {
+        state.answers = {
+          ...state.answers,
+          [change.itemId]: { verdict: change.verdict, comment: change.comment },
+        }
         state.open = editorOpenCount(editor)
       }
     }))
   // Comments save as they are typed, once typing pauses; a verdict saves at once.
   const typed = new Map<string, ReturnType<typeof setTimeout>>()
-  const pending = new Map<string, ChecklistChange>()
+  const pending = new Map<string, { change: ChecklistChange; listId: string }>()
   const flush = (itemId: string): void => {
     clearTimeout(typed.get(itemId))
     typed.delete(itemId)
-    const change = pending.get(itemId)
+    const queued = pending.get(itemId)
     pending.delete(itemId)
-    if (change) send(change)
+    if (queued) send(queued.change, queued.listId)
   }
   flushComments = () => [...pending.keys()].forEach(flush)
   editor.addEventListener('change', (event) => {
     const change = (event as CustomEvent<ChecklistChange>).detail
     if (!change?.itemId || !state?.list) return
+    const listId = state.list.id
+    unsaved.set(change.itemId, {
+      verdict: change.verdict,
+      comment: change.comment,
+    })
     if (change.changed === 'comment') {
-      pending.set(change.itemId, change)
+      pending.set(change.itemId, { change, listId })
       clearTimeout(typed.get(change.itemId))
       typed.set(
         change.itemId,
@@ -252,7 +277,7 @@ export async function openChecklist(): Promise<void> {
     clearTimeout(typed.get(change.itemId))
     typed.delete(change.itemId)
     pending.delete(change.itemId)
-    send(change)
+    send(change, listId)
   })
   panel = tosiFloat(
     {

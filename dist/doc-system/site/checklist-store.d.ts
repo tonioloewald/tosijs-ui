@@ -56,7 +56,11 @@ export declare function normalizeChecklist(input: unknown, now?: Date): Checklis
 };
 /** Post a list. It replaces the current one, and the old answers and schematics go with it. */
 export declare function postChecklist(dir: string, list: Checklist): void;
-/** Remove the list and everything answered against it. */
+/**
+ * Remove the list and everything answered against it: only the files the store writes, so a
+ * `--dir` that names a folder with anything else in it loses nothing else. The folder itself
+ * goes only if that leaves it empty.
+ */
 export declare function clearChecklist(dir: string): void;
 export declare const readChecklist: (dir: string) => Checklist | null;
 /** The list, its answers, and the count of each verdict. */

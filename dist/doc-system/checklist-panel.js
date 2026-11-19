@@ -28,6 +28,8 @@ let state = null;
 let panel = null;
 let badge = null;
 let started = false;
+// Answers given here whose save has not landed yet (waiting out the pause, or in flight).
+const unsaved = new Map();
 // Saves any comment still waiting out its pause (closing, or leaving the page).
 let flushComments = () => { };
 const remember = (open) => {
@@ -158,9 +160,15 @@ async function refresh() {
             closeChecklist();
             return;
         }
-        if (replaced)
+        if (replaced) {
+            unsaved.clear();
             editor.value = state.list;
-        editor.answers = state.answers;
+            editor.answers = state.answers;
+        }
+        else {
+            // What this reader has given and not yet seen saved wins over the server's copy.
+            editor.answers = { ...state.answers, ...Object.fromEntries(unsaved) };
+        }
     }
     updateBadge();
 }
@@ -191,12 +199,11 @@ export async function openChecklist() {
     });
     // One send at a time, so an older comment never lands after a newer one.
     let sending = Promise.resolve();
-    const send = (change) => (sending = sending.then(async () => {
-        if (!state?.list)
-            return;
+    // The list is the one answered when the change was made, so a replaced list is a 409.
+    const send = (change, listId) => (sending = sending.then(async () => {
         status.textContent = 'Saving…';
         const problem = await sendChecklistAnswer({
-            listId: state.list.id,
+            listId,
             itemId: change.itemId,
             verdict: change.verdict,
             comment: change.comment,
@@ -205,11 +212,20 @@ export async function openChecklist() {
                 ? { schematic: pageSchematic({ skip: SKIP }) }
                 : {}),
         });
+        const sent = unsaved.get(change.itemId);
+        if (!pending.has(change.itemId) &&
+            sent?.verdict === change.verdict &&
+            sent?.comment === change.comment) {
+            unsaved.delete(change.itemId);
+        }
         status.textContent = problem ?? '';
         if (problem)
             await refresh();
-        else {
-            state.answers = editor.answers;
+        else if (state) {
+            state.answers = {
+                ...state.answers,
+                [change.itemId]: { verdict: change.verdict, comment: change.comment },
+            };
             state.open = editorOpenCount(editor);
         }
     }));
@@ -219,18 +235,23 @@ export async function openChecklist() {
     const flush = (itemId) => {
         clearTimeout(typed.get(itemId));
         typed.delete(itemId);
-        const change = pending.get(itemId);
+        const queued = pending.get(itemId);
         pending.delete(itemId);
-        if (change)
-            send(change);
+        if (queued)
+            send(queued.change, queued.listId);
     };
     flushComments = () => [...pending.keys()].forEach(flush);
     editor.addEventListener('change', (event) => {
         const change = event.detail;
         if (!change?.itemId || !state?.list)
             return;
+        const listId = state.list.id;
+        unsaved.set(change.itemId, {
+            verdict: change.verdict,
+            comment: change.comment,
+        });
         if (change.changed === 'comment') {
-            pending.set(change.itemId, change);
+            pending.set(change.itemId, { change, listId });
             clearTimeout(typed.get(change.itemId));
             typed.set(change.itemId, setTimeout(() => flush(change.itemId), COMMENT_PAUSE_MS));
             return;
@@ -239,7 +260,7 @@ export async function openChecklist() {
         clearTimeout(typed.get(change.itemId));
         typed.delete(change.itemId);
         pending.delete(change.itemId);
-        send(change);
+        send(change, listId);
     });
     panel = tosiFloat({
         drag: true,

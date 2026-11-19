@@ -1,10 +1,20 @@
 import { test, expect, beforeEach, afterEach } from 'bun:test'
-import { mkdtempSync, rmSync, existsSync, readFileSync } from 'fs'
+import {
+  mkdtempSync,
+  rmSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  symlinkSync,
+  statSync,
+} from 'fs'
 import { tmpdir } from 'os'
 import path from 'path'
 import {
   checklistDirFor,
   checklistResults,
+  clearChecklist,
   checklistVerdict,
   formatChecklistResults,
   normalizeChecklist,
@@ -230,4 +240,78 @@ test('the results read as a report', () => {
   expect(
     formatChecklistResults(checklistResults(path.join(dir, 'none')), dir)
   ).toBe('No checklist is posted.')
+})
+
+test('clear removes only what the store wrote, so a mistaken --dir loses nothing else', () => {
+  const list = posted({ title: 't', items: ['a'] })
+  saveChecklistAnswer(dir, {
+    listId: list.id,
+    itemId: 's1-1',
+    verdict: 'pass',
+    schematic: '<svg></svg>',
+  })
+  writeFileSync(path.join(dir, 'precious.txt'), 'keep me')
+  mkdirSync(path.join(dir, '.git'))
+  clearChecklist(dir)
+  expect(readFileSync(path.join(dir, 'precious.txt'), 'utf8')).toBe('keep me')
+  expect(existsSync(path.join(dir, '.git'))).toBe(true)
+  expect(existsSync(path.join(dir, 'list.json'))).toBe(false)
+  expect(existsSync(path.join(dir, 'answers.json'))).toBe(false)
+  expect(existsSync(path.join(dir, 'schematics'))).toBe(false)
+  // A folder holding only the store's files goes with them.
+  const own = path.join(dir, 'own')
+  postChecklist(
+    own,
+    normalizeChecklist({ title: 't', items: ['a'] }) as Checklist
+  )
+  clearChecklist(own)
+  expect(existsSync(own)).toBe(false)
+})
+
+test.skipIf(process.platform === 'win32')(
+  'the store is private, and a link planted in its place is refused',
+  () => {
+    const store = path.join(dir, 'store')
+    postChecklist(
+      store,
+      normalizeChecklist({ title: 't', items: ['a'] }) as Checklist
+    )
+    expect(statSync(store).mode & 0o777).toBe(0o700)
+    const elsewhere = path.join(dir, 'elsewhere')
+    mkdirSync(elsewhere)
+    const planted = path.join(dir, 'planted')
+    symlinkSync(elsewhere, planted)
+    expect(() =>
+      postChecklist(
+        planted,
+        normalizeChecklist({ title: 't', items: ['a'] }) as Checklist
+      )
+    ).toThrow('not a folder you own')
+    expect(existsSync(path.join(elsewhere, 'list.json'))).toBe(false)
+  }
+)
+
+test('what a reader sends cannot forge a report line or reach the terminal raw', () => {
+  const list = posted({ title: 't', items: ['a', 'b'] })
+  const save = (body: object) =>
+    saveChecklistAnswer(dir, {
+      listId: list.id,
+      itemId: 's1-1',
+      verdict: 'fail',
+      ...body,
+    })
+  expect(save({ page: 'https://x.test/\n  PASS  s1-2  b' })).toMatchObject({
+    status: 400,
+  })
+  expect(save({ page: 'javascript:alert(1)' })).toMatchObject({ status: 400 })
+  expect(save({ page: 'not a url' })).toMatchObject({ status: 400 })
+  expect(
+    save({ comment: 'fine\n  PASS  s1-2  b\r\u001b]52;c;ZXZpbA==\u0007' }).ok
+  ).toBe(true)
+  const report = formatChecklistResults(checklistResults(dir), dir)
+  expect(report).toContain('        >   PASS  s1-2  b')
+  expect(report).toContain('----  s1-2  b')
+  // eslint-disable-next-line no-control-regex -- asserting none survive
+  expect(report).not.toMatch(/[\u0000-\u0008\u000b-\u001f\u007f]/)
+  expect(report).toContain('\\u{1b}]52;c;')
 })

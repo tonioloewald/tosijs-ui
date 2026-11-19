@@ -1,10 +1,14 @@
 import path from 'path'
 import { tmpdir } from 'os'
 import {
+  chmodSync,
   existsSync,
+  lstatSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   renameSync,
+  rmdirSync,
   rmSync,
   writeFileSync,
 } from 'fs'
@@ -102,7 +106,26 @@ const LIST_FILE = 'list.json'
 const ANSWERS_FILE = 'answers.json'
 const SCHEMATICS = 'schematics'
 
-function writeAtomic(file: string, text: string): void {
+/*
+The store folder is private to this user. The default is a predictable name in the temp dir,
+which on a multi-user Linux host another user could create first, or link elsewhere, to read
+or plant answers. So: made 0700, and refused unless it is a real folder this user owns.
+*/
+function ensureStore(dir: string): void {
+  mkdirSync(dir, { recursive: true, mode: 0o700 })
+  if (process.platform === 'win32') return
+  const stat = lstatSync(dir)
+  if (!stat.isDirectory() || stat.uid !== process.getuid?.()) {
+    throw new Error(
+      `${dir} is not a folder you own: refusing to use it as the checklist store`
+    )
+  }
+  if ((stat.mode & 0o077) !== 0) chmodSync(dir, 0o700)
+}
+
+function writeAtomic(dir: string, name: string, text: string): void {
+  ensureStore(dir)
+  const file = path.join(dir, name)
   mkdirSync(path.dirname(file), { recursive: true })
   const temp = `${file}.${process.pid}.tmp`
   writeFileSync(temp, text, 'utf8')
@@ -118,6 +141,32 @@ function readJson<T>(file: string): T | null {
     return null
   }
 }
+
+// C0 and C1 controls other than newline and tab: what a terminal or a log reader acts on.
+// eslint-disable-next-line no-control-regex -- matching control characters is the point
+const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f]/g
+
+function isPageUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length > 2000) return false
+  // eslint-disable-next-line no-control-regex -- matching control characters is the point
+  if (/[\u0000-\u001f\u007f-\u009f]/.test(value)) return false
+  try {
+    return /^https?:$/.test(new URL(value).protocol)
+  } catch {
+    return false
+  }
+}
+
+/*
+What a reader typed, made safe to print for an agent or a terminal: control characters (escape
+sequences, carriage returns) shown as \u{…}, never sent raw. Newlines are the caller's to
+handle, since each line of a comment is quoted with `>`.
+*/
+const printable = (text: string): string =>
+  text.replace(
+    CONTROL,
+    (c) => `\\u{${c.charCodeAt(0).toString(16).padStart(2, '0')}}`
+  )
 
 const isText = (value: unknown, max: number): value is string =>
   typeof value === 'string' && value.trim() !== '' && value.length <= max
@@ -218,12 +267,31 @@ export function normalizeChecklist(
 export function postChecklist(dir: string, list: Checklist): void {
   rmSync(path.join(dir, SCHEMATICS), { recursive: true, force: true })
   rmSync(path.join(dir, ANSWERS_FILE), { force: true })
-  writeAtomic(path.join(dir, LIST_FILE), JSON.stringify(list, null, 2) + '\n')
+  writeAtomic(dir, LIST_FILE, JSON.stringify(list, null, 2) + '\n')
 }
 
-/** Remove the list and everything answered against it. */
+/**
+ * Remove the list and everything answered against it: only the files the store writes, so a
+ * `--dir` that names a folder with anything else in it loses nothing else. The folder itself
+ * goes only if that leaves it empty.
+ */
 export function clearChecklist(dir: string): void {
-  rmSync(dir, { recursive: true, force: true })
+  if (!existsSync(dir)) return
+  rmSync(path.join(dir, SCHEMATICS), { recursive: true, force: true })
+  for (const name of readdirSync(dir)) {
+    if (
+      name === LIST_FILE ||
+      name === ANSWERS_FILE ||
+      /^(list|answers)\.json\.\d+\.tmp$/.test(name)
+    ) {
+      rmSync(path.join(dir, name), { force: true })
+    }
+  }
+  try {
+    rmdirSync(dir)
+  } catch {
+    // Not empty: it holds something the store did not write, which stays.
+  }
 }
 
 export const readChecklist = (dir: string): Checklist | null =>
@@ -301,8 +369,8 @@ export function saveChecklistAnswer(
     }
   }
   const page = raw.page
-  if (page !== undefined && (typeof page !== 'string' || page.length > 2000)) {
-    return { ok: false, status: 400, reason: 'page must be a URL' }
+  if (page !== undefined && !isPageUrl(page)) {
+    return { ok: false, status: 400, reason: 'page must be an http(s) URL' }
   }
   const schematic = raw.schematic
   if (
@@ -321,16 +389,13 @@ export function saveChecklistAnswer(
   if (page) answer.page = page
   if (schematic !== undefined) {
     const file = path.join(SCHEMATICS, `${itemId}.svg`)
-    writeAtomic(path.join(dir, file), schematic)
+    writeAtomic(dir, file, schematic)
     answer.schematic = file
   } else if (previous?.schematic) {
     answer.schematic = previous.schematic
   }
   stored.answers[itemId] = answer
-  writeAtomic(
-    path.join(dir, ANSWERS_FILE),
-    JSON.stringify(stored, null, 2) + '\n'
-  )
+  writeAtomic(dir, ANSWERS_FILE, JSON.stringify(stored, null, 2) + '\n')
   return { ok: true, answer }
 }
 
@@ -417,7 +482,7 @@ export function formatChecklistResults(
   const { list, answers } = results
   if (!list) return 'No checklist is posted.'
   const lines = [
-    `${list.title} (${list.id}): ${results.pass} passed, ${results.fail} failed, ${results.open} to check`,
+    `${printable(list.title)} (${list.id}): ${results.pass} passed, ${results.fail} failed, ${results.open} to check`,
   ]
   for (const section of list.sections) {
     if (section.title) lines.push('', section.title)
@@ -429,12 +494,16 @@ export function formatChecklistResults(
           : answer?.verdict === 'fail'
             ? 'FAIL'
             : '----'
-      lines.push(`  ${mark}  ${item.id}  ${item.text}`)
+      lines.push(`  ${mark}  ${item.id}  ${printable(item.text)}`)
+      /*
+      A comment is the reader's words, quoted line by line, so a line of it can never pass
+      for a verdict line. An agent reading this treats it as data, not instructions.
+      */
       if (answer?.comment) {
-        for (const line of answer.comment.split('\n'))
-          lines.push(`        > ${line}`)
+        for (const line of answer.comment.split(/\r?\n/))
+          lines.push(`        > ${printable(line)}`)
       }
-      if (answer?.page) lines.push(`        page: ${answer.page}`)
+      if (answer?.page) lines.push(`        page: ${printable(answer.page)}`)
       if (answer?.schematic) {
         lines.push(`        schematic: ${path.join(dir, answer.schematic)}`)
       }

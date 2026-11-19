@@ -12,6 +12,7 @@ import {
   parseAnswerBody,
   saveChecklistAnswer,
 } from './checklist-store.js'
+import { isSameOriginRequest } from './dev-auth.js'
 
 export interface ChecklistHandlerOptions {
   /** The folder `tosijs-checklist` posts to: `checklistDirFor(projectRoot)`. */
@@ -44,6 +45,14 @@ export function checklistHandler(
   return async (request) => {
     const path = new URL(request.url).pathname
     if (path !== endpoint && path !== `${endpoint}/answer`) return null
+    /*
+    Same origin, whatever admit says: the content-type rule below stops a simple cross-site
+    request, but not one that CORS middleware in front of this handler lets through, and an
+    `admit` that trusts a cookie would then admit any page the reader has open.
+    */
+    if (!isSameOriginRequest(request)) {
+      return json({ error: 'cross-origin request refused' }, 403)
+    }
     const admitted = await admit(request)
     if (admitted instanceof Response) return admitted
     if (admitted !== true) return json({ error: 'not admitted' }, 403)

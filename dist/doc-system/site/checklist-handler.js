@@ -7,6 +7,7 @@ speaks `Request`/`Response` (Bun.serve, Hono, a Next route handler, Vite through
 send to disk, so there is no default that could leave them open by accident.
 */
 import { checklistResults, parseAnswerBody, saveChecklistAnswer, } from './checklist-store.js';
+import { isSameOriginRequest } from './dev-auth.js';
 const NO_STORE = { 'Cache-Control': 'no-store' };
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
     status,
@@ -22,6 +23,14 @@ export function checklistHandler(options) {
         const path = new URL(request.url).pathname;
         if (path !== endpoint && path !== `${endpoint}/answer`)
             return null;
+        /*
+        Same origin, whatever admit says: the content-type rule below stops a simple cross-site
+        request, but not one that CORS middleware in front of this handler lets through, and an
+        `admit` that trusts a cookie would then admit any page the reader has open.
+        */
+        if (!isSameOriginRequest(request)) {
+            return json({ error: 'cross-origin request refused' }, 403);
+        }
         const admitted = await admit(request);
         if (admitted instanceof Response)
             return admitted;

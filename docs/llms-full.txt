@@ -12173,6 +12173,10 @@ Source: https://ui.tosijs.net/theme-data/
 at the top, then each variable you declare, for one mode at a time. What you change applies to
 the page as you change it, and `value` is the theme, ready to save as JSON.
 
+In an app, import it from `tosijs-ui/theme-editor`: as of 1.19.0 it is not in the root barrel,
+so an app that does not use it ships none of it. (The examples here import from `tosijs-ui`
+because doc pages run against the full bundle.)
+
 ```js
 import { tosiThemeEditor } from 'tosijs-ui'
 
@@ -12363,6 +12367,9 @@ neither was written for it.
 Each theme builds out from one colour, and every link of the chain can be overridden. Change
 the root colour and everything derived from it follows; override a link and what hangs from
 it follows the override instead.
+
+In an app, import the editor from `tosijs-ui/theme-editor`. (The examples here import from
+`tosijs-ui` because doc pages run against the full bundle.)
 
 ## Material 3 tokens
 
