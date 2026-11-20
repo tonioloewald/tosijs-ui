@@ -120,6 +120,8 @@ test('doc pages hydrate with no console errors', async ({ page }) => {
   // suppresses it). Not a hydration failure — the industry-standard thing to ignore.
   const BENIGN =
     /ResizeObserver loop (limit exceeded|completed with undelivered notifications)/
+  const REFUSED_FONT =
+    /(Cross-Origin Request Blocked|downloadable font: download failed)\b.*https:\/\/(?!localhost|127\.0\.0\.1)[^/\s]+\/\S*\.(woff2?|ttf|otf)\b/
   const errors: string[] = []
   page.on('console', (m) => {
     if (m.type() !== 'error') return
@@ -131,6 +133,9 @@ test('doc pages hydrate with no console errors', async ({ page }) => {
     const url = m.location()?.url || ''
     if (url && !/^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) return
     if (BENIGN.test(m.text())) return
+    // The fixtures refuse third-party fonts (tests/fixtures.ts), and Firefox reports each
+    // refusal as an error located on OUR page, naming the font's host. Failed about 1 run in 8.
+    if (REFUSED_FONT.test(m.text())) return
     errors.push(m.text())
   })
   page.on('pageerror', (e) => {
