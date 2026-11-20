@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.19.2
+
+> **The checklist client, without a DOM.** `tosijs-ui/checklist-client` lets a client that
+> draws the list itself answer it. tosijs-3d does, in a 3D scene or a headset. Nothing else
+> changes.
+
+### New
+
+- `tosijs-ui/checklist-client` exports the checklist client: `fetchChecklist`, `sendChecklistAnswer`, `hasChecklistEndpoint`, `setChecklistEndpoint`, `checklistSections` (the item-id rule) and the list types. It imports without a DOM, so a client that draws the list itself can answer it: tosijs-3d answers it in a 3D scene or a headset. `tosijs-ui/checklist` still exports all of these. closes #4194 (a1b84a0d)
+
 ## 1.19.1
 
 > **Typing no longer loses focus while background tests run.** On a doc page with background
