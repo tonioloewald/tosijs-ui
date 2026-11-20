@@ -1227,3 +1227,15 @@ gap, recorded rather than hidden.
   points at `/theme-editor/`.
 - **Process:** the 60-minute staged-approval window lapsed once. Approving and then running
   `verify_only` recovered it, as designed.
+
+## 1.19.2 (2026-11-20) — `tosijs-ui/checklist-client` for tosijs-3d (#4194)
+
+- **What it was:** an adopter's ask, filed with its evidence on the day tosijs-3d extended the
+  checklist to 3D scenes and VR. A DOM-free subpath. The id rule moved with it, so the adopter
+  can drop its copy. Additive, so a patch.
+- **The gate caught:** a Firefox-only flake in `hydration.pw.ts` (1 run in 8). The fixtures
+  abort third-party fonts, and Firefox reports the abort as an error located on our page, so
+  the third-party filter missed it. It reproduced on `--repeat-each=8`, where a single re-run
+  had passed. Repeat before calling anything a flake.
+- **New check:** `test-consumer` imports the new subpath under node, which is the no-DOM
+  claim, tested where an adopter would hit it.
