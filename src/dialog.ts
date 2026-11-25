@@ -391,7 +391,7 @@ export class TosiDialog extends Component<DialogParts> {
   helpers never resolved and removeOnClose leaked the element. Take the close over instead,
   which is also what lets dialogWillClose veto it.
   */
-  onCancel = (event: Event) => {
+  handleCancel = (event: Event) => {
     event.preventDefault()
     this.close('cancel')
   }
@@ -401,7 +401,7 @@ export class TosiDialog extends Component<DialogParts> {
   `cancel` non-cancelable without fresh user activation, and `<form method="dialog">` closes it
   directly. Too late to veto, so tell dialogWillClose and settle, rather than hang the caller.
   */
-  onNativeClose = () => {
+  handleNativeClose = () => {
     if (this.#settled) {
       return
     }
@@ -416,7 +416,11 @@ export class TosiDialog extends Component<DialogParts> {
 
   content = () =>
     dialog(
-      { part: 'dialog', onCancel: this.onCancel, onClose: this.onNativeClose },
+      {
+        part: 'dialog',
+        onCancel: this.handleCancel,
+        onClose: this.handleNativeClose,
+      },
       header(tosiSlot({ name: 'header' })),
       tosiSlot(),
       footer(
