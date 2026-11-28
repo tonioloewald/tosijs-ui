@@ -418,12 +418,12 @@ describe('example ordinals match the page (#4343)', () => {
             file: doc.filename,
             i,
             slot,
-            code: ours[i][slot]?.trimEnd(),
+            code: ours[i][slot]?.trimEnd() as string | undefined,
           }).toEqual({
             file: doc.filename,
             i,
             slot,
-            code: page[i][slot].trimEnd(),
+            code: page[i][slot]?.trimEnd() as string | undefined,
           })
         }
       }
