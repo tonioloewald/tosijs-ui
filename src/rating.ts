@@ -77,17 +77,12 @@ and (in my opinion) common sense, but  not like [MUI's rating widget](https://mu
 
 /*{ "headTitle": "<tosi-rating> star rating input — tosijs-ui", "parent": "Form Components", "description": "<tosi-rating> is a form-associated rating input drawn with icons, with half steps, custom icons and sizes, that behaves like an <input>." }*/
 
-import {
-  elements,
-  ElementCreator,
-  PartsMap,
-  deprecated,
-  withAttributes,
-} from 'tosijs'
+import { elements, ElementCreator, PartsMap, withAttributes } from 'tosijs'
 import { icons } from './icon-core.js'
 import { chainDuration, chainTransition } from './theme-chain.js'
 // The default icon, drawn by name.
 import './icons/star.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 const { span } = elements
 
@@ -290,13 +285,18 @@ export class TosiRating extends withAttributes({
 /** @deprecated Use TosiRating instead */
 export type XinRating = TosiRating
 /** @deprecated Use TosiRating instead */
-export const XinRating: typeof TosiRating = TosiRating
+export const XinRating: typeof TosiRating = deprecatedClass(
+  TosiRating,
+  'XinRating',
+  'TosiRating'
+)
 
 export const tosiRating =
   TosiRating.elementCreator() as ElementCreator<TosiRating>
 
 /** @deprecated Use tosiRating instead (tag is now tosi-rating) */
-export const xinRating = deprecated(
-  (...args: Parameters<typeof tosiRating>) => tosiRating(...args),
-  'xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)'
-) as ElementCreator<TosiRating>
+export const xinRating = deprecatedCreator(
+  tosiRating,
+  'xinRating',
+  'tosiRating'
+)

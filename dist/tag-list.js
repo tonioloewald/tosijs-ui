@@ -162,7 +162,7 @@ If `editable`, an input field is provided for entering tags directly.
 Placeholder shown on input field.
 */
 /*{ "parent": "Form Components", "description": "An editable list of tags with suggestions, built on standard inputs and form-associated, so it submits like any other field." }*/
-import { elements, vars, varDefault, deprecated, StyleSheet, withAttributes, } from 'tosijs';
+import { elements, vars, varDefault, StyleSheet, withAttributes, } from 'tosijs';
 import { tagColors } from './tag-colors.js';
 import { popMenu } from './menu.js';
 import { chevronDown as chevronDownIcon } from './icons/chevronDown.js';
@@ -179,6 +179,7 @@ not import the menu system with them. Re-exported here, where it has always been
 */
 export { TosiTag, tosiTag, XinTag, xinTag } from './tag.js';
 import { TosiTag, tosiTag } from './tag.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 /*
 The pick menu lives outside the tag list (menus float in <body>), so its lozenge style is a
 global sheet, injected on first use. A coloured row's CAPTION becomes a lozenge in the tag's
@@ -483,7 +484,7 @@ export class TosiTagList extends withAttributes({
     }
 }
 /** @deprecated Use TosiTagList instead */
-export const XinTagList = TosiTagList;
+export const XinTagList = deprecatedClass(TosiTagList, 'XinTagList', 'TosiTagList');
 export const tosiTagList = TosiTagList.elementCreator();
 /** @deprecated Use tosiTagList instead */
-export const xinTagList = deprecated((...args) => tosiTagList(...args), 'xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)');
+export const xinTagList = deprecatedCreator(tosiTagList, 'xinTagList', 'tosiTagList');

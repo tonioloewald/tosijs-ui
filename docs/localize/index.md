@@ -398,8 +398,9 @@ You use this data using `initLocalization()`.
 ## Leveraging TosiLocalized Automatic Updates
 
 If you want to leverage TosiLocalized's automatic updates you simply need to
-implement `updateLocale` and register yourself with `TosiLocalized.allInstances`
-(which is a `Set<AbstractLocalized>).
+implement `localeChanged` and register yourself with `TosiLocalized.allInstances`
+(which is a `Set<AbstractLocalized>`). `localeChanged` is what a locale change calls;
+an instance without one throws, and stops every instance after it updating.
 
 Typically, this would look like something like:
 
@@ -408,21 +409,21 @@ class MyLocalizedComponent extends Component {
   ...
 
   // register yourself as a localized component
-  connectecCallback() {
+  connectedCallback() {
     super.connectedCallback()
 
     TosiLocalized.allInstances.add(this)
   }
 
   // avoid leaking!
-  disconnectecCallback() {
-    super.connectedCallback()
+  disconnectedCallback() {
+    super.disconnectedCallback()
 
     TosiLocalized.allInstances.delete(this)
   }
 
   // presumably your render method does the right things
-  updateLocale = () =>  {
+  localeChanged = () => {
     this.queueRender()
   }
 }

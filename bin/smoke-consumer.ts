@@ -462,6 +462,20 @@ try {
       await nodeResolves(entry)
     )
   }
+  /*
+  And what must NOT resolve: the dev server's internals, which the `./*` wildcard used to make
+  importable (#4390, 1.20.0). `tosijs-ui/site` is the API; this is its security boundary.
+  */
+  {
+    const probe = `import('tosijs-ui/doc-system/site/dev-auth').then(()=>console.log('RESOLVED')).catch(e=>console.log(e.code||e.message))`
+    const r = await $`node -e ${probe}`.cwd(proj).nothrow().quiet()
+    const said = r.stdout.toString() + r.stderr.toString()
+    check(
+      'node refuses tosijs-ui/doc-system/site/dev-auth (not exported)',
+      /ERR_PACKAGE_PATH_NOT_EXPORTED/.test(said),
+      said.slice(0, 200)
+    )
+  }
   // The DOM-free entry must actually RUN under node — it exists precisely for build
   // scripts and server-rendered templates. Call it, through a transformed redirect and a
   // throw, since both go through a second module (icon-suffixes) that must also ship.

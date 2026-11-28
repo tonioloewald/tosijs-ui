@@ -31,6 +31,7 @@ reads as a bug.
 
 import { ElementCreator, elements, varDefault, withAttributes } from 'tosijs'
 import { chainDuration, chainEasing } from './theme-chain.js'
+import { deprecatedCreator } from './deprecated-alias.js'
 
 const { slot } = elements
 
@@ -240,4 +241,8 @@ export const tosiSidenav =
 export const sideNav = tosiSidenav
 
 /** @deprecated Use tosiSidenav instead */
-export const xinSidenav = tosiSidenav
+export const xinSidenav = deprecatedCreator(
+  tosiSidenav,
+  'xinSidenav',
+  'tosiSidenav'
+)

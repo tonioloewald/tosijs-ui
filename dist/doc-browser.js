@@ -80,7 +80,7 @@ interface DocBrowserOptions {
   logo?: string // header logo
   navSize?: number // nav width (default: 200)
   minSize?: number // width below which the nav goes compact (default: 600)
-  routing?: 'query' | 'path' | 'memory' // see below (default: 'query')
+  routing?: 'query' | 'path' | 'memory' // see below (default: 'memory')
   initialRoute?: string // memory routing: the first page
   onRouteChange?: (slug: string) => void // memory routing: page changes
   searchShortcut?: string // opens the search; '' for none (default: 'mod+k')
@@ -89,10 +89,12 @@ interface DocBrowserOptions {
 }
 ```
 
-`routing` picks how pages map to URLs. `'query'` links pages as `?filename`. `'path'` uses
-clean `/slug/` URLs, as the static site does. `'memory'` never touches the page's URL or
-history, for a browser embedded in another page: drive it with `initialRoute`,
-`onRouteChange` and the element's `navigate(slug)` method.
+`routing` picks how pages map to URLs. `'memory'`, the default, never touches the page's URL
+or history, which is what a browser embedded in another page needs: drive it with
+`initialRoute`, `onRouteChange` and the element's `navigate(slug)` method. `'path'` uses
+clean `/slug/` URLs, as the static site does. `'query'` links pages as `?filename` and owns
+the page's URL; it was the default until 1.20.0, so a page that relied on that passes
+`routing: 'query'`.
 
 The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that owns that key,
 or embeds more than one browser, passes `searchShortcut: ''` (or another key in
@@ -469,7 +471,13 @@ let docBrowserSeq = 0;
 // Likewise for the nav's aria-controls ids.
 let navIdCounter = 0;
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, aliases = {}, onRouteChange, searchShortcut = 'mod+k', searchPlaceholder = 'Search', accessibility, navbarLinks, contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, 
+    /*
+    'memory' since 1.20.0 (#4391). The default was 'query', which reads and rewrites the HOST
+    page's URL, while these docs pitched `createDocBrowser` as the API for embedding a browser
+    in someone else's page. The doc site names its mode, so only a bare call moves.
+    */
+    routing = 'memory', initialRoute, aliases = {}, onRouteChange, searchShortcut = 'mod+k', searchPlaceholder = 'Search', accessibility, navbarLinks, contentElement, } = options;
     // Memory routing is fully self-contained: it never reads or writes
     // window.history/location, so an embedded or nested browser can't hijack the
     // host page's URL (or recurse into it).

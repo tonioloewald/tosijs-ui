@@ -169,7 +169,6 @@ import {
   vars,
   varDefault,
   ElementCreator,
-  deprecated,
   XinStyleSheet,
   StyleSheet,
   withAttributes,
@@ -196,6 +195,7 @@ not import the menu system with them. Re-exported here, where it has always been
 */
 export { TosiTag, tosiTag, XinTag, xinTag } from './tag.js'
 import { TosiTag, tosiTag } from './tag.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 interface Tag {
   value: string
@@ -549,13 +549,18 @@ export class TosiTagList extends withAttributes({
 /** @deprecated Use TosiTagList instead */
 export type XinTagList = TosiTagList
 /** @deprecated Use TosiTagList instead */
-export const XinTagList: typeof TosiTagList = TosiTagList
+export const XinTagList: typeof TosiTagList = deprecatedClass(
+  TosiTagList,
+  'XinTagList',
+  'TosiTagList'
+)
 
 export const tosiTagList =
   TosiTagList.elementCreator() as ElementCreator<TosiTagList>
 
 /** @deprecated Use tosiTagList instead */
-export const xinTagList = deprecated(
-  (...args: Parameters<typeof tosiTagList>) => tosiTagList(...args),
-  'xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)'
-) as ElementCreator<TosiTagList>
+export const xinTagList = deprecatedCreator(
+  tosiTagList,
+  'xinTagList',
+  'tosiTagList'
+)

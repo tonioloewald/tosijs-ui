@@ -29,6 +29,7 @@ reads as a bug.
 /*{ "parent": "Components", "headTitle": "<tosi-sidenav> responsive sidebar — tosijs-ui", "description": "<tosi-sidenav> shows a sidebar beside the content when there is room and hides it behind a toggle on small screens, as iPad apps do." }*/
 import { elements, varDefault, withAttributes } from 'tosijs';
 import { chainDuration, chainEasing } from './theme-chain.js';
+import { deprecatedCreator } from './deprecated-alias.js';
 const { slot } = elements;
 export class TosiSidenav extends withAttributes({
     minSize: 800,
@@ -205,4 +206,4 @@ export const tosiSidenav = TosiSidenav.elementCreator();
 /** @deprecated Use tosiSidenav instead */
 export const sideNav = tosiSidenav;
 /** @deprecated Use tosiSidenav instead */
-export const xinSidenav = tosiSidenav;
+export const xinSidenav = deprecatedCreator(tosiSidenav, 'xinSidenav', 'tosiSidenav');

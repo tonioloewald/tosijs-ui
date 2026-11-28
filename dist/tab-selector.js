@@ -145,6 +145,7 @@ import { elements, vars, withAttributes, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize.js';
 import { chainDuration, chainEasing } from './theme-chain.js';
 import { x as xIcon } from './icons/x.js';
+import { deprecatedCreator } from './deprecated-alias.js';
 const { div, slot, span } = elements;
 export class TosiTabs extends withAttributes({
     localized: false,
@@ -451,4 +452,4 @@ export const tosiTabs = TosiTabs.elementCreator();
 /** @deprecated Use tosiTabs instead */
 export const tabSelector = tosiTabs;
 /** @deprecated Use tosiTabs instead */
-export const xinTabs = tosiTabs;
+export const xinTabs = deprecatedCreator(tosiTabs, 'xinTabs', 'tosiTabs');

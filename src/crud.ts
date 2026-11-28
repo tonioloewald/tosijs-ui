@@ -297,7 +297,9 @@ for every instance; each one re-checks it the next time it is resized.
 - `rows` — the records currently listed.
 - `value` — the selected record (the form's live model).
 - `table` / `form` — the composed elements.
-- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()`
+- `refresh()` / `select(record)` / `save()` / `deleteRecord()` / `createNew()`
+- `remove()` is the DOM's: it takes the element out of the page. Until 1.20.0 it deleted the
+  selected record, which is now `deleteRecord()`.
 - `close()` — put the open record away (unsaved edits are dropped); what the Close button does.
 - `TosiCrud.NARROW_WIDTH` — below this width (720) the layout is one column; see above.
 - `whenIdle()` — resolves when no store operation is in flight; for tests, mostly.
@@ -466,7 +468,7 @@ export class TosiCrud extends withAttributes({
   action, and `save()` then posted the unedited record.
 
   `_selected` deliberately stays at the record as LOADED. Nothing needs it to track the edit:
-  `value` and `save()` read `form.value` directly, and `remove()` wants the identity of the
+  `value` and `save()` read `form.value` directly, and `deleteRecord()` wants the identity of the
   record that was opened rather than a half-edited copy of it.
   */
   private _loaded: any = null
@@ -709,8 +711,8 @@ export class TosiCrud extends withAttributes({
    * Is the selected record something the store could delete?
    *
    * ONE rule, used by both the button and the method. They disagreed: `render()` disabled the
-   * button for a record with no id, while `remove()` only checked that *something* was
-   * selected — so `createNew()` followed by `remove()` sent `store.delete({})`, which for a
+   * button for a record with no id, while the method only checked that *something* was
+   * selected — so `createNew()` followed by a delete sent `store.delete({})`, which for a
    * REST adapter is `DELETE /records/undefined`. A guard the UI enforces and the API does not
    * is not a guard.
    */
@@ -722,7 +724,11 @@ export class TosiCrud extends withAttributes({
     )
   }
 
-  async remove(): Promise<void> {
+  /*
+  Delete the selected record. Named `remove()` until 1.20.0, which overrode `Element.remove()`:
+  `crud.remove()` deleted a record from the store and left the element in the page (#4354).
+  */
+  async deleteRecord(): Promise<void> {
     if (!this.deletable) return
     await this.run('delete', () => this._store!.delete!(this._selected))
     this._selected = null
@@ -837,7 +843,7 @@ export class TosiCrud extends withAttributes({
       this.save().catch(() => undefined)
     }
     this.parts.deleteButton.onclick = () => {
-      this.remove().catch(() => undefined)
+      this.deleteRecord().catch(() => undefined)
     }
     this.parts.form.addEventListener('change', () => this.queueRender())
     this.parts.search.value = this.search

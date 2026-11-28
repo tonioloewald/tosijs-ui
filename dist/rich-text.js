@@ -137,6 +137,7 @@ import { fontItalic as fontItalicIcon } from './icons/fontItalic.js';
 import { fontUnderline as fontUnderlineIcon } from './icons/fontUnderline.js';
 import { tosiSelect, TosiSelect } from './select.js';
 import { spacer as layoutSpacer } from './layout.js';
+import { deprecatedClass } from './deprecated-alias.js';
 const { tosiSlot, div, button } = elements;
 const blockStyles = [
     {
@@ -416,7 +417,7 @@ export class RichText extends withAttributes({
     }
 }
 /** @deprecated Use RichText instead */
-export const XinWord = RichText;
+export const XinWord = deprecatedClass(RichText, 'XinWord', 'RichText');
 export const tosiRichText = RichText.elementCreator();
 /** @deprecated Use tosiRichText instead (tag is now <tosi-rich-text>) */
 export const richText = deprecated((...args) => tosiRichText(...args), 'richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)');

@@ -159,6 +159,7 @@ found in Weakpass's database (and spit out extra info to the console).
 /*{ "parent": "Form Components", "description": "Wrap an <input> in <tosi-password-strength> to rate a password as it is typed and securely check whether it appears in known breaches." }*/
 import { elements, vars, varDefault, withAttributes } from 'tosijs';
 import { chainDuration, chainEasing } from './theme-chain.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 export const digest = async (s, method = 'SHA-1') => {
     // Convert password to an ArrayBuffer
     const encoder = new TextEncoder();
@@ -298,7 +299,7 @@ export class TosiPasswordStrength extends withAttributes({
     }
 }
 /** @deprecated Use TosiPasswordStrength instead */
-export const XinPasswordStrength = TosiPasswordStrength;
+export const XinPasswordStrength = deprecatedClass(TosiPasswordStrength, 'XinPasswordStrength', 'TosiPasswordStrength');
 export const tosiPasswordStrength = TosiPasswordStrength.elementCreator();
 /** @deprecated Use tosiPasswordStrength instead */
-export const xinPasswordStrength = tosiPasswordStrength;
+export const xinPasswordStrength = deprecatedCreator(tosiPasswordStrength, 'xinPasswordStrength', 'tosiPasswordStrength');

@@ -30,6 +30,7 @@ import { Component as XinComponent, ElementCreator, vars } from 'tosijs'
 import { resize as resizeIcon } from './icons/resize.js'
 import { chainTransition } from './theme-chain.js'
 import { trackDrag } from './track-drag.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 export class TosiSizer extends XinComponent {
   static preferredTagName = 'tosi-sizer'
@@ -115,9 +116,13 @@ export class TosiSizer extends XinComponent {
 /** @deprecated Use TosiSizer instead */
 export type XinSizer = TosiSizer
 /** @deprecated Use TosiSizer instead */
-export const XinSizer: typeof TosiSizer = TosiSizer
+export const XinSizer: typeof TosiSizer = deprecatedClass(
+  TosiSizer,
+  'XinSizer',
+  'TosiSizer'
+)
 
 export const tosiSizer = TosiSizer.elementCreator() as ElementCreator<TosiSizer>
 
 /** @deprecated Use tosiSizer instead */
-export const xinSizer = tosiSizer
+export const xinSizer = deprecatedCreator(tosiSizer, 'xinSizer', 'tosiSizer')

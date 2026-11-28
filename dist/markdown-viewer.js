@@ -1,6 +1,7 @@
 import { xin, withAttributes } from 'tosijs';
 import { marked } from 'marked';
 import { setSanitizedHtml } from './sanitize-html.js';
+import { deprecatedCreator } from './deprecated-alias.js';
 /*#
 # markdown
 
@@ -248,4 +249,4 @@ export const tosiMd = TosiMd.elementCreator();
 /** @deprecated Use tosiMd instead */
 export const markdownViewer = tosiMd;
 /** @deprecated Use tosiMd instead */
-export const xinMd = tosiMd;
+export const xinMd = deprecatedCreator(tosiMd, 'xinMd', 'tosiMd');

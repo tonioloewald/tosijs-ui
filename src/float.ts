@@ -96,6 +96,7 @@ just add the `no-drag` class to an element or its container.
 import { elements, ElementCreator, withAttributes } from 'tosijs'
 import { trackDrag, bringToFront } from './track-drag.js'
 import type { FloatPosition } from './pop-float.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 const { slot } = elements
 
@@ -189,12 +190,16 @@ export class TosiFloat extends withAttributes({
 /** @deprecated Use TosiFloat instead */
 export type XinFloat = TosiFloat
 /** @deprecated Use TosiFloat instead */
-export const XinFloat: typeof TosiFloat = TosiFloat
+export const XinFloat: typeof TosiFloat = deprecatedClass(
+  TosiFloat,
+  'XinFloat',
+  'TosiFloat'
+)
 
 export const tosiFloat = TosiFloat.elementCreator() as ElementCreator<TosiFloat>
 
 /** @deprecated Use tosiFloat instead */
-export const xinFloat = tosiFloat
+export const xinFloat = deprecatedCreator(tosiFloat, 'xinFloat', 'tosiFloat')
 
 /*
 Does this scroll move the anchor? The page scrolling does; so does any scroller that contains it,

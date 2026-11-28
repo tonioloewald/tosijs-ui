@@ -160,6 +160,19 @@ export function contrastRatio(a, b) {
     return (hi + 0.05) / (lo + 0.05);
 }
 /**
+ * Black or white, whichever has the higher WCAG contrast against `color`.
+ *
+ * tosijs's `Color.contrasting()` decides by BT.601 luma, which is not what contrast is measured
+ * in: it put white on `#009688` at 3.67:1, where black gives 5.72:1 (#4367). `tag-colors.ts`
+ * had already switched its chips to this rule for the same reason.
+ */
+export function contrastingText(color) {
+    const c = color.opaque;
+    return contrastRatio(c, Color.black) >= contrastRatio(c, Color.white)
+        ? Color.black
+        : Color.white;
+}
+/**
  * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach
  * `min` contrast against `bg`, so it keeps as much of its hue as AA allows.
  */
@@ -172,7 +185,7 @@ export function readableOn(color, bg, min = 4.5) {
     for (let step = 0; step < 20 && contrastRatio(c, bg) < min; step++) {
         c = shipped(darkBg ? c.brighten(0.1) : c.darken(0.1));
     }
-    return contrastRatio(c, bg) < min ? bg.contrasting() : c;
+    return contrastRatio(c, bg) < min ? contrastingText(bg) : c;
 }
 // ============================================================================
 // Theme Creation Functions
@@ -183,7 +196,7 @@ export function readableOn(color, bg, min = 4.5) {
 export function createColorVariables(colors) {
     const { accent, background, text } = colors;
     // Derive colors if not provided
-    const accentText = colors.accentText ?? accent.contrasting();
+    const accentText = colors.accentText ?? contrastingText(accent);
     const backgroundInset = colors.backgroundInset ?? background.darken(0.03);
     const border = colors.border ?? text.opacity(0.15);
     const shadow = colors.shadow ?? text.opacity(0.1);

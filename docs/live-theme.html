@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=227c097e460b" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=3a2f71558140" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>live-theme — tosijs-ui</title>
   <meta name="description" content="The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser." />
@@ -42,23 +42,39 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/live-theme.webp" />
   <meta name="twitter:image:alt" content="live-theme — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"live-theme","description":"The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser.","url":"https://ui.tosijs.net/live-theme/","inLanguage":"en","image":"https://ui.tosijs.net/og/live-theme.webp","dateModified":"2026-11-19T12:30:37+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"live-theme","description":"The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser.","url":"https://ui.tosijs.net/live-theme/","inLanguage":"en","image":"https://ui.tosijs.net/og/live-theme.webp","dateModified":"2026-11-28T08:47:31.808Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Helper Libraries","item":"https://ui.tosijs.net/helper-libraries/"},{"@type":"ListItem","position":2,"name":"live-theme","item":"https://ui.tosijs.net/live-theme/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=dee28178933d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=e7d8ad2c82ff" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="live-theme.ts">
 <h1 id="live-theme">live-theme</h1>
-<p>The <code>liveTheme</code> observable: three colours (accent, background, text) and a dark flag, applied
-to the page as they change.</p>
+<p><strong>Deprecated in 1.20.0; 1.21.0 removes <code>liveTheme</code>, <code>enableLiveTheme</code> and
+<code>disableLiveTheme</code>.</strong> Build a theme from your colours and apply it instead, which is what this
+did underneath:</p>
+<pre data-example-mode="static"><code class="language-js" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> Color <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> applyTheme<span class="token punctuation">,</span> createTheme<span class="token punctuation">,</span> createDarkTheme <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
+
+<span class="token keyword">const</span> colors <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">accent</span><span class="token operator">:</span> Color<span class="token punctuation">.</span><span class="token function">fromCss</span><span class="token punctuation">(</span><span class="token string">'#0064d2'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">background</span><span class="token operator">:</span> Color<span class="token punctuation">.</span><span class="token function">fromCss</span><span class="token punctuation">(</span><span class="token string">'#ffffff'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token literal-property property">text</span><span class="token operator">:</span> Color<span class="token punctuation">.</span><span class="token function">fromCss</span><span class="token punctuation">(</span><span class="token string">'#1a1a1a'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">const</span> dark <span class="token operator">=</span> <span class="token function">matchMedia</span><span class="token punctuation">(</span><span class="token string">'(prefers-color-scheme: dark)'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>matches
+<span class="token function">applyTheme</span><span class="token punctuation">(</span>dark <span class="token operator">?</span> <span class="token function">createDarkTheme</span><span class="token punctuation">(</span>colors<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">createTheme</span><span class="token punctuation">(</span>colors<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p>To edit a whole theme as you look at it, use <a href="/theme-editor/"><code>&lt;tosi-theme-editor&gt;</code></a>.</p>
+<p>The <code>liveTheme</code> observable held three colours (accent, background, text) and a dark flag, applied
+to the page as they changed.</p>
 <p>The editor that used to live here is now <a href="/theme-editor/"><code>&lt;tosi-theme-editor&gt;</code></a>, on
 <code>tosijs-ui/theme-editor</code>, and edits a whole theme as <a href="/theme-data/">data</a>. It no longer drives
 <code>liveTheme</code>. As of 1.19.0 it is no longer exported from <code>tosijs-ui</code>: import it from
 <code>tosijs-ui/theme-editor</code>.</p>
-<h2 id="programmatic-control">Programmatic Control</h2>
-<p>The <code>liveTheme</code> observable lets you read and write theme values from code:</p>
+<h2 id="programmatic-control-deprecated">Programmatic control (deprecated)</h2>
+<p>The <code>liveTheme</code> observable read and wrote theme values from code, once <code>enableLiveTheme()</code> had
+been called:</p>
 <pre data-example-mode="static"><code class="language-js" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> liveTheme <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui'</span>
 
 <span class="token comment">// Read current values</span>
@@ -270,6 +286,6 @@ test(&#39;css canary: Color math (inverseLuminance) yields a distinct valid colo
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-ycepy4eb.js"></script>
+  <script type="module" src="hydrate-fmbwgecy.js"></script>
 </body>
 </html>

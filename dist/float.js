@@ -93,6 +93,7 @@ just add the `no-drag` class to an element or its container.
 /*{ "headTitle": "<tosi-float> draggable floating panel — tosijs-ui", "parent": "Components", "description": "<tosi-float> is a minimally styled floating element that can be dragged, and that hides, stays or is removed when the window resizes." }*/
 import { elements, withAttributes } from 'tosijs';
 import { trackDrag, bringToFront } from './track-drag.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { slot } = elements;
 export class TosiFloat extends withAttributes({
     drag: false,
@@ -164,10 +165,10 @@ export class TosiFloat extends withAttributes({
     }
 }
 /** @deprecated Use TosiFloat instead */
-export const XinFloat = TosiFloat;
+export const XinFloat = deprecatedClass(TosiFloat, 'XinFloat', 'TosiFloat');
 export const tosiFloat = TosiFloat.elementCreator();
 /** @deprecated Use tosiFloat instead */
-export const xinFloat = tosiFloat;
+export const xinFloat = deprecatedCreator(tosiFloat, 'xinFloat', 'tosiFloat');
 /*
 Does this scroll move the anchor? The page scrolling does; so does any scroller that contains it,
 across shadow roots (a menu popped from inside a component's shadow DOM is still moved by a

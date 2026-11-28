@@ -358,7 +358,7 @@ if (has('link')) {
   Print the CODE as well as the URL — the docs said so and the bin did not.
 
   `doc-site-system.md` documents `tosijs-tunnel --link` printing the link and its
-  7-character code, with sample output; only the dev server's own banner did. On the device
+  code, with sample output; only the dev server's own banner did. On the device
   this exists for you are not pasting a URL, you are reading characters off one screen and
   typing them on another, so the code is the part that matters.
   */

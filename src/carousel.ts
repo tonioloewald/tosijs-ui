@@ -77,6 +77,7 @@ import { ElementCreator, elements, vars, withAttributes } from 'tosijs'
 import { chevronLeft as chevronLeftIcon } from './icons/chevronLeft.js'
 import { chevronRight as chevronRightIcon } from './icons/chevronRight.js'
 import { prefersReducedMotion } from './reduced-motion.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 const { button, slot, div } = elements
 
@@ -498,10 +499,18 @@ export class TosiCarousel extends withAttributes({
 /** @deprecated Use TosiCarousel instead */
 export type XinCarousel = TosiCarousel
 /** @deprecated Use TosiCarousel instead */
-export const XinCarousel: typeof TosiCarousel = TosiCarousel
+export const XinCarousel: typeof TosiCarousel = deprecatedClass(
+  TosiCarousel,
+  'XinCarousel',
+  'TosiCarousel'
+)
 
 export const tosiCarousel =
   TosiCarousel.elementCreator() as ElementCreator<TosiCarousel>
 
 /** @deprecated Use tosiCarousel instead */
-export const xinCarousel = tosiCarousel
+export const xinCarousel = deprecatedCreator(
+  tosiCarousel,
+  'xinCarousel',
+  'tosiCarousel'
+)

@@ -404,6 +404,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
 /*{ "headTitle": "<tosi-form> forms with native validation — tosijs-ui", "parent": "Form Components", "description": "<tosi-form> and <tosi-field> build forms with native client-side validation and a submit callback that receives the form's values." }*/
 import { Component as XinComponent, elements, varDefault, withAttributes, } from 'tosijs';
 import { colorInput } from './color-input.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { form, slot, tosiSlot, label, input, span } = elements;
 function attr(element, name, value) {
     if (value !== '' && value !== false) {
@@ -748,12 +749,12 @@ export class TosiForm extends XinComponent {
     }
 }
 /** @deprecated Use TosiField instead */
-export const XinField = TosiField;
+export const XinField = deprecatedClass(TosiField, 'XinField', 'TosiField');
 /** @deprecated Use TosiForm instead */
-export const XinForm = TosiForm;
+export const XinForm = deprecatedClass(TosiForm, 'XinForm', 'TosiForm');
 export const tosiField = TosiField.elementCreator();
 export const tosiForm = TosiForm.elementCreator();
 /** @deprecated Use tosiField instead (tag is now tosi-field) */
-export const xinField = tosiField;
+export const xinField = deprecatedCreator(tosiField, 'xinField', 'tosiField');
 /** @deprecated Use tosiForm instead (tag is now tosi-form) */
-export const xinForm = tosiForm;
+export const xinForm = deprecatedCreator(tosiForm, 'xinForm', 'tosiForm');

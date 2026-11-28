@@ -72,3 +72,37 @@ test('a page in a sequence ends with Continue; following it opens the next page 
     happyDOM.setURL(before)
   }
 })
+
+/*
+#4391 (1.20.0): a bare createDocBrowser() is an embed. Its default was 'query', which reads and
+rewrites the host page's URL.
+*/
+test("createDocBrowser defaults to 'memory' routing, leaving the page's URL alone", () => {
+  // test-setup has no `history` global (lean plan H1), so through window
+  const { history } = window
+  const before = window.location.href
+  const pushes: unknown[] = []
+  const realPush = history.pushState.bind(history)
+  history.pushState = (...args: any[]) => void pushes.push(args)
+  try {
+    const browser: any = createDocBrowser({
+      docs: [
+        {
+          filename: 'README.md',
+          title: 'Home',
+          path: 'README.md',
+          text: '# Home\n',
+        },
+        { filename: 'b.md', title: 'B', path: 'b.md', text: '# B\n' },
+      ] as any,
+    })
+    document.body.append(browser)
+    expect(typeof browser.navigate).toBe('function')
+    browser.navigate('b')
+    expect(pushes).toEqual([])
+    expect(window.location.href).toBe(before)
+    browser.remove()
+  } finally {
+    history.pushState = realPush
+  }
+})

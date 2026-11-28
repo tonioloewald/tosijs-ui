@@ -135,11 +135,12 @@ The following CSS variables can be used to control customize the `<tosi-segmente
     --segmented-placeholder-opacity
 */
 /*{ "parent": "Form Components", "description": "<tosi-segmented> is a form-associated segmented control for choosing one value or several, with icons and labels." }*/
-import { elements, varDefault, deprecated, withAttributes, } from 'tosijs';
+import { elements, varDefault, withAttributes } from 'tosijs';
 import { icons } from './icon-core.js';
 import { chainRadius } from './theme-chain.js';
 import { tosiLocalized } from './localize.js';
 import { splitCaptionIcon } from './caption-icon.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { div, slot, label, span, input } = elements;
 export class TosiSegmented extends withAttributes({
     direction: 'row',
@@ -425,7 +426,7 @@ export class TosiSegmented extends withAttributes({
     }
 }
 /** @deprecated Use TosiSegmented instead */
-export const XinSegmented = TosiSegmented;
+export const XinSegmented = deprecatedClass(TosiSegmented, 'XinSegmented', 'TosiSegmented');
 export const tosiSegmented = TosiSegmented.elementCreator();
 /** @deprecated Use tosiSegmented instead (tag is now tosi-segmented) */
-export const xinSegmented = deprecated((...args) => tosiSegmented(...args), 'xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)');
+export const xinSegmented = deprecatedCreator(tosiSegmented, 'xinSegmented', 'tosiSegmented');

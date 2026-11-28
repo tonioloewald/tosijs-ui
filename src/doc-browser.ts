@@ -80,7 +80,7 @@ interface DocBrowserOptions {
   logo?: string // header logo
   navSize?: number // nav width (default: 200)
   minSize?: number // width below which the nav goes compact (default: 600)
-  routing?: 'query' | 'path' | 'memory' // see below (default: 'query')
+  routing?: 'query' | 'path' | 'memory' // see below (default: 'memory')
   initialRoute?: string // memory routing: the first page
   onRouteChange?: (slug: string) => void // memory routing: page changes
   searchShortcut?: string // opens the search; '' for none (default: 'mod+k')
@@ -89,10 +89,12 @@ interface DocBrowserOptions {
 }
 ```
 
-`routing` picks how pages map to URLs. `'query'` links pages as `?filename`. `'path'` uses
-clean `/slug/` URLs, as the static site does. `'memory'` never touches the page's URL or
-history, for a browser embedded in another page: drive it with `initialRoute`,
-`onRouteChange` and the element's `navigate(slug)` method.
+`routing` picks how pages map to URLs. `'memory'`, the default, never touches the page's URL
+or history, which is what a browser embedded in another page needs: drive it with
+`initialRoute`, `onRouteChange` and the element's `navigate(slug)` method. `'path'` uses
+clean `/slug/` URLs, as the static site does. `'query'` links pages as `?filename` and owns
+the page's URL; it was the default until 1.20.0, so a page that relied on that passes
+`routing: 'query'`.
 
 The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that owns that key,
 or embeds more than one browser, passes `searchShortcut: ''` (or another key in
@@ -435,13 +437,14 @@ export interface LinkItem {
 
 /**
  * How the doc browser maps docs to URLs.
- * - 'query' (default, legacy): single-page app, links are `?filename`.
+ * - 'memory' (default since 1.20.0): self-contained — navigation never touches
+ *   window.history/location and the instance ignores the page URL. For an
+ *   embedded/nested browser (a live demo, a floating help panel). Drive it via
+ *   `initialRoute` + `onRouteChange`, and the returned element's `.navigate(slug)`.
  * - 'path': clean per-page URLs (`/slug/`), for the static pre-rendered site
  *   driven by <tosi-doc-system>. Requires a real page to exist at each path.
- * - 'memory': self-contained — navigation never touches window.history/location
- *   and the instance ignores the page URL. For an embedded/nested browser (a
- *   live demo, a floating help panel). Drive it via `initialRoute` +
- *   `onRouteChange`, and the returned element's `.navigate(slug)` method.
+ * - 'query' (legacy; the default until 1.20.0): single-page app, links are
+ *   `?filename`, and it reads and rewrites the page's URL.
  */
 export type DocRoutingMode = 'query' | 'path' | 'memory'
 
@@ -694,7 +697,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     logo,
     navSize = 200,
     minSize = 600,
-    routing = 'query',
+    /*
+    'memory' since 1.20.0 (#4391). The default was 'query', which reads and rewrites the HOST
+    page's URL, while these docs pitched `createDocBrowser` as the API for embedding a browser
+    in someone else's page. The doc site names its mode, so only a bare call moves.
+    */
+    routing = 'memory',
     initialRoute,
     aliases = {},
     onRouteChange,

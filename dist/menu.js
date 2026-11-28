@@ -801,6 +801,7 @@ import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
 import { localize } from './localize.js';
 import { matchShortcut, displayShortcut } from './match-shortcut.js';
 import { isTypeAllowed, stringToTypes } from './drag-and-drop.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 export const resolveMenuItems = (provider) => typeof provider === 'function' ? provider() : provider;
 const { div, button, span, a, tosiSlot } = elements;
 const cleanSeparators = (items) => {
@@ -1694,6 +1695,6 @@ export class TosiMenu extends withAttributes({
 }
 export const tosiMenu = TosiMenu.elementCreator();
 /** @deprecated Use tosiMenu instead */
-export const xinMenu = tosiMenu;
+export const xinMenu = deprecatedCreator(tosiMenu, 'xinMenu', 'tosiMenu');
 /** @deprecated Use TosiMenu instead */
-export const XinMenu = TosiMenu;
+export const XinMenu = deprecatedClass(TosiMenu, 'XinMenu', 'TosiMenu');

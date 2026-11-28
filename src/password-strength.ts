@@ -161,6 +161,7 @@ found in Weakpass's database (and spit out extra info to the console).
 
 import { elements, vars, varDefault, withAttributes } from 'tosijs'
 import { chainDuration, chainEasing } from './theme-chain.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 export const digest = async (s: string, method = 'SHA-1'): Promise<string> => {
   // Convert password to an ArrayBuffer
@@ -333,10 +334,17 @@ export class TosiPasswordStrength extends withAttributes({
 /** @deprecated Use TosiPasswordStrength instead */
 export type XinPasswordStrength = TosiPasswordStrength
 /** @deprecated Use TosiPasswordStrength instead */
-export const XinPasswordStrength: typeof TosiPasswordStrength =
-  TosiPasswordStrength
+export const XinPasswordStrength: typeof TosiPasswordStrength = deprecatedClass(
+  TosiPasswordStrength,
+  'XinPasswordStrength',
+  'TosiPasswordStrength'
+)
 
 export const tosiPasswordStrength = TosiPasswordStrength.elementCreator()
 
 /** @deprecated Use tosiPasswordStrength instead */
-export const xinPasswordStrength = tosiPasswordStrength
+export const xinPasswordStrength = deprecatedCreator(
+  tosiPasswordStrength,
+  'xinPasswordStrength',
+  'tosiPasswordStrength'
+)

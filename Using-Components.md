@@ -433,16 +433,14 @@ Override at any level in the CSS cascade.
 ```typescript
 import { initLocalization, setLocale, localize } from 'tosijs-ui'
 
-// TSV format — 5 header rows, then translatable strings:
+// TSV format — 4 header rows, then translatable strings:
 //   Row 1: locale codes
 //   Row 2: (skipped)
-//   Row 3: language names in reference language
-//   Row 4: language names in native language
-//   Row 5: flag emoji
-//   Row 6+: translatable strings (first column is the key)
+//   Row 3: language names, as the locale menu shows them
+//   Row 4: flag emoji
+//   Row 5+: translatable strings (first column is the key)
 initLocalization(`en-US\tfr\tfi
 \t\t
-English\tFrench\tFinnish
 English (US)\tFrançais\tsuomi
 🇺🇸\t🇫🇷\t🇫🇮
 Ok\tD'accord\tOk

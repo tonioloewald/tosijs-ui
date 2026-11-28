@@ -107,11 +107,30 @@ const aliases: [string, unknown, unknown][] = [
   ['XinLocalized', XinLocalized, TosiLocalized],
 ]
 
+/*
+Since 1.20.0 the `Xin*` names warn when used (#4389), so each is a Proxy of its class rather
+than the class itself: the same class in every way a caller can use it, but not `===`. The
+other names here are still plain aliases. `deprecated-alias.test.ts` checks the warning.
+*/
+const quietly = <T>(read: () => T): T => {
+  const { warn, error } = console
+  console.warn = console.error = () => {}
+  try {
+    return read()
+  } finally {
+    console.warn = warn
+    console.error = error
+  }
+}
+
 describe('deprecated class aliases', () => {
-  test.each(aliases)(
-    '%s is the same class as its canonical name',
-    (name, alias, canonical) => {
+  test.each(aliases)('%s is its canonical class', (name, alias, canonical) => {
+    if (name.startsWith('Xin')) {
+      expect(quietly(() => (alias as any).prototype)).toBe(
+        (canonical as any).prototype
+      )
+    } else {
       expect(alias).toBe(canonical)
     }
-  )
+  })
 })

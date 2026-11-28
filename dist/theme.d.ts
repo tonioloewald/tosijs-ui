@@ -18,6 +18,14 @@ export declare const baseVariables: XinStyleRule;
  */
 export declare function contrastRatio(a: Color, b: Color): number;
 /**
+ * Black or white, whichever has the higher WCAG contrast against `color`.
+ *
+ * tosijs's `Color.contrasting()` decides by BT.601 luma, which is not what contrast is measured
+ * in: it put white on `#009688` at 3.67:1, where black gives 5.72:1 (#4367). `tag-colors.ts`
+ * had already switched its chips to this rule for the same reason.
+ */
+export declare function contrastingText(color: Color): Color;
+/**
  * `color`, darkened (on a light `bg`) or brightened (on a dark one) just far enough to reach
  * `min` contrast against `bg`, so it keeps as much of its hue as AA allows.
  */

@@ -1040,8 +1040,8 @@ export async function devServer(
   */
   const auth = createAuthState()
   /*
-  Guess-rate control for the 7-character link token: one redemption at a time, each taking at
-  least 100ms. Ten attempts a second against 32^7 is ~108 years; a person does not notice
+  Guess-rate control for the 8-letter link token: one redemption at a time, each taking at
+  least 100ms. Ten attempts a second against 22^8 is ~174 years; a person does not notice
   100ms. Global rather than per-IP because every request over the tunnel arrives from
   loopback — see dev-auth.ts.
   */

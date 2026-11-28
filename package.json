@@ -197,6 +197,8 @@
       "import": "./dist/test-setup.js",
       "default": "./dist/test-setup.js"
     },
+    "./doc-system/site/*": null,
+    "./doc-system/site/*.js": null,
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js",

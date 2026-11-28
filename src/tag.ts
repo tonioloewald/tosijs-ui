@@ -9,10 +9,10 @@ import {
   vars,
   varDefault,
   ElementCreator,
-  deprecated,
   withAttributes,
 } from 'tosijs'
 import { x as xIcon } from './icons/x.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 const { span, button } = elements
 
@@ -87,12 +87,13 @@ export class TosiTag extends withAttributes({
 /** @deprecated Use TosiTag instead */
 export type XinTag = TosiTag
 /** @deprecated Use TosiTag instead */
-export const XinTag: typeof TosiTag = TosiTag
+export const XinTag: typeof TosiTag = deprecatedClass(
+  TosiTag,
+  'XinTag',
+  'TosiTag'
+)
 
 export const tosiTag = TosiTag.elementCreator() as ElementCreator<TosiTag>
 
 /** @deprecated Use tosiTag instead */
-export const xinTag = deprecated(
-  (...args: Parameters<typeof tosiTag>) => tosiTag(...args),
-  'xinTag is deprecated, use tosiTag instead (tag is now <tosi-tag>)'
-) as ElementCreator<TosiTag>
+export const xinTag = deprecatedCreator(tosiTag, 'xinTag', 'tosiTag')

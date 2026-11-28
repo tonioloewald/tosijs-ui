@@ -184,6 +184,7 @@ import {
   chainSurface,
   chainSurfaceFilter,
 } from './theme-chain.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 const { div, button } = elements
 
 interface NotificationSpec {
@@ -649,12 +650,20 @@ export class TosiNotification extends Component {
 /** @deprecated Use TosiNotification instead */
 export type XinNotification = TosiNotification
 /** @deprecated Use TosiNotification instead */
-export const XinNotification: typeof TosiNotification = TosiNotification
+export const XinNotification: typeof TosiNotification = deprecatedClass(
+  TosiNotification,
+  'XinNotification',
+  'TosiNotification'
+)
 
 export const tosiNotification = TosiNotification.elementCreator()
 
 /** @deprecated Use tosiNotification instead */
-export const xinNotification = tosiNotification
+export const xinNotification = deprecatedCreator(
+  tosiNotification,
+  'xinNotification',
+  'tosiNotification'
+)
 
 export function postNotification(spec: NotificationSpec | string): callback {
   return TosiNotification.post(spec)

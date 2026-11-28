@@ -1,16 +1,36 @@
 # live-theme
 
-The `liveTheme` observable: three colours (accent, background, text) and a dark flag, applied
-to the page as they change.
+**Deprecated in 1.20.0; 1.21.0 removes `liveTheme`, `enableLiveTheme` and
+`disableLiveTheme`.** Build a theme from your colours and apply it instead, which is what this
+did underneath:
+
+```js:static
+import { Color } from 'tosijs'
+import { applyTheme, createTheme, createDarkTheme } from 'tosijs-ui'
+
+const colors = {
+  accent: Color.fromCss('#0064d2'),
+  background: Color.fromCss('#ffffff'),
+  text: Color.fromCss('#1a1a1a'),
+}
+const dark = matchMedia('(prefers-color-scheme: dark)').matches
+applyTheme(dark ? createDarkTheme(colors) : createTheme(colors))
+```
+
+To edit a whole theme as you look at it, use [`<tosi-theme-editor>`](/theme-editor/).
+
+The `liveTheme` observable held three colours (accent, background, text) and a dark flag, applied
+to the page as they changed.
 
 The editor that used to live here is now [`<tosi-theme-editor>`](/theme-editor/), on
 `tosijs-ui/theme-editor`, and edits a whole theme as [data](/theme-data/). It no longer drives
 `liveTheme`. As of 1.19.0 it is no longer exported from `tosijs-ui`: import it from
 `tosijs-ui/theme-editor`.
 
-## Programmatic Control
+## Programmatic control (deprecated)
 
-The `liveTheme` observable lets you read and write theme values from code:
+The `liveTheme` observable read and wrote theme values from code, once `enableLiveTheme()` had
+been called:
 
 ```js:static
 import { liveTheme } from 'tosijs-ui'

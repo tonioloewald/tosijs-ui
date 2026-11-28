@@ -128,7 +128,7 @@ test('a record with no id is not deletable — by button OR by method', async ({
     ).disabled
     // The API must enforce the same rule the button shows — a guard the UI enforces and the
     // method does not is not a guard.
-    await crud.remove()
+    await crud.deleteRecord()
     return { buttonDisabled, deleteCalls: deletes.length }
   })
   expect(result.buttonDisabled).toBe(true)
@@ -144,7 +144,7 @@ test('deleting a real record removes it and clears the selection', async ({
     const before = crud.rows.length
     crud.select(crud.rows[2])
     await crud.whenIdle()
-    await crud.remove()
+    await crud.deleteRecord()
     await crud.whenIdle()
     return {
       before,

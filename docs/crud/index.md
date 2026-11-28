@@ -296,7 +296,9 @@ for every instance; each one re-checks it the next time it is resized.
 - `rows` — the records currently listed.
 - `value` — the selected record (the form's live model).
 - `table` / `form` — the composed elements.
-- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()`
+- `refresh()` / `select(record)` / `save()` / `deleteRecord()` / `createNew()`
+- `remove()` is the DOM's: it takes the element out of the page. Until 1.20.0 it deleted the
+  selected record, which is now `deleteRecord()`.
 - `close()` — put the open record away (unsaved edits are dropped); what the Close button does.
 - `TosiCrud.NARROW_WIDTH` — below this width (720) the layout is one column; see above.
 - `whenIdle()` — resolves when no store operation is in flight; for tests, mostly.

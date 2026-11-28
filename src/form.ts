@@ -413,6 +413,7 @@ import {
 } from 'tosijs'
 
 import { colorInput } from './color-input.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 const { form, slot, tosiSlot, label, input, span } = elements
 
@@ -803,19 +804,27 @@ export class TosiForm extends XinComponent {
 /** @deprecated Use TosiField instead */
 export type XinField = TosiField
 /** @deprecated Use TosiField instead */
-export const XinField: typeof TosiField = TosiField
+export const XinField: typeof TosiField = deprecatedClass(
+  TosiField,
+  'XinField',
+  'TosiField'
+)
 
 /** @deprecated Use TosiForm instead */
 export type XinForm = TosiForm
 /** @deprecated Use TosiForm instead */
-export const XinForm: typeof TosiForm = TosiForm
+export const XinForm: typeof TosiForm = deprecatedClass(
+  TosiForm,
+  'XinForm',
+  'TosiForm'
+)
 
 export const tosiField = TosiField.elementCreator() as ElementCreator<TosiField>
 
 export const tosiForm = TosiForm.elementCreator() as ElementCreator<TosiForm>
 
 /** @deprecated Use tosiField instead (tag is now tosi-field) */
-export const xinField = tosiField
+export const xinField = deprecatedCreator(tosiField, 'xinField', 'tosiField')
 
 /** @deprecated Use tosiForm instead (tag is now tosi-form) */
-export const xinForm = tosiForm
+export const xinForm = deprecatedCreator(tosiForm, 'xinForm', 'tosiForm')

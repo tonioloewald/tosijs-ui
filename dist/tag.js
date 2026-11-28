@@ -3,8 +3,9 @@
 tag-list page. Its own module so importing a chip does not import the tag list's menu system;
 `tag-list.ts` re-exports everything here.
 */
-import { elements, vars, varDefault, deprecated, withAttributes, } from 'tosijs';
+import { elements, vars, varDefault, withAttributes, } from 'tosijs';
 import { x as xIcon } from './icons/x.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { span, button } = elements;
 export class TosiTag extends withAttributes({
     caption: '',
@@ -71,7 +72,7 @@ export class TosiTag extends withAttributes({
     ];
 }
 /** @deprecated Use TosiTag instead */
-export const XinTag = TosiTag;
+export const XinTag = deprecatedClass(TosiTag, 'XinTag', 'TosiTag');
 export const tosiTag = TosiTag.elementCreator();
 /** @deprecated Use tosiTag instead */
-export const xinTag = deprecated((...args) => tosiTag(...args), 'xinTag is deprecated, use tosiTag instead (tag is now <tosi-tag>)');
+export const xinTag = deprecatedCreator(tosiTag, 'xinTag', 'tosiTag');

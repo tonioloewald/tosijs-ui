@@ -46,10 +46,15 @@ Then import the component `elementCreator` and create elements. A `tosijs`
 `elementCreator` is syntax sugar around `document.createElement()`.
 
 ```typescript
-import { tosiTable } from 'tosijs-ui'
+import { tosiTable } from 'tosijs-ui/data-table'
 
 document.body.append(tosiTable())
 ```
+
+Import each component from its own module, as above, and you ship only what you use: one
+component through its subpath is a few kB to about 30 kB gzip, where the package root brings the
+whole library (about 107 kB gzip). `import { tosiTable } from 'tosijs-ui'` works too, and is
+the simpler choice when a page uses many components.
 
 ### Using the iife via cdn
 
@@ -1102,7 +1107,9 @@ for every instance; each one re-checks it the next time it is resized.
 - `rows` — the records currently listed.
 - `value` — the selected record (the form's live model).
 - `table` / `form` — the composed elements.
-- `refresh()` / `select(record)` / `save()` / `remove()` / `createNew()`
+- `refresh()` / `select(record)` / `save()` / `deleteRecord()` / `createNew()`
+- `remove()` is the DOM's: it takes the element out of the page. Until 1.20.0 it deleted the
+  selected record, which is now `deleteRecord()`.
 - `close()` — put the open record away (unsaved edits are dropped); what the Close button does.
 - `TosiCrud.NARROW_WIDTH` — below this width (720) the layout is one column; see above.
 - `whenIdle()` — resolves when no store operation is in flight; for tests, mostly.
@@ -10983,17 +10990,37 @@ Source: https://ui.tosijs.net/hash-state/
 
 # live-theme
 
-The `liveTheme` observable: three colours (accent, background, text) and a dark flag, applied
-to the page as they change.
+**Deprecated in 1.20.0; 1.21.0 removes `liveTheme`, `enableLiveTheme` and
+`disableLiveTheme`.** Build a theme from your colours and apply it instead, which is what this
+did underneath:
+
+```js:static
+import { Color } from 'tosijs'
+import { applyTheme, createTheme, createDarkTheme } from 'tosijs-ui'
+
+const colors = {
+  accent: Color.fromCss('#0064d2'),
+  background: Color.fromCss('#ffffff'),
+  text: Color.fromCss('#1a1a1a'),
+}
+const dark = matchMedia('(prefers-color-scheme: dark)').matches
+applyTheme(dark ? createDarkTheme(colors) : createTheme(colors))
+```
+
+To edit a whole theme as you look at it, use [`<tosi-theme-editor>`](/theme-editor/).
+
+The `liveTheme` observable held three colours (accent, background, text) and a dark flag, applied
+to the page as they changed.
 
 The editor that used to live here is now [`<tosi-theme-editor>`](/theme-editor/), on
 `tosijs-ui/theme-editor`, and edits a whole theme as [data](/theme-data/). It no longer drives
 `liveTheme`. As of 1.19.0 it is no longer exported from `tosijs-ui`: import it from
 `tosijs-ui/theme-editor`.
 
-## Programmatic Control
+## Programmatic control (deprecated)
 
-The `liveTheme` observable lets you read and write theme values from code:
+The `liveTheme` observable read and wrote theme values from code, once `enableLiveTheme()` had
+been called:
 
 ```js:static
 import { liveTheme } from 'tosijs-ui'
@@ -11508,8 +11535,9 @@ You use this data using `initLocalization()`.
 ## Leveraging TosiLocalized Automatic Updates
 
 If you want to leverage TosiLocalized's automatic updates you simply need to
-implement `updateLocale` and register yourself with `TosiLocalized.allInstances`
-(which is a `Set<AbstractLocalized>).
+implement `localeChanged` and register yourself with `TosiLocalized.allInstances`
+(which is a `Set<AbstractLocalized>`). `localeChanged` is what a locale change calls;
+an instance without one throws, and stops every instance after it updating.
 
 Typically, this would look like something like:
 
@@ -11518,21 +11546,21 @@ class MyLocalizedComponent extends Component {
   ...
 
   // register yourself as a localized component
-  connectecCallback() {
+  connectedCallback() {
     super.connectedCallback()
 
     TosiLocalized.allInstances.add(this)
   }
 
   // avoid leaking!
-  disconnectecCallback() {
-    super.connectedCallback()
+  disconnectedCallback() {
+    super.disconnectedCallback()
 
     TosiLocalized.allInstances.delete(this)
   }
 
   // presumably your render method does the right things
-  updateLocale = () =>  {
+  localeChanged = () => {
     this.queueRender()
   }
 }
@@ -13963,8 +13991,8 @@ thrash for twenty minutes until it was power-cycled.
   sample fires after a rebuild, the preflight at launch — and all of them are blind to the
   state that actually kills machines: a server nobody is touching, sitting on gigabytes,
   on a box quietly filling up around it. _Nothing rebuilds, so nothing looks._ So the dev
-  server also checks on a **timer**: the RSS ceiling every minute, and a full machine
-  preflight every five. If the box is dying — even because of someone else's runaway — it
+  server also checks on a **timer**: the RSS ceiling and a full machine preflight, every
+  minute. If the box is dying — even because of someone else's runaway — it
   exits and prints the PIDs on the way out.
 - **A rebuild-storm detector.** The other way to eat a machine is not a leak but a **loop**:
   if the build writes a file the watcher watches, every rebuild triggers the next, forever —
@@ -13976,7 +14004,8 @@ thrash for twenty minutes until it was power-cycled.
 
 #### Nothing the dev server serves is cacheable
 
-Every response carries `Cache-Control: no-store`. That is not paranoia — sending no
+Every page, script, stylesheet and asset it serves carries `Cache-Control: no-store`. Not yet
+every API response does: the source endpoint and some refusals don't. That is not paranoia — sending no
 `Cache-Control` is not neutral, because a browser is free to invent a freshness lifetime when
 you decline to state one, and Safari is the most willing to. The failure mode is a dev server
 that rebuilds correctly while the browser keeps showing the previous build, which presents as
@@ -14234,7 +14263,7 @@ export default defineSiteConfig({
 })
 ```
 
-Redeem an edit link on the device (`tosijs-tunnel --link` gives you a 7-character code),
+Redeem an edit link on the device (`tosijs-tunnel --link` gives you an 8-letter code),
 load the page, and it appears in `hj windows` like any other.
 
 **Why it is a separate opt-in, not part of `true`.** `true` means "an agent may drive the
@@ -14649,7 +14678,7 @@ Two hostnames, because the postures genuinely differ:
 ```bash
 tosijs-tunnel            # open the tunnel (foreground; Ctrl-C closes it)
 tosijs-tunnel --status   # is one already up?
-tosijs-tunnel --link     # print a fresh edit link + its 7-character code (5 min)
+tosijs-tunnel --link     # print a fresh edit link + its 8-letter code (5 min)
 tosijs-tunnel --close    # close any tunnel this project opened
 ```
 
@@ -14897,7 +14926,7 @@ turn the throttle into the oracle that `safeEqual`'s constant-time comparison ex
 prevent.
 
 After **ten consecutive failures the slot widens to a second** — another factor of ten
-against a guesser, and nothing at all against a human, who does not mistype seven characters
+against a guesser, and nothing at all against a human, who does not mistype eight letters
 ten times running and would wait a second if they did.
 
 There is **no lockout** for ordinary use: a lockout a few mistypes can trigger is a denial of
@@ -15938,7 +15967,7 @@ interface DocBrowserOptions {
   logo?: string // header logo
   navSize?: number // nav width (default: 200)
   minSize?: number // width below which the nav goes compact (default: 600)
-  routing?: 'query' | 'path' | 'memory' // see below (default: 'query')
+  routing?: 'query' | 'path' | 'memory' // see below (default: 'memory')
   initialRoute?: string // memory routing: the first page
   onRouteChange?: (slug: string) => void // memory routing: page changes
   searchShortcut?: string // opens the search; '' for none (default: 'mod+k')
@@ -15947,10 +15976,12 @@ interface DocBrowserOptions {
 }
 ```
 
-`routing` picks how pages map to URLs. `'query'` links pages as `?filename`. `'path'` uses
-clean `/slug/` URLs, as the static site does. `'memory'` never touches the page's URL or
-history, for a browser embedded in another page: drive it with `initialRoute`,
-`onRouteChange` and the element's `navigate(slug)` method.
+`routing` picks how pages map to URLs. `'memory'`, the default, never touches the page's URL
+or history, which is what a browser embedded in another page needs: drive it with
+`initialRoute`, `onRouteChange` and the element's `navigate(slug)` method. `'path'` uses
+clean `/slug/` URLs, as the static site does. `'query'` links pages as `?filename` and owns
+the page's URL; it was the default until 1.20.0, so a page that relied on that passes
+`routing: 'query'`.
 
 The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that owns that key,
 or embeds more than one browser, passes `searchShortcut: ''` (or another key in
@@ -16212,6 +16243,36 @@ this applies — go to the [Quick Start](/) instead.
 
 Current releases are described in [CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).
 
+## 1.20.0
+
+1.20.0 removes and renames a few things, and starts the countdown on the old names. In order of
+how likely they are to reach you:
+
+- **Every `xin*` / `Xin*` name now warns.** `xinSelect`, `XinMenu`, `xinTabs` and the other 30
+  log one line the first time they are used, naming the `tosi*` replacement, and keep working.
+  **1.21.0 removes them.** Search your code for `xin[A-Z]` and `Xin[A-Z]`, and switch each to the
+  name the warning gives. (The `<xin-*>` tags went in 1.3.0; see below.)
+- **`liveTheme`, `enableLiveTheme` and `disableLiveTheme` warn too**, and 1.21.0 removes them.
+  Build a theme and apply it: `applyTheme(createTheme(colors))`. See [live-theme](/live-theme/).
+- **`<tosi-tabs>`: `onCloseTab` is gone.** Set `handleCloseTab`, which it forwarded to. Code that
+  still sets `tabs.onCloseTab = fn` is no longer called when a tab closes, so a close confirmation
+  written that way stops working, with no warning.
+- **`<tosi-crud>`: deleting the selected record is `deleteRecord()`.** It was `remove()`, which
+  overrode the DOM's `Element.remove()`, so `crud.remove()` deleted a record and left the element
+  in the page. `remove()` now takes the element out of the page, as it does for every element.
+- **`createDocBrowser()` defaults to `routing: 'memory'`.** It defaulted to `'query'`, which reads
+  and rewrites the page's URL. A page that wants the browser to own the URL passes
+  `routing: 'query'` (or `'path'`). `<tosi-doc-system>` and the static doc site name their mode,
+  so they are unaffected.
+- **`tosijs-ui/doc-system/site/*` no longer resolves.** The `./*` wildcard used to make every
+  dev-server internal importable. Import from `tosijs-ui/site`, which is the API; if something
+  you need is only reachable through the old path, file an issue.
+
+## 1.19.0
+
+`tosiThemeEditor` and `TosiThemeEditor` are no longer exported from `tosijs-ui`. Import them from
+`tosijs-ui/theme-editor`. The CDN global `xinjsui` still has them.
+
 ## tosijs `^1.10.9` — 1.16.21
 
 tosijs-ui now needs **tosijs `^1.10.9`**; upgrade it alongside. `<tosi-table>` relies on that
@@ -16284,7 +16345,7 @@ Element-creator arguments are not typed by this: `tosiRating({ maxx: 1 })` still
 
 ## The doc-system cluster moved off the root barrel — 1.14.0
 
-If you import `<tosi-code>`, the doc browser, `<tosi-doc-system>` or `<live-example>` from the
+If you import `<tosi-code>`, the doc browser, `<tosi-doc-system>` or `<tosi-example>` from the
 package root, change the import. Everything else is unaffected.
 
 ```typescript
@@ -16297,7 +16358,7 @@ import { createDocBrowser } from 'tosijs-ui/doc-browser'
 ```
 
 **This one can fail at RUNTIME rather than at build time.** A bare `import 'tosijs-ui'` used to
-register `<tosi-code>`, `<tosi-doc-system>` and `<live-example>` as a side effect; it no longer
+register `<tosi-code>`, `<tosi-doc-system>` and `<tosi-example>` as a side effect; it no longer
 does, so a page using those tags renders nothing and the console says only that an unknown
 element was not upgraded. If a custom element stopped appearing after this upgrade, this is why.
 
@@ -16417,12 +16478,12 @@ tags now use the `tosi-` prefix and all exports use `Tosi*`/`tosi*` names.
 - **CSS custom properties** in component `styleSpec` objects retain `--xin-*`
   fallbacks for backward compatibility, but new code should use `--tosi-*`.
 
-### Deprecated exports still work
+### Deprecated exports still work, until 1.21.0
 
-The old `xin*` JavaScript exports (`xinSelect`, `xinTabs`, `xinTable`, etc.)
-remain available and will continue to work. Most log a runtime deprecation
-warning; a few are silent aliases marked with JSDoc `@deprecated`. They will
-be removed in a future major version.
+The old `xin*` / `Xin*` JavaScript exports (`xinSelect`, `xinTabs`, `xinTable`, etc.) still
+work. Until 1.20.0 only five of them said so (`xinRating`, `xinSegmented`, `xinSelect`, `xinTag`
+and `xinTagList`); the rest were silent aliases marked `@deprecated`. Since 1.20.0 every one of
+them logs one warning naming its replacement, and **1.21.0 removes them** (see 1.20.0 above).
 
 ### Migration checklist
 

@@ -1,17 +1,37 @@
 /*#
 # live-theme
 
-The `liveTheme` observable: three colours (accent, background, text) and a dark flag, applied
-to the page as they change.
+**Deprecated in 1.20.0; 1.21.0 removes `liveTheme`, `enableLiveTheme` and
+`disableLiveTheme`.** Build a theme from your colours and apply it instead, which is what this
+did underneath:
+
+```js:static
+import { Color } from 'tosijs'
+import { applyTheme, createTheme, createDarkTheme } from 'tosijs-ui'
+
+const colors = {
+  accent: Color.fromCss('#0064d2'),
+  background: Color.fromCss('#ffffff'),
+  text: Color.fromCss('#1a1a1a'),
+}
+const dark = matchMedia('(prefers-color-scheme: dark)').matches
+applyTheme(dark ? createDarkTheme(colors) : createTheme(colors))
+```
+
+To edit a whole theme as you look at it, use [`<tosi-theme-editor>`](/theme-editor/).
+
+The `liveTheme` observable held three colours (accent, background, text) and a dark flag, applied
+to the page as they changed.
 
 The editor that used to live here is now [`<tosi-theme-editor>`](/theme-editor/), on
 `tosijs-ui/theme-editor`, and edits a whole theme as [data](/theme-data/). It no longer drives
 `liveTheme`. As of 1.19.0 it is no longer exported from `tosijs-ui`: import it from
 `tosijs-ui/theme-editor`.
 
-## Programmatic Control
+## Programmatic control (deprecated)
 
-The `liveTheme` observable lets you read and write theme values from code:
+The `liveTheme` observable read and wrote theme values from code, once `enableLiveTheme()` had
+been called:
 
 ```js:static
 import { liveTheme } from 'tosijs-ui'
@@ -123,11 +143,12 @@ test('css canary: Color math (inverseLuminance) yields a distinct valid color', 
 ```
 */
 /*{ "parent": "Helper Libraries", "description": "The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser." }*/
-import { Color, tosi } from 'tosijs';
+import { Color, deprecated, tosi } from 'tosijs';
 import { createTheme, createDarkTheme, applyTheme, defaultColors, } from './theme.js';
 // ============================================================================
 // Live Theme Observable
 // ============================================================================
+/** @deprecated Use `applyTheme(createTheme(colors))`; tosijs-ui 1.21.0 removes it (#4392). */
 export const { liveTheme } = tosi({
     liveTheme: {
         accent: String(defaultColors.accent),
@@ -137,6 +158,9 @@ export const { liveTheme } = tosi({
     },
 });
 let liveThemeActive = false;
+// Warned from the functions, since `liveTheme` does nothing until enableLiveTheme() runs.
+const warnLiveTheme = deprecated(() => undefined, 'liveTheme, enableLiveTheme and disableLiveTheme are deprecated: use ' +
+    'applyTheme(createTheme(colors)). tosijs-ui 1.21.0 removes them.');
 function applyLiveTheme() {
     if (!liveThemeActive)
         return;
@@ -152,8 +176,10 @@ function applyLiveTheme() {
 }
 /**
  * Start applying the live theme to the document.
+ * @deprecated Use `applyTheme(createTheme(colors))`; tosijs-ui 1.21.0 removes it (#4392).
  */
 export function enableLiveTheme() {
+    warnLiveTheme();
     if (liveThemeActive)
         return;
     liveThemeActive = true;
@@ -165,7 +191,9 @@ export function enableLiveTheme() {
 }
 /**
  * Stop applying the live theme.
+ * @deprecated tosijs-ui 1.21.0 removes it (#4392).
  */
 export function disableLiveTheme() {
+    warnLiveTheme();
     liveThemeActive = false;
 }

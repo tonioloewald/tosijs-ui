@@ -174,6 +174,7 @@ import { info as infoIcon } from './icons/info.js';
 import { x as xIcon } from './icons/x.js';
 import { findHighestZ } from './track-drag.js';
 import { chainDuration, chainEasing, chainElevation, chainRadius, chainSurface, chainSurfaceFilter, } from './theme-chain.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { div, button } = elements;
 const COLOR_MAP = {
     error: 'red',
@@ -583,10 +584,10 @@ export class TosiNotification extends Component {
     content = null;
 }
 /** @deprecated Use TosiNotification instead */
-export const XinNotification = TosiNotification;
+export const XinNotification = deprecatedClass(TosiNotification, 'XinNotification', 'TosiNotification');
 export const tosiNotification = TosiNotification.elementCreator();
 /** @deprecated Use tosiNotification instead */
-export const xinNotification = tosiNotification;
+export const xinNotification = deprecatedCreator(tosiNotification, 'xinNotification', 'tosiNotification');
 export function postNotification(spec) {
     return TosiNotification.post(spec);
 }

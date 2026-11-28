@@ -28,6 +28,7 @@ import { Component as XinComponent, vars } from 'tosijs';
 import { resize as resizeIcon } from './icons/resize.js';
 import { chainTransition } from './theme-chain.js';
 import { trackDrag } from './track-drag.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 export class TosiSizer extends XinComponent {
     static preferredTagName = 'tosi-sizer';
     target = null;
@@ -98,7 +99,7 @@ export class TosiSizer extends XinComponent {
     }
 }
 /** @deprecated Use TosiSizer instead */
-export const XinSizer = TosiSizer;
+export const XinSizer = deprecatedClass(TosiSizer, 'XinSizer', 'TosiSizer');
 export const tosiSizer = TosiSizer.elementCreator();
 /** @deprecated Use tosiSizer instead */
-export const xinSizer = tosiSizer;
+export const xinSizer = deprecatedCreator(tosiSizer, 'xinSizer', 'tosiSizer');

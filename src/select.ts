@@ -217,7 +217,6 @@ import {
   vars,
   varDefault,
   throttle,
-  deprecated,
   withAttributes,
 } from 'tosijs'
 import { icons } from './icon-core.js'
@@ -232,6 +231,7 @@ import {
 } from './menu.js'
 import { localize, XinLocalized } from './localize.js'
 import { splitCaptionIcon } from './caption-icon.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 const { button, div, span, input } = elements
 
@@ -769,13 +769,18 @@ export class TosiSelect extends withAttributes({
 /** @deprecated Use TosiSelect instead */
 export type XinSelect = TosiSelect
 /** @deprecated Use TosiSelect instead */
-export const XinSelect: typeof TosiSelect = TosiSelect
+export const XinSelect: typeof TosiSelect = deprecatedClass(
+  TosiSelect,
+  'XinSelect',
+  'TosiSelect'
+)
 
 export const tosiSelect =
   TosiSelect.elementCreator() as ElementCreator<TosiSelect>
 
 /** @deprecated Use tosiSelect instead (tag is now tosi-select) */
-export const xinSelect = deprecated(
-  (...args: Parameters<typeof tosiSelect>) => tosiSelect(...args),
-  'xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)'
-) as ElementCreator<TosiSelect>
+export const xinSelect = deprecatedCreator(
+  tosiSelect,
+  'xinSelect',
+  'tosiSelect'
+)

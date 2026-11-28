@@ -1324,6 +1324,7 @@ import { getSchemaValidator, warnNoValidator } from './schema-form/validator.js'
 import { popMenu } from './menu.js';
 import * as dragAndDrop from './drag-and-drop.js';
 import { tosiLocalized, localize, localizePhrase } from './localize.js';
+import { deprecatedCreator } from './deprecated-alias.js';
 function defaultWidth(array, prop, charWidth) {
     const example = array.find((item) => item[prop] !== undefined && item[prop] !== null);
     if (example !== undefined) {
@@ -3800,7 +3801,8 @@ export class TosiTable extends withAttributes({
     bare `Right` row when there is no annotated one, so an existing translation table keeps
     working untouched.
     */
-    popColumnMenu = (target, options) => {
+    /** The items of a column's header menu (sort, hide and show, pin). */
+    columnMenuItems = (options) => {
         const { sortByColumn } = this;
         const hiddenColumns = this.columns.filter((column) => column.visible === false);
         const queueRender = this.queueRender.bind(this);
@@ -3839,7 +3841,12 @@ export class TosiTable extends withAttributes({
                     ? localizePhrase('Hide Column', ['Hide#conceal', 'Column#table'])
                     : 'Hide Column',
                 icon: 'eyeOff',
-                enabled: () => options.visible !== true,
+                /*
+                Any column that is showing can be hidden: `visible` hides a column only when it is
+                `false`. This read `!== true`, and inferred columns are created with `visible: true`,
+                so Hide Column was disabled on every table built from rows alone (#4353).
+                */
+                enabled: () => options.visible !== false,
                 action() {
                     options.visible = false;
                     queueRender();
@@ -3902,10 +3909,13 @@ export class TosiTable extends withAttributes({
                 },
             ],
         });
+        return menu;
+    };
+    popColumnMenu = (target, options) => {
         popMenu({
             target,
             localized: this.localized,
-            menuItems: menu,
+            menuItems: this.columnMenuItems(options),
         });
     };
     get captionSpan() {
@@ -4181,4 +4191,4 @@ export const tosiTable = TosiTable.elementCreator();
 /** @deprecated Use tosiTable instead */
 export const dataTable = tosiTable;
 /** @deprecated Use tosiTable instead */
-export const xinTable = tosiTable;
+export const xinTable = deprecatedCreator(tosiTable, 'xinTable', 'tosiTable');

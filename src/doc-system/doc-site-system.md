@@ -782,8 +782,8 @@ thrash for twenty minutes until it was power-cycled.
   sample fires after a rebuild, the preflight at launch — and all of them are blind to the
   state that actually kills machines: a server nobody is touching, sitting on gigabytes,
   on a box quietly filling up around it. _Nothing rebuilds, so nothing looks._ So the dev
-  server also checks on a **timer**: the RSS ceiling every minute, and a full machine
-  preflight every five. If the box is dying — even because of someone else's runaway — it
+  server also checks on a **timer**: the RSS ceiling and a full machine preflight, every
+  minute. If the box is dying — even because of someone else's runaway — it
   exits and prints the PIDs on the way out.
 - **A rebuild-storm detector.** The other way to eat a machine is not a leak but a **loop**:
   if the build writes a file the watcher watches, every rebuild triggers the next, forever —
@@ -795,7 +795,8 @@ thrash for twenty minutes until it was power-cycled.
 
 #### Nothing the dev server serves is cacheable
 
-Every response carries `Cache-Control: no-store`. That is not paranoia — sending no
+Every page, script, stylesheet and asset it serves carries `Cache-Control: no-store`. Not yet
+every API response does: the source endpoint and some refusals don't. That is not paranoia — sending no
 `Cache-Control` is not neutral, because a browser is free to invent a freshness lifetime when
 you decline to state one, and Safari is the most willing to. The failure mode is a dev server
 that rebuilds correctly while the browser keeps showing the previous build, which presents as
@@ -1053,7 +1054,7 @@ export default defineSiteConfig({
 })
 ```
 
-Redeem an edit link on the device (`tosijs-tunnel --link` gives you a 7-character code),
+Redeem an edit link on the device (`tosijs-tunnel --link` gives you an 8-letter code),
 load the page, and it appears in `hj windows` like any other.
 
 **Why it is a separate opt-in, not part of `true`.** `true` means "an agent may drive the
@@ -1469,7 +1470,7 @@ Two hostnames, because the postures genuinely differ:
 ```bash
 tosijs-tunnel            # open the tunnel (foreground; Ctrl-C closes it)
 tosijs-tunnel --status   # is one already up?
-tosijs-tunnel --link     # print a fresh edit link + its 7-character code (5 min)
+tosijs-tunnel --link     # print a fresh edit link + its 8-letter code (5 min)
 tosijs-tunnel --close    # close any tunnel this project opened
 ```
 
@@ -1717,7 +1718,7 @@ turn the throttle into the oracle that `safeEqual`'s constant-time comparison ex
 prevent.
 
 After **ten consecutive failures the slot widens to a second** — another factor of ten
-against a guesser, and nothing at all against a human, who does not mistype seven characters
+against a guesser, and nothing at all against a human, who does not mistype eight letters
 ten times running and would wait a second if they did.
 
 There is **no lockout** for ordinary use: a lockout a few mistypes can trigger is a denial of

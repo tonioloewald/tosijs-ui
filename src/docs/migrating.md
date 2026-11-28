@@ -7,6 +7,36 @@ this applies — go to the [Quick Start](/) instead.
 
 Current releases are described in [CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).
 
+## 1.20.0
+
+1.20.0 removes and renames a few things, and starts the countdown on the old names. In order of
+how likely they are to reach you:
+
+- **Every `xin*` / `Xin*` name now warns.** `xinSelect`, `XinMenu`, `xinTabs` and the other 30
+  log one line the first time they are used, naming the `tosi*` replacement, and keep working.
+  **1.21.0 removes them.** Search your code for `xin[A-Z]` and `Xin[A-Z]`, and switch each to the
+  name the warning gives. (The `<xin-*>` tags went in 1.3.0; see below.)
+- **`liveTheme`, `enableLiveTheme` and `disableLiveTheme` warn too**, and 1.21.0 removes them.
+  Build a theme and apply it: `applyTheme(createTheme(colors))`. See [live-theme](/live-theme/).
+- **`<tosi-tabs>`: `onCloseTab` is gone.** Set `handleCloseTab`, which it forwarded to. Code that
+  still sets `tabs.onCloseTab = fn` is no longer called when a tab closes, so a close confirmation
+  written that way stops working, with no warning.
+- **`<tosi-crud>`: deleting the selected record is `deleteRecord()`.** It was `remove()`, which
+  overrode the DOM's `Element.remove()`, so `crud.remove()` deleted a record and left the element
+  in the page. `remove()` now takes the element out of the page, as it does for every element.
+- **`createDocBrowser()` defaults to `routing: 'memory'`.** It defaulted to `'query'`, which reads
+  and rewrites the page's URL. A page that wants the browser to own the URL passes
+  `routing: 'query'` (or `'path'`). `<tosi-doc-system>` and the static doc site name their mode,
+  so they are unaffected.
+- **`tosijs-ui/doc-system/site/*` no longer resolves.** The `./*` wildcard used to make every
+  dev-server internal importable. Import from `tosijs-ui/site`, which is the API; if something
+  you need is only reachable through the old path, file an issue.
+
+## 1.19.0
+
+`tosiThemeEditor` and `TosiThemeEditor` are no longer exported from `tosijs-ui`. Import them from
+`tosijs-ui/theme-editor`. The CDN global `xinjsui` still has them.
+
 ## tosijs `^1.10.9` — 1.16.21
 
 tosijs-ui now needs **tosijs `^1.10.9`**; upgrade it alongside. `<tosi-table>` relies on that
@@ -79,7 +109,7 @@ Element-creator arguments are not typed by this: `tosiRating({ maxx: 1 })` still
 
 ## The doc-system cluster moved off the root barrel — 1.14.0
 
-If you import `<tosi-code>`, the doc browser, `<tosi-doc-system>` or `<live-example>` from the
+If you import `<tosi-code>`, the doc browser, `<tosi-doc-system>` or `<tosi-example>` from the
 package root, change the import. Everything else is unaffected.
 
 ```typescript
@@ -92,7 +122,7 @@ import { createDocBrowser } from 'tosijs-ui/doc-browser'
 ```
 
 **This one can fail at RUNTIME rather than at build time.** A bare `import 'tosijs-ui'` used to
-register `<tosi-code>`, `<tosi-doc-system>` and `<live-example>` as a side effect; it no longer
+register `<tosi-code>`, `<tosi-doc-system>` and `<tosi-example>` as a side effect; it no longer
 does, so a page using those tags renders nothing and the console says only that an unknown
 element was not upgraded. If a custom element stopped appearing after this upgrade, this is why.
 
@@ -212,12 +242,12 @@ tags now use the `tosi-` prefix and all exports use `Tosi*`/`tosi*` names.
 - **CSS custom properties** in component `styleSpec` objects retain `--xin-*`
   fallbacks for backward compatibility, but new code should use `--tosi-*`.
 
-### Deprecated exports still work
+### Deprecated exports still work, until 1.21.0
 
-The old `xin*` JavaScript exports (`xinSelect`, `xinTabs`, `xinTable`, etc.)
-remain available and will continue to work. Most log a runtime deprecation
-warning; a few are silent aliases marked with JSDoc `@deprecated`. They will
-be removed in a future major version.
+The old `xin*` / `Xin*` JavaScript exports (`xinSelect`, `xinTabs`, `xinTable`, etc.) still
+work. Until 1.20.0 only five of them said so (`xinRating`, `xinSegmented`, `xinSelect`, `xinTag`
+and `xinTagList`); the rest were silent aliases marked `@deprecated`. Since 1.20.0 every one of
+them logs one warning naming its replacement, and **1.21.0 removes them** (see 1.20.0 above).
 
 ### Migration checklist
 

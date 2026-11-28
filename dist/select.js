@@ -207,12 +207,13 @@ preview.append(
 ```
 */
 /*{ "headTitle": "<tosi-select> styleable select menu — tosijs-ui", "parent": "Form Components", "description": "<tosi-select> replaces <select> with a styleable menu that supports icons, separators, submenus, editable values and missing options." }*/
-import { elements, vars, varDefault, throttle, deprecated, withAttributes, } from 'tosijs';
+import { elements, vars, varDefault, throttle, withAttributes, } from 'tosijs';
 import { icons } from './icon-core.js';
 import { chevronDown as chevronDownIcon } from './icons/chevronDown.js';
 import { popMenu, removeLastMenu, resolveMenuItems, findShortcutAction, } from './menu.js';
 import { localize, XinLocalized } from './localize.js';
 import { splitCaptionIcon } from './caption-icon.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { button, div, span, input } = elements;
 const hasValue = (options, value) => {
     return !!options.find((option) => {
@@ -673,7 +674,7 @@ export class TosiSelect extends withAttributes({
     }
 }
 /** @deprecated Use TosiSelect instead */
-export const XinSelect = TosiSelect;
+export const XinSelect = deprecatedClass(TosiSelect, 'XinSelect', 'TosiSelect');
 export const tosiSelect = TosiSelect.elementCreator();
 /** @deprecated Use tosiSelect instead (tag is now tosi-select) */
-export const xinSelect = deprecated((...args) => tosiSelect(...args), 'xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)');
+export const xinSelect = deprecatedCreator(tosiSelect, 'xinSelect', 'tosiSelect');

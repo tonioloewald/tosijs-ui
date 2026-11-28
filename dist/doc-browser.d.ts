@@ -74,13 +74,14 @@ export interface LinkItem {
 }
 /**
  * How the doc browser maps docs to URLs.
- * - 'query' (default, legacy): single-page app, links are `?filename`.
+ * - 'memory' (default since 1.20.0): self-contained — navigation never touches
+ *   window.history/location and the instance ignores the page URL. For an
+ *   embedded/nested browser (a live demo, a floating help panel). Drive it via
+ *   `initialRoute` + `onRouteChange`, and the returned element's `.navigate(slug)`.
  * - 'path': clean per-page URLs (`/slug/`), for the static pre-rendered site
  *   driven by <tosi-doc-system>. Requires a real page to exist at each path.
- * - 'memory': self-contained — navigation never touches window.history/location
- *   and the instance ignores the page URL. For an embedded/nested browser (a
- *   live demo, a floating help panel). Drive it via `initialRoute` +
- *   `onRouteChange`, and the returned element's `.navigate(slug)` method.
+ * - 'query' (legacy; the default until 1.20.0): single-page app, links are
+ *   `?filename`, and it reads and rewrites the page's URL.
  */
 export type DocRoutingMode = 'query' | 'path' | 'memory';
 export interface DocBrowserOptions {

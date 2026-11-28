@@ -148,6 +148,7 @@ import type { IconElement } from './icon-types.js'
 
 import { tosiSelect, TosiSelect } from './select.js'
 import { spacer as layoutSpacer } from './layout.js'
+import { deprecatedClass } from './deprecated-alias.js'
 
 const { tosiSlot, div, button } = elements
 
@@ -496,7 +497,11 @@ export class RichText extends withAttributes({
 /** @deprecated Use RichText instead */
 export type XinWord = RichText
 /** @deprecated Use RichText instead */
-export const XinWord: typeof RichText = RichText
+export const XinWord: typeof RichText = deprecatedClass(
+  RichText,
+  'XinWord',
+  'RichText'
+)
 
 export const tosiRichText =
   RichText.elementCreator() as ElementCreator<RichText>

@@ -470,3 +470,20 @@ describe('columnLayout', () => {
     expect(columnLayout([100], [false], -1, 300).stretches).toBe(false)
   })
 })
+
+/*
+#4353: Hide Column was enabled only when `visible` was not `true`, and inferred columns are made
+with `visible: true`, so a table built from rows alone could hide nothing. The docs say a column
+is hidden by `visible: false`, so anything else can be hidden.
+*/
+test('Hide Column is enabled on inferred and explicitly visible columns (#4353)', () => {
+  const table: any = tosiTable({ value: { array: [{ a: 1, b: 2 }] } })
+  const hide = (column: any) =>
+    table.columnMenuItems(column).find((item: any) => item?.icon === 'eyeOff')
+  const inferred = table.columns[0]
+  expect(inferred.visible).toBe(true)
+  expect(hide(inferred).enabled()).toBe(true)
+  expect(hide({ prop: 'x', width: 10 }).enabled()).toBe(true)
+  hide(inferred).action()
+  expect(inferred.visible).toBe(false)
+})

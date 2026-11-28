@@ -739,7 +739,7 @@ export interface SiteConfig {
        * How long a link stays redeemable, in minutes. Default 5.
        *
        * Defaults to 5 minutes — short, because the link is a bearer token for its lifetime
-       * and the 7-character code is what makes that acceptable. A link is redeemed seconds
+       * and the 8-letter code is what makes that acceptable. A link is redeemed seconds
        * after it is typed, so a longer window buys exposure and nothing else.
        *
        * Do NOT raise it to share with a person — use `tosijs-tunnel --link --share`, which

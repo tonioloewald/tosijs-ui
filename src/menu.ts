@@ -815,6 +815,7 @@ import { chevronRight as chevronRightIcon } from './icons/chevronRight.js'
 import { localize } from './localize.js'
 import { matchShortcut, displayShortcut } from './match-shortcut.js'
 import { isTypeAllowed, stringToTypes } from './drag-and-drop.js'
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
 export type ActionCallback = () => void | Promise<void>
 
@@ -1953,8 +1954,12 @@ export class TosiMenu extends withAttributes({
 export const tosiMenu = TosiMenu.elementCreator()
 
 /** @deprecated Use tosiMenu instead */
-export const xinMenu = tosiMenu
+export const xinMenu = deprecatedCreator(tosiMenu, 'xinMenu', 'tosiMenu')
 /** @deprecated Use TosiMenu instead */
 export type XinMenu = TosiMenu
 /** @deprecated Use TosiMenu instead */
-export const XinMenu: typeof TosiMenu = TosiMenu
+export const XinMenu: typeof TosiMenu = deprecatedClass(
+  TosiMenu,
+  'XinMenu',
+  'TosiMenu'
+)

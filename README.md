@@ -42,10 +42,15 @@ Then import the component `elementCreator` and create elements. A `tosijs`
 `elementCreator` is syntax sugar around `document.createElement()`.
 
 ```typescript
-import { tosiTable } from 'tosijs-ui'
+import { tosiTable } from 'tosijs-ui/data-table'
 
 document.body.append(tosiTable())
 ```
+
+Import each component from its own module, as above, and you ship only what you use: one
+component through its subpath is a few kB to about 30 kB gzip, where the package root brings the
+whole library (about 107 kB gzip). `import { tosiTable } from 'tosijs-ui'` works too, and is
+the simpler choice when a page uses many components.
 
 ### Using the iife via cdn
 

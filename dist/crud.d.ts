@@ -153,13 +153,13 @@ export declare class TosiCrud extends TosiCrud_base<CrudParts> {
      * Is the selected record something the store could delete?
      *
      * ONE rule, used by both the button and the method. They disagreed: `render()` disabled the
-     * button for a record with no id, while `remove()` only checked that *something* was
-     * selected — so `createNew()` followed by `remove()` sent `store.delete({})`, which for a
+     * button for a record with no id, while the method only checked that *something* was
+     * selected — so `createNew()` followed by a delete sent `store.delete({})`, which for a
      * REST adapter is `DELETE /records/undefined`. A guard the UI enforces and the API does not
      * is not a guard.
      */
     private get deletable();
-    remove(): Promise<void>;
+    deleteRecord(): Promise<void>;
     private handleSearchInput;
     private handleSelectionChanged;
     content: () => HTMLDivElement[];

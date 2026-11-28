@@ -75,11 +75,12 @@ as the behavior of `<input type="number">`, [Shoelace's rating widget](https://s
 and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).
 */
 /*{ "headTitle": "<tosi-rating> star rating input — tosijs-ui", "parent": "Form Components", "description": "<tosi-rating> is a form-associated rating input drawn with icons, with half steps, custom icons and sizes, that behaves like an <input>." }*/
-import { elements, deprecated, withAttributes, } from 'tosijs';
+import { elements, withAttributes } from 'tosijs';
 import { icons } from './icon-core.js';
 import { chainDuration, chainTransition } from './theme-chain.js';
 // The default icon, drawn by name.
 import './icons/star.js';
+import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { span } = elements;
 export class TosiRating extends withAttributes({
     max: 5,
@@ -235,7 +236,7 @@ export class TosiRating extends withAttributes({
     }
 }
 /** @deprecated Use TosiRating instead */
-export const XinRating = TosiRating;
+export const XinRating = deprecatedClass(TosiRating, 'XinRating', 'TosiRating');
 export const tosiRating = TosiRating.elementCreator();
 /** @deprecated Use tosiRating instead (tag is now tosi-rating) */
-export const xinRating = deprecated((...args) => tosiRating(...args), 'xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)');
+export const xinRating = deprecatedCreator(tosiRating, 'xinRating', 'tosiRating');

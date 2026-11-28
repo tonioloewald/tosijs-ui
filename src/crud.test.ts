@@ -116,5 +116,30 @@ test('without a schema, New starts from the fields the rows have, empty of their
   })
   crud.close()
   expect(crud._selected).toBeNull()
-  Element.prototype.remove.call(crud) // not crud.remove(): that deletes the record
+  crud.remove()
+})
+
+/*
+#4354 (1.20.0): `remove()` is the DOM's again. It used to delete the selected record and leave
+the element in the page; deleting is `deleteRecord()`.
+*/
+test('remove() takes the element out of the page and deletes nothing (#4354)', async () => {
+  const deleted: unknown[] = []
+  const store = {
+    list: async () => [{ id: 1, name: 'a' }],
+    delete: async (record: unknown) => void deleted.push(record),
+  }
+  const crud: any = tosiCrud({ store } as any)
+  document.body.append(crud)
+  await crud.whenIdle()
+  crud.select({ id: 1, name: 'a' })
+  crud.remove()
+  expect(crud.isConnected).toBe(false)
+  expect(deleted).toEqual([])
+  document.body.append(crud)
+  await crud.whenIdle()
+  crud.select(crud.rows[0])
+  await crud.deleteRecord()
+  expect(deleted.map((r: any) => r.id)).toEqual([1])
+  crud.remove()
 })

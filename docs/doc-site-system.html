@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=227c097e460b" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=3a2f71558140" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Doc-Site System — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-28T08:33:20.229Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-28T08:50:45.450Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"Doc-Site System","item":"https://ui.tosijs.net/doc-site-system/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=dee28178933d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=e7d8ad2c82ff" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="doc-site-system.md">
 <!--{"order":30,"title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Documentation System"}-->
 
@@ -1069,8 +1069,8 @@ Override with <code>DEV_SKIP_PREFLIGHT=1</code>.</p>
 sample fires after a rebuild, the preflight at launch — and all of them are blind to the
 state that actually kills machines: a server nobody is touching, sitting on gigabytes,
 on a box quietly filling up around it. <em>Nothing rebuilds, so nothing looks.</em> So the dev
-server also checks on a <strong>timer</strong>: the RSS ceiling every minute, and a full machine
-preflight every five. If the box is dying — even because of someone else&#39;s runaway — it
+server also checks on a <strong>timer</strong>: the RSS ceiling and a full machine preflight, every
+minute. If the box is dying — even because of someone else&#39;s runaway — it
 exits and prints the PIDs on the way out.</p>
 </li>
 <li><p><strong>A rebuild-storm detector.</strong> The other way to eat a machine is not a leak but a <strong>loop</strong>:
@@ -1083,7 +1083,8 @@ the diagnosis — and stops.</p>
 </li>
 </ul>
 <h4 id="nothing-the-dev-server-serves-is-cacheable">Nothing the dev server serves is cacheable</h4>
-<p>Every response carries <code>Cache-Control: no-store</code>. That is not paranoia — sending no
+<p>Every page, script, stylesheet and asset it serves carries <code>Cache-Control: no-store</code>. Not yet
+every API response does: the source endpoint and some refusals don&#39;t. That is not paranoia — sending no
 <code>Cache-Control</code> is not neutral, because a browser is free to invent a freshness lifetime when
 you decline to state one, and Safari is the most willing to. The failure mode is a dev server
 that rebuilds correctly while the browser keeps showing the previous build, which presents as
@@ -1292,7 +1293,7 @@ it exactly as it drives a local page:</p>
   preview<span class="token operator">:</span> <span class="token punctuation">{</span> tunnel<span class="token operator">:</span> <span class="token punctuation">{</span> url<span class="token operator">:</span> <span class="token string">'https://myproject.edit.dev.example.com'</span> <span class="token punctuation">}</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span>
 </code></pre>
-<p>Redeem an edit link on the device (<code>tosijs-tunnel --link</code> gives you a 7-character code),
+<p>Redeem an edit link on the device (<code>tosijs-tunnel --link</code> gives you an 8-letter code),
 load the page, and it appears in <code>hj windows</code> like any other.</p>
 <p><strong>Why it is a separate opt-in, not part of <code>true</code>.</strong> <code>true</code> means &quot;an agent may drive the
 page on this machine&quot;, and the localhost gate is what makes that safe to leave on.
@@ -1658,7 +1659,7 @@ routes — which is what lets one small VPS front many projects.</p>
 </tbody></table>
 <pre><code class="language-bash" data-highlighted>tosijs-tunnel            <span class="token comment"># open the tunnel (foreground; Ctrl-C closes it)</span>
 tosijs-tunnel <span class="token parameter variable">--status</span>   <span class="token comment"># is one already up?</span>
-tosijs-tunnel <span class="token parameter variable">--link</span>     <span class="token comment"># print a fresh edit link + its 7-character code (5 min)</span>
+tosijs-tunnel <span class="token parameter variable">--link</span>     <span class="token comment"># print a fresh edit link + its 8-letter code (5 min)</span>
 tosijs-tunnel <span class="token parameter variable">--close</span>    <span class="token comment"># close any tunnel this project opened</span>
 </code></pre>
 <p><strong>How the gate works.</strong> <code>--link</code> prints a URL carrying a short-lived token (see <em>Link security</em> below). Opening it
@@ -1917,7 +1918,7 @@ too, so response time cannot answer <em>was that the right token?</em> — delay
 turn the throttle into the oracle that <code>safeEqual</code>&#39;s constant-time comparison exists to
 prevent.</p>
 <p>After <strong>ten consecutive failures the slot widens to a second</strong> — another factor of ten
-against a guesser, and nothing at all against a human, who does not mistype seven characters
+against a guesser, and nothing at all against a human, who does not mistype eight letters
 ten times running and would wait a second if they did.</p>
 <p>There is <strong>no lockout</strong> for ordinary use: a lockout a few mistypes can trigger is a denial of
 service against you, on the one credential you need in order to work. The door never closes on
@@ -2910,6 +2911,6 @@ exports.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-ycepy4eb.js"></script>
+  <script type="module" src="hydrate-fmbwgecy.js"></script>
 </body>
 </html>

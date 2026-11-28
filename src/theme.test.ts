@@ -129,3 +129,27 @@ test('applyTheme reuses its style element instead of adding one per call', () =>
   applyTheme(createTheme(defaultColors), 'theme-reuse-test')
   expect(document.querySelectorAll('#theme-reuse-test').length).toBe(1)
 })
+
+/*
+#4367: accent text is black or white by WCAG contrast. `Color.contrasting()` decides by luma, and
+put white on #009688 at 3.67:1 where black gives 5.72:1.
+*/
+test('accent text is whichever of black and white contrasts more (#4367)', async () => {
+  const { Color } = await import('tosijs')
+  const { contrastingText, contrastRatio, createTheme } =
+    await import('./theme')
+  const teal = Color.fromCss('#009688')
+  expect(contrastingText(teal).html).toBe(Color.black.html)
+  expect(contrastRatio(contrastingText(teal), teal)).toBeGreaterThan(4.5)
+  // The derived variable follows it.
+  const theme = createTheme({
+    accent: teal,
+    background: Color.fromCss('#ffffff'),
+    text: Color.fromCss('#111111'),
+  })[':root'] as Record<string, unknown>
+  expect(String(theme._tosiAccentText ?? theme['--tosi-accent-text'])).toBe(
+    String(Color.black)
+  )
+  // Where the two rules agree, nothing moves.
+  expect(contrastingText(Color.fromCss('#0064d2')).html).toBe(Color.white.html)
+})

@@ -3,6 +3,7 @@ import { SortCallback } from './make-sorter.js';
 import { RowGroupIdFn, GroupCount } from './row-grouping.js';
 import { ValueRendererType } from './value-renderer.js';
 import type { JSONSchema } from './schema-form/json-schema.js';
+import { MenuItem } from './menu.js';
 export interface ColumnOptions {
     name?: string;
     prop: string;
@@ -508,6 +509,8 @@ export declare class TosiTable extends TosiTable_base {
     private layoutColumns;
     setColumnWidths(): void;
     sortByColumn: (columnOptions: ColumnOptions, direction?: "ascending" | "descending" | "auto") => void;
+    /** The items of a column's header menu (sort, hide and show, pin). */
+    columnMenuItems: (options: ColumnOptions) => MenuItem[];
     popColumnMenu: (target: HTMLElement, options: ColumnOptions) => void;
     get captionSpan(): ElementCreator;
     labelAttrs(key: string, attr?: string): Record<string, string>;

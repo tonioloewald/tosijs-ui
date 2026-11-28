@@ -128,7 +128,7 @@ untouched. Measured on this repo at 1.16.x: `iife.js` 1236KB → **366KB** brotl
 Brotli runs at **quality 5, not 11** — measured, q5 is 19ms for 0.36MB while q11 is
 **1169ms** for 0.32MB. Sixty times the cost for four percent.
 
-Compressed bytes are cached, keyed on path + mtime so a rebuild invalidates them, with a
+Compressed bytes are cached, keyed on path + mtime + size and emptied on every rebuild, with a
 **64MB ceiling and oldest-out eviction**. The bound is not optional: this is a process that
 lives for days, and an unbounded cache here is the same failure class that took the
 machine down twice.
@@ -378,6 +378,10 @@ Public surface (this is the contract; the pre-1.7 ACE `theme`/`options` props we
 
 `package.json` `exports` expose stable subpaths — `tosijs-ui/site`, `/icons`, `/code-editor`, `/live-example`, `/doc-browser`, `/diff`, `/theme`, `/theme-editor`, `/checklist`, `/checklist-client`, `/checklist-panel` — plus a `./*` wildcard so `import 'tosijs-ui/rating'` resolves to `dist/rating.js` and registers just that element.
 
+**`tosijs-ui/doc-system/site/*` is excluded** (`null` in `exports`, 1.20.0, #4390): the
+wildcard made every dev-server internal importable, `dev-auth` (the security boundary) among them,
+and `tosijs-ui/site` is the API. `src/package-exports.test.ts` and `bin/smoke-consumer.ts` hold it.
+
 There is a **second `./*.js` wildcard** beside it, because `./*` alone maps `tosijs-ui/foo.js` to `dist/foo.js.js` — so the extension-ful spelling, which is exactly what an adopter copying this repo's own ESM import style would write, failed to resolve. `bin/smoke-consumer.ts` checks both spellings for a nested path (`tosijs-ui/schema-form/fields` and `…/fields.js`); nested paths only exist through the wildcards, so nothing else covers them.
 
 **Do NOT set a blanket `sideEffects: false`.** `elementCreator()` registers custom elements _eagerly at import time_, so a bare `import 'tosijs-ui'` tree-shakes to zero registrations under it. Per-component entry points (the Lit/Shoelace model) are the correct tree-shaking path. Components that inject global styles/listeners (menu/tooltip/float) do so on **first use** (`ensureMenu`/`ensureTooltipStyles`/`ensureFloatListeners`), not at import, to keep imports side-effect-light.
@@ -400,9 +404,9 @@ Components are self-documenting via `/*#` comment blocks containing markdown. A 
 
 The `createDocBrowser()` function renders documentation from extracted `docs.json`. It supports three `routing` modes (`DocRoutingMode` in `src/doc-browser.ts`):
 
-- `'query'` (default, legacy SPA): links are `?filename`; uses `popstate`.
+- `'memory'` (the default since 1.20.0, #4391): self-contained — never reads/writes `window.history`/`location` or the `__docTestResults` global, so an embedded/nested browser can't hijack the host page's URL. Drive it via `initialRoute` + `onRouteChange` and the element's `.navigate(slug)` method.
 - `'path'`: clean per-page `/slug/` URLs, for the static pre-rendered site.
-- `'memory'`: self-contained — never reads/writes `window.history`/`location` or the `__docTestResults` global, so an embedded/nested browser can't hijack the host page's URL. Drive it via `initialRoute` + `onRouteChange` and the element's `.navigate(slug)` method.
+- `'query'` (legacy SPA; the default until 1.20.0): links are `?filename`; uses `popstate`.
 
 #### Doc extraction & Markdown (`src/doc-system/site/docs.ts`, `render.ts`)
 
@@ -433,7 +437,7 @@ How grouping works (`insert-examples.ts`):
 
 1. Finds all `.language-{js,tjs,ts,html,css,test}` elements not already inside a live-example
 2. Groups consecutive `<pre>` siblings (checked via `nextElementSibling`)
-3. Creates one `<live-example>` per group, setting `.html`, `.css`, `.test` properties — and, for a `js`/`tjs`/`ts` block, `.js` (the source) plus `.dialect` (which drives how it's transpiled). All three dialects are the _same_ slot: one executable block per example.
+3. Creates one `<tosi-example>` per group, setting `.html`, `.css`, `.test` properties — and, for a `js`/`tjs`/`ts` block, `.js` (the source) plus `.dialect` (which drives how it's transpiled). All three dialects are the _same_ slot: one executable block per example.
 
 **Execution model** (`src/live-example/execution.ts`):
 
