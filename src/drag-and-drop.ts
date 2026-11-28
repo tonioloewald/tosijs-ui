@@ -294,6 +294,8 @@ preview.append(
 
 /*{ "parent": "Helper Libraries", "description": "Make HTML5 drag and drop usable: one init() call highlights compatible drop zones as a drag starts, including zones added mid-drag." }*/
 
+import { setSanitizedHtml } from './sanitize-html.js'
+
 const dragInProgress = () => !!document.querySelector('.drag-source')
 
 export const isTypeAllowed = (
@@ -412,15 +414,22 @@ function drop(evt: DragEvent) {
   const target = (evt.target as HTMLElement).closest(
     '.drag-target'
   ) as HTMLElement | null
-  if (target) {
-    const dropTypes = (target.dataset?.drop || '').split(';')
-    for (const type of dropTypes) {
-      if (isTypeAllowed(evt.dataTransfer?.types, type)) {
-        if (type === 'text/html') {
-          target.innerHTML = evt.dataTransfer?.getData(type) || ''
-        } else {
-          target.textContent = evt.dataTransfer?.getData(type) || ''
-        }
+  if (target && evt.dataTransfer) {
+    const dataTypes = [...evt.dataTransfer.types]
+    /*
+    Matched the way `markDroppable` matches: the zone's types (which may be wildcards) allow the
+    dragged type. The arguments used to be the other way round, so a `text/*` zone highlighted
+    and then received nothing (#4342).
+    */
+    for (const zoneType of stringToTypes(target.dataset.drop)) {
+      const type = dataTypes.find((t) => isTypeAllowed([zoneType], t))
+      if (type === undefined) continue
+      const data = evt.dataTransfer.getData(type)
+      if (type === 'text/html') {
+        // Dragged HTML can come from another site or the desktop (#4342).
+        setSanitizedHtml(target, data)
+      } else {
+        target.textContent = data
       }
     }
   }

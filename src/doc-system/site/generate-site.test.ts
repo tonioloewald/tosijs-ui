@@ -1002,3 +1002,66 @@ describe('#3914: a saved theme', () => {
     }
   })
 })
+
+/*
+#4375: every site URL is composed by `siteUrl`. robots.txt's Sitemap line left out basePath, so a
+GitHub project page pointed crawlers at the user's root, and a baseUrl ending in a slash doubled
+it in every canonical, og:url and sitemap entry.
+*/
+describe('site URLs carry basePath and never double a slash (#4375)', () => {
+  const build = async (over: Record<string, unknown>) => {
+    const dir = `${tmpdir()}/tosi-url-${Math.floor(performance.now() * 1000)}`
+    await generateSite({
+      docs: [
+        {
+          filename: 'README.md',
+          title: 'Home',
+          path: 'README.md',
+          text: '# Home\n\nHi.',
+        },
+        {
+          filename: 'guide.md',
+          title: 'Guide',
+          path: 'guide.md',
+          text: '# Guide\n\nHi.',
+        },
+      ] as any,
+      outputDir: dir,
+      projectName: 'T',
+      ...over,
+    } as any)
+    const read = (f: string) => Bun.file(`${dir}/${f}`).text()
+    const files = {
+      robots: await read('robots.txt'),
+      sitemap: await read('sitemap.xml'),
+      guide: await read('guide/index.html'),
+    }
+    await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    return files
+  }
+
+  test('robots.txt names the sitemap under basePath', async () => {
+    const { robots, sitemap } = await build({
+      baseUrl: 'https://user.github.io',
+      basePath: '/project/',
+    })
+    expect(robots).toContain(
+      'Sitemap: https://user.github.io/project/sitemap.xml'
+    )
+    expect(sitemap).toContain(
+      '<loc>https://user.github.io/project/guide/</loc>'
+    )
+  })
+
+  test('a baseUrl ending in a slash does not double it', async () => {
+    const { robots, sitemap, guide } = await build({
+      baseUrl: 'https://example.com/',
+    })
+    for (const text of [robots, sitemap, guide]) {
+      expect(text).not.toContain('example.com//')
+    }
+    expect(guide).toContain(
+      '<link rel="canonical" href="https://example.com/guide/" />'
+    )
+  })
+})

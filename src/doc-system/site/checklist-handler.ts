@@ -9,10 +9,12 @@ send to disk, so there is no default that could leave them open by accident.
 
 import {
   checklistResults,
+  MAX_ANSWER_BYTES,
   parseAnswerBody,
   saveChecklistAnswer,
 } from './checklist-store.js'
 import { isSameOriginRequest } from './dev-auth.js'
+import { readBodyCapped } from './read-body.js'
 
 export interface ChecklistHandlerOptions {
   /** The folder `tosijs-checklist` posts to: `checklistDirFor(projectRoot)`. */
@@ -79,8 +81,16 @@ export function checklistHandler(
     if (!/^application\/json\b/i.test(type)) {
       return json({ error: 'expected application/json' }, 415)
     }
+    // Capped while reading, not after: the body was held whole before its size check (#4379).
+    const bytes = await readBodyCapped(request, MAX_ANSWER_BYTES)
+    if (bytes === null) {
+      return json(
+        { error: `answer over ${MAX_ANSWER_BYTES} bytes as sent` },
+        413
+      )
+    }
     const parsed = await parseAnswerBody(
-      new Uint8Array(await request.arrayBuffer()),
+      bytes,
       request.headers.get('content-encoding') === 'gzip'
     )
     if ('status' in parsed) return json({ error: parsed.reason }, parsed.status)

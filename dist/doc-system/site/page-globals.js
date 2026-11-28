@@ -7,6 +7,7 @@ Each is emitted only when it differs from the default, so a default site's HTML 
 byte-for-byte when a new switch is added.
 */
 import { EXAMPLE_VIEWS, exampleTabsProblem, normalizeDialectNames, } from '../example-policy.js';
+import { scriptJson } from '../script-json.js';
 const LIVE_EXAMPLE_POLICIES = ['auto', 'opt-in', 'no-code'];
 const SITE_KINDS = ['documentation', 'book'];
 /**
@@ -46,7 +47,7 @@ export function pageGlobalsHead(config) {
             : '',
         // 1.16.3: the dialects the site says its bundle registers, so the page can check
         config.dialects?.length
-            ? `<script>globalThis.__TOSI_DIALECTS=${JSON.stringify(normalizeDialectNames(config.dialects)).replace(/</g, '\\u003c')}</script>`
+            ? `<script>globalThis.__TOSI_DIALECTS=${scriptJson(normalizeDialectNames(config.dialects))}</script>`
             : '',
     ].join('');
 }

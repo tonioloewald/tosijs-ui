@@ -13,6 +13,7 @@ import {
   normalizeDialectNames,
 } from '../example-policy.js'
 import type { ExampleTab, ExampleView } from '../example-policy.js'
+import { scriptJson } from '../script-json.js'
 
 export interface PageGlobalsConfig {
   liveExamples?: 'auto' | 'opt-in' | 'no-code'
@@ -74,9 +75,9 @@ export function pageGlobalsHead(config: PageGlobalsConfig): string {
       : '',
     // 1.16.3: the dialects the site says its bundle registers, so the page can check
     config.dialects?.length
-      ? `<script>globalThis.__TOSI_DIALECTS=${JSON.stringify(
+      ? `<script>globalThis.__TOSI_DIALECTS=${scriptJson(
           normalizeDialectNames(config.dialects)
-        ).replace(/</g, '\\u003c')}</script>`
+        )}</script>`
       : '',
   ].join('')
 }

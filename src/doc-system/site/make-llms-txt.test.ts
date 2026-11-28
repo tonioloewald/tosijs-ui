@@ -275,3 +275,13 @@ test('link titles drop the project suffix a headTitle carries (#3867)', () => {
   )
   expect(entry.title).toBe('<tosi-menu> menus')
 })
+
+test('the Docs link carries basePath (#4375)', () => {
+  const text = written({
+    name: 'x',
+    baseUrl: 'https://user.github.io/',
+    basePath: '/project',
+  })
+  expect(text).toContain('- Docs: https://user.github.io/project/')
+  expect(text).not.toContain('github.io//')
+})

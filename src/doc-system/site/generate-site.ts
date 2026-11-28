@@ -28,6 +28,7 @@ import {
   buildSlugMap,
   pathForSlug,
   rewriteDocLinks,
+  siteUrl,
   withBase,
   wikilinkTargets,
 } from '../routing.js'
@@ -49,6 +50,7 @@ import {
 } from './build-warnings.js'
 
 import { existsSync } from 'fs'
+import { scriptJson } from '../script-json.js'
 
 declare global {
   var Bun: any
@@ -276,10 +278,7 @@ function linkListHtml(className: string, links?: LinkItem[]): string {
 
 /** Serialize a JSON-LD object into a safe <script> (escaping `<` prevents breakout). */
 function jsonLdScript(obj: Record<string, unknown>): string {
-  return `  <script type="application/ld+json">${JSON.stringify(obj).replace(
-    /</g,
-    '\\u003c'
-  )}</script>`
+  return `  <script type="application/ld+json">${scriptJson(obj)}</script>`
 }
 
 /** Image types a share card may be, in the order a page's card is looked for. */
@@ -320,12 +319,6 @@ function navTrail(roots: NavNode<Doc>[], filename: string): NavNode<Doc>[] {
 /** Every nav page in reading order. */
 function flattenNav(roots: NavNode<Doc>[]): NavNode<Doc>[] {
   return roots.flatMap((node) => [node, ...flattenNav(node.children)])
-}
-
-/** Absolute URL for an asset path against the site origin (passes through full URLs). */
-function absUrl(baseUrl: string, pathOrUrl: string): string {
-  if (!pathOrUrl) return ''
-  return /^https?:\/\//.test(pathOrUrl) ? pathOrUrl : baseUrl + pathOrUrl
 }
 
 /**
@@ -416,7 +409,6 @@ async function pageHtml(
     assetStamp,
     docsStamp,
     localizedUrl = '/localized-strings.txt',
-    basePath,
     headExtra = '',
     bakes,
   } = config
@@ -446,10 +438,9 @@ async function pageHtml(
   const keywords = Array.isArray(doc.keywords)
     ? doc.keywords.join(', ')
     : doc.keywords || ''
-  const canonical =
-    baseUrl + withBase(basePath, pathForSlug(slugMap[doc.filename]))
+  const canonical = siteUrl(config, pathForSlug(slugMap[doc.filename]))
   const image = pageImage(doc, own, config)
-  const imageAbs = absUrl(baseUrl, withBase(basePath, image))
+  const imageAbs = siteUrl(config, image)
   const imageDims =
     image.startsWith('/') && !image.startsWith('//') && config.outputDir
       ? imageSize(`${config.outputDir}${image}`)
@@ -498,7 +489,7 @@ async function pageHtml(
   const order = flattenNav(roots)
   const position = order.findIndex((n) => n.doc.filename === doc.filename)
   const pageUrl = (node: NavNode<Doc>) =>
-    baseUrl + withBase(basePath, pathForSlug(node.slug))
+    siteUrl(config, pathForSlug(node.slug))
   const book = config.kind === 'book'
   const prev = book && position > 0 ? order[position - 1] : undefined
   const next = book && position >= 0 ? order[position + 1] : undefined
@@ -509,7 +500,7 @@ async function pageHtml(
     ? {
         '@type': 'Book',
         name: projectName,
-        url: baseUrl + withBase(basePath, '/'),
+        url: siteUrl(config, '/'),
         // The book's author, not this chapter's.
         ...(config.author
           ? { author: { '@type': 'Person', name: config.author } }
@@ -518,7 +509,7 @@ async function pageHtml(
     : {
         '@type': 'WebSite',
         name: projectName,
-        url: baseUrl + withBase(basePath, '/'),
+        url: siteUrl(config, '/'),
       }
 
   const jsonLd = baseUrl
@@ -1031,8 +1022,7 @@ export async function generateSite(
       .map((doc) => {
         const modified = config.modified?.get(doc.path)
         return `  <url><loc>${escapeText(
-          config.baseUrl +
-            withBase(config.basePath, pathForSlug(slugMap[doc.filename]))
+          siteUrl(config, pathForSlug(slugMap[doc.filename]))
         )}</loc>${
           modified ? `<lastmod>${escapeText(modified)}</lastmod>` : ''
         }</url>`
@@ -1057,7 +1047,7 @@ export async function generateSite(
         : 'User-agent: *\nAllow: /\n'
       await Bun.write(
         robotsPath,
-        `${base}Sitemap: ${config.baseUrl}/sitemap.xml\n`
+        `${base}Sitemap: ${siteUrl(config, '/sitemap.xml')}\n`
       )
     }
   }
@@ -1104,9 +1094,7 @@ export function notFoundHtml(
 ): string {
   const { projectName = '', basePath } = config
   const base = withBase(basePath, '/')
-  const slugs = JSON.stringify(
-    Object.values(slugMap).filter((slug) => slug !== '')
-  ).replace(/</g, '\\u003c')
+  const slugs = scriptJson(Object.values(slugMap).filter((slug) => slug !== ''))
   const title = projectName
     ? `Page not found — ${projectName}`
     : 'Page not found'

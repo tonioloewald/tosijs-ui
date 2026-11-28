@@ -120,3 +120,26 @@ test('a cross-origin request is refused before admit is asked', async () => {
   )
   expect(sameSite!.status).toBe(403)
 })
+
+test('an oversized answer is refused without being read whole (#4379)', async () => {
+  const handle = checklistHandler({ dir, admit: () => true })
+  let pulled = 0
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (pulled >= 320) return controller.close() // 20 MB in 64 KB chunks
+      pulled += 1
+      controller.enqueue(new Uint8Array(64 * 1024))
+    },
+  })
+  const res = await handle(
+    at('/__checklist/answer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      // @ts-expect-error: a streamed request body needs half-duplex
+      duplex: 'half',
+    })
+  )
+  expect(res!.status).toBe(413)
+  expect(pulled).toBeLessThan(40)
+})

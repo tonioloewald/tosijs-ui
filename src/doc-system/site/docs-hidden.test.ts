@@ -104,3 +104,33 @@ test('nothing is withheld when nothing asks to be', () => {
   })
   expect(extractDocs({ paths: [dir] })).toHaveLength(2)
 })
+
+/*
+#4344: metadata is read with marked's lexer. The fence-stripping regex it replaced closed a
+four-backtick fence on its first inner ```, so a page that ILLUSTRATED a hidden block read it as
+its own and vanished; its single-line pattern also ignored a wrapped block.
+*/
+test('a hidden block a page only illustrates does not unpublish it (#4344)', () => {
+  const dir = corpus('illustrated-hidden', {
+    'guide.md':
+      '# Guide\n\nA page with an example and a hidden block:\n\n````md\n```js\nexample()\n```\n<!--{"hidden": true}-->\n````\n\nstays out of the site.\n',
+    'quoted.md': '# Quoted\n\n> <!--{"hidden": true}-->\n\nvisible\n',
+  })
+  const names = extractDocs({ paths: [dir] }).map((d) => d.filename)
+  expect(names).toContain('guide.md')
+  expect(names).toContain('quoted.md')
+})
+
+test('a metadata block may wrap across lines (#4344)', () => {
+  const dir = corpus('wrapped-meta', {
+    'wrapped.md':
+      '<!--{\n  "order": 7,\n  "description": "wrapped"\n}-->\n# Wrapped\n\ntext\n',
+    'ts-wrapped.ts':
+      '/*{\n  "order": 3\n}*/\n/*#\n# Code\n\ntext\n*/\nexport const x = 1\n',
+  })
+  const docs = extractDocs({ paths: [dir] })
+  const wrapped = docs.find((d) => d.filename === 'wrapped.md')!
+  expect(wrapped.order).toBe(7)
+  expect(wrapped.description).toBe('wrapped')
+  expect(docs.find((d) => d.filename === 'ts-wrapped.ts')!.order).toBe(3)
+})

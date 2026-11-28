@@ -227,3 +227,20 @@ export function withBase(basePath, p) {
         return p;
     return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
 }
+/**
+ * The site's URL for a root-relative path: `baseUrl` (the origin) + `basePath` + `p`.
+ *
+ * THE ONE COMPOSITION (#4375). `baseUrl + withBase(…)` was written out at every call site, and
+ * the sites disagreed: robots.txt's `Sitemap:` line and llms.txt's `- Docs:` link left out
+ * `basePath` (so a GitHub project page pointed crawlers at the user's root), and half of them
+ * trimmed a trailing slash from `baseUrl` while the canonical links doubled it.
+ *
+ * With no `baseUrl` it returns the root-relative path, as the old compositions did; absolute
+ * URLs pass through.
+ */
+export function siteUrl(config, p) {
+    if (!p || /^(https?:)?\/\//.test(p))
+        return p;
+    return ((config.baseUrl ?? '').replace(/\/+$/, '') +
+        withBase(config.basePath, p.startsWith('/') ? p : '/' + p));
+}

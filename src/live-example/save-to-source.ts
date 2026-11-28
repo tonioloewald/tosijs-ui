@@ -29,56 +29,138 @@ same question, so ask the shared one.
 */
 // `js`/`tjs`/`ts` and any registered dialect are interchangeable "source" blocks (the
 // example's executable code) — `isDialectLanguage` is the list; html/css/test are the rest.
-import {
-  isDialectLanguage,
-  isLiveFence,
-  parseFenceInfo,
-} from '../doc-system/example-policy.js'
+import { isDialectLanguage, isLiveFence } from '../doc-system/example-policy.js'
 import type { ExamplePolicy } from '../doc-system/example-policy.js'
+import { lexCodeTokens } from '../doc-system/code-fences.js'
 
 interface FencedBlock {
   lang: string
   /** the `:<mode>` suffix (`inline` | `iframe` | `ide` | `static`), if the fence carried one */
   mode?: string
+  /**
+   * The page puts this block right after the previous one, with no element between: the rule
+   * `insert-examples` groups by.
+   */
+  followsCode: boolean
+  /**
+   * The block maps to one contiguous range of the source, so it can be rewritten. A block in a
+   * blockquote or a list, an unterminated fence, or an indented code block still counts toward
+   * ordinals and grouping, but is never written.
+   */
+  writable: boolean
   indent: string // leading whitespace of the fence lines (see below)
-  start: number // index of the opening ```
-  end: number // index just past the closing ```
+  start: number // index of the opening fence
+  end: number // index just past the closing fence
   codeStart: number // index of the first char of the code body
   codeEnd: number // index just past the last char of the code body
+  /** the fence has no body line at all (```` ```js ```` then the closing fence) */
+  emptyBody?: boolean
+}
+
+/*
+The doc text the page was rendered from, as slices of the file. A markdown file is one slice.
+A source file's doc is its `/*#` blocks, each trimmed and joined with a blank line, exactly as
+`extractDocs` builds it (`site/docs.ts`), so the lexer sees what the page saw: fences in the
+file's code (a template string, a regex) are not examples, and two blocks that end and start
+with a fence are one example on the page because the join puts them side by side.
+*/
+interface DocSlice {
+  text: string
+  at: number // offset of `text` in the file
+}
+
+const TJS_DOC_OPENER = /^[ \t]*\/#(?![^\n]*#\/)/m
+
+function docSlices(src: string, file?: string): DocSlice[] | null {
+  if (!file || /\.(md|markdown|mdx)$/i.test(file)) return [{ text: src, at: 0 }]
+  /*
+  A `.tjs`/`.ajs` file may also document itself in `/# … #/` comments, interleaved with the
+  `/*#` blocks; finding those needs tjs-lang's scanner. Refuse rather than number the examples
+  without them.
+  */
+  if (/\.(tjs|ajs)$/i.test(file) && TJS_DOC_OPENER.test(src)) return null
+  const slices: DocSlice[] = []
+  for (const m of src.matchAll(/^[ \t]*(\/\*#[\s\S]+?\*\/)/gm)) {
+    const inner = m[1].slice(3, -2)
+    const lead = inner.length - inner.trimStart().length
+    slices.push({
+      text: inner.trim(),
+      at: m.index! + m[0].length - m[1].length + 3 + lead,
+    })
+  }
+  return slices
 }
 
 /**
- * Find every ```lang …``` fenced block in document order, with positions.
+ * Every code block of the doc in `src`, in document order, with positions in `src`.
  *
- * `^([ \t]*)` captures the fence's indentation: a doc comment is often itself
- * indented (some code styles indent block-comment bodies), so its fences —
- * and their code lines — are indented in the raw source. The doc extractor dedents
- * them, so examples render with the right ordinals, but a raw scan must match them
- * where they actually sit (and re-indent on write-back). The old anchor-free regex
- * required the closing ``` immediately after a newline, so an indented file yielded
- * ZERO blocks → save-to-source always failed with "no matching block".
+ * Read with marked's lexer (`lexCodeTokens`), the parser the page is rendered with, so the
+ * blocks and their order are the page's. This used to be a line regex, and the page and the
+ * regex disagreed about a four-space-indented illustration of a fence, a blockquoted fence,
+ * ```` ``` js ```` and `~~~js`: saving one example wrote into another (#4343).
+ *
+ * `file` says how to read `src`: a markdown file (the default) or a source file whose doc is
+ * its `/*#` blocks. Positions assume `\n` line endings; `rewriteExampleBlocks` normalises.
+ *
+ * `indent` is the fence's indentation: a doc comment is often itself indented, so its fence
+ * and code lines are too. The body is compared dedented and written back re-indented.
  */
-export function findFencedBlocks(src: string): FencedBlock[] {
-  // Capture the WHOLE info string and let `parseFenceInfo` split it. The previous regex
-  // captured the language as `[\w-]*`, which stops at the colon — so `js:static` read as
-  // plain `js` and the mode was invisible here while being load-bearing everywhere else.
-  const re = /^([ \t]*)```([^\n]*)\n([\s\S]*?)\n[ \t]*```/gm
-  const blocks: FencedBlock[] = []
-  let m: RegExpExecArray | null
-  while ((m = re.exec(src)) !== null) {
-    const codeStart = m.index + m[0].indexOf('\n') + 1
-    const info = parseFenceInfo(m[2])
-    blocks.push({
-      lang: info.lang,
-      mode: info.mode,
-      indent: m[1],
-      start: m.index,
-      end: m.index + m[0].length,
-      codeStart,
-      codeEnd: codeStart + m[3].length,
-    })
+export function findFencedBlocks(src: string, file?: string): FencedBlock[] {
+  const slices = docSlices(src, file)
+  if (!slices) return []
+  const joined = slices.map((s) => s.text).join('\n\n')
+  // Map a range of `joined` to `src`, or null if it crosses from one slice into the next.
+  const starts: number[] = []
+  let offset = 0
+  for (const s of slices) {
+    starts.push(offset)
+    offset += s.text.length + 2
   }
-  return blocks
+  const toSource = (from: number, to: number): number | null => {
+    for (let i = slices.length - 1; i >= 0; i -= 1) {
+      if (from >= starts[i]) {
+        return to <= starts[i] + slices[i].text.length
+          ? slices[i].at + (from - starts[i])
+          : null
+      }
+    }
+    return null
+  }
+  const crlf = src.includes('\r')
+  return lexCodeTokens(joined).map((t) => {
+    const block: FencedBlock = {
+      lang: t.lang,
+      mode: t.mode,
+      followsCode: t.followsCode,
+      writable: false,
+      indent: '',
+      start: -1,
+      end: -1,
+      codeStart: -1,
+      codeEnd: -1,
+    }
+    const open = /^([ \t]*)(`{3,}|~{3,})[^\n]*\n/.exec(t.raw)
+    if (crlf || t.at === null || !t.fenced || !open) return block
+    const [opener, indent, fence] = open
+    const close = new RegExp(
+      `\\n[ \\t]*\\${fence[0]}{${fence.length},}[ \\t]*(?=\\n|$)`
+    ).exec(t.raw.slice(opener.length - 1))
+    if (!close) return block // unterminated: runs to the end of the doc
+    const closeAt = opener.length - 1 + close.index
+    const at = toSource(t.at, t.at + closeAt + close[0].length)
+    if (at === null) return block
+    const emptyBody = closeAt < opener.length
+    return {
+      ...block,
+      writable: true,
+      indent,
+      start: at,
+      end: at + closeAt + close[0].length,
+      codeStart: at + opener.length,
+      codeEnd: at + (emptyBody ? opener.length : closeAt),
+      emptyBody,
+    }
+  })
 }
 
 /** Re-indent each non-empty line of `text` by `indent` (inverse of dedentBy). */
@@ -101,7 +183,7 @@ function dedentBy(text: string, indent: string): string {
 
 /** Group executable blocks into examples, mirroring insert-examples. */
 export function groupExamples(
-  src: string,
+  _src: string,
   blocks: FencedBlock[],
   policy: ExamplePolicy = 'auto'
 ): FencedBlock[][] {
@@ -117,10 +199,7 @@ export function groupExamples(
     }
     const prev = blocks[i - 1]
     const adjacent =
-      current !== null &&
-      prev !== undefined &&
-      live(prev) &&
-      src.slice(prev.end, block.start).trim() === ''
+      current !== null && block.followsCode && prev !== undefined && live(prev)
     if (adjacent && current) {
       current.push(block)
     } else {
@@ -139,8 +218,10 @@ export type ExampleEdits = {
 }
 
 /**
- * Return `src` with the `ordinal`-th example's edited blocks replaced, or `null`
- * if that example or none of the edited blocks exist in the source.
+ * Return `src` with the `ordinal`-th example's edited blocks replaced, or `null` if that
+ * example doesn't exist, none of its blocks changed, or a changed block can't be mapped back to
+ * one place in the source (see `FencedBlock.writable`). `file` is the source's path, which says
+ * whether it is markdown or a source file documented in `/*#` blocks.
  */
 export function rewriteExampleBlocks(
   src: string,
@@ -148,9 +229,26 @@ export function rewriteExampleBlocks(
   edits: ExampleEdits,
   /* Which fences are live examples — MUST match what `insert-examples` used, or the
      ordinal means something different here than it did there. */
-  policy: ExamplePolicy = 'auto'
+  policy: ExamplePolicy = 'auto',
+  file?: string
 ): string | null {
-  const group = groupExamples(src, findFencedBlocks(src), policy)[ordinal]
+  /*
+  The lexer reads `\n` text, so a CRLF file is rewritten as LF and converted back. A file that
+  mixes line endings has no single answer for what the edit's newlines should be: refuse.
+  */
+  if (src.includes('\r')) {
+    const rest = src.replace(/\r\n/g, '')
+    if (rest.includes('\r') || rest.includes('\n')) return null
+    const out = rewriteExampleBlocks(
+      src.replace(/\r\n/g, '\n'),
+      ordinal,
+      edits,
+      policy,
+      file
+    )
+    return out === null ? null : out.replace(/\n/g, '\r\n')
+  }
+  const group = groupExamples(src, findFencedBlocks(src, file), policy)[ordinal]
   if (!group) return null
 
   // Code editors normalize trailing whitespace (e.g. add a trailing newline), so
@@ -170,15 +268,19 @@ export function rewriteExampleBlocks(
     if (next === undefined) continue
     const block = blockFor(lang)
     if (!block) continue
+    // Never guess where an unmappable block lives: a wrong guess is a silent bad write.
+    if (!block.writable) return null
     // The source fence may be indented (inside an indented doc comment) while the
     // editor value is dedented — compare dedented, and re-indent when writing back
     // so the block keeps its place in the comment.
     const sourceCode = src.slice(block.codeStart, block.codeEnd)
     if (trimEnd(dedentBy(sourceCode, block.indent)) === trimEnd(next)) continue
+    const text = indentBy(next, block.indent)
     replacements.push({
       start: block.codeStart,
       end: block.codeEnd,
-      text: indentBy(next, block.indent),
+      // A fence with no body line needs one, or the closing fence joins the code's last line.
+      text: block.emptyBody ? text + '\n' : text,
     })
   }
   if (replacements.length === 0) return null

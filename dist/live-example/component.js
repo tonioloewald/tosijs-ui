@@ -763,6 +763,7 @@ import { liveExampleStyleSpec } from './styles.js';
 import { runTests } from './test-harness.js';
 import { hasSourceEndpoint, sourceAccess, sourceWritable, LAN_REFUSAL_ADVICE, } from './source-access.js';
 import { servedForDevelopment } from './dev-served.js';
+import { storageGet, storageSet } from '../safe-storage.js';
 const { div, tosiSlot, style, button, pre, span, label, input, textarea } = elements;
 /** Every string property name reachable from a value, prototype chain included. */
 function propertyNamesOf(value) {
@@ -845,9 +846,8 @@ const isLocalhost = typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' ||
         window.location.hostname === '127.0.0.1');
 function getStoredTestsEnabled() {
-    if (typeof localStorage === 'undefined')
-        return false;
-    const stored = localStorage.getItem(TESTS_ENABLED_KEY);
+    // Read at import, so it must not throw: blocked storage stopped the doc site hydrating (#4351).
+    const stored = storageGet(TESTS_ENABLED_KEY);
     if (stored !== null) {
         return stored === 'true';
     }
@@ -876,7 +876,7 @@ if (typeof document !== 'undefined') {
 }
 /** Enable test mode (runs tests and shows indicators) */
 export function enableTests() {
-    localStorage.setItem(TESTS_ENABLED_KEY, 'true');
+    storageSet(TESTS_ENABLED_KEY, 'true');
     testManager.enabled.value = true;
     updateTestsEnabledClass();
     // Re-run tests on all existing examples
@@ -906,7 +906,7 @@ export function pageTestCount() {
 }
 /** Disable test mode */
 export function disableTests() {
-    localStorage.setItem(TESTS_ENABLED_KEY, 'false');
+    storageSet(TESTS_ENABLED_KEY, 'false');
     testManager.enabled.value = false;
     updateTestsEnabledClass();
 }
@@ -2260,7 +2260,7 @@ export class LiveExample extends withAttributes({
             html: this.html,
             css: this.css,
             test: this.test,
-        }, examplePolicy());
+        }, examplePolicy(), sourceFile);
         if (updated === null) {
             // Distinguish the two failure modes so a source↔doc mismatch is diagnosable
             // (vs. a genuine no-op). An ordinal past the source's group count means the
@@ -2268,13 +2268,19 @@ export class LiveExample extends withAttributes({
             // file with more than one doc comment, or fenced blocks the doc extractor
             // treats differently from a raw scan (e.g. indented inside the comment).
             const ordinal = Number(ordinalAttr);
-            const groups = groupExamples(content, findFencedBlocks(content));
+            // The same reading as the rewrite: this file, this policy (#4343).
+            const groups = groupExamples(content, findFencedBlocks(content, sourceFile), examplePolicy());
             if (ordinal >= groups.length) {
                 window.alert(`Couldn't locate this example in ${sourceFile}: it's example ` +
                     `#${ordinal + 1} on the page, but a raw scan of the file finds only ` +
                     `${groups.length} fenced example group(s). The page↔source ordinals ` +
                     `disagree — likely multiple docs in one file, or indented fences. ` +
                     `(File a report with the source structure.)`);
+            }
+            else if (groups[ordinal].some((block) => !block.writable)) {
+                window.alert(`This example can't be saved to ${sourceFile}: one of its blocks sits inside a ` +
+                    `blockquote or a list, has no closing fence, or the file mixes line endings, so ` +
+                    `there is no single place to write it. Edit the source instead.`);
             }
             else {
                 window.alert('No changes to save.');
@@ -3367,12 +3373,18 @@ export class LiveExample extends withAttributes({
     initFromElements(blocks) {
         for (const element of blocks) {
             element.hidden = true;
-            const [mode, ...lines] = element.innerHTML.split('\n');
+            /*
+            Code is TEXT: read through innerHTML, `a < b` came back as `a &lt; b`. Only html is read
+            as markup, as the language-class branch below already did (#4351).
+            */
+            const firstLine = (element.textContent ?? '').split('\n')[0];
+            const [mode, ...lines] = (firstLine === 'html' ? element.innerHTML : (element.textContent ?? '')).split('\n');
             if (['js', 'html', 'css', 'test'].includes(mode)) {
-                const minIndex = lines
+                // The smallest indent, numerically: a string sort put 12 before 4.
+                const indents = lines
                     .filter((line) => line.trim() !== '')
-                    .map((line) => line.match(/^\s*/)[0].length)
-                    .sort()[0];
+                    .map((line) => line.match(/^\s*/)[0].length);
+                const minIndex = indents.length ? Math.min(...indents) : 0;
                 const source = (minIndex > 0 ? lines.map((line) => line.substring(minIndex)) : lines).join('\n');
                 this.setEditorValue(mode, source);
             }
@@ -3409,9 +3421,15 @@ export class LiveExample extends withAttributes({
         super.render();
         this.updateExampleWidgets();
         if (this.remoteId !== '') {
-            const data = localStorage.getItem(this.storageKey);
-            if (data !== null) {
-                const payload = JSON.parse(data);
+            const data = storageGet(this.storageKey);
+            let payload = null;
+            try {
+                payload = data === null ? null : JSON.parse(data);
+            }
+            catch {
+                console.error(`live example: the pop-out's stored payload is not JSON`);
+            }
+            if (payload !== null) {
                 if (this.remoteKey !== payload.remoteKey)
                     return;
                 this.css = payload.css;

@@ -65,6 +65,35 @@ import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxErrorI
 // before interpolating into the require-shim detector below.
 /** Give up on a hung ePub child rather than wedge the dev server's rebuild. */
 const EPUB_TIMEOUT_MS = 120_000;
+/*
+The config fields `buildEpub` reads, which is what crosses to its child. A hand-written payload
+here left out `liveExamples`, so on an `'opt-in'` site (the setting the docs recommend for books)
+every js/html/css fence got a "Run this example live" link to an anchor the page doesn't have;
+`epub.ts` recorded the bug as fixed because `bun book` calls `buildEpub` directly (#4376).
+`epub-fields.test.ts` fails when `epub.ts` reads a field this list doesn't name.
+*/
+export const EPUB_CONFIG_FIELDS = [
+    'accessibility', // figures and one <h1> per chapter, as on the site (#3521)
+    'basePath',
+    'baseUrl',
+    'book',
+    // the ePub's "run this example live" links count examples the way the page does, so it
+    // must know the site's dialects and policy too (1.16.3 review F3, #4376)
+    'dialects',
+    'docsJson',
+    'favicon',
+    'lang',
+    'liveExamples',
+    'name',
+    'outputDir',
+    'strict', // an image the book cannot bind fails a strict build (EPUB_IMAGE_EXIT)
+];
+function epubConfig(config) {
+    const out = {};
+    for (const field of EPUB_CONFIG_FIELDS)
+        out[field] = config[field];
+    return out;
+}
 /**
  * Run buildEpub() in a child process.
  *
@@ -82,26 +111,7 @@ async function buildEpubInChild(config, opts) {
     // and when shipped (compiled .js) — same trick as generate-css below.
     const cliTs = `${import.meta.dir}/epub-cli.ts`;
     const cli = existsSync(cliTs) ? cliTs : `${import.meta.dir}/epub-cli.js`;
-    const payload = {
-        config: {
-            basePath: config.basePath,
-            baseUrl: config.baseUrl,
-            book: config.book,
-            docsJson: config.docsJson,
-            favicon: config.favicon,
-            lang: config.lang,
-            name: config.name,
-            outputDir: config.outputDir,
-            // the ePub's "run this example live" links count examples the way the page does, so it
-            // must know the site's dialects too (1.16.3 review F3)
-            dialects: config.dialects,
-            // an image the book cannot bind fails a strict build (EPUB_IMAGE_EXIT)
-            strict: config.strict,
-            // figures and one <h1> per chapter, as on the site (#3521)
-            accessibility: config.accessibility,
-        },
-        opts,
-    };
+    const payload = { config: epubConfig(config), opts };
     const payloadPath = path.join(tmpdir(), `tosijs-epub-${process.pid}.json`);
     await Bun.write(payloadPath, JSON.stringify(payload));
     const child = spawn(['bun', cli, payloadPath], {
@@ -178,6 +188,17 @@ url = `/${path.basename(dir)}/`) {
  * problems is not a failure — that is the whole point of it.
  */
 async function checkExamplesInChild(docsJson, importPrefix, contextKeys = [], liveExamples = 'auto', overriddenDialects = [], modules = false) {
+    /*
+    Built once, for both paths. The in-process fallback below passed only `importPrefix` and
+    `contextKeys`, so on that path an opt-in site failed its build over illustrative code (#4376).
+    */
+    const options = {
+        ...(importPrefix ? { importPrefix } : {}),
+        ...(contextKeys.length ? { contextKeys } : {}),
+        liveExamples,
+        overriddenDialects,
+        modules,
+    };
     const cliTs = `${import.meta.dir}/check-examples-cli.ts`;
     const cli = existsSync(cliTs)
         ? cliTs
@@ -228,10 +249,7 @@ async function checkExamplesInChild(docsJson, importPrefix, contextKeys = [], li
         console.warn(`⚠️  example check: could not run it in a child (${String(e)}) — ` +
             `falling back to in-process.`);
         const corpus = JSON.parse(await Bun.file(docsJson).text());
-        return checkExamples(corpus, {
-            ...(importPrefix ? { importPrefix } : {}),
-            ...(contextKeys.length ? { contextKeys } : {}),
-        });
+        return checkExamples(corpus, options);
     }
 }
 /**

@@ -250,3 +250,183 @@ describe('ordinals agree with insert-examples (#dx-B1)', () => {
     expect(blocks.map((b) => b.mode)).toEqual(['ide', undefined])
   })
 })
+
+/*
+The oracle for #4343: the page's own grouping. Render the doc with the page's renderer, group it
+with the page's `insertExamples`, and check that example N here is example N there, block for
+block. A regex scanner disagreed with the page on the shapes below and wrote edits into the
+wrong example.
+*/
+import { renderDocMarkdown } from '../doc-system/render.js'
+import { insertExamples } from './insert-examples.js'
+import { readFileSync } from 'fs'
+
+function pageExamples(markdown: string) {
+  const root = document.createElement('div')
+  root.innerHTML = renderDocMarkdown(markdown)
+  const created: any[] = []
+  const creator: any = () => {
+    const el: any = document.createElement('div')
+    el.showDefaultTab = () => {}
+    el.snapshotAndRestoreLocalEdit = () => {}
+    created.push(el)
+    return el
+  }
+  insertExamples(root, {} as any, creator, 'live-example')
+  // The page's code is the block's text, which ends in a newline; the source body doesn't.
+  const trim = (v: unknown) => (typeof v === 'string' ? v.trimEnd() : undefined)
+  return created.map((el) => ({
+    js: trim(el.js),
+    html: trim(el.html),
+    css: trim(el.css),
+    test: trim(el.test),
+  }))
+}
+
+function sourceExamples(src: string, file?: string) {
+  const dedent = (text: string, indent: string) =>
+    text
+      .split('\n')
+      .map((line) =>
+        line.startsWith(indent) ? line.slice(indent.length) : line
+      )
+      .join('\n')
+  return groupExamples(src, findFencedBlocks(src, file)).map((group) => {
+    const out: Record<string, string> = {}
+    for (const b of group) {
+      const slot = ['html', 'css', 'test'].includes(b.lang) ? b.lang : 'js'
+      out[slot] = b.writable
+        ? dedent(src.slice(b.codeStart, b.codeEnd), b.indent)
+        : '(unwritable)'
+    }
+    return out
+  })
+}
+
+const fence = (lang: string, code: string, marker = '```') =>
+  `${marker}${lang}\n${code}\n${marker}`
+
+describe('example ordinals match the page (#4343)', () => {
+  const tail = [
+    '',
+    'prose',
+    '',
+    fence('js', 'const first = 1'),
+    '',
+    'prose',
+    '',
+    fence('js', 'const second = 2'),
+    '',
+  ].join('\n')
+  const shapes: Record<string, string> = {
+    'a four-space-indented illustration of a fence':
+      '    ```js\n    illustration\n    ```\n',
+    'a blockquoted fence': '> ```js\n> quoted\n> ```\n',
+    'a space before the language': '``` js\nspaced\n```\n',
+    'a tilde fence': '~~~js\ntilde\n~~~\n',
+    'a four-backtick fence illustrating a fence':
+      '````md\n```js\ninner\n```\n````\n',
+    'a fence in a list item': '- item\n\n  ```js\n  listed\n  ```\n',
+  }
+  for (const [name, lead] of Object.entries(shapes)) {
+    test(`${name}, then two examples: saving the second writes the second`, () => {
+      const src = `# Doc\n\n${lead}${tail}`
+      const page = pageExamples(src)
+      const ours = sourceExamples(src)
+      expect(ours.length).toBe(page.length)
+      const last = page.length - 1
+      expect(page[last].js).toBe('const second = 2')
+      const out = rewriteExampleBlocks(src, last, { js: 'const EDITED = 3' })!
+      expect(out).toContain('const EDITED = 3')
+      expect(out).toContain('const first = 1')
+      expect(out).not.toContain('const second = 2')
+      expect(out.replace('const EDITED = 3', 'const second = 2')).toBe(src)
+    })
+  }
+
+  test('an example inside a blockquote counts, but is never written', () => {
+    const src = `${shapes['a blockquoted fence']}\nprose\n\n${fence('js', 'after')}\n`
+    expect(pageExamples(src).length).toBe(2)
+    expect(rewriteExampleBlocks(src, 0, { js: 'x' })).toBe(null)
+    expect(rewriteExampleBlocks(src, 1, { js: 'x' })).toContain('```js\nx\n```')
+  })
+
+  test('a source file: fences in its code are not examples, and adjacent doc blocks join', () => {
+    const src = [
+      "const pattern = '```js\\nnot a doc\\n```'",
+      '/*#',
+      '# Doc',
+      '',
+      fence('js', 'const a = 1'),
+      '*/',
+      'export const x = 1',
+      '/*#',
+      fence('css', '.a {}'),
+      '*/',
+      '',
+    ].join('\n')
+    const joined = [
+      '# Doc\n\n' + fence('js', 'const a = 1'),
+      fence('css', '.a {}'),
+    ].join('\n\n')
+    expect(pageExamples(joined)).toEqual([
+      { js: 'const a = 1', html: undefined, css: '.a {}', test: undefined },
+    ])
+    expect(sourceExamples(src, 'widget.ts')).toEqual([
+      { js: 'const a = 1', css: '.a {}' },
+    ])
+    const out = rewriteExampleBlocks(
+      src,
+      0,
+      { css: '.b {}' },
+      'auto',
+      'widget.ts'
+    )!
+    expect(out).toBe(src.replace('.a {}', '.b {}'))
+  })
+
+  test('a CRLF file keeps its line endings', () => {
+    const src = `# Doc\r\n\r\n${fence('js', 'const a = 1').replace(/\n/g, '\r\n')}\r\n`
+    const out = rewriteExampleBlocks(src, 0, {
+      js: 'const a = 2\nconst b = 3',
+    })!
+    expect(out).toBe(src.replace('const a = 1', 'const a = 2\r\nconst b = 3'))
+  })
+
+  test('a fence with no body line takes an edit without swallowing its closing fence', () => {
+    const src = '```js\n```\n'
+    expect(rewriteExampleBlocks(src, 0, { js: 'x' })).toBe('```js\nx\n```\n')
+  })
+
+  test('every doc in demo/docs.json numbers its examples the way its page does', () => {
+    const docs = JSON.parse(
+      readFileSync(new URL('../../demo/docs.json', import.meta.url), 'utf8')
+    ) as Array<{ text: string; filename: string }>
+    for (const doc of docs) {
+      const page = pageExamples(doc.text).map((e) =>
+        Object.fromEntries(Object.entries(e).filter(([, v]) => v !== undefined))
+      )
+      const ours = sourceExamples(doc.text)
+      expect({ file: doc.filename, examples: ours.length }).toEqual({
+        file: doc.filename,
+        examples: page.length,
+      })
+      for (let i = 0; i < page.length; i += 1) {
+        for (const slot of Object.keys(page[i])) {
+          if (ours[i][slot] === '(unwritable)') continue
+          expect({
+            file: doc.filename,
+            i,
+            slot,
+            code: ours[i][slot]?.trimEnd(),
+          }).toEqual({
+            file: doc.filename,
+            i,
+            slot,
+            code: page[i][slot].trimEnd(),
+          })
+        }
+      }
+    }
+  })
+})

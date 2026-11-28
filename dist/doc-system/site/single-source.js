@@ -25,13 +25,16 @@ import { marked } from 'marked';
 import { buildSlugMap, resolveParent, slugify } from '../routing.js';
 import { HeadingIds, headingSlug, slugOfHeadingText } from '../heading-id.js';
 import { mayHaveSingleSourceDirective } from '../book-target.js';
+import { JSON_COMMENT } from '../json-comment.js';
+import { parseFrontmatter } from './docs.js';
 export class SingleSourceError extends Error {
     constructor(message) {
         super(message);
         this.name = 'SingleSourceError';
     }
 }
-const DIRECTIVE = /^\s*<!--\s*(\{[\s\S]*\})\s*-->\s*$/;
+// The one JSON-comment grammar, shared with the metadata reader (#4344).
+const DIRECTIVE = JSON_COMMENT;
 /** The directive a top-level HTML token spells, or null for ordinary HTML. */
 function directiveOf(token) {
     if (token.type !== 'html')
@@ -300,8 +303,14 @@ export function resolveInsets(docs, options = {}) {
                 }
                 sourceId = path.relative(process.cwd(), found);
                 sourceDir = path.dirname(found);
-                // A fragment is not extracted, so its frontmatter was never stripped for it.
-                source = readFile(found)?.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+                /*
+                A fragment is not extracted, so its frontmatter was never stripped for it. Stripped by
+                `parseFrontmatter`, the extractor's own rule, which leaves a leading `---` rule alone: a
+                regex of its own here ate a fragment's first passage up to its next rule (#4344).
+                */
+                const fragment = readFile(found);
+                source =
+                    fragment === undefined ? undefined : parseFrontmatter(fragment).body;
             }
             if (source === undefined) {
                 throw new SingleSourceError(`inset "${d.ref}" in ${id}: no such document or file.\n` +

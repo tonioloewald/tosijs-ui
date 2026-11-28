@@ -215,6 +215,17 @@ export function createAuthState() {
         retired: new Map(),
     };
 }
+/*
+End a session: every map that keys on it. There were three copies of this — expiry cleared four
+maps, revoking a device three and the MAX_SESSIONS eviction two — so a session evicted at the cap
+left its grant and its device behind, where nothing ever removed them (#4381).
+*/
+function dropSession(state, session) {
+    state.sessions.delete(session);
+    state.readOnly.delete(session);
+    state.sessionGrants.delete(session);
+    state.sessionDevices.delete(session);
+}
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
 export function prune(state, now) {
     for (const [t, exp] of state.links)
@@ -224,12 +235,8 @@ export function prune(state, now) {
         if (until <= now)
             state.retired.delete(t);
     for (const [t, exp] of state.sessions)
-        if (exp <= now) {
-            state.sessions.delete(t);
-            state.readOnly.delete(t);
-            state.sessionGrants.delete(t);
-            state.sessionDevices.delete(t);
-        }
+        if (exp <= now)
+            dropSession(state, t);
 }
 /**
  * Issue a link token to put in a URL. `ttlMs` overrides the default.
@@ -555,9 +562,7 @@ export function revokeDeviceSessions(state, revoked) {
     for (const [session, device] of state.sessionDevices) {
         if (!revoked.has(device))
             continue;
-        state.sessionDevices.delete(session);
-        state.sessions.delete(session);
-        state.readOnly.delete(session);
+        dropSession(state, session);
         ended++;
     }
     return ended;
@@ -578,9 +583,7 @@ export function issueSession(state, now, ttlMs, readOnly) {
     prune(state, now);
     // A Map iterates in insertion order, so the first key is the oldest session.
     while (state.sessions.size >= MAX_SESSIONS) {
-        const oldest = state.sessions.keys().next().value;
-        state.sessions.delete(oldest);
-        state.readOnly.delete(oldest);
+        dropSession(state, state.sessions.keys().next().value);
     }
     const session = mintToken();
     state.sessions.set(session, now + ttlMs);
@@ -1097,9 +1100,10 @@ export const GLOBAL_KEY_MIN_LENGTH = 24;
  */
 export const GLOBAL_KEY_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 /**
- * The most live sessions one server holds; past it the oldest goes. Only a key holder can mint
- * one: per page load, and per request from a page left open across a restart until its first
- * renewed cookie lands. So this bounds a browser stuck reloading, not an attacker.
+ * The most live sessions one server holds; past it the oldest goes. A global key mints one per
+ * page load (and per request from a page left open across a restart until its first renewed
+ * cookie lands), and so does every link redemption. So this bounds memory, not an attacker: a
+ * link holder who redeems often enough can evict everyone else's session (#4381).
  */
 export const MAX_SESSIONS = 1000;
 /**

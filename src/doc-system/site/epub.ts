@@ -23,8 +23,8 @@ import {
   buildSlugMap,
   pathForSlug,
   resolveParent,
+  siteUrl,
   slugForPath,
-  withBase,
   wikilinkTargets,
 } from '../routing.js'
 import { buildNavTree, NavNode } from '../nav-tree.js'
@@ -1242,9 +1242,7 @@ export async function buildEpub(
       imagesDescribed = false
     // The doc's live-site URL, matching generate-site's canonical link: README
     // maps to '/' (not '/index/'), others to '/slug/', with basePath applied.
-    const pageUrl =
-      baseUrl +
-      withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''))
+    const pageUrl = siteUrl(config, pathForSlug(slugMap[doc.filename] ?? ''))
     /*
     Highlight before the XHTML pass. An ePub reader may run no JavaScript at all, so the
     token markup has to be IN the file — a runtime highlighter reaches the book never. This

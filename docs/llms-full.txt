@@ -8302,7 +8302,7 @@ them) and the controls stay where they are. Selecting a tab scrolls it into view
 Adding the `data-close` attribute to a tab will make it closeable.
 
 When a tab is closed, the `<tosi-tabs>` element's `handleCloseTab: (tabBody: Element) => boolean | undefined | void`
-will be called (the old `onCloseTab` name still works but is deprecated). If you set this and return `false`, the tab will
+will be called (it was `onCloseTab` until 1.20.0). If you set this and return `false`, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).
 
 ## Custom Tab Content
@@ -12901,7 +12901,12 @@ import './src/index'
 import { buildSite, devServer } from 'tosijs-ui/site'
 import config from '../site.config'
 
-process.argv.includes('--build') ? buildSite(config) : devServer(config)
+if (process.argv.includes('--build')) {
+  // buildSite reports a failed build by returning false: exit 1, or CI sees a pass.
+  if (!(await buildSite(config))) process.exit(1)
+} else {
+  await devServer(config)
+}
 ```
 
 Then `bun bin/site.ts` to develop and `bun bin/site.ts --build` to build. The dev server wants
@@ -13256,7 +13261,12 @@ export default defineSiteConfig({
 import { buildSite, devServer } from 'tosijs-ui/site'
 import config from '../site.config'
 
-process.argv.includes('--build') ? buildSite(config) : devServer(config)
+if (process.argv.includes('--build')) {
+  // buildSite reports a failed build by returning false: exit 1, or CI sees a pass.
+  if (!(await buildSite(config))) process.exit(1)
+} else {
+  await devServer(config)
+}
 ```
 
 > **If your build does more than `buildSite`** — e.g. you bundle your own
@@ -13391,7 +13401,7 @@ neither says so:
 ```typescript:static
 import { buildSite, restampSite } from 'tosijs-ui/site'
 
-await buildSite(config)
+if (!(await buildSite(config))) process.exit(1)
 await buildMyDocsBundle() // writes <outputDir>/iife.js
 await restampSite(config) // checks the file that is served, then re-stamps every page
 ```

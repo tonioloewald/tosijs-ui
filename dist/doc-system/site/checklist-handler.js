@@ -6,8 +6,9 @@ speaks `Request`/`Response` (Bun.serve, Hono, a Next route handler, Vite through
 `admit` is required. The endpoints show the list to whoever is admitted and write what they
 send to disk, so there is no default that could leave them open by accident.
 */
-import { checklistResults, parseAnswerBody, saveChecklistAnswer, } from './checklist-store.js';
+import { checklistResults, MAX_ANSWER_BYTES, parseAnswerBody, saveChecklistAnswer, } from './checklist-store.js';
 import { isSameOriginRequest } from './dev-auth.js';
+import { readBodyCapped } from './read-body.js';
 const NO_STORE = { 'Cache-Control': 'no-store' };
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
     status,
@@ -57,7 +58,12 @@ export function checklistHandler(options) {
         if (!/^application\/json\b/i.test(type)) {
             return json({ error: 'expected application/json' }, 415);
         }
-        const parsed = await parseAnswerBody(new Uint8Array(await request.arrayBuffer()), request.headers.get('content-encoding') === 'gzip');
+        // Capped while reading, not after: the body was held whole before its size check (#4379).
+        const bytes = await readBodyCapped(request, MAX_ANSWER_BYTES);
+        if (bytes === null) {
+            return json({ error: `answer over ${MAX_ANSWER_BYTES} bytes as sent` }, 413);
+        }
+        const parsed = await parseAnswerBody(bytes, request.headers.get('content-encoding') === 'gzip');
         if ('status' in parsed)
             return json({ error: parsed.reason }, parsed.status);
         const saved = saveChecklistAnswer(dir, parsed.body);

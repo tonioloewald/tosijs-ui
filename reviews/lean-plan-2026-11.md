@@ -75,7 +75,10 @@
      and only 5 of them warn.**
    - `migrating.md` says most of them warn, and it promises removal only "in a future major",
      which this project doesn't have.
-6. **Decisions for the owner before 1.20.0.** Each has a recommendation in §6.
+6. **Decisions for the owner before 1.20.0.** Each has a recommendation in §6. **The owner
+   accepted every recommendation on 2026-11-28.** Phase 2 as a whole is the plan for 1.21 or
+   2.0 (#4393); 1.20.0 only deprecates and lands the three breaks below. Cards: E1 #4389,
+   E2 #4390, E7 #4391, E6 #4392, D13 #4354; phase 1 is tracked by #4394.
    - **(E1)** Retire the `xin*` aliases? Recommendation: warn in 1.20.0, delete in 1.21.0.
    - **(D13)** Rename `TosiCrud.remove()`, which overrides `Element.remove()`. Recommendation:
      yes, in 1.20.0.
@@ -382,9 +385,10 @@ does. It isn't worth a break.
 
 ### Unused, but not redundant: the decisions
 
-The full list is E1–E15 in `phases.md` §4. These need an answer for 1.20.0:
+The full list is E1–E15 in `phases.md` §4. These needed an answer for 1.20.0. **The owner
+accepted all seven recommendations on 2026-11-28.**
 
-| # | decision | recommendation |
+| # | decision | recommendation (accepted) |
 | --- | --- | --- |
 | E1 | The docs promise `xin*` and `B3d` stay "until a future major", but the policy has no separate major | **Make all 33 aliases warn once in 1.20.0, and fix `migrating.md` to say the next minor deletes them. Delete in 1.21.0.** Zero uses found, but namespace and CDN users are invisible, so warn first |
 | D13 | `TosiCrud.remove()` | **Rename it in 1.20.0** (`[break]`). The override is a live bug and crud has no consumers |

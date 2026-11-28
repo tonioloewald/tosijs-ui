@@ -23,7 +23,11 @@ import { auditDependencies, reportAudit } from './audit-guard.js'
 import { openDevBrowser } from './open-browser.js'
 import { resolveTunnelLocalPort } from './site-config.js'
 import { acquireBuildLock, describeHolder } from './build-lock.js'
-import { sinkPathFor, appendToSink } from './debug-sink.js'
+import {
+  sinkPathFor,
+  appendToSink,
+  MAX_BODY_BYTES as MAX_SINK_BODY_BYTES,
+} from './debug-sink.js'
 import { invitePageHtml } from './invite-page.js'
 import { checklistDirFor } from './checklist-store.js'
 import { checklistHandler } from './checklist-handler.js'
@@ -101,13 +105,16 @@ import {
   dataHistory,
   readDataAt,
   isGitWorkTree,
+  MAX_DATA_BYTES,
   type DataStore,
 } from './data-store.js'
+import { readJsonCapped, readTextCapped } from './read-body.js'
 import {
   SOURCE_ACCESS_HEADER,
   SOURCE_ENDPOINT_SNIPPET,
 } from '../../live-example/source-access.js'
 import { DEV_SERVER_SNIPPET } from '../../live-example/dev-served.js'
+import { scriptJson } from '../script-json.js'
 
 /**
  * Every path the dev server watches for changes.
@@ -767,6 +774,12 @@ alone does NOT invalidate naturally, because its resolution is coarser than a re
 oldest-out eviction.
 */
 const COMPRESS_CACHE_MAX_BYTES = 64 * 1024 * 1024
+/*
+The most any endpoint reads: a data file's 16 MB of content can double as a JSON string. Set as
+both listeners' `maxRequestBodySize`, and as the cap source writes and data writes read with
+(#4379).
+*/
+const MAX_REQUEST_BODY_BYTES = 2 * MAX_DATA_BYTES
 const compressCache = new Map<string, Uint8Array<ArrayBuffer>>()
 let compressCacheBytes = 0
 
@@ -1373,7 +1386,18 @@ export async function devServer(
 
   async function handleWriteSource(request: Request): Promise<Response> {
     try {
-      const { file, content } = (await request.json()) as {
+      // Capped while reading (#4379); a doc source has no business near this size.
+      const read = await readJsonCapped(request, MAX_REQUEST_BODY_BYTES)
+      if ('tooLarge' in read) {
+        return new Response(
+          JSON.stringify({
+            error: `body over ${MAX_REQUEST_BODY_BYTES} bytes`,
+          }),
+          { status: 413, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
+      if ('invalid' in read) throw new Error('body is not JSON')
+      const { file, content } = (read.value ?? {}) as {
         file?: string
         content?: string
       }
@@ -1479,7 +1503,12 @@ export async function devServer(
       })
     }
     if (request.method !== 'POST') return json({ error: 'GET or POST' }, 405)
-    const body = (await request.json().catch(() => null)) as {
+    // Capped while reading (#4379): the 16 MB content check below ran after parsing.
+    const read = await readJsonCapped(request, MAX_REQUEST_BODY_BYTES)
+    if ('tooLarge' in read) {
+      return json({ error: `body over ${MAX_REQUEST_BODY_BYTES} bytes` }, 413)
+    }
+    const body = ('value' in read ? read.value : null) as {
       file?: unknown
       content?: unknown
     } | null
@@ -1679,7 +1708,8 @@ export async function devServer(
         readCookie(request?.headers.get('cookie'), SESSION_COOKIE),
         Date.now()
       )
-    const payload = JSON.stringify({
+    // scriptJson: the detail is build-error text, which can quote `</script>` (#4342).
+    const payload = scriptJson({
       ok: false,
       label: buildStatus.label,
       detail: trusted ? buildStatus.detail : undefined,
@@ -1850,7 +1880,15 @@ export async function devServer(
 
   async function handleTestReport(request: Request): Promise<Response> {
     try {
-      const results = await request.json()
+      // Capped while reading (#4379): a report is a few hundred KB.
+      const read = await readJsonCapped(request, MAX_DATA_BYTES)
+      if ('tooLarge' in read) {
+        return new Response(`report over ${MAX_DATA_BYTES} bytes`, {
+          status: 413,
+        })
+      }
+      if ('invalid' in read) throw new Error('report is not JSON')
+      const results = read.value as any
       await Bun.write(TEST_RESULTS_FILE, JSON.stringify(results, null, 2))
 
       if (results.failed > 0) {
@@ -2918,7 +2956,16 @@ export async function devServer(
       if (request.method !== 'POST') {
         return new Response('POST only', { status: 405 })
       }
-      const body = await request.text()
+      // Capped while reading: this endpoint answers before auth (#4077, #4379).
+      const body = await readTextCapped(request, MAX_SINK_BODY_BYTES)
+      if (body === null) {
+        return new Response(
+          `debug-sink body over ${MAX_SINK_BODY_BYTES} bytes`,
+          {
+            status: 413,
+          }
+        )
+      }
       const result = appendToSink(SINK_PATH, body)
       if (!result.ok) {
         console.warn(`⚠️  ${result.reason}`)
@@ -3312,6 +3359,8 @@ export async function devServer(
   Bun.serve({
     port: PORT,
     idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
+    // The largest any endpoint accepts; Bun's default is 128 MB (#4379).
+    maxRequestBodySize: MAX_REQUEST_BODY_BYTES,
     tls: {
       key: Bun.file('./tls/key.pem'),
       cert: Bun.file('./tls/certificate.pem'),
@@ -3354,6 +3403,7 @@ export async function devServer(
         port: tunnelPort,
         // Same reasoning as the main listener — a tunnelled load is slower, not faster.
         idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
+        maxRequestBodySize: MAX_REQUEST_BODY_BYTES,
         hostname: '127.0.0.1',
         fetch: (request: Request, srv: any) =>
           withKeySession(request, srv, (r, s) => handleRequest(r, s, true)),

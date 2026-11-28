@@ -12,6 +12,7 @@ import { Marked, Renderer } from 'marked';
 import { parseFenceInfo } from './example-policy.js';
 import { HeadingIds, headingSlug, headingText } from './heading-id.js';
 import { pathForSlug, slugify } from './routing.js';
+import { scriptJson } from './script-json.js';
 const baseRenderer = new Renderer();
 let currentBakes;
 let currentWikilinks;
@@ -211,9 +212,7 @@ docMarked.use({
             if (attrs)
                 html = html.replace(/^<pre>/, `<pre ${attrs}>`);
             if (bake) {
-                // `<` → < prevents a `</script>` inside the JS from breaking the tag;
-                // JSON.parse decodes it unchanged at hydration.
-                const json = JSON.stringify(bake.js).replace(/</g, '\\u003c');
+                const json = scriptJson(bake.js);
                 const module = bake.module
                     ? ` data-module="${escapeAttr(bake.module)}"`
                     : '';

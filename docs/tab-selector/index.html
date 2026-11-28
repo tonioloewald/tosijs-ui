@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=eb007da6307d" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=227c097e460b" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>&lt;tosi-tabs&gt; tab panel — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-tabs&gt; builds a tab panel from its children&#39;s name attributes, with closeable tabs and methods to add or remove tabs." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/tab-selector.webp" />
   <meta name="twitter:image:alt" content="&lt;tosi-tabs&gt; tab panel — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-tabs> tab panel","description":"\u003ctosi-tabs> builds a tab panel from its children's name attributes, with closeable tabs and methods to add or remove tabs.","url":"https://ui.tosijs.net/tab-selector/","inLanguage":"en","image":"https://ui.tosijs.net/og/tab-selector.webp","dateModified":"2026-11-12T22:02:17+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"\u003ctosi-tabs> tab panel","description":"\u003ctosi-tabs> builds a tab panel from its children's name attributes, with closeable tabs and methods to add or remove tabs.","url":"https://ui.tosijs.net/tab-selector/","inLanguage":"en","image":"https://ui.tosijs.net/og/tab-selector.webp","dateModified":"2026-11-25T23:30:17+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Components","item":"https://ui.tosijs.net/components/"},{"@type":"ListItem","position":2,"name":"tabs","item":"https://ui.tosijs.net/tab-selector/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=ac483d1ea3be" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=dee28178933d" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="tab-selector.ts">
 <h1 id="tabs">tabs</h1>
 <p><code>&lt;tosi-tabs&gt;</code> creates a <code>tabpanel</code> for its children, creating a <code>tab</code> for each based on its
@@ -130,7 +130,7 @@ them) and the controls stay where they are. Selecting a tab scrolls it into view
 <h2 id="closeable-tabs">Closeable Tabs</h2>
 <p>Adding the <code>data-close</code> attribute to a tab will make it closeable.</p>
 <p>When a tab is closed, the <code>&lt;tosi-tabs&gt;</code> element&#39;s <code>handleCloseTab: (tabBody: Element) =&gt; boolean | undefined | void</code>
-will be called (the old <code>onCloseTab</code> name still works but is deprecated). If you set this and return <code>false</code>, the tab will
+will be called (it was <code>onCloseTab</code> until 1.20.0). If you set this and return <code>false</code>, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).</p>
 <h2 id="custom-tab-content">Custom Tab Content</h2>
 <p>You can specify the exact content of the tab for a given body by
@@ -273,6 +273,6 @@ initTooltips()
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-0a5pp137.js"></script>
+  <script type="module" src="../hydrate-ycepy4eb.js"></script>
 </body>
 </html>

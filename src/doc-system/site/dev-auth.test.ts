@@ -2066,6 +2066,19 @@ describe('redirects and session bounds', () => {
     expect(auth.sessions.has(first)).toBe(false)
     expect(auth.readOnly.has(first)).toBe(false)
   })
+
+  test('an evicted session takes its grant and its device with it (#4381)', () => {
+    const auth = createAuthState()
+    const first = issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    // What a granting link and a device pass record against a session.
+    auth.sessionGrants.set(first, 'example.test' as any)
+    auth.sessionDevices.set(first, 'phone')
+    for (let i = 1; i < MAX_SESSIONS + 1; i++)
+      issueSession(auth, NOW, GLOBAL_KEY_SESSION_TTL_MS, false)
+    expect(auth.sessions.has(first)).toBe(false)
+    expect(auth.sessionGrants.has(first)).toBe(false)
+    expect(auth.sessionDevices.has(first)).toBe(false)
+  })
 })
 
 describe('the haltija bridge over the tunnel', () => {

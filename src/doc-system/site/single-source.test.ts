@@ -520,3 +520,31 @@ test('extraction assembles the corpus: fragment file, section inset, condition, 
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+describe('the directive grammar is one grammar (#4344)', () => {
+  test('a wrapped directive is noticed, so it is resolved rather than shipped as a comment', async () => {
+    const { mayHaveSingleSourceDirective } = await import('../book-target.js')
+    expect(
+      mayHaveSingleSourceDirective('<!--{\n  "inset": "_steps.md"\n}-->\n')
+    ).toBe(true)
+    // …but not across two comments
+    expect(
+      mayHaveSingleSourceDirective('<!--{"order": 1}-->\n\n"inset": "x"\n')
+    ).toBe(false)
+  })
+
+  test('a fragment that opens with a rule keeps its first passage', () => {
+    const docs = [
+      doc('a.md', '# A\n\n<!--{ "inset": "_steps.md" }-->\n', {
+        path: '/proj/docs/a.md',
+      }),
+    ]
+    resolveInsets(docs, {
+      fragmentDirs: new Set(['/proj/docs']),
+      realPath: (p) => p,
+      readFile: () => '---\n\nFIRST passage\n\n---\n\nsecond passage\n',
+    })
+    expect(docs[0].text).toContain('FIRST passage')
+    expect(docs[0].text).toContain('second passage')
+  })
+})

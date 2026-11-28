@@ -6,6 +6,7 @@ import type { ExampleBakes } from '../render.js';
 declare global {
     var Bun: any;
 }
+export declare const EPUB_CONFIG_FIELDS: readonly ["accessibility", "basePath", "baseUrl", "book", "dialects", "docsJson", "favicon", "lang", "liveExamples", "name", "outputDir", "strict"];
 /**
  * Write each baked example's module into `dir` and point its bake at it (#245). Named by a
  * hash of the module, so a page never imports a stale one from a cache, and two examples with

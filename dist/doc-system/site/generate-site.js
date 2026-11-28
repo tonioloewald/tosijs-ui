@@ -14,7 +14,7 @@ import { pageTitle, withoutProjectSuffix } from '../doc-title.js';
 import { highlightHtml } from '../highlight.js';
 import { DOC_SYSTEM_FONTS_URL } from '../doc-fonts.js';
 import { allowedFontUrl } from '../../theme-fonts.js';
-import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, withBase, wikilinkTargets, } from '../routing.js';
+import { aliasProblems, buildSlugMap, pathForSlug, rewriteDocLinks, siteUrl, withBase, wikilinkTargets, } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
 import { continueLinkHtml, continueTarget } from '../continue-link.js';
 import { renderDocMarkdown, } from '../render.js';
@@ -23,6 +23,7 @@ import { pageDescription } from './page-metadata.js';
 import { imageSize } from './image-size.js';
 import { bareNameLinks, deadInPageAnchors, missingWikilinks, misconfigured, } from './build-warnings.js';
 import { existsSync } from 'fs';
+import { scriptJson } from '../script-json.js';
 const escapeAttr = (s) => s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -88,7 +89,7 @@ function linkListHtml(className, links) {
 }
 /** Serialize a JSON-LD object into a safe <script> (escaping `<` prevents breakout). */
 function jsonLdScript(obj) {
-    return `  <script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+    return `  <script type="application/ld+json">${scriptJson(obj)}</script>`;
 }
 /** Image types a share card may be, in the order a page's card is looked for. */
 const CARD_TYPES = ['webp', 'png', 'jpg', 'jpeg'];
@@ -123,12 +124,6 @@ function navTrail(roots, filename) {
 /** Every nav page in reading order. */
 function flattenNav(roots) {
     return roots.flatMap((node) => [node, ...flattenNav(node.children)]);
-}
-/** Absolute URL for an asset path against the site origin (passes through full URLs). */
-function absUrl(baseUrl, pathOrUrl) {
-    if (!pathOrUrl)
-        return '';
-    return /^https?:\/\//.test(pathOrUrl) ? pathOrUrl : baseUrl + pathOrUrl;
 }
 /**
  * Prefix a root-relative path with basePath. No-op for '/', empty, protocol-
@@ -192,7 +187,7 @@ async function pageHtml(doc, config, slugMap, configAttr, wikilinks,
 at = slugMap[doc.filename] ?? '', 
 /** the directory depth its references resolve from: 0 for the `/slug` copy (`slug.html`) */
 depth = pageDepth(at)) {
-    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', assetStamp, docsStamp, localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
+    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', assetStamp, docsStamp, localizedUrl = '/localized-strings.txt', headExtra = '', bakes, } = config;
     // Functional URLs are emitted relative to THIS page's depth so the build is
     // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
     const own = slugMap[doc.filename] ?? '';
@@ -217,9 +212,9 @@ depth = pageDepth(at)) {
     const keywords = Array.isArray(doc.keywords)
         ? doc.keywords.join(', ')
         : doc.keywords || '';
-    const canonical = baseUrl + withBase(basePath, pathForSlug(slugMap[doc.filename]));
+    const canonical = siteUrl(config, pathForSlug(slugMap[doc.filename]));
     const image = pageImage(doc, own, config);
-    const imageAbs = absUrl(baseUrl, withBase(basePath, image));
+    const imageAbs = siteUrl(config, image);
     const imageDims = image.startsWith('/') && !image.startsWith('//') && config.outputDir
         ? imageSize(`${config.outputDir}${image}`)
         : undefined;
@@ -255,7 +250,7 @@ depth = pageDepth(at)) {
     const trail = navTrail(roots, doc.filename);
     const order = flattenNav(roots);
     const position = order.findIndex((n) => n.doc.filename === doc.filename);
-    const pageUrl = (node) => baseUrl + withBase(basePath, pathForSlug(node.slug));
+    const pageUrl = (node) => siteUrl(config, pathForSlug(node.slug));
     const book = config.kind === 'book';
     const prev = book && position > 0 ? order[position - 1] : undefined;
     const next = book && position >= 0 ? order[position + 1] : undefined;
@@ -266,7 +261,7 @@ depth = pageDepth(at)) {
         ? {
             '@type': 'Book',
             name: projectName,
-            url: baseUrl + withBase(basePath, '/'),
+            url: siteUrl(config, '/'),
             // The book's author, not this chapter's.
             ...(config.author
                 ? { author: { '@type': 'Person', name: config.author } }
@@ -275,7 +270,7 @@ depth = pageDepth(at)) {
         : {
             '@type': 'WebSite',
             name: projectName,
-            url: baseUrl + withBase(basePath, '/'),
+            url: siteUrl(config, '/'),
         };
     const jsonLd = baseUrl
         ? jsonLdScript(isHome
@@ -687,8 +682,7 @@ export async function generateSite(config) {
             .filter((doc) => !doc.noindex)
             .map((doc) => {
             const modified = config.modified?.get(doc.path);
-            return `  <url><loc>${escapeText(config.baseUrl +
-                withBase(config.basePath, pathForSlug(slugMap[doc.filename])))}</loc>${modified ? `<lastmod>${escapeText(modified)}</lastmod>` : ''}</url>`;
+            return `  <url><loc>${escapeText(siteUrl(config, pathForSlug(slugMap[doc.filename])))}</loc>${modified ? `<lastmod>${escapeText(modified)}</lastmod>` : ''}</url>`;
         })
             .join('\n');
         await Bun.write(`${outputDir}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
@@ -705,7 +699,7 @@ export async function generateSite(config) {
             const base = robots.trim()
                 ? robots.trim() + '\n'
                 : 'User-agent: *\nAllow: /\n';
-            await Bun.write(robotsPath, `${base}Sitemap: ${config.baseUrl}/sitemap.xml\n`);
+            await Bun.write(robotsPath, `${base}Sitemap: ${siteUrl(config, '/sitemap.xml')}\n`);
         }
     }
     // A site's own 404.html (copied from its static files) wins.
@@ -737,7 +731,7 @@ the note goes with the first navigation, as the content is replaced.
 export function notFoundHtml(homeHtml, slugMap, config) {
     const { projectName = '', basePath } = config;
     const base = withBase(basePath, '/');
-    const slugs = JSON.stringify(Object.values(slugMap).filter((slug) => slug !== '')).replace(/</g, '\\u003c');
+    const slugs = scriptJson(Object.values(slugMap).filter((slug) => slug !== ''));
     const title = projectName
         ? `Page not found — ${projectName}`
         : 'Page not found';

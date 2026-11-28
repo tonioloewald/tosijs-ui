@@ -164,9 +164,12 @@ if (has('check')) {
 
   So this keys on the diff and the annotations rather than on what the release was called.
   */
-  // Named apart from the outer `version` (the --version flag): shadowing it put the CHANGELOG
-  // section lookup above in the temporal dead zone.
-  const pkgVersion = (await Bun.file('package.json').json()).version as string
+  /*
+  Classified against `version`, the one being released: the --version flag when given, else
+  package.json. This read package.json regardless, and the "already tagged" error above tells
+  you to pass --version, so the path it recommends compared a tag with itself, classified the
+  bump as unknown, and let a [break] bullet through a patch (#4373).
+  */
   const changedPaths = since
     ? (await $`git diff --name-only ${since}...HEAD`.nothrow().quiet().text())
         .split('\n')
@@ -174,7 +177,7 @@ if (has('check')) {
     : []
   const concerns = since
     ? bumpConcerns({
-        bump: classifyBump(since, pkgVersion),
+        bump: classifyBump(since, version),
         bullets: total,
         changedPaths,
       })

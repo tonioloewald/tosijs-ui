@@ -153,22 +153,31 @@ import { calendar as calendarIcon } from './icons/calendar.js';
 import { chevronRight as chevronRightIcon } from './icons/chevronRight.js';
 import { popMenu } from './menu.js';
 const { div, span, button } = elements;
-const DAY_MS = 24 * 3600 * 1000;
 const WEEK = [0, 1, 2, 3, 4, 5, 6];
 const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 // Note this is because Safari is super strict about leading zeros
 const padLeft = (value, length = 2, padding = '0') => String(value).padStart(length, padding);
-const dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
+/*
+Every date here is LOCAL. This built `new Date('YYYY-MM-DD')`, which is UTC midnight, then read
+it with the local getters and wrote it back with `toISOString()` (UTC), so anywhere west of UTC
+every cell's number disagreed with its date and clicking "1" selected the 2nd (#4352). Day
+arithmetic is done in calendar days (`new Date(y, m, d + n)`), not in 24-hour steps, which a
+daylight-saving change would knock off midnight.
+*/
+const dateFromYMD = (year, month, date) => new Date(year, month - 1, date);
+/** A local date as `YYYY-MM-DD`, the format of `value`. */
+const ymd = (date) => `${padLeft(date.getFullYear(), 4)}-${padLeft(date.getMonth() + 1)}-${padLeft(date.getDate())}`;
+/** `YYYY-MM-DD` (anything after a `T` is ignored) as local midnight. */
+const parseYMD = (dateString) => {
+    const [year, month, date] = dateString.split('T')[0].split('-').map(Number);
+    return dateFromYMD(year, month || 1, date || 1);
+};
 export class TosiMonth extends withAttributes({
     month: NaN,
     year: NaN,
     weekStart: 0, // Sunday, 1 = Monday
-    minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
-        .toISOString()
-        .split('T')[0],
-    maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
-        .toISOString()
-        .split('T')[0],
+    minDate: ymd(dateFromYMD(new Date().getFullYear() - 100, 1, 1)),
+    maxDate: ymd(dateFromYMD(new Date().getFullYear() + 10, 12, 31)),
     selectable: false,
     multiple: false,
     range: false,
@@ -299,22 +308,24 @@ export class TosiMonth extends withAttributes({
         this.selectedDays.splice(2);
     }
     clickDate = (event) => {
+        if (this.disabled || this.readonly)
+            return;
         const dateString = event.target.getAttribute('title');
         this.selectDate(dateString);
     };
     keyDate = (event) => {
         let stopEvent = false;
         switch (event.code) {
-            case 'Space': {
+            case 'Space':
+            case 'Enter':
+            case 'NumpadEnter': {
+                if (this.disabled || this.readonly)
+                    break;
                 const dateString = event.target.getAttribute('title');
                 this.selectDate(dateString);
                 stopEvent = true;
                 break;
             }
-            case 'Tab':
-                break;
-            default:
-                console.log(event);
         }
         if (stopEvent) {
             event.preventDefault();
@@ -408,7 +419,7 @@ export class TosiMonth extends withAttributes({
         popMenu({
             target: this.parts.jump,
             menuItems: [
-                this.dateMenuItem(new Date().toISOString(), 'This Month'),
+                this.dateMenuItem(ymd(new Date()), 'This Month'),
                 ...(this.selectedDays.length === 0 ? [] : [null]),
                 ...this.selectedDays.map((date) => this.dateMenuItem(date)),
             ],
@@ -442,12 +453,13 @@ export class TosiMonth extends withAttributes({
         div({ part: 'days' }),
     ];
     gotoDate(dateString) {
-        const date = new Date(dateString);
+        const date = parseYMD(dateString);
         this.gotoMonth(date.getFullYear(), date.getMonth() + 1);
     }
     connectedCallback() {
         super.connectedCallback();
-        const date = new Date(this.value.split(',').pop() || Date.now());
+        const last = this.value.split(',').pop();
+        const date = last ? parseYMD(last) : new Date();
         if (isNaN(this.month)) {
             this.month = date.getMonth() + 1;
         }
@@ -461,19 +473,19 @@ export class TosiMonth extends withAttributes({
         const { week, days, jump, month, year, previous, next } = this.parts;
         this.selectedDays = this.value ? this.value.split(',') : [];
         const firstOfMonth = dateFromYMD(this.year, this.month, 1);
-        const weekStart = new Date(firstOfMonth.valueOf() -
-            ((7 + firstOfMonth.getDay() - this.weekStart) % 7) * DAY_MS);
-        const nextMonth = this.month === 12 ? 1 : this.month + 1;
-        const lastOfMonth = new Date(dateFromYMD(this.year + (this.month === 12 ? 1 : 0), nextMonth, 1).valueOf() - DAY_MS);
-        const endDay = new Date(lastOfMonth.valueOf() +
-            ((this.weekStart * 2 + 5 + this.endDay - lastOfMonth.getDay()) % 7) *
-                DAY_MS);
-        const weekDays = WEEK.map((day) => new Date(weekStart.valueOf() + day * DAY_MS).toString().split(' ')[0]);
+        // Days shown before the 1st, to fill the first week.
+        const lead = (7 + firstOfMonth.getDay() - this.weekStart) % 7;
+        // Day 0 of next month is the last of this one (and month 13 is next January).
+        const lastOfMonth = dateFromYMD(this.year, this.month + 1, 0);
+        // Days shown after the last, to fill the last week.
+        const trail = (this.weekStart * 2 + 5 + this.endDay - lastOfMonth.getDay()) % 7;
+        const shown = (n) => dateFromYMD(this.year, this.month, 1 - lead + n);
+        const weekDays = WEEK.map((day) => shown(day).toString().split(' ')[0]);
         this.days = [];
-        const today = new Date().toISOString().split('T')[0];
-        for (let day = weekStart.valueOf(); day <= endDay.valueOf(); day += DAY_MS) {
-            const date = new Date(day);
-            const dateString = date.toISOString().split('T')[0];
+        const today = ymd(new Date());
+        for (let n = 0; n < lead + lastOfMonth.getDate() + trail; n++) {
+            const date = shown(n);
+            const dateString = ymd(date);
             this.days.push({
                 date,
                 selected: false,
@@ -507,7 +519,7 @@ export class TosiMonth extends withAttributes({
             if (day.isToday) {
                 classes.push('today');
             }
-            const dateString = day.date.toISOString().split('T')[0];
+            const dateString = ymd(day.date);
             if (this.checkDay(dateString)) {
                 classes.push('checked');
             }

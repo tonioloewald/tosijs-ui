@@ -516,9 +516,10 @@ export declare const GLOBAL_KEY_MIN_LENGTH = 24;
  */
 export declare const GLOBAL_KEY_SESSION_TTL_MS: number;
 /**
- * The most live sessions one server holds; past it the oldest goes. Only a key holder can mint
- * one: per page load, and per request from a page left open across a restart until its first
- * renewed cookie lands. So this bounds a browser stuck reloading, not an attacker.
+ * The most live sessions one server holds; past it the oldest goes. A global key mints one per
+ * page load (and per request from a page left open across a restart until its first renewed
+ * cookie lands), and so does every link redemption. So this bounds memory, not an attacker: a
+ * link holder who redeems often enough can evict everyone else's session (#4381).
  */
 export declare const MAX_SESSIONS = 1000;
 export interface GlobalKeys {

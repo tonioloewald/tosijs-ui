@@ -80,7 +80,12 @@ export default defineSiteConfig({
 import { buildSite, devServer } from 'tosijs-ui/site'
 import config from '../site.config'
 
-process.argv.includes('--build') ? buildSite(config) : devServer(config)
+if (process.argv.includes('--build')) {
+  // buildSite reports a failed build by returning false: exit 1, or CI sees a pass.
+  if (!(await buildSite(config))) process.exit(1)
+} else {
+  await devServer(config)
+}
 ```
 
 > **If your build does more than `buildSite`** — e.g. you bundle your own
@@ -215,7 +220,7 @@ neither says so:
 ```typescript:static
 import { buildSite, restampSite } from 'tosijs-ui/site'
 
-await buildSite(config)
+if (!(await buildSite(config))) process.exit(1)
 await buildMyDocsBundle() // writes <outputDir>/iife.js
 await restampSite(config) // checks the file that is served, then re-stamps every page
 ```

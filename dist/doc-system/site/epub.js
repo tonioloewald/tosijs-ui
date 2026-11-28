@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { renderDocMarkdown } from '../render.js';
 import { highlightHtml } from '../highlight.js';
-import { buildSlugMap, pathForSlug, resolveParent, slugForPath, withBase, wikilinkTargets, } from '../routing.js';
+import { buildSlugMap, pathForSlug, resolveParent, siteUrl, slugForPath, wikilinkTargets, } from '../routing.js';
 import { buildNavTree } from '../nav-tree.js';
 import { partitionByBook, placeInBook, bookTextOf, DEFAULT_BOOK, } from '../book-target.js';
 import { COVER_MEDIA_TYPES, EPUB_IMAGE_EXIT, coverStem, epubVolumeIdentity, } from './epub-volumes.js';
@@ -920,8 +920,7 @@ export async function buildEpub(config, opts = {}) {
             imagesDescribed = false;
         // The doc's live-site URL, matching generate-site's canonical link: README
         // maps to '/' (not '/index/'), others to '/slug/', with basePath applied.
-        const pageUrl = baseUrl +
-            withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''));
+        const pageUrl = siteUrl(config, pathForSlug(slugMap[doc.filename] ?? ''));
         /*
         Highlight before the XHTML pass. An ePub reader may run no JavaScript at all, so the
         token markup has to be IN the file — a runtime highlighter reaches the book never. This

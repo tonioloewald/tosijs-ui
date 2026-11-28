@@ -53,7 +53,12 @@ import './src/index'
 import { buildSite, devServer } from 'tosijs-ui/site'
 import config from '../site.config'
 
-process.argv.includes('--build') ? buildSite(config) : devServer(config)
+if (process.argv.includes('--build')) {
+  // buildSite reports a failed build by returning false: exit 1, or CI sees a pass.
+  if (!(await buildSite(config))) process.exit(1)
+} else {
+  await devServer(config)
+}
 ```
 
 Then `bun bin/site.ts` to develop and `bun bin/site.ts --build` to build. The dev server wants

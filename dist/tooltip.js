@@ -43,6 +43,7 @@ import { marked } from 'marked';
 import { popFloat } from './pop-float.js';
 import { localize } from './localize.js';
 import { chainRadius } from './theme-chain.js';
+import { setSanitizedHtml } from './sanitize-html.js';
 const { span } = elements;
 let tooltipFloat = null;
 let showTimeout = null;
@@ -152,7 +153,11 @@ function renderText(text, useLocalize) {
         text = localize(text);
     }
     const el = span({ class: TOOLTIP_CLASS });
-    el.innerHTML = marked.parseInline(text);
+    /*
+    A tooltip is usually a converted `title`, and a title often holds text the page did not write
+    (a user or file name), so the markdown it renders is sanitized (#4342).
+    */
+    setSanitizedHtml(el, marked.parseInline(text));
     return el;
 }
 function showTooltip(target, text, useLocalize) {

@@ -66,8 +66,8 @@ export declare class TosiDialog extends Component<DialogParts> {
     of that when `dialogWillClose` is async.
     */
     close: (reason?: string) => boolean | Promise<boolean>;
-    onCancel: (event: Event) => void;
-    onNativeClose: () => void;
+    handleCancel: (event: Event) => void;
+    handleNativeClose: () => void;
     ok: () => void;
     content: () => HTMLDialogElement;
 }

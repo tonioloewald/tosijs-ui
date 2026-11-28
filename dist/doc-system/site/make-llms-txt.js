@@ -1,7 +1,7 @@
 import { withoutProjectSuffix } from '../doc-title.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { buildSlugMap, pathForSlug, withBase } from '../routing.js';
+import { buildSlugMap, pathForSlug, siteUrl } from '../routing.js';
 import { buildNavTree } from '../nav-tree.js';
 import { flatten, stripDocMeta } from '../book-html.js';
 import { liveFenceLanguages } from './build-warnings.js';
@@ -42,9 +42,8 @@ function inNavOrder(corpus) {
  */
 export function entriesFromCorpus(corpus, meta) {
     const slugMap = buildSlugMap(corpus);
-    const base = (meta.baseUrl ?? '').replace(/\/$/, '');
     return inNavOrder(corpus).map(({ doc, section }) => {
-        const link = base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename]));
+        const link = siteUrl(meta, pathForSlug(slugMap[doc.filename]));
         return {
             // The <title> a search result shows names the page better than a terse nav label.
             // …without the project suffix every headTitle repeats (#3867).
@@ -146,7 +145,7 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
     const description = meta.description ?? pkg.description ?? '';
     const links = [];
     if (meta.baseUrl)
-        links.push(`- Docs: ${meta.baseUrl}`);
+        links.push(`- Docs: ${siteUrl(meta, '/')}`);
     if (meta.projectLinks?.github)
         links.push(`- Source: ${meta.projectLinks.github}`);
     const npm = meta.projectLinks?.npm ??
@@ -190,13 +189,12 @@ export function generateLlmsFullTxt(outputPath, meta, corpus) {
     const name = meta.name ?? pkg.name ?? '';
     const description = meta.description ?? pkg.description ?? '';
     const slugMap = buildSlugMap(corpus);
-    const base = (meta.baseUrl ?? '').replace(/\/$/, '');
     const parts = [
         `# ${name}` + (description ? `\n\n> ${description}` : '') + '\n',
     ];
     for (const { doc } of inNavOrder(corpus)) {
         const text = stripDocMeta(doc.text ?? '').trim();
-        const url = base + withBase(meta.basePath, pathForSlug(slugMap[doc.filename]));
+        const url = siteUrl(meta, pathForSlug(slugMap[doc.filename]));
         parts.push((/^#\s/m.test(text) ? '' : `# ${doc.title}\n\n`) +
             text +
             `\n\nSource: ${url}\n`);
@@ -204,8 +202,7 @@ export function generateLlmsFullTxt(outputPath, meta, corpus) {
     fs.writeFileSync(outputPath, parts.join('\n---\n\n'), 'utf8');
 }
 function fullTxtUrl(meta) {
-    return ((meta.baseUrl ?? '').replace(/\/$/, '') +
-        withBase(meta.basePath, '/llms-full.txt'));
+    return siteUrl(meta, '/llms-full.txt');
 }
 /** package.json's fallbacks; a doc site isn't guaranteed one, so degrade, never abort. */
 function readPackage() {

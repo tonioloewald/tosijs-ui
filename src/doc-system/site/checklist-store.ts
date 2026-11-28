@@ -113,6 +113,16 @@ or plant answers. So: made 0700, and refused unless it is a real folder this use
 */
 function ensureStore(dir: string): void {
   mkdirSync(dir, { recursive: true, mode: 0o700 })
+  assertOwnedStore(dir)
+}
+
+/*
+Checked BEFORE anything in the folder is deleted, never after. `postChecklist` used to delete the
+old schematics and answers first and reach the check only when it wrote the new list, and
+`clearChecklist` never checked at all, so through a planted link both deleted files in another
+folder (#4381).
+*/
+function assertOwnedStore(dir: string): void {
   if (process.platform === 'win32') return
   const stat = lstatSync(dir)
   if (!stat.isDirectory() || stat.uid !== process.getuid?.()) {
@@ -265,6 +275,7 @@ export function normalizeChecklist(
 
 /** Post a list. It replaces the current one, and the old answers and schematics go with it. */
 export function postChecklist(dir: string, list: Checklist): void {
+  ensureStore(dir)
   rmSync(path.join(dir, SCHEMATICS), { recursive: true, force: true })
   rmSync(path.join(dir, ANSWERS_FILE), { force: true })
   writeAtomic(dir, LIST_FILE, JSON.stringify(list, null, 2) + '\n')
@@ -277,6 +288,7 @@ export function postChecklist(dir: string, list: Checklist): void {
  */
 export function clearChecklist(dir: string): void {
   if (!existsSync(dir)) return
+  assertOwnedStore(dir)
   rmSync(path.join(dir, SCHEMATICS), { recursive: true, force: true })
   for (const name of readdirSync(dir)) {
     if (

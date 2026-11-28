@@ -91,7 +91,7 @@ them) and the controls stay where they are. Selecting a tab scrolls it into view
 Adding the `data-close` attribute to a tab will make it closeable.
 
 When a tab is closed, the `<tosi-tabs>` element's `handleCloseTab: (tabBody: Element) => boolean | undefined | void`
-will be called (the old `onCloseTab` name still works but is deprecated). If you set this and return `false`, the tab will
+will be called (it was `onCloseTab` until 1.20.0). If you set this and return `false`, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).
 
 ## Custom Tab Content

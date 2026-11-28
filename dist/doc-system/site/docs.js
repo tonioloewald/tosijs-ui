@@ -52,6 +52,8 @@ import { pinnedSort } from '../nav-tree.js';
 import { buildSlugMap } from '../routing.js';
 import { withoutHidden } from '../book-target.js';
 import { assembleCorpus, isSingleSourceDirective } from './single-source.js';
+import { jsonCommentText } from '../json-comment.js';
+import { marked } from 'marked';
 /**
  * Directories a doc site should not publish, excluded by default (tosijs-ui#153).
  *
@@ -184,40 +186,45 @@ export function parseFrontmatter(content) {
         return { data: {}, body: content }; // a bare `---`, not frontmatter
     return { data, body: content.slice(m[0].length).replace(/^\r?\n+/, '') };
 }
-function metadata(content, filePath) {
-    // Ignore metadata-style comments INSIDE /*# ... */ doc blocks — those are
-    // documentation examples, not real directives. Only line-starting blocks count
-    // as docs (see findMarkdownFiles), so strip exactly those.
+/*
+A markdown doc's metadata block: the first top-level JSON comment that is not a single-sourcing
+directive (an inset or an `only` is spelled the same way, and a doc that opened with one was
+otherwise published carrying `inset` as a metadata field). Found with marked's lexer, so a block
+that is only being SHOWN, in a fence or a blockquote, is never the page's own (#156, #4344).
+`/*{ … }*\/` on a line of its own is accepted too, as it always was.
+*/
+function markdownMetadataJson(content) {
+    for (const t of marked.lexer(content)) {
+        const json = jsonCommentText(t) ??
+            (t.type === 'paragraph'
+                ? /^\s*\/\*(\{[\s\S]*\})\*\/\s*$/.exec(t.raw)?.[1]
+                : undefined);
+        if (json && !isSingleSourceDirective(json))
+            return json;
+    }
+    return undefined;
+}
+/*
+A source file's metadata block sits in its code, outside the `/*#` doc blocks (a block inside
+one is a documentation example, not a directive). It must start a line, and may wrap.
+*/
+function sourceMetadataJson(content) {
     const scannable = content
         .replace(/^[ \t]*\/\*#[\s\S]*?\*\//gm, '')
-        /*
-        Strip FENCED CODE too (#156).
-    
-        A document that teaches the metadata format shows the format, and the matcher read the
-        illustration as the document's own directive. tjs-lang's `CLAUDE.md` explains how to
-        author a playground example, shows `<!--{"section":"tjs","type":"example",…}-->` on line
-        815 as prose, and was published classified by it. Nothing failed — they found it diffing
-        the new corpus against the old one field by field.
-    
-        Same reasoning as the `/*#` strip above: an example of a directive is not a directive.
-        */
         .replace(/^[ \t]*(?:```|~~~)[^\n]*\n[\s\S]*?^[ \t]*(?:```|~~~)[ \t]*$/gm, '');
-    /*
-    And it must START A LINE. A metadata block is a standalone directive, so an inline mention
-    in a sentence is prose — exactly the rule `/*#` doc blocks already follow.
-    */
-    /*
-    The first such block that is not a single-sourcing directive. An inset or an `only` is
-    spelled the same way, and a doc that opens with one and has no metadata of its own was
-    otherwise published carrying `inset` as a metadata field.
-    */
-    const source = [
-        ...scannable.matchAll(/^[ \t]*<!--(\{.*\})-->|^[ \t]*\/\*(\{.*\})\*\//gm),
+    const found = [
+        ...scannable.matchAll(/^[ \t]*<!--\s*(\{[\s\S]*?\})\s*-->|^[ \t]*\/\*(\{[\s\S]*?\})\*\//gm),
     ].find((m) => !isSingleSourceDirective(m[1] || m[2]));
+    return found ? found[1] || found[2] : undefined;
+}
+function metadata(content, filePath) {
+    const source = path.extname(filePath).toLowerCase() === '.md'
+        ? markdownMetadataJson(content)
+        : sourceMetadataJson(content);
     let data = {};
     if (source) {
         try {
-            data = JSON.parse(source[1] || source[2]);
+            data = JSON.parse(source);
         }
         catch {
             console.error('bad metadata in doc', filePath);

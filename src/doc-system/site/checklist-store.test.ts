@@ -291,6 +291,29 @@ test.skipIf(process.platform === 'win32')(
   }
 )
 
+/*
+#4381: the test above plants an EMPTY target, so it could not see that post deleted the old
+answers and schematics before reaching the check, and that clear never checked at all.
+*/
+test.skipIf(process.platform === 'win32')(
+  'a planted link loses its target nothing, on post or on clear (#4381)',
+  () => {
+    const elsewhere = path.join(dir, 'victim')
+    mkdirSync(path.join(elsewhere, 'schematics'), { recursive: true })
+    writeFileSync(path.join(elsewhere, 'answers.json'), '{"keep":true}')
+    writeFileSync(path.join(elsewhere, 'list.json'), '{"keep":true}')
+    writeFileSync(path.join(elsewhere, 'schematics', 'a.svg'), '<svg/>')
+    const planted = path.join(dir, 'planted-full')
+    symlinkSync(elsewhere, planted)
+    const list = normalizeChecklist({ title: 't', items: ['a'] }) as Checklist
+    expect(() => postChecklist(planted, list)).toThrow('not a folder you own')
+    expect(() => clearChecklist(planted)).toThrow('not a folder you own')
+    expect(existsSync(path.join(elsewhere, 'answers.json'))).toBe(true)
+    expect(existsSync(path.join(elsewhere, 'list.json'))).toBe(true)
+    expect(existsSync(path.join(elsewhere, 'schematics', 'a.svg'))).toBe(true)
+  }
+)
+
 test('what a reader sends cannot forge a report line or reach the terminal raw', () => {
   const list = posted({ title: 't', items: ['a', 'b'] })
   const save = (body: object) =>

@@ -92,7 +92,7 @@ them) and the controls stay where they are. Selecting a tab scrolls it into view
 Adding the `data-close` attribute to a tab will make it closeable.
 
 When a tab is closed, the `<tosi-tabs>` element's `handleCloseTab: (tabBody: Element) => boolean | undefined | void`
-will be called (the old `onCloseTab` name still works but is deprecated). If you set this and return `false`, the tab will
+will be called (it was `onCloseTab` until 1.20.0). If you set this and return `false`, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).
 
 ## Custom Tab Content
@@ -268,19 +268,6 @@ export class TosiTabs extends withAttributes({
         },
     };
     handleCloseTab = null;
-    /**
-     * @deprecated Use `handleCloseTab`. The `on<Event>` prefix is reserved for the
-     * elements-factory event-handler sugar (`tosiTabs({ onCloseTab })` would attach a
-     * dead `closetab` listener instead of setting the callback), and tosijs warns when a
-     * component defines such a property. This alias keeps existing `el.onCloseTab = fn`
-     * code working; migrate to `handleCloseTab`.
-     */
-    get onCloseTab() {
-        return this.handleCloseTab;
-    }
-    set onCloseTab(handler) {
-        this.handleCloseTab = handler;
-    }
     content = [
         div({ part: 'tabpanel' }, div({ part: 'tabrow' }, div({ class: 'tabs', part: 'tabs', role: 'tablist' }), div({ class: 'elastic' }), slot({ name: 'after-tabs' })), div({ class: 'border' }, div({ class: 'selected', part: 'selected' }))),
         slot(),
