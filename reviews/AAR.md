@@ -1239,3 +1239,28 @@ gap, recorded rather than hidden.
   had passed. Repeat before calling anything a flake.
 - **New check:** `test-consumer` imports the new subpath under node, which is the no-DOM
   claim, tested where an adopter would hit it.
+
+## 1.20.0 (2026-11-28) — the lean review's defects, three breaks, and the `xin*` countdown
+
+- **The lean review was the better gate.** A whole-library read (eight area reviewers, one
+  merge pass; `reviews/lean-plan-2026-11.md`) found 41 live defects, more than any release
+  review here, and "line up the copies" found most of them. Eleven shipped in 1.20.0, each
+  with a test that fails on the old code. The pre-release review then found two blockers and
+  four majors, all in 1.20.0's own new code, none in the fixes for the old defects.
+- **The deprecation wrapper was the riskiest new code.** Warning Proxies for the 33 `xin*`
+  names broke two things no lane saw: subclassing an alias built the base element, and the
+  library read its own `XinLocalized`, so a localized select warned in apps that never wrote
+  the name. A warning that fires once per process makes an in-process test pass vacuously, so
+  the guard runs in a child process.
+- **A fix's own scanner missed a case.** Save to source moved from a regex to marked's lexer,
+  and still split examples the page groups, because the page renders a footnote definition as
+  nothing. It now asks the page's own renderer what renders nothing, instead of keeping a
+  list.
+- **Closed-set tests caught what review missed.** Scanning every site module for request-body
+  reads found a `request.clone().json()` the capped-reads fix had missed, and scanning for raw
+  `JSON.stringify` in a `<script>` found four more. Per-line scans would have missed the first,
+  which split its chain across lines.
+- **Proportionality:** the owner judged the tooltip and drop innerHTML fixes worth a
+  CHANGELOG note, not an advisory; a draft GHSA was closed unpublished.
+- **Lanes:** unit 2484; Playwright 1228 passed, 191 declared engine skips; haltija 99 over 27
+  pages; consumer 76, including node refusing `tosijs-ui/doc-system/site/*`. CI green.
