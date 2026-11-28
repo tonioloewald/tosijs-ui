@@ -465,6 +465,47 @@ export function renderDocMarkdown(
 }
 
 /**
+ * A doc's top-level tokens as the page's renderer reads them, with its extensions (footnotes,
+ * wikilinks). `lexCodeTokens` counts examples with this: plain `marked.lexer` read a footnote
+ * definition as a paragraph, where the page renders nothing for it and so groups the fences on
+ * either side into one example, and save-to-source wrote an edit into the wrong one (1.20.0
+ * review, M2).
+ */
+export function docTokens(text: string): any[] {
+  return [...docMarked.lexer(text)]
+}
+
+/**
+ * Does this token put no element on the page? Blank lines, a link or footnote definition, an
+ * HTML comment: anything that renders to nothing but comments. Decided by rendering it with the
+ * page's renderer, so an extension added later cannot drift from a hand-kept list.
+ */
+const ELEMENT_TOKENS = new Set([
+  'code',
+  'paragraph',
+  'heading',
+  'list',
+  'blockquote',
+  'table',
+  'hr',
+  'text',
+])
+export function rendersNoElement(token: any): boolean {
+  if (token.type === 'space' || token.type === 'def') return true
+  // The built-in block types that always render an element; only HTML and extensions ask.
+  if (ELEMENT_TOKENS.has(token.type)) return false
+  try {
+    return (
+      (docMarked.parser([token] as any) as string)
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .trim() === ''
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
  * A doc's tokens as the accessibility mode renders them, for the build's report: the same
  * lexer and the same rewrites as `renderDocMarkdown`, so the report and the page cannot
  * disagree about what is a figure or which heading is the `<h1>`.

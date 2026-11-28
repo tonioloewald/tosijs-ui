@@ -211,7 +211,7 @@ import { elements, vars, varDefault, throttle, withAttributes, } from 'tosijs';
 import { icons } from './icon-core.js';
 import { chevronDown as chevronDownIcon } from './icons/chevronDown.js';
 import { popMenu, removeLastMenu, resolveMenuItems, findShortcutAction, } from './menu.js';
-import { localize, XinLocalized } from './localize.js';
+import { localize, TosiLocalized } from './localize.js';
 import { splitCaptionIcon } from './caption-icon.js';
 import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js';
 const { button, div, span, input } = elements;
@@ -624,7 +624,7 @@ export class TosiSelect extends withAttributes({
             this._options = TosiSelect.parseOptionsString(optionsAttr);
         }
         if (this.localized) {
-            XinLocalized.allInstances.add(this);
+            TosiLocalized.allInstances.add(this);
         }
     }
     disconnectedCallback() {
@@ -633,7 +633,7 @@ export class TosiSelect extends withAttributes({
         // told it is one.
         document.removeEventListener('keydown', this.handleShortcut, true);
         if (this.localized) {
-            XinLocalized.allInstances.delete(this);
+            TosiLocalized.allInstances.delete(this);
         }
     }
     render() {

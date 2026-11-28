@@ -1,5 +1,5 @@
 /*
-THE way to enumerate the code blocks in a doc, build and client alike: marked's own lexer.
+THE way to enumerate the code blocks in a doc, build and client alike: the page's own lexer.
 
 `check-examples` had this function; `build-warnings` then grew a hand-written line scanner for
 the same job, and the 1.16.7 re-review found the scanner disagreeing with marked on CRLF files,
@@ -8,12 +8,8 @@ parser the pages are rendered with, so nothing here scans: every caller asks mar
 doc-browser's test runner asks here too (`hasTestBlock`), and so does save-to-source, which
 had the last regex scanner and wrote edits into the wrong example with it (#4343).
 */
-import { marked } from 'marked';
 import { parseFenceInfo } from './example-policy.js';
-// Tokens that render no element, so they don't separate two blocks on the page.
-const rendersNoElement = (t) => t.type === 'space' ||
-    t.type === 'def' ||
-    (t.type === 'html' && /^\s*<!--[\s\S]*?-->\s*$/.test(t.raw));
+import { docTokens, rendersNoElement } from './render.js';
 /** Every code block in `text`, in document order, with its place. */
 export function lexCodeTokens(text) {
     const out = [];
@@ -36,7 +32,8 @@ export function lexCodeTokens(text) {
                     cursor = found + t.raw.length;
                 }
             }
-            if (rendersNoElement(t))
+            // After a code block, a token that renders nothing keeps the next one beside it.
+            if (followsCode && t.type !== 'code' && rendersNoElement(t))
                 continue;
             if (t.type === 'code') {
                 /*
@@ -65,7 +62,7 @@ export function lexCodeTokens(text) {
                 walk(t.items, null); // list items
         }
     };
-    walk(marked.lexer(lexed), 0);
+    walk(docTokens(lexed), 0);
     return out;
 }
 /*

@@ -82,7 +82,7 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
 - [css value](https://ui.tosijs.net/css-value/index.md): <tosi-css-value> edits a CSS value as what it is: a colour, another variable, a mix, a contrast colour, a scaled length or an expression, as live CSS.
 - [drag & drop](https://ui.tosijs.net/drag-and-drop/index.md): Make HTML5 drag and drop usable: one init() call highlights compatible drop zones as a drag starts, including zones added mid-drag.
 - [hash-state](https://ui.tosijs.net/hash-state/index.md): Key-value state in the page's URL hash: shareable, bookmarkable, and back/forward work without you writing any of it.
-- [live-theme](https://ui.tosijs.net/live-theme/index.md): The liveTheme observable: three colours and a dark flag applied live, plus a CSS canary that checks the whole styling chain in a real browser.
+- [live-theme](https://ui.tosijs.net/live-theme/index.md): Deprecated: liveTheme and its helpers go in 1.21.0; use applyTheme(createTheme(colors)). Also a CSS canary that checks the whole styling chain in a real browser.
 - [localize](https://ui.tosijs.net/localize/index.md): Localize an interface: localize() for strings, <tosi-localized> for markup, and <tosi-locale-picker> so readers can choose the language.
 - [makeSorter](https://ui.tosijs.net/make-sorter/index.md): Build an array sort callback from a function that returns the keys to sort by, with a direction per key, so a multi-key sort is one line.
 - [naturalCompare](https://ui.tosijs.net/natural-compare/index.md): Comparing values the way a reader expects, for sorting tables, navs and lists.

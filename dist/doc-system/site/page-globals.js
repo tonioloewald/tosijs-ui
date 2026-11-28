@@ -35,7 +35,7 @@ export function pageGlobalsHead(config) {
             : '',
         // #246: which tabs an example's code panel shows
         config.exampleTabs
-            ? `<script>globalThis.__TOSI_EXAMPLE_TABS=${JSON.stringify(config.exampleTabs)}</script>`
+            ? `<script>globalThis.__TOSI_EXAMPLE_TABS=${scriptJson(config.exampleTabs)}</script>`
             : '',
         // #252: the view examples open in
         config.exampleView && config.exampleView !== 'preview'

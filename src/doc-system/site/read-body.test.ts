@@ -61,3 +61,27 @@ describe('readBodyCapped (#4379)', () => {
     })
   })
 })
+
+/*
+The closed set (#4379, and the 1.20.0 review, which found a `request.clone().json()` the first
+pass missed): nothing in the site code reads a request body except through read-body.ts.
+*/
+test('no site module reads a request body except through read-body.ts', async () => {
+  const { Glob } = await import('bun')
+  const { readFileSync } = await import('fs')
+  const offenders: string[] = []
+  for (const file of new Glob('src/doc-system/site/*.ts').scanSync({
+    cwd: process.cwd(),
+  })) {
+    if (file.endsWith('.test.ts') || file.endsWith('/read-body.ts')) continue
+    // Over the whole file, so a chain split across lines (`request\n.clone()\n.json()`) counts.
+    const source = readFileSync(file, 'utf8')
+    for (const m of source.matchAll(
+      /\b(request|req)\s*\.\s*(json|text|arrayBuffer|formData|blob|bytes|clone|body)\b/g
+    )) {
+      const line = source.slice(0, m.index).split('\n').length
+      offenders.push(`${file}:${line}: ${m[0].replace(/\s+/g, '')}`)
+    }
+  }
+  expect(offenders).toEqual([])
+})

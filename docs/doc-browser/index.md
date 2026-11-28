@@ -36,6 +36,8 @@ import docs from './docs.json'
 
 const browser = createDocBrowser({
   docs,
+  // This browser IS the page, so it owns the URL and runs the doc tests (see `routing` below).
+  routing: 'query',
   context: { mylib },
   projectName: 'My Project',
   projectLinks: {
@@ -88,12 +90,20 @@ interface DocBrowserOptions {
 }
 ```
 
-`routing` picks how pages map to URLs. `'memory'`, the default, never touches the page's URL
-or history, which is what a browser embedded in another page needs: drive it with
-`initialRoute`, `onRouteChange` and the element's `navigate(slug)` method. `'path'` uses
-clean `/slug/` URLs, as the static site does. `'query'` links pages as `?filename` and owns
-the page's URL; it was the default until 1.20.0, so a page that relied on that passes
-`routing: 'query'`.
+`routing` picks how pages map to URLs, and whether the browser owns the page.
+
+- **`'memory'`, the default since 1.20.0,** is for a browser embedded in someone else's page.
+  It leaves everything that belongs to the page alone: it never reads or writes the URL or
+  history (so back and forward do nothing), sets no `window.__docTestResults`, starts no
+  background test runner, puts no `role="main"` on its content, and never adopts pre-rendered
+  content or sets a host's layout. Drive it with `initialRoute`, `onRouteChange` and the
+  element's `navigate(slug)` method.
+- **`'query'`** links pages as `?filename` and owns the page: its URL, back and forward, the
+  test runner and `window.__docTestResults`. It was the default until 1.20.0. **A whole-page
+  testbed, like the example above, passes `routing: 'query'`**, and so does anything whose CI
+  awaits `window.__docTestResults`, which a memory-routed browser never sets.
+- **`'path'`** owns the page the same way with clean `/slug/` URLs, as the static site does;
+  it needs a real page at each path.
 
 The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that owns that key,
 or embeds more than one browser, passes `searchShortcut: ''` (or another key in

@@ -61,7 +61,7 @@ export function pageGlobalsHead(config: PageGlobalsConfig): string {
       : '',
     // #246: which tabs an example's code panel shows
     config.exampleTabs
-      ? `<script>globalThis.__TOSI_EXAMPLE_TABS=${JSON.stringify(
+      ? `<script>globalThis.__TOSI_EXAMPLE_TABS=${scriptJson(
           config.exampleTabs
         )}</script>`
       : '',

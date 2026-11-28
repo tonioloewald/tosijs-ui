@@ -118,6 +118,7 @@ import {
   tjsEditorLeakedAsExternal,
   classicScriptSyntaxErrorInChild,
 } from './bundle-guard.js'
+import { scriptJson } from '../script-json.js'
 
 declare global {
   var Bun: any
@@ -1718,7 +1719,7 @@ export async function buildSite(
         const bp = config.basePath
         const base =
           !bp || bp === '/' ? '/tjs/' : bp.replace(/\/$/, '') + '/tjs/'
-        tjsHead = `<script>globalThis.__TJS_LOCAL_BASE=${JSON.stringify(
+        tjsHead = `<script>globalThis.__TJS_LOCAL_BASE=${scriptJson(
           base
         )}</script>`
         console.log(`tjs-lang bundles served same-origin at ${base}`)
@@ -1789,7 +1790,7 @@ export async function buildSite(
           if (resolver.defaultCdn) clientConfig.defaultCdn = resolver.defaultCdn
           if (resolver.esmShPackages)
             clientConfig.esmShPackages = resolver.esmShPackages
-          importResolverHead = `<script>globalThis.__TOSI_IMPORT_RESOLVER=${JSON.stringify(
+          importResolverHead = `<script>globalThis.__TOSI_IMPORT_RESOLVER=${scriptJson(
             clientConfig
           )}</script>`
           console.log(

@@ -486,4 +486,7 @@ test('Hide Column is enabled on inferred and explicitly visible columns (#4353)'
   expect(hide({ prop: 'x', width: 10 }).enabled()).toBe(true)
   hide(inferred).action()
   expect(inferred.visible).toBe(false)
+  // the last shown column cannot be hidden: its header is where Show Column lives
+  const last = table.columns[1]
+  expect(hide(last).enabled()).toBe(false)
 })

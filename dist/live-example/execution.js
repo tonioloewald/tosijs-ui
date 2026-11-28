@@ -1,5 +1,6 @@
 import { elements } from 'tosijs';
 import { describeError, diagnoseConstruction, firstUserStackFrame, sourceLineAt, EXAMPLE_SOURCE_URL, } from './error-location.js';
+import { isDeprecatedAlias } from '../deprecated-alias.js';
 import { rewriteImports, assertContextProvided, AsyncFunction, contextParamNames, contextVarName, } from './code-transform.js';
 /*
 Source of the example currently being run, so `describeError` can lift the offending line out
@@ -40,6 +41,9 @@ export function registerComponentsInIframe(iframeWindow, context) {
     for (const lib of Object.values(context)) {
         if (lib && typeof lib === 'object') {
             for (const creator of Object.values(lib)) {
+                // A deprecated alias names the same element as its survivor, and reading it warns.
+                if (isDeprecatedAlias(creator))
+                    continue;
                 if (typeof creator === 'function' && 'tagName' in creator) {
                     register(creator.tagName);
                 }

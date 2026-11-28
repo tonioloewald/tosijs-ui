@@ -229,7 +229,7 @@ import {
   resolveMenuItems,
   findShortcutAction,
 } from './menu.js'
-import { localize, XinLocalized } from './localize.js'
+import { localize, TosiLocalized } from './localize.js'
 import { splitCaptionIcon } from './caption-icon.js'
 import { deprecatedClass, deprecatedCreator } from './deprecated-alias.js'
 
@@ -714,7 +714,7 @@ export class TosiSelect extends withAttributes({
     }
 
     if (this.localized) {
-      XinLocalized.allInstances.add(this)
+      TosiLocalized.allInstances.add(this)
     }
   }
 
@@ -725,7 +725,7 @@ export class TosiSelect extends withAttributes({
     document.removeEventListener('keydown', this.handleShortcut, true)
 
     if (this.localized) {
-      XinLocalized.allInstances.delete(this)
+      TosiLocalized.allInstances.delete(this)
     }
   }
 

@@ -79,3 +79,24 @@ describe('scriptJson (#4342)', () => {
     expect(JSON.parse(json)).toEqual(value)
   })
 })
+
+/*
+The closed set for scriptJson: no source builds a `<script>` around raw JSON.stringify. The
+build-status snippet did, and an error quoting `</script>` broke every page while the build was
+red (#4342); the 1.20.0 review found three more raw embeds.
+*/
+test('no source embeds JSON.stringify output in a <script> directly (#4342)', async () => {
+  const { Glob } = await import('bun')
+  const { readFileSync } = await import('fs')
+  const offenders: string[] = []
+  for (const file of new Glob('src/**/*.ts').scanSync({ cwd: process.cwd() })) {
+    if (file.endsWith('.test.ts')) continue
+    const source = readFileSync(file, 'utf8')
+    for (const m of source.matchAll(
+      /<script[^>`]*>[^`]{0,120}?\$\{\s*JSON\.stringify\(/g
+    )) {
+      offenders.push(`${file}:${source.slice(0, m.index).split('\n').length}`)
+    }
+  }
+  expect(offenders).toEqual([])
+})

@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=3a2f71558140" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=05f9c4a688d6" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>doc-browser — tosijs-ui</title>
   <meta name="description" content="createDocBrowser() renders a documentation corpus as a searchable browser with live, self-testing examples: a lighter alternative to Storybook." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="doc-browser — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"doc-browser","description":"createDocBrowser() renders a documentation corpus as a searchable browser with live, self-testing examples: a lighter alternative to Storybook.","url":"https://ui.tosijs.net/doc-browser/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-28T10:53:25+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"doc-browser","description":"createDocBrowser() renders a documentation corpus as a searchable browser with live, self-testing examples: a lighter alternative to Storybook.","url":"https://ui.tosijs.net/doc-browser/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-28T09:34:08.140Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation System","item":"https://ui.tosijs.net/documentation-system/"},{"@type":"ListItem","position":2,"name":"doc-browser","item":"https://ui.tosijs.net/doc-browser/"}]}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e7d8ad2c82ff" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=bd362f8cfed2" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="../localized-strings.txt">
   <article class="doc-content" data-doc="doc-browser.ts">
 <h1 id="doc-browser">doc-browser</h1>
 <p><code>createDocBrowser()</code> renders a documentation corpus as a browsable, searchable testbed with
@@ -77,6 +77,8 @@ metadata and which code fences run are described under
 
 <span class="token keyword">const</span> browser <span class="token operator">=</span> <span class="token function">createDocBrowser</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
   docs<span class="token punctuation">,</span>
+  <span class="token comment">// This browser IS the page, so it owns the URL and runs the doc tests (see `routing` below).</span>
+  routing<span class="token operator">:</span> <span class="token string">'query'</span><span class="token punctuation">,</span>
   context<span class="token operator">:</span> <span class="token punctuation">{</span> mylib <span class="token punctuation">}</span><span class="token punctuation">,</span>
   projectName<span class="token operator">:</span> <span class="token string">'My Project'</span><span class="token punctuation">,</span>
   projectLinks<span class="token operator">:</span> <span class="token punctuation">{</span>
@@ -123,12 +125,21 @@ my-component {
   contentElement<span class="token operator">?</span><span class="token operator">:</span> HTMLElement <span class="token comment">// adopt this element as the content area</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<p><code>routing</code> picks how pages map to URLs. <code>&#39;memory&#39;</code>, the default, never touches the page&#39;s URL
-or history, which is what a browser embedded in another page needs: drive it with
-<code>initialRoute</code>, <code>onRouteChange</code> and the element&#39;s <code>navigate(slug)</code> method. <code>&#39;path&#39;</code> uses
-clean <code>/slug/</code> URLs, as the static site does. <code>&#39;query&#39;</code> links pages as <code>?filename</code> and owns
-the page&#39;s URL; it was the default until 1.20.0, so a page that relied on that passes
-<code>routing: &#39;query&#39;</code>.</p>
+<p><code>routing</code> picks how pages map to URLs, and whether the browser owns the page.</p>
+<ul>
+<li><strong><code>&#39;memory&#39;</code>, the default since 1.20.0,</strong> is for a browser embedded in someone else&#39;s page.
+It leaves everything that belongs to the page alone: it never reads or writes the URL or
+history (so back and forward do nothing), sets no <code>window.__docTestResults</code>, starts no
+background test runner, puts no <code>role=&quot;main&quot;</code> on its content, and never adopts pre-rendered
+content or sets a host&#39;s layout. Drive it with <code>initialRoute</code>, <code>onRouteChange</code> and the
+element&#39;s <code>navigate(slug)</code> method.</li>
+<li><strong><code>&#39;query&#39;</code></strong> links pages as <code>?filename</code> and owns the page: its URL, back and forward, the
+test runner and <code>window.__docTestResults</code>. It was the default until 1.20.0. <strong>A whole-page
+testbed, like the example above, passes <code>routing: &#39;query&#39;</code></strong>, and so does anything whose CI
+awaits <code>window.__docTestResults</code>, which a memory-routed browser never sets.</li>
+<li><strong><code>&#39;path&#39;</code></strong> owns the page the same way with clean <code>/slug/</code> URLs, as the static site does;
+it needs a real page at each path.</li>
+</ul>
 <p>The search opens on Cmd-K (Ctrl-K off a Mac) anywhere on the page. A host that owns that key,
 or embeds more than one browser, passes <code>searchShortcut: &#39;&#39;</code> (or another key in
 <code>&lt;tosi-palette&gt;</code>&#39;s <code>shortcut</code> form).</p>
@@ -240,6 +251,6 @@ or embeds more than one browser, passes <code>searchShortcut: &#39;&#39;</code> 
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-fmbwgecy.js"></script>
+  <script type="module" src="../hydrate-p7ybe63t.js"></script>
 </body>
 </html>

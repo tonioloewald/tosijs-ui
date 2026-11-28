@@ -16,8 +16,10 @@
 
 Copyright ©2023-2026 Tonio Loewald
 
-> **Upgrading from an older version?** `<tosi-code>` changed editors in 1.7.0, and
-> 1.3.0 renamed everything from `xinjs-ui`. Both are covered in
+> **Upgrading from an older version?** 1.20.0 renames `<tosi-crud>`'s `remove()` to
+> `deleteRecord()`, makes `createDocBrowser()` default to `routing: 'memory'`, and starts the
+> countdown on every `xin*` name (they warn now; 1.21.0 removes them). `<tosi-code>` changed
+> editors in 1.7.0, and 1.3.0 renamed everything from `xinjs-ui`. All are covered in
 > [Migrating from older versions](https://ui.tosijs.net/migrating/) — new projects can skip it.
 
 ## the tosijs-ui library
@@ -47,10 +49,10 @@ import { tosiTable } from 'tosijs-ui/data-table'
 document.body.append(tosiTable())
 ```
 
-Import each component from its own module, as above, and you ship only what you use: one
-component through its subpath is a few kB to about 30 kB gzip, where the package root brings the
-whole library (about 107 kB gzip). `import { tosiTable } from 'tosijs-ui'` works too, and is
-the simpler choice when a page uses many components.
+Import each component from its own module, as above, and you ship only what you use. The
+package root brings the whole library, because importing a component registers it, so a bundler
+cannot drop the ones you don't use. `import { tosiTable } from 'tosijs-ui'` works too, and is the
+simpler choice when a page uses many components.
 
 ### Using the iife via cdn
 

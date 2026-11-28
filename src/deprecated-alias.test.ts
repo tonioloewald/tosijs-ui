@@ -64,3 +64,105 @@ test('enableLiveTheme and disableLiveTheme warn once between them, naming applyT
   expect(mentions.length).toBe(1)
   expect(mentions[0]).toContain('applyTheme')
 })
+
+/*
+1.20.0 review, M1: a subclass of an alias is a subclass. The `get` trap bound statics to the
+survivor, so `class MyForm extends XinForm` built and registered a <tosi-form>.
+*/
+describe('subclassing an Xin* alias (review M1)', () => {
+  const classAliases = aliases.filter((name) => /^Xin/.test(name))
+  let n = 0
+  for (const name of classAliases) {
+    test(`a subclass of ${name} registers and builds its own element`, () => {
+      const alias = (root as any)[name]
+      const tag = `alias-sub-${++n}-${name.toLowerCase()}`
+      let Sub: any
+      captureWarnings(() => {
+        Sub = class extends alias {
+          static preferredTagName = tag
+          ownMethod() {
+            return 'mine'
+          }
+        }
+        const el = Sub.elementCreator()()
+        expect(el.tagName.toLowerCase()).toBe(tag)
+        expect(el.ownMethod()).toBe('mine')
+        expect(el instanceof Sub).toBe(true)
+        expect(el instanceof alias).toBe(true)
+      })
+      expect(customElements.get(tag)).toBe(Sub)
+      const replacement =
+        name === 'XinWord' ? 'RichText' : name.replace(/^Xin/, 'Tosi')
+      const survivorElement = (root as any)[replacement].elementCreator()()
+      expect(survivorElement instanceof Sub).toBe(false)
+    })
+  }
+})
+
+/*
+1.20.0 review, B2: the library must never read an alias itself, or an app that never names one
+is told to stop using it. <tosi-select localized> read XinLocalized, and the iframe registration
+read every class alias's statics.
+*/
+describe('the library reads no alias of its own (review B2)', () => {
+  test('no source file outside its own export line names an alias', async () => {
+    const { Glob } = await import('bun')
+    const { readFileSync } = await import('fs')
+    const names = new Set(aliases)
+    const strip = (source: string) =>
+      source
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1')
+        .replace(/'(?:[^'\\\n]|\\.)*'/g, "''")
+    const offenders: string[] = []
+    for (const file of new Glob('src/**/*.ts').scanSync({
+      cwd: process.cwd(),
+    })) {
+      if (file.endsWith('.test.ts') || file.endsWith('.d.ts')) continue
+      const lines = strip(readFileSync(file, 'utf8')).split('\n')
+      lines.forEach((line, i) => {
+        for (const m of line.matchAll(/\b(?:xin|Xin)[A-Z]\w*\b/g)) {
+          if (!names.has(m[0])) continue // tosijs's own names, such as XinStyleSheet
+          if (new RegExp(`^export (const|type) ${m[0]}\\b`).test(line)) continue
+          // A re-export passes the binding on without reading it.
+          if (/^export (type )?\{[^}]*\} from /.test(line)) continue
+          offenders.push(`${file}:${i + 1}: ${line.trim()}`)
+        }
+      })
+    }
+    expect(offenders).toEqual([])
+  })
+
+  /*
+  In a child process: each alias warns once per process, and the tests above have used every one
+  up, so in this process the check could not fail.
+  */
+  test('a localized select and the iframe registration log no deprecation', () => {
+    const root = process.cwd()
+    const probe = `
+      const said = []
+      console.warn = console.error = (...a) => said.push(a.map(String).join(' '))
+      const ui = await import('${root}/src/index.ts')
+      const { registerComponentsInIframe } = await import('${root}/src/live-example/execution.ts')
+      const select = ui.tosiSelect({ localized: true, options: 'a,b' })
+      document.body.append(select)
+      select.remove()
+      const registered = []
+      registerComponentsInIframe({
+        customElements: { get: () => undefined, define: (t) => registered.push(t) },
+        document: { querySelectorAll: () => [] },
+      }, { 'tosijs-ui': ui })
+      process.stdout.write(JSON.stringify({ registered: registered.length, said: said.filter((l) => l.includes('is deprecated')) }))
+    `
+    const run = Bun.spawnSync(
+      ['bun', '--preload', `${root}/src/test-setup.ts`, '-e', probe],
+      { cwd: root }
+    )
+    const out = run.stdout.toString()
+    const result = JSON.parse(
+      out.slice(out.lastIndexOf('{"registered"')) || '{}'
+    )
+    expect(result.registered).toBeGreaterThan(10)
+    expect(result.said).toEqual([])
+  })
+})

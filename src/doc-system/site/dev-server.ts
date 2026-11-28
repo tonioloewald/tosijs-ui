@@ -1384,10 +1384,11 @@ export async function devServer(
     )
   }
 
-  async function handleWriteSource(request: Request): Promise<Response> {
+  // `read` is the body, read once with a cap by the caller, which also logs a LAN write's file.
+  async function handleWriteSource(
+    read: Awaited<ReturnType<typeof readJsonCapped>>
+  ): Promise<Response> {
     try {
-      // Capped while reading (#4379); a doc source has no business near this size.
-      const read = await readJsonCapped(request, MAX_REQUEST_BODY_BYTES)
       if ('tooLarge' in read) {
         return new Response(
           JSON.stringify({
@@ -3002,16 +3003,17 @@ export async function devServer(
         })
       }
       if (request.method === 'POST') {
-        // A write admitted only by LAN trust is recorded with its outcome (#3346).
+        /*
+        Read once, capped. A write admitted only by LAN trust is recorded with its outcome
+        (#3346), and that record used to re-read the body with an uncapped `clone().json()`,
+        the one door the capped reads of #4379 missed (1.20.0 review).
+        */
+        const read = await readJsonCapped(request, MAX_REQUEST_BODY_BYTES)
         const file =
-          admission === 'lan'
-            ? await request
-                .clone()
-                .json()
-                .then((body: { file?: unknown }) => body?.file)
-                .catch(() => undefined)
+          'value' in read
+            ? (read.value as { file?: unknown } | null)?.file
             : undefined
-        const response = await handleWriteSource(request)
+        const response = await handleWriteSource(read)
         if (admission === 'lan') {
           console.log(trustLanWriteRecord(peer, file, response.status))
         }

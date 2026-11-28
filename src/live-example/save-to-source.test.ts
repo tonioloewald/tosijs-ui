@@ -430,3 +430,73 @@ describe('example ordinals match the page (#4343)', () => {
     }
   })
 })
+
+/*
+1.20.0 review, M2: the page's footnote extension renders a definition as nothing, so the fences on
+either side are one example there. Plain `marked.lexer` read it as a paragraph and split them, so
+an edit to the page's second example was written into the first.
+*/
+describe('footnote definitions between fences (review M2)', () => {
+  const src = [
+    '# Doc',
+    '',
+    fence('html', '<p>A</p>'),
+    '[^1]: a note',
+    fence('js', 'const a = 1'),
+    '',
+    'prose[^1]',
+    '',
+    fence('html', '<p>B</p>'),
+    '',
+  ].join('\n')
+
+  test('the grouping is the page grouping', () => {
+    expect(sourceExamples(src).length).toBe(pageExamples(src).length)
+    expect(pageExamples(src).length).toBe(2)
+  })
+
+  test('saving the second example writes the second example', () => {
+    const out = rewriteExampleBlocks(src, 1, { html: '<p>EDITED</p>' })!
+    expect(out).toContain('<p>EDITED</p>')
+    expect(out).toContain('const a = 1')
+    expect(out).toContain('<p>A</p>')
+    expect(out).not.toContain('<p>B</p>')
+  })
+
+  test('a closing fence indented four spaces is code, not a closer', () => {
+    const body = 'const t = `\n    ```\n`'
+    const doc = fence('js', body) + '\n'
+    const out = rewriteExampleBlocks(doc, 0, { js: 'replaced' })
+    // marked reads the indented ``` as part of the body; so must the rewrite
+    expect(pageExamples(doc)[0].js).toBe(body)
+    expect(out).toBe('```js\nreplaced\n```\n')
+  })
+})
+
+/*
+The same oracle, over each doc's SOURCE FILE with its path, which is what a save actually reads
+(a .ts file's doc is its /*# blocks). Docs assembled from insets are refused by the editor, so
+they are skipped here too.
+*/
+test('every doc in demo/docs.json numbers its examples the way its page does, read from its source file', async () => {
+  const { existsSync } = await import('fs')
+  const { mayHaveSingleSourceDirective } =
+    await import('../doc-system/book-target.js')
+  const docs = JSON.parse(
+    readFileSync(new URL('../../demo/docs.json', import.meta.url), 'utf8')
+  ) as Array<{ text: string; filename: string; path?: string }>
+  let checked = 0
+  for (const doc of docs) {
+    if (!doc.path || !existsSync(doc.path)) continue
+    const raw = readFileSync(doc.path, 'utf8')
+    if (mayHaveSingleSourceDirective(raw)) continue
+    const page = pageExamples(doc.text)
+    const ours = sourceExamples(raw.replace(/\r\n/g, '\n'), doc.path)
+    expect({ file: doc.path, examples: ours.length }).toEqual({
+      file: doc.path,
+      examples: page.length,
+    })
+    checked += 1
+  }
+  expect(checked).toBeGreaterThan(50)
+})

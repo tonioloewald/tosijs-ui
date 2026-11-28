@@ -7,6 +7,7 @@ import {
   EXAMPLE_SOURCE_URL,
 } from './error-location.js'
 import { ExampleContext, TransformFn } from './types.js'
+import { isDeprecatedAlias } from '../deprecated-alias.js'
 import {
   rewriteImports,
   assertContextProvided,
@@ -59,6 +60,8 @@ export function registerComponentsInIframe(
   for (const lib of Object.values(context)) {
     if (lib && typeof lib === 'object') {
       for (const creator of Object.values(lib as Record<string, unknown>)) {
+        // A deprecated alias names the same element as its survivor, and reading it warns.
+        if (isDeprecatedAlias(creator)) continue
         if (typeof creator === 'function' && 'tagName' in creator) {
           register((creator as { tagName: string }).tagName)
         }

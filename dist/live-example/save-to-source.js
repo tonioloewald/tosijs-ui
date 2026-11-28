@@ -105,7 +105,8 @@ export function findFencedBlocks(src, file) {
         if (crlf || t.at === null || !t.fenced || !open)
             return block;
         const [opener, indent, fence] = open;
-        const close = new RegExp(`\\n[ \\t]*\\${fence[0]}{${fence.length},}[ \\t]*(?=\\n|$)`).exec(t.raw.slice(opener.length - 1));
+        // A closing fence is indented at most three spaces; four makes it code (CommonMark).
+        const close = new RegExp(`\\n {0,3}\\${fence[0]}{${fence.length},}[ \\t]*(?=\\n|$)`).exec(t.raw.slice(opener.length - 1));
         if (!close)
             return block; // unterminated: runs to the end of the doc
         const closeAt = opener.length - 1 + close.index;

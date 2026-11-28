@@ -1,3 +1,5 @@
+/** Is `value` one of the deprecated `xin*` / `Xin*` aliases? Asking does not warn. */
+export declare const isDeprecatedAlias: (value: unknown) => boolean;
 /** An element-creator alias: calling it warns once, then creates the survivor's element. */
 export declare function deprecatedCreator<T extends (...args: any[]) => any>(creator: T, oldName: string, newName: string): T;
 /**

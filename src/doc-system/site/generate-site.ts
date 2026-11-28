@@ -1102,7 +1102,7 @@ export function notFoundHtml(
   const script = `<script>
     ;(() => {
       const slugs = ${slugs}
-      const base = ${JSON.stringify(base)}
+      const base = ${scriptJson(base)}
       const asked = decodeURIComponent(location.pathname)
       document.getElementById('not-found-path').textContent = asked
       const want = asked.slice(base.length - 1).replace(/^\\/+|\\/+$/g, '').toLowerCase()

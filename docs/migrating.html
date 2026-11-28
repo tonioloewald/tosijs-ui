@@ -24,7 +24,7 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="doc-system.css?v=3a2f71558140" data-tosi-doc-system />
+  <link rel="stylesheet" href="doc-system.css?v=05f9c4a688d6" data-tosi-doc-system />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&amp;family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&amp;display=swap" />
   <title>Migrating from older versions — tosijs-ui</title>
   <meta name="description" content="Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release." />
@@ -42,13 +42,13 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="https://ui.tosijs.net/og/index.webp" />
   <meta name="twitter:image:alt" content="Migrating from older versions — tosijs-ui" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-28T10:53:25+02:00","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","image":"https://ui.tosijs.net/og/index.webp","dateModified":"2026-11-28T09:34:08.141Z","author":{"@type":"Person","name":"Tonio Loewald"},"isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net/"}}</script>
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Appendices","item":"https://ui.tosijs.net/appendices/"},{"@type":"ListItem","position":2,"name":"Migrating from older versions","item":"https://ui.tosijs.net/migrating/"}]}</script>
   <link rel="icon" href="favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="docs.json?v=e7d8ad2c82ff" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
+  <tosi-doc-system docs="docs.json?v=bd362f8cfed2" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;themeFile&quot;:&quot;tosijs-theme.json&quot;,&quot;theme&quot;:{},&quot;themePresets&quot;:true,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;},&quot;bookVolumes&quot;:&quot;/epub-volumes.json&quot;,&quot;ebooks&quot;:[{&quot;title&quot;:&quot;tosijs-ui&quot;,&quot;url&quot;:&quot;/tosijs-ui.epub&quot;}]}" localized="localized-strings.txt">
   <article class="doc-content" data-doc="migrating.md">
 <h1 id="migrating-from-older-versions">Migrating from older versions</h1>
 <!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes in tosijs-ui releases and what to change when you upgrade past them, from the xinjs-ui rename to the current release." }-->
@@ -60,10 +60,13 @@ this applies — go to the <a href="/">Quick Start</a> instead.</p>
 <p>1.20.0 removes and renames a few things, and starts the countdown on the old names. In order of
 how likely they are to reach you:</p>
 <ul>
-<li><strong>Every <code>xin*</code> / <code>Xin*</code> name now warns.</strong> <code>xinSelect</code>, <code>XinMenu</code>, <code>xinTabs</code> and the other 30
-log one line the first time they are used, naming the <code>tosi*</code> replacement, and keep working.
-<strong>1.21.0 removes them.</strong> Search your code for <code>xin[A-Z]</code> and <code>Xin[A-Z]</code>, and switch each to the
-name the warning gives. (The <code>&lt;xin-*&gt;</code> tags went in 1.3.0; see below.)</li>
+<li><strong>Every <code>xin*</code> / <code>Xin*</code> name tosijs-ui exports now warns.</strong> <code>xinSelect</code>, <code>XinMenu</code>, <code>xinTabs</code>
+and the other 30 log one line the first time they are used, naming the <code>tosi*</code> replacement,
+and keep working: call them, construct them, extend them, test <code>instanceof</code> against them. One
+thing changed: a class alias is no longer <code>===</code> its replacement (<code>XinForm !== TosiForm</code>), since
+it is now a wrapper that warns. <strong>1.21.0 removes them.</strong> Search your code for <code>xin[A-Z]</code> and
+<code>Xin[A-Z]</code> and switch each to the name the warning gives; tosijs&#39;s own <code>Xin*</code> types, such as
+<code>XinStyleSheet</code>, are not affected. (The <code>&lt;xin-*&gt;</code> tags went in 1.3.0; see below.)</li>
 <li><strong><code>liveTheme</code>, <code>enableLiveTheme</code> and <code>disableLiveTheme</code> warn too</strong>, and 1.21.0 removes them.
 Build a theme and apply it: <code>applyTheme(createTheme(colors))</code>. See <a href="/live-theme/">live-theme</a>.</li>
 <li><strong><code>&lt;tosi-tabs&gt;</code>: <code>onCloseTab</code> is gone.</strong> Set <code>handleCloseTab</code>, which it forwarded to. Code that
@@ -72,10 +75,13 @@ written that way stops working, with no warning.</li>
 <li><strong><code>&lt;tosi-crud&gt;</code>: deleting the selected record is <code>deleteRecord()</code>.</strong> It was <code>remove()</code>, which
 overrode the DOM&#39;s <code>Element.remove()</code>, so <code>crud.remove()</code> deleted a record and left the element
 in the page. <code>remove()</code> now takes the element out of the page, as it does for every element.</li>
-<li><strong><code>createDocBrowser()</code> defaults to <code>routing: &#39;memory&#39;</code>.</strong> It defaulted to <code>&#39;query&#39;</code>, which reads
-and rewrites the page&#39;s URL. A page that wants the browser to own the URL passes
-<code>routing: &#39;query&#39;</code> (or <code>&#39;path&#39;</code>). <code>&lt;tosi-doc-system&gt;</code> and the static doc site name their mode,
-so they are unaffected.</li>
+<li><strong><code>createDocBrowser()</code> defaults to <code>routing: &#39;memory&#39;</code>.</strong> It defaulted to <code>&#39;query&#39;</code>. A
+memory-routed browser leaves the page alone, which is more than the URL: it never reads or
+writes the URL or history (back and forward do nothing), sets no <code>window.__docTestResults</code>,
+starts no background test runner, puts no <code>role=&quot;main&quot;</code> on its content, and never adopts
+pre-rendered content. <strong>A browser that is the whole page passes <code>routing: &#39;query&#39;</code></strong> (or
+<code>&#39;path&#39;</code>), or it loses all five; CI that awaits <code>window.__docTestResults</code> would wait forever.
+<code>&lt;tosi-doc-system&gt;</code> and the static doc site name their mode, so they are unaffected.</li>
 <li><strong><code>tosijs-ui/doc-system/site/*</code> no longer resolves.</strong> The <code>./*</code> wildcard used to make every
 dev-server internal importable. Import from <code>tosijs-ui/site</code>, which is the API; if something
 you need is only reachable through the old path, file an issue.</li>
@@ -374,6 +380,6 @@ them logs one warning naming its replacement, and <strong>1.21.0 removes them</s
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="hydrate-fmbwgecy.js"></script>
+  <script type="module" src="hydrate-p7ybe63t.js"></script>
 </body>
 </html>

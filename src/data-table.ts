@@ -4226,9 +4226,11 @@ export class TosiTable extends withAttributes({
           /*
           Any column that is showing can be hidden: `visible` hides a column only when it is
           `false`. This read `!== true`, and inferred columns are created with `visible: true`,
-          so Hide Column was disabled on every table built from rows alone (#4353).
+          so Hide Column was disabled on every table built from rows alone (#4353). The last
+          shown column stays: its header is the only place to show the others again.
           */
-          enabled: () => options.visible !== false,
+          enabled: () =>
+            options.visible !== false && this.visibleColumns.length > 1,
           action() {
             options.visible = false
             queueRender()

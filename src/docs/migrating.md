@@ -12,10 +12,13 @@ Current releases are described in [CHANGELOG.md](https://github.com/tonioloewald
 1.20.0 removes and renames a few things, and starts the countdown on the old names. In order of
 how likely they are to reach you:
 
-- **Every `xin*` / `Xin*` name now warns.** `xinSelect`, `XinMenu`, `xinTabs` and the other 30
-  log one line the first time they are used, naming the `tosi*` replacement, and keep working.
-  **1.21.0 removes them.** Search your code for `xin[A-Z]` and `Xin[A-Z]`, and switch each to the
-  name the warning gives. (The `<xin-*>` tags went in 1.3.0; see below.)
+- **Every `xin*` / `Xin*` name tosijs-ui exports now warns.** `xinSelect`, `XinMenu`, `xinTabs`
+  and the other 30 log one line the first time they are used, naming the `tosi*` replacement,
+  and keep working: call them, construct them, extend them, test `instanceof` against them. One
+  thing changed: a class alias is no longer `===` its replacement (`XinForm !== TosiForm`), since
+  it is now a wrapper that warns. **1.21.0 removes them.** Search your code for `xin[A-Z]` and
+  `Xin[A-Z]` and switch each to the name the warning gives; tosijs's own `Xin*` types, such as
+  `XinStyleSheet`, are not affected. (The `<xin-*>` tags went in 1.3.0; see below.)
 - **`liveTheme`, `enableLiveTheme` and `disableLiveTheme` warn too**, and 1.21.0 removes them.
   Build a theme and apply it: `applyTheme(createTheme(colors))`. See [live-theme](/live-theme/).
 - **`<tosi-tabs>`: `onCloseTab` is gone.** Set `handleCloseTab`, which it forwarded to. Code that
@@ -24,10 +27,13 @@ how likely they are to reach you:
 - **`<tosi-crud>`: deleting the selected record is `deleteRecord()`.** It was `remove()`, which
   overrode the DOM's `Element.remove()`, so `crud.remove()` deleted a record and left the element
   in the page. `remove()` now takes the element out of the page, as it does for every element.
-- **`createDocBrowser()` defaults to `routing: 'memory'`.** It defaulted to `'query'`, which reads
-  and rewrites the page's URL. A page that wants the browser to own the URL passes
-  `routing: 'query'` (or `'path'`). `<tosi-doc-system>` and the static doc site name their mode,
-  so they are unaffected.
+- **`createDocBrowser()` defaults to `routing: 'memory'`.** It defaulted to `'query'`. A
+  memory-routed browser leaves the page alone, which is more than the URL: it never reads or
+  writes the URL or history (back and forward do nothing), sets no `window.__docTestResults`,
+  starts no background test runner, puts no `role="main"` on its content, and never adopts
+  pre-rendered content. **A browser that is the whole page passes `routing: 'query'`** (or
+  `'path'`), or it loses all five; CI that awaits `window.__docTestResults` would wait forever.
+  `<tosi-doc-system>` and the static doc site name their mode, so they are unaffected.
 - **`tosijs-ui/doc-system/site/*` no longer resolves.** The `./*` wildcard used to make every
   dev-server internal importable. Import from `tosijs-ui/site`, which is the API; if something
   you need is only reachable through the old path, file an issue.

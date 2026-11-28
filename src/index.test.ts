@@ -135,7 +135,7 @@ test('#133/F9: no heavy source reaches a bundle built from the barrel', async ()
     /*
     A byte ceiling as well (#4153). The source list only catches what the pattern names; the
     theme editor reached the barrel through a deprecated re-export in `live-theme.ts` and cost
-    +7% (105.5kB → 113.4kB gzip) before anything here noticed. ~3% headroom (106.5kB measured by this test): a dependency bump
+    +7% (105.5kB → 113.4kB gzip) before anything here noticed. ~2.4% headroom (107.4kB measured by this test at 1.20.0): a dependency bump
     may need it raised, deliberately, with the reason recorded here.
     */
     const gzipped = Bun.gzipSync(

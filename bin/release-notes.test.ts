@@ -12,6 +12,9 @@ const git = (...args: string[]) => {
     cwd: work,
     env: {
       ...process.env,
+      // The developer's git config (hooks, signing) must not reach the scratch repo.
+      GIT_CONFIG_GLOBAL: '/dev/null',
+      GIT_CONFIG_NOSYSTEM: '1',
       GIT_AUTHOR_NAME: 'test',
       GIT_AUTHOR_EMAIL: 'test@example.com',
       GIT_COMMITTER_NAME: 'test',
@@ -53,6 +56,11 @@ test('--check --version=<patch> still blocks a [break] bullet (#4373)', () => {
 
   const run = Bun.spawnSync(['bun', BIN, '--check', '--version=1.2.4'], {
     cwd: work,
+    env: {
+      ...process.env,
+      GIT_CONFIG_GLOBAL: '/dev/null',
+      GIT_CONFIG_NOSYSTEM: '1',
+    },
   })
   const out = run.stdout.toString() + run.stderr.toString()
   // Written up, so the only thing that can fail it is the bump check.

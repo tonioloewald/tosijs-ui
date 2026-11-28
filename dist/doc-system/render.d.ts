@@ -30,6 +30,15 @@ export declare function renderDocMarkdown(text: string, opts?: {
     title?: string;
 }): string;
 /**
+ * A doc's top-level tokens as the page's renderer reads them, with its extensions (footnotes,
+ * wikilinks). `lexCodeTokens` counts examples with this: plain `marked.lexer` read a footnote
+ * definition as a paragraph, where the page renders nothing for it and so groups the fences on
+ * either side into one example, and save-to-source wrote an edit into the wrong one (1.20.0
+ * review, M2).
+ */
+export declare function docTokens(text: string): any[];
+export declare function rendersNoElement(token: any): boolean;
+/**
  * A doc's tokens as the accessibility mode renders them, for the build's report: the same
  * lexer and the same rewrites as `renderDocMarkdown`, so the report and the page cannot
  * disagree about what is a figure or which heading is the `<h1>`.

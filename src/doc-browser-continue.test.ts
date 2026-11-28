@@ -106,3 +106,40 @@ test("createDocBrowser defaults to 'memory' routing, leaving the page's URL alon
     history.pushState = realPush
   }
 })
+
+/*
+1.20.0 review, M3: memory routing leaves more than the URL alone, and the docs now say so. These
+pin the list: no `__docTestResults` and no `role="main"`, where query routing sets both.
+*/
+test('a memory-routed browser leaves the page its test global and its main landmark', () => {
+  const docs = [
+    {
+      filename: 'README.md',
+      title: 'Home',
+      path: 'README.md',
+      text: '# Home\n',
+    },
+  ] as any
+  const w = window as any
+  delete w.__docTestResults
+  const memory: any = createDocBrowser({ docs })
+  document.body.append(memory)
+  expect(w.__docTestResults).toBeUndefined()
+  expect(memory.querySelector('[role="main"]')).toBeNull()
+  memory.remove()
+  // The control: the same browser owning the page sets both. Query routing reads the bare
+  // `location` global, which test-setup does not provide (lean plan H1).
+  const g = globalThis as any
+  const hadLocation = 'location' in g
+  if (!hadLocation) g.location = window.location
+  try {
+    const query: any = createDocBrowser({ docs, routing: 'query' })
+    document.body.append(query)
+    expect(w.__docTestResults).toBeInstanceOf(Promise)
+    expect(query.querySelector('[role="main"]')).not.toBeNull()
+    query.remove()
+  } finally {
+    if (!hadLocation) delete g.location
+    delete w.__docTestResults
+  }
+})

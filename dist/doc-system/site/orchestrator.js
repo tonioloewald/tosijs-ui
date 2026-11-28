@@ -61,6 +61,7 @@ import { preflight } from './preflight.js';
 import { auditDependencies, reportAudit } from './audit-guard.js';
 import { gatherBuildStamp, hashOutput, stampToWrite, } from './build-stamp.js';
 import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxErrorInChild, } from './bundle-guard.js';
+import { scriptJson } from '../script-json.js';
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 /** Give up on a hung ePub child rather than wedge the dev server's rebuild. */
@@ -1421,7 +1422,7 @@ export async function buildSite(config, opts = {}) {
                 await $ `cp ${tjsBundles.fromTs} ${PUBLIC}/tjs/tjs-browser-from-ts.js`.text();
                 const bp = config.basePath;
                 const base = !bp || bp === '/' ? '/tjs/' : bp.replace(/\/$/, '') + '/tjs/';
-                tjsHead = `<script>globalThis.__TJS_LOCAL_BASE=${JSON.stringify(base)}</script>`;
+                tjsHead = `<script>globalThis.__TJS_LOCAL_BASE=${scriptJson(base)}</script>`;
                 console.log(`tjs-lang bundles served same-origin at ${base}`);
             }
             else {
@@ -1482,7 +1483,7 @@ export async function buildSite(config, opts = {}) {
                         clientConfig.defaultCdn = resolver.defaultCdn;
                     if (resolver.esmShPackages)
                         clientConfig.esmShPackages = resolver.esmShPackages;
-                    importResolverHead = `<script>globalThis.__TOSI_IMPORT_RESOLVER=${JSON.stringify(clientConfig)}</script>`;
+                    importResolverHead = `<script>globalThis.__TOSI_IMPORT_RESOLVER=${scriptJson(clientConfig)}</script>`;
                     console.log(`import-resolver worker at ${root}/import-resolver-worker.js (prefix ${clientConfig.prefix})`);
                 }
                 catch (e) {
