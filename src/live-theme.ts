@@ -143,7 +143,7 @@ test('css canary: Color math (inverseLuminance) yields a distinct valid color', 
 ```
 */
 
-/*{ "parent": "Helper Libraries", "description": "Deprecated: liveTheme and its helpers go in 1.21.0; use applyTheme(createTheme(colors)). Also a CSS canary that checks the whole styling chain in a real browser." }*/
+/*{ "parent": "Helper Libraries", "description": "Deprecated: liveTheme goes in 1.21.0; use applyTheme(createTheme(colors)). Also a CSS canary for the whole styling chain in a real browser." }*/
 
 import { Color, deprecated, tosi } from 'tosijs'
 

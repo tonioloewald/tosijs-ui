@@ -1,5 +1,164 @@
 # Changelog
 
+## 1.20.0
+
+> **Leaner and more correct, after a whole-library review.** 1.20.0 fixes the defects a
+> line-by-line review of the library found (`reviews/lean-plan-2026-11.md`), two of them
+> security fixes for code that has shipped for a long time, and starts retiring the old
+> spellings: every `xin*` name now warns, and 1.21.0 removes them.
+>
+> **Upgrade, and read this first:**
+> - **Security.** Tooltips and the default `text/html` drop wrote untrusted text through
+>   `innerHTML` (see Security below). If you are on 1.19.x or earlier and any `title` in your app
+>   can hold text a user wrote, upgrade; until you can, `initTooltips({ convertTitles: false })`.
+> - **Four breaking changes**, each small: `<tosi-crud>`'s `remove()` is `deleteRecord()`;
+>   `createDocBrowser()` defaults to `routing: 'memory'`; `tosijs-ui/doc-system/site/*` is closed;
+>   `<tosi-tabs>`'s `onCloseTab` is gone. [Migrating](https://ui.tosijs.net/migrating/) has the
+>   steps.
+> - **Deprecation warnings.** Each of the 33 `xin*` / `Xin*` names, and `liveTheme`,
+>   `enableLiveTheme` and `disableLiveTheme`, logs one line naming its replacement the first time
+>   it is used. 1.21.0 removes them.
+> - **Size.** `dist/iife.js` is +1.8 kB gzip (535.3 kB): the shared sanitizer, reading fences with
+>   the page's own renderer, and the deprecation wrappers. `tosijs-ui/data-table` is +1.1 kB,
+>   because its drop target now sanitizes. The root barrel is 107.4 kB gzip.
+
+### Security
+
+- **Tooltips rendered a `title` as live HTML; tooltips now sanitize what they render.**
+  `initTooltips()` converts every `title` to a tooltip by default, and a converted `title` (often
+  a user or file name) was written through innerHTML as markdown, so a title holding text a user
+  wrote (a name, a file name, a comment) ran script on hover: `<img src=x onerror=…>` did.
+  `MenuItem.tooltip` took the same path. Tooltips now render through the same sanitizer as
+  `<tosi-md>`: markdown still works, scripts and event handlers are removed, custom elements are
+  unwrapped. **Affected:** 1.4.9 through 1.19.2 (CWE-79). Until you can upgrade, pass
+  `initTooltips({ convertTitles: false })` and keep untrusted text out of `data-tooltip`. (#4342)
+- **The default `text/html` drop inserted dragged HTML as is.** `dragAndDrop`'s default drop
+  handler wrote `getData('text/html')` into `innerHTML`, and that data can come from another site
+  or the desktop. It is now sanitized. **Affected:** xinjs-ui 0.8.0 through tosijs-ui 1.19.2, on
+  pages with a `[data-drop]` zone accepting `text/html` and no drop handler of their own. (#4342)
+- **Dev server only:** request bodies are now refused at their size limit while being read,
+  rather than read whole first; the only real bound was Bun's 128 MB default, and both listeners
+  now cap bodies at 32 MB. **Affected:** every release with the dev server. The checklist store
+  checks that it owns its folder before deleting anything in it; through a planted symlink it
+  could delete another folder's files. **Affected:** 1.19.0 through 1.19.2. (#4379, #4381)
+
+### Breaking
+
+- **`<tosi-crud>`: deleting the selected record is `deleteRecord()`.** It was `remove()`, which
+  overrode the DOM's `Element.remove()`: `crud.remove()` deleted the record from the store and
+  left the element in the page. `remove()` now removes the element, as it does for every element.
+  #4354 (4aae91bf)
+- **`createDocBrowser()` defaults to `routing: 'memory'`**, the mode for a browser embedded in
+  someone else's page. It defaulted to `'query'`. A memory-routed browser leaves the page alone,
+  which is more than the URL: it never reads or writes the URL or history (back and forward do
+  nothing), sets no `window.__docTestResults`, starts no background test runner, puts no
+  `role="main"` on its content, and never adopts pre-rendered content. **A browser that is the
+  whole page passes `routing: 'query'`** (or `'path'`), or it loses all five; CI that awaits
+  `window.__docTestResults` would wait forever. `<tosi-doc-system>` and the static doc site name
+  their mode and are unaffected. closes #4391 (4aae91bf, eb2ba31f)
+- **`tosijs-ui/doc-system/site/*` no longer resolves.** The `./*` wildcard made every dev-server
+  internal importable, `dev-auth` (the server's security boundary) among them. Import from
+  `tosijs-ui/site`, which is the API. closes #4390 (4aae91bf)
+- **`<tosi-tabs>`: the deprecated `onCloseTab` alias is gone.** Set `handleCloseTab` instead. Code
+  that still sets `el.onCloseTab = fn` is no longer called when a tab closes, so a close
+  confirmation written that way stops working, with no warning. The alias made tosijs warn on
+  every page with tabs, since the elements factory reads `on<Event>` names as event-handler sugar.
+  (af13cd1e)
+- **`<tosi-dialog>`: its internal `onCancel` and `onNativeClose` members are `handleCancel` and
+  `handleNativeClose`.** They were public in the type declarations though meant as internals; code
+  that called or replaced them must use the new names. tosijs no longer warns about them. (af13cd1e)
+
+### Changed
+
+- **Every `xin*` / `Xin*` name warns once, naming its `tosi*` replacement, and 1.21.0 removes
+  them.** All 33 still work as before: call them, construct them, extend them, test `instanceof`
+  against them. Only five warned before (`xinRating`, `xinSegmented`, `xinSelect`, `xinTag`,
+  `xinTagList`), while the migration notes said most did. One difference: a class alias is now a
+  wrapper, so it is no longer `===` its replacement (`XinForm !== TosiForm`). tosijs's own `Xin*`
+  types, such as `XinStyleSheet`, are not affected. #4389 (4aae91bf, eb2ba31f)
+- **`liveTheme`, `enableLiveTheme` and `disableLiveTheme` warn once**, naming
+  `applyTheme(createTheme(colors))`, which is what they did underneath; 1.21.0 removes them.
+  #4392 (4aae91bf)
+- **The theme's accent text is black or white by WCAG contrast,** not by luma. `--tosi-accent-text`
+  was white on `#009688` at 3.67:1, where black gives 5.72:1. Some accents' text colour changes,
+  always to the one that contrasts more; `readableOn()`'s fallback, when no shade of a colour
+  reaches the contrast asked for, follows the same rule. #4367 (4aae91bf)
+
+### Added
+
+- `contrastingText(color)`: black or white, whichever contrasts more with `color` by WCAG.
+  (4aae91bf)
+- `<tosi-table>`'s `columnMenuItems(column)`: the items of a column's header menu. (4aae91bf)
+
+### Fixed
+
+- **Save to source writes into the example you edited.** It numbered examples with its own
+  regex, while the page numbers them with marked, and they disagreed: a four-space-indented
+  illustration of a fence, a blockquoted fence, ```` ``` js ````, `~~~js` or a footnote definition
+  between two blocks made a save write into a different example, silently. It now reads the doc
+  with the page's own renderer, refuses to save a block it cannot place (inside a blockquote or a
+  list), keeps a CRLF file's line endings, and treats a closing fence indented four spaces as
+  code, as marked does. closes #4343 (796d82ca, eb2ba31f)
+- **A page is no longer unpublished by a metadata block it only illustrates.** The metadata
+  reader stripped fences with a regex that closed on the first inner ` ``` `, so a page whose
+  nested fence showed `<!--{"hidden": true}-->` read it as its own and vanished from the site,
+  sitemap, llms.txt and ePub. Metadata is now read with marked's lexer. A metadata block may wrap
+  across lines; a wrapped inset or `only` directive is resolved instead of shipping as a raw
+  comment; an inset fragment that opens with a `---` rule keeps its first passage. closes #4344
+  (796d82ca)
+- **With site data blocked** (a browser setting, a sandboxed frame), **the doc site hydrates.**
+  The live-example module read `localStorage` while loading, and the accessor itself throws when
+  storage is blocked. closes #4351 (796d82ca)
+- **`<tosi-month>` shows and selects the right dates west of UTC.** It mixed UTC and local dates,
+  so in New York every day number disagreed with its date and clicking "1" selected the 2nd.
+  Enter now selects a date, and a disabled or readonly month refuses keyboard and click
+  selection. closes #4352 (796d82ca)
+- **The default `text/html` drop also receives text on a wildcard zone:** its type check ran
+  with its arguments reversed, so a `text/*` zone highlighted and then received nothing. #4342
+  (796d82ca)
+- The dev server's build-status script can no longer be broken by an error message that quotes
+  `</script>`. #4342 (796d82ca)
+- **robots.txt and llms.txt point at the right URLs.** robots.txt's Sitemap line and llms.txt's
+  Docs link include `basePath` (they left it out, so a GitHub project page sent crawlers and
+  agents to the user's root), and a `baseUrl` ending in `/` no longer doubles the slash in
+  canonical links, og:url, sitemap and JSON-LD. #4375 (796d82ca)
+- **Books built by `buildSite` honour `liveExamples`.** On an opt-in or no-code site, the ePub
+  linked every fence to a live example the page doesn't have. closes #4376 (796d82ca)
+- **The adopter guide's `bin/site.ts` exits 1 when the build fails.** The one it taught exited 0;
+  `buildSite` reports a failed build by returning `false`. If you copied it, add
+  `if (!(await buildSite(config))) process.exit(1)`. closes #4374 (796d82ca)
+- `tosijs-release-notes --check --version=X.Y.Z`, the form its own error message recommends, no
+  longer turns off the `[break]`-in-a-patch check. closes #4373 (796d82ca)
+- Dev auth: a session evicted at the session cap no longer leaves its grant and device behind.
+  #4381 (796d82ca)
+- `<tosi-table>`: Hide Column works on any shown column except the last. It was disabled on every
+  column a table inferred from its rows. #4353 (4aae91bf, eb2ba31f)
+- A source save over a trusted LAN reads its body once, with the size cap. (eb2ba31f)
+- `<tosi-dialog>` no longer makes tosijs warn about `onCancel` and `onNativeClose` (see
+  Breaking). (af13cd1e)
+- **Docs that taught something wrong:** migrating.md covers 1.19.0 and 1.20.0, says which `xin*`
+  names warned and when they go, and names `<tosi-example>` rather than a tag that doesn't exist;
+  the README teaches the per-component import first; the localization sample in Using-Components
+  reads 4 header rows, as the parser does; the localization protocol is `localeChanged`, not
+  `updateLocale`; doc-site-system.md's edit-link code is 8 letters, its health tick runs every
+  minute, and not every API response is `no-store`. (4aae91bf)
+
+### Fixed before release
+
+Found by the 1.20.0 review. None of these shipped.
+
+- the `Xin*` class aliases can be subclassed: `class MyForm extends XinForm` builds and registers
+  its own element. The first warning wrapper bound statics to the survivor, so the subclass built a
+  `<tosi-form>` and was never defined (eb2ba31f)
+- `<tosi-select localized>` and the iframe example registration no longer log `Xin*` deprecation
+  warnings an app never caused: the library read its own aliases (eb2ba31f)
+- createDocBrowser's docs, migrating.md and the README say everything memory routing leaves alone,
+  and the doc-browser Quick Start passes `routing: 'query'` (eb2ba31f)
+- `<tosi-table>`: the last shown column cannot be hidden, since its header is where Show Column
+  lives (eb2ba31f)
+
+Closes #4343, #4344, #4351, #4352, #4373, #4374, #4376, #4379, #4390, #4391.
+
 ## 1.19.2
 
 > **The checklist client, without a DOM.** `tosijs-ui/checklist-client` lets a client that

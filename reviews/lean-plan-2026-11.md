@@ -254,10 +254,11 @@ fix. **checked** means I re-read it against the code myself.
   `bun run test-consumer`.
 - **The type surface:** `bunx tsc --noEmit` and `bun run typecheck-guards`.
 - **The runtime exports:** each entry point's runtime exports must equal
-  [`exports-before.json`](lean-plan-2026-11/exports-before.json), taken from the working tree's
-  `dist/` at `af13cd1ee` and keyed by export-map entry. Re-take the snapshot with
+  [`exports-before.json`](lean-plan-2026-11/exports-before.json), keyed by export-map entry.
+  It was taken at `af13cd1ee` and **re-taken at 1.20.0**, where phase 1 starts: the only change
+  was the new `contrastingText`. Re-take the snapshot with
   [`export-snapshot.ts`](lean-plan-2026-11/export-snapshot.ts), whose header gives the command,
-  and diff it. ✔ Re-taking it at `af13cd1ee` reproduces the file exactly.
+  and diff it.
 - **The declarations:** `git diff dist/**/*.d.ts` may show only internals deleted on purpose.
 
 ### The packages
